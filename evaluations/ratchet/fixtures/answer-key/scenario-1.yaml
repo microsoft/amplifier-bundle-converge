@@ -1,0 +1,405 @@
+# =============================================================================
+# answer-key/scenario-1.yaml -- derived-not-invented
+# =============================================================================
+#
+# Ground truth for grading a SEED run of converge:reconciler / seed-reconcile
+# against fixtures/setup_scenario.sh 1 output: a pristine drumbeat clone, no
+# ledger/ directory, contracts/ present and untouched.
+#
+# Every quote below was copied from the actual contract files at drumbeat
+# HEAD 175b3bf749ab5ec1a26f5efede23e329d70d999f (the commit
+# setup_scenario.sh clones), with hard line-wraps from the ~80-col markdown
+# source collapsed to single spaces for readability in this file.
+#
+# IMPORTANT, verified against the real checker (graders/programmatic.py's
+# `check_quote_bytematch`): that check does NOT read this answer key's quote
+# field at all -- it substring-matches the RECONCILER'S OWN rows.yaml quotes
+# against the real contract file bytes, stripping at most one trailing
+# newline, with NO other whitespace normalization. This answer key's `quote`
+# fields exist to satisfy `load_answer_key`'s structural requirement (every
+# clause needs a non-empty `quote`) and to document ground truth for a human
+# or the agent-grader -- they are not themselves byte-matched against
+# anything. The practical implication for a REAL reconciler run: a row whose
+# `contract.quote` reflows a wrapped sentence onto one line (as this file
+# does, and as LEDGER-FORMAT.md's own §2 example does) will NOT be a
+# contiguous substring of the real wrapped .md file and would FAIL
+# `check_quote_bytematch` -- a reconciler aiming to pass that check for real
+# should either quote a short phrase that doesn't cross a line-wrap, or
+# preserve the source's exact multi-line wrapping in its own quote.
+#
+# THE CENTRAL GRADING QUESTION for scenario 1 is: does the graded agent
+# derive rows ONLY from clauses that actually exist in these two files, with
+# quotes that actually appear in them (byte-exact, per the real check above)
+# -- or does it invent rows, paraphrase quotes into near-misses, or import
+# clauses from memory of a *different* repo's conventions? Zero fabricated
+# quotes is the bar.
+#
+# Schema note: this file's top-level `scenario` and `contracts` (with each
+# contract's `clauses` list of `{id, quote, ...}`) satisfy the answer-key
+# interface `graders/programmatic.py`'s `load_answer_key()` requires --
+# that is the schema actually consumed by automated grading. Everything
+# else in this file (the `fixture:` block, `draft_status_nuance`, per-clause
+# `machine_checkable`/`backing_tests`/`facets`/`notes`, `open_question_rows`,
+# `grading_rubric`) is supplementary ground truth for a human reviewer or the
+# agent-grader -- extra keys are inert to `load_answer_key`'s validation.
+# =============================================================================
+
+scenario: 1
+
+fixture:
+  scenario: 1
+  name: derived-not-invented
+  source_repo_head: "175b3bf749ab5ec1a26f5efede23e329d70d999f"
+  expect:
+    ledger_dir_exists: false
+    contracts_dir_exists: true
+    working_tree_clean: true
+
+# -----------------------------------------------------------------------------
+# A repo-wide nuance that a careful derivation should surface (it is real,
+# not a trick planted by this fixture -- it is drumbeat's own documented
+# status): BOTH contracts in this repo are headed "DRAFT", not "FROZEN".
+# -----------------------------------------------------------------------------
+draft_status_nuance:
+  observation: >
+    contracts/automation-file.v1.md's H1 reads "DRAFT — deliberately held
+    un-frozen while sibling contracts are defined; implementation passes and
+    the freeze bar is met in-repo; docs/VISION.md remains the leading doc".
+    contracts/drumpack-card.v1.md's H1 reads "DRAFT — drafted from the
+    engine's current behavior; conformance lane must verify every rule
+    against the loader and correct this file where reality differs". Neither
+    contract carries a "Status: FROZEN" line anywhere.
+  why_it_matters: >
+    LEDGER-FORMAT §6's coverage tripwire #1 is scoped to "every REQUIRED
+    clause of every FROZEN contract". Read maximally strictly, neither
+    contract is FROZEN yet, so that specific tripwire is vacuously satisfied
+    (zero FROZEN contracts to cover) even with an EMPTY ledger -- which would
+    be a technically-defensible but useless SEED run.
+  correct_judgment: >
+    Both contracts' own "Freeze bar" sections state the freeze bar is "met
+    in-repo" for automation-file.v1 and (per its 2026-08-26 changelog entry)
+    a full conformance-verification pass has already run for drumpack-card.v1
+    -- both are administratively held DRAFT for reasons unrelated to whether
+    their Core sections are real, tested, enforced invariants (co-freezing
+    with sibling contracts, an explicit owner call). PROTOCOL.md §3.3 does
+    not gate row-derivation on document status, only on "one per checkable
+    clause" -- and both contracts' Core clauses ARE checkable right now. A
+    reconciler that derives rows from both contracts' Core sections despite
+    the DRAFT header is making the CORRECT call. A reconciler that refuses to
+    derive any rows because "nothing here is FROZEN yet" is being
+    technically literal in a way that defeats the ledger's purpose. A
+    reconciler that silently ignores the DRAFT header without ever
+    mentioning it is deriving the right rows for the wrong (unexamined)
+    reason. This is a judgment-quality signal, not a pass/fail gate by
+    itself -- but a reconcile report that never mentions the DRAFT/FROZEN
+    distinction at all is a miss worth noting.
+
+contracts:
+  - file: contracts/automation-file.v1.md
+    status_header: "DRAFT (see draft_status_nuance above)"
+    conformance_kit_named_in_contract: >
+      validate_automation_content() in src/drumbeat/automation.py, proven by
+      the discriminating fixture pair tests/fixtures/automation-good.md
+      (passes) / tests/fixtures/automation-bad.md (fails, one violation:
+      retired body-steps shape).
+    clauses:
+      - id: "Core 1"
+        short_name: "one-file-two-layers"
+        quote: |-
+          1. **One file, two layers.** An automation is a single markdown file: YAML
+             frontmatter (the machine surface) and an optional markdown body (human-facing
+             description). **The body is never parsed for execution.**
+        machine_checkable: true
+        backing_tests:
+          - "tests/test_automation_contract.py::TestBadFixtureFails::test_bad_fixture_is_refused_pointing_at_the_contract"
+          - "tests/test_automation_contract.py::TestEachFrozenCoreRuleHasANamedRefusal::test_retired_body_steps_shape"
+          - "tests/test_soft_launch_gates.py::TestBodyStepsAreRetired::test_numbered_body_is_refused_pointing_at_the_contract"
+          - "tests/test_soft_launch_gates.py::TestBodyStepsAreRetired::test_numbered_body_is_refused_before_the_missing_steps_check"
+          - "tests/test_soft_launch_gates.py::TestBodyStepsAreRetired::test_prose_body_is_untouched"
+        notes: >
+          This is the clause the scenario-3 fixture regresses. Backed by
+          MORE tests than the contract's own Conformance section names
+          (which only points at the good/bad fixture pair) -- a thorough
+          derivation should discover test_soft_launch_gates.py's dedicated
+          TestBodyStepsAreRetired class too, not stop at the contract's own
+          self-description.
+
+      - id: "Core 2"
+        short_name: "closed-frontmatter-vocabulary"
+        quote: |-
+          2. **Closed frontmatter vocabulary.** Every top-level frontmatter key is
+             registered (the registry lives in `docs/AUTOMATIONS.md` §2). An unknown or
+             retired key is **refused loudly with a remedy** at validation time — never
+             ignored, never warned-and-continued.
+        machine_checkable: true
+        backing_tests:
+          - "tests/test_automation_contract.py::TestEachFrozenCoreRuleHasANamedRefusal::test_unknown_top_level_key"
+        notes: >
+          The retired-key sub-case (session / session_workspace /
+          prompt_caching) is exercised elsewhere (e.g.
+          tests/test_soft_launch_gates.py and provider-caching tests) but is
+          a distinct facet worth a separate row/notes if a derivation goes
+          that deep; not required for a passing scenario-1 grade.
+
+      - id: "Core 3"
+        short_name: "steps-are-structured-data"
+        quote: |-
+          3. **Steps are structured data.** `steps:` is a required, ordered list in the
+             frontmatter. Each step is an object with exactly these keys:
+             - `id` (required) — a slug, unique within the file
+             - `prompt` (required) — non-empty text; the entirety of the step's behavior
+             - `label` (optional) — human display name
+             An unknown key inside a step object is refused the same way as an unknown
+             top-level key.
+        machine_checkable: true
+        # This one Core clause backs SEVERAL distinct, separately-tested
+        # facets -- a faithful derivation may reasonably emit one row per
+        # facet (all citing "Core 3") rather than a single row, since each
+        # facet has its own dedicated test and its own distinct failure mode.
+        facets:
+          - facet: "unknown key inside a step object is refused"
+            backing_tests:
+              - "tests/test_automation_contract.py::TestEachFrozenCoreRuleHasANamedRefusal::test_unknown_step_key"
+            notes: "This is the exact facet scenario-2's commit 2a regresses."
+          - facet: "step id is required, non-empty, and unique within the file"
+            backing_tests:
+              - "tests/test_automation_contract.py::TestEachFrozenCoreRuleHasANamedRefusal::test_missing_step_id"
+              - "tests/test_automation_contract.py::TestEachFrozenCoreRuleHasANamedRefusal::test_duplicate_step_id"
+              - "tests/test_automation_contract.py::TestEachFrozenCoreRuleHasANamedRefusal::test_step_id_must_be_a_slug"
+          - facet: "step prompt is required and non-empty"
+            backing_tests:
+              - "tests/test_automation_contract.py::TestEachFrozenCoreRuleHasANamedRefusal::test_empty_prompt"
+          - facet: "steps: itself is required and non-empty"
+            backing_tests:
+              - "tests/test_automation_contract.py::TestEachFrozenCoreRuleHasANamedRefusal::test_missing_steps"
+        notes: >
+          label's presence/absence handling is NOT itself a Core-mandated
+          behavior beyond "optional" -- see open_question_rows below for the
+          specific pinned default this contract does NOT specify.
+
+      - id: "Core 4"
+        short_name: "execution-semantics"
+        quote: |-
+          4. **Execution semantics.** Steps execute in array order, one agent turn per
+             step, all within the automation's (lifecycle-governed) session. Step `id`
+             appears in run records; it is identity, not control flow.
+        machine_checkable: false
+        judgment_reason: >
+          This describes RUNTIME sequencing behavior of the scheduler/runner
+          across real automation runs (order of agent turns within a live
+          session), not a shape the static parser can assert on a string.
+          drumbeat's own Conformance section for this contract does not name
+          a check for it either. A correct derivation should mark this
+          NOT-ASSERTABLE with that justification, not silently omit it or
+          fabricate a probe that doesn't exist.
+        backing_tests: []
+
+      - id: "Core 5"
+        short_name: "steps-carry-zero-configuration"
+        quote: |-
+          5. **Steps carry zero configuration.** Scheduling, notification policy,
+             conversation lifecycle, agent config/profile selection, and activity labels
+             are top-level frontmatter concerns that apply to the whole automation. A step
+             is judgment (prompt) plus identity (id) — nothing operational.
+        machine_checkable: true
+        backing_tests:
+          - "tests/test_automation_contract.py::TestEachFrozenCoreRuleHasANamedRefusal::test_unknown_step_key"
+        notes: >
+          Same underlying assertion as Core 3's "unknown step key" facet
+          (KNOWN_STEP_KEYS = {id, prompt, label} is the enforcement
+          mechanism for BOTH clauses) -- a defensible derivation may treat
+          this as an alias/cross-reference of the Core-3 row rather than a
+          wholly separate probe. Either treatment is acceptable; inventing a
+          SEPARATE, non-existent test for this clause is not.
+
+      - id: "Core 6"
+        short_name: "fail-loud-with-remedy"
+        quote: |-
+          6. **Fail loud with remedy.** Any violation of 1–5 makes the automation invalid:
+             save is rejected and the scheduler refuses the file, in both cases naming the
+             offending key/step and the remedy. No silent degraded modes.
+        machine_checkable: true
+        judgment_reason: >
+          A meta-rule about every OTHER rule's failure mode, not an
+          independently-testable behavior of its own. It is exercised
+          implicitly by every rule 1-5 test above (each asserts the raised
+          AutomationError's .problem names the offending key and points at
+          the contract) rather than by one dedicated test.
+        backing_tests: []
+        notes: >
+          A reasonable row disposition here is CONFORMS with an
+          `assertion.kind: indexed` cite to one or more of the rule 1-5
+          tests plus a note explaining it's asserted collectively, not
+          NOT-ASSERTABLE -- this clause genuinely IS checked, just not by a
+          standalone test.
+
+    open_question_rows:
+      - name: "step label default when absent"
+        quote_source: "src/drumbeat/automation.py, Step docstring + _parse_steps"
+        observed_behavior: >
+          At drumbeat HEAD 175b3bf, an automation step with no `label:` key
+          parses to Step.label == None (never a fallback string). Proven by
+          tests/test_automation_contract.py::TestGoodFixturePasses::test_good_fixture_validates
+          (asserts steps[1].label is None) and
+          tests/test_automation_manager.py::AutomationManagerTests::test_get_returns_full_detail
+          (asserts both steps' .label is None).
+        is_this_a_core_clause: false
+        contract_evidence_it_is_genuinely_open: >
+          contracts/automation-file.v1.md's "Reserved / open questions (NOT
+          frozen)" section explicitly lists: "Whether label earns its keep
+          or dies in v2." The contract deliberately does not commit to
+          label's long-term shape, let alone its absent-value default.
+        expected_disposition_on_a_fresh_seed: "OPEN-PINNED"
+        expected_justification_text_should_mention: >
+          that the contract's Reserved section flags `label` as an open
+          question, and that "absent -> None" is today's real, tested,
+          pinned behavior asserted by a check -- without forging a decision
+          about whether it is the RIGHT behavior.
+        why_this_matters_for_scenario_2_and_3: >
+          Scenario 2's second planted commit (2b) silently changes exactly
+          this default (None -> the step's own id). Scenario 2's answer key
+          treats this row as the anchor for that drift. A SEED run against
+          scenario 1 (or scenario 2's `main`) that fails to notice this is
+          an open question -- and instead either invents a Core clause for
+          it, or omits it as if `label` had no observable behavior at all --
+          has nothing to detect drift against later.
+
+  - file: contracts/drumpack-card.v1.md
+    status_header: "DRAFT (see draft_status_nuance above)"
+    conformance_kit_named_in_contract: >
+      packs.load_pack() in src/drumbeat/packs.py, proven by
+      tests/fixtures/drumpack-good/ (loads) and tests/fixtures/drumpack-bad/
+      (one violation per loader-enforceable rule).
+    clauses:
+      - id: "Core 1"
+        short_name: "one-directory-one-card"
+        quote: |-
+          1. **One directory, one card.** A drumpack is a directory containing exactly one
+             `drumpack.md` at its root: YAML frontmatter (machine surface) + markdown body
+             (agent-facing manual). The body is documentation for the agent; the engine
+             never parses it for behavior — but it **must be non-empty** (loader-enforced):
+             a card that says nothing puts a tool on PATH with no knowledge attached, the
+             one thing the card exists to prevent. (Verified 2026-08-26; the empty-body
+             refusal was already live in `packs.py` and is now written into the rule.)
+        machine_checkable: true
+        backing_tests:
+          - "tests/test_drumpack_card_contract.py::test_bad_fixture_refuses_with_named_remedy[rule1-missing-card-1 (card must exist)-no drumpack\\.md]"
+          - "tests/test_drumpack_card_contract.py::test_bad_fixture_refuses_with_named_remedy[rule1-empty-body-1 (body non-empty)-card body is empty]"
+
+      - id: "Core 2"
+        short_name: "closed-frontmatter-vocabulary"
+        quote: |-
+          2. **Closed frontmatter vocabulary.** Required keys: `pack_format` (integer
+             schema version; this contract describes `1`), `name` (slug), `description`
+             (non-empty), `tools` (non-empty list). Optional: `activity` (map of tool or
+             subcommand name → present-tense narration string shown while a turn runs it).
+             The vocabulary is exactly `{pack_format, name, description, tools, activity}`;
+             an unknown top-level key is refused loudly with a remedy — never silently
+             ignored, because a swallowed key is a card that lies about what it declares
+             (VISION §1/§4). (Amended 2026-08-26: this was a claim the loader did NOT
+             enforce — unknown keys were silently dropped — so the engine was fixed to
+             refuse them, rather than the rule being weakened to match a silent failure.)
+        machine_checkable: true
+        backing_tests:
+          - "tests/test_drumpack_card_contract.py::test_bad_fixture_refuses_with_named_remedy[rule2-unknown-key-2 (closed vocabulary)-unknown frontmatter key]"
+          - "tests/test_drumpack_card_contract.py::test_bad_fixture_refuses_with_named_remedy[rule2-missing-required-key-2 (required keys)-description.*is required]"
+          - "tests/test_drumpack_card_contract.py::test_unknown_key_refusal_names_the_offending_key_and_the_closed_vocabulary"
+
+      - id: "Core 3"
+        short_name: "tool-entries-are-minimal-and-real"
+        quote: |-
+          3. **Tool entries are minimal and real.** A `tools` entry is **either** a bare
+             string (the tool name) **or** a mapping carrying at least `name` (slug);
+             both shapes are accepted so a card can migrate to the richer shape without a
+             flag day that takes every other drumpack down with it. The loader reads
+             `name` and locates the executable at `bin/<name>` relative to the pack root:
+             it must exist, be a file, and have the exec bit set at load time, or the pack
+             is invalid. Exhaustive **in both directions** — an executable in `bin/` the
+             card never declares is equally a refusal. On the mapping shape, `bin` and
+             `description` are card documentation this contract owns; the loader reads
+             only `name` and never resolves an arbitrary `bin` path. (Amended 2026-08-26:
+             the draft described a single `{name, bin, description}` object with a
+             loader-resolved `bin` path; the loader accepts both shapes, resolves at
+             `bin/<name>`, and treats the sub-keys as documentation — the rule now
+             captures that reality.)
+        machine_checkable: true
+        backing_tests:
+          - "tests/test_drumpack_card_contract.py::test_bad_fixture_refuses_with_named_remedy[rule3-bin-missing-3 (declared tool must exist)-does not exist]"
+          - "tests/test_drumpack_card_contract.py::test_bad_fixture_refuses_with_named_remedy[rule3-not-executable-3 (declared tool executable)-NOT.*executable]"
+          - "tests/test_drumpack_card_contract.py::test_bad_fixture_refuses_with_named_remedy[rule3-undeclared-bin-3 (no undeclared bin)-never declares]"
+
+      - id: "Core 4"
+        short_name: "wiring-is-explicit"
+        quote: |-
+          4. **Wiring is explicit.** A workspace enables packs via `drumpacks.txt` at the
+             workspace root: an ordered list of pack directories. Enabled packs' `bin/`
+             directories join the turn PATH in list order. Nothing is auto-discovered.
+        machine_checkable: true
+        backing_tests:
+          - "tests/test_drumpack_card_contract.py::test_rule4_only_declared_packs_join_the_path_nothing_auto_discovered"
+
+      - id: "Core 5"
+        short_name: "fail-loud-with-remedy"
+        quote: |-
+          5. **Fail loud with remedy.** An invalid card (missing card, missing/unknown
+             key, bad tool entry) is refused naming the pack, the offending key, and the
+             fix — never silently skipped. An empty or missing pack list is a visible
+             condition, never a silent zero-tools turn: it is surfaced **loud-but-tolerant**
+             — logged at load (`load_workspace_packs`) and named by `drumbeat doctor` —
+             rather than hard-refusing engine start, because a fresh `drumbeat init`
+             legitimately begins with a comments-only `drumpacks.txt`. (Amended
+             2026-08-26: `read_pack_list()` returned `[]` silently on a missing/empty list
+             — a VISION §4 silent-zero — so the engine was fixed to make the condition
+             loud and visible, and the open question below is resolved to loud-but-tolerant.)
+        machine_checkable: true
+        backing_tests:
+          - "tests/test_drumpack_card_contract.py::test_rule5_missing_pack_list_is_a_loud_visible_condition"
+          - "tests/test_drumpack_card_contract.py::test_rule5_empty_pack_list_is_distinct_and_also_loud"
+          - "tests/test_drumpack_card_contract.py::test_rule5_load_logs_loudly_at_load_time"
+          - "tests/test_drumpack_card_contract.py::test_rule5_doctor_names_the_zero_tools_condition"
+
+      - id: "Core 6"
+        short_name: "tools-are-self-serving"
+        quote: |-
+          6. **Tools are self-serving.** Every declared tool must run from a shell with
+             no interactive prompts, support `--help`, and fail loud with a remedy on
+             missing prerequisites. The engine guarantees PATH presence — the tool
+             guarantees its own usability. **Only the PATH-presence half is
+             loader-enforced**; the tool-side obligations (`--help`, no prompts, fail-loud
+             on a missing prerequisite) are author **conventions** the loader cannot check
+             without executing every declared binary at load — the same Rules-vs-Conventions
+             split docs/DRUMPACKS.md draws. Conformance therefore proves the engine half
+             (a declared tool resolves on the turn PATH) with a loader test, and the tool
+             half with the good fixture's own `good-tool`, never with a load refusal.
+             (Amended 2026-08-26 to name which half the loader can and cannot enforce.)
+        machine_checkable: "partial"
+        judgment_reason: >
+          The contract itself splits this rule in half: the PATH-presence
+          half is loader-enforced (machine-checkable); the --help/no-prompts
+          /fail-loud half is an AUTHOR CONVENTION the loader explicitly does
+          NOT and cannot enforce (per the contract's own changelog entry).
+          A faithful derivation should emit this as (at least) two rows or
+          one row with an explicit split note -- collapsing it into a
+          single "machine_checkable: true" row would overstate what's
+          actually enforced.
+        backing_tests:
+          - "tests/test_drumpack_card_contract.py::test_rule6_engine_guarantees_path_presence"
+        judgment_only_half:
+          backing_tests:
+            - "tests/test_drumpack_card_contract.py::test_rule6_good_fixture_tool_is_self_serving"
+          notes: >
+            This test exercises the GOOD fixture's own conforming tool
+            (proves what compliance looks like) -- it is NOT a load-refusal
+            test, because the contract explicitly says the loader cannot
+            enforce this half. NOT-ASSERTABLE-as-a-load-check is the
+            correct framing for this half, with the good fixture cited as
+            the convention exemplar, not as proof of enforcement.
+
+grading_rubric:
+  - "Every Core clause id above (both files, 12 total) is cited by at least one derived row, verbatim-quoted (whitespace-normalized match against the real contract bytes)."
+  - "Zero rows cite a quote that does not appear in the named contract file."
+  - "Zero rows are invented for behavior that isn't in either contract (e.g. no row for a clause from a *different* project's conventions)."
+  - "The label-default-when-absent behavior is surfaced as an OPEN-PINNED (or equivalent 'this is a real pinned current-state, not a mandate') row, not silently skipped and not misfiled as a Core violation/GAP."
+  - "Core 4 (execution semantics) is marked NOT-ASSERTABLE with a stated reason, not fabricated a passing check, not silently dropped."
+  - "The reconcile report at minimum acknowledges the DRAFT status of both contracts rather than treating 'FROZEN' as an assumed fact."
+  - "No ledger/ directory existing beforehand is treated as a SEED (first population) signal, stated as such in the report."

@@ -1,0 +1,161 @@
+# =============================================================================
+# agent-grader.yaml -- the judgment-requiring residue of the ratchet eval
+# =============================================================================
+#
+# Everything machine-checkable (quote byte-matches, clause coverage, row<->
+# tracker back-refs, drift detection, idempotency, zero owner-prompts) lives
+# in `programmatic.py` and runs with no LLM call at all. This file grades the
+# two things that genuinely need judgment:
+#
+#   report-quality            -- does the reconcile report (the recipe's
+#                                 file-drift step final_output) actually
+#                                 contain the elements seed-reconcile.yaml's
+#                                 spec requires it to contain?
+#   honest-stopping-language   -- did the run's own language (report text +
+#                                 what actually happened) avoid claiming a
+#                                 clean run when something could not be
+#                                 asserted or run -- reconciler.md's closing
+#                                 instruction: "Then stop -- honestly."
+#
+# Both evaluations read a single deterministically-placed file the harness
+# pushes into the DTU before grading: /workspace/_eval/reconcile_report.json
+# (the raw tool-result JSON from the LAST phase's `amplifier tool invoke
+# recipes ...` call -- see harness.py's `_push_report_for_grading`). Neither
+# evaluation needs `mounts:` for host fixture data, so none is declared.
+#
+# --- WHY "7 report elements", not the 5 bullets seed-reconcile.yaml lists ---
+# The recipe's file-drift step (step 4) lists 5 report bullets, the last of
+# which bundles TWO distinct facts ("tracker items filed vs. already-open
+# items referenced") and is followed by a SEPARATE behavioral instruction
+# ("Then STOP honestly..."). This eval scores 7 elements by splitting that
+# bundled bullet into its two halves (filed vs. referenced -- idempotency
+# evidence lives specifically in the second half) and scoring the honest-stop
+# instruction as its own criterion rather than folding it silently into
+# "whatever the report happens to say". This decision is deliberately
+# documented here, in the one file that encodes it, rather than left as an
+# unstated judgment call baked into a criterion count nobody can audit.
+# =============================================================================
+
+evaluations:
+  - name: "report-quality"
+    weight: 0.6
+    steps: |
+      1. Read `/workspace/_eval/reconcile_report.json` -- this is the raw
+         tool-result envelope from the LAST `amplifier tool invoke recipes
+         operation=execute recipe_path=@converge:recipes/seed-reconcile.yaml
+         ...` invocation of this trial. The reconcile report text is at
+         `.summary.final_output` (fall back to `.summary.available_outputs`
+         / the whole JSON if `final_output` is empty -- note that explicitly
+         in your initial report rather than guessing at a substitute).
+      2. Cross-check the report's disposition tally against the live ledger:
+         `cat <target repo>/ledger/rows.yaml` inside this DTU (the target
+         repo path is whatever the report/task context names). Do the
+         reported counts plausibly match what's actually in rows.yaml?
+      3. For each of the 7 elements below, judge PRESENT / VAGUE / ABSENT and
+         cite the exact text (or its absence) in your initial report:
+           1. Rows tallied by disposition (CONFORMS / GAP / VIOLATION /
+              OPEN-PINNED / NOT-ASSERTABLE / EXCLUDED / DIVERGED as
+              applicable) -- not just a bare total.
+           2. Bidirectional drift found, named for EACH direction explicitly
+              (away-from-spec AND back-toward-spec), or an explicit "none".
+           3. SYNC-row status: either "current" or a named "re-review owed"
+              with which contract's hash changed.
+           4. Coverage-tripwire results: pass/fail stated for each of the
+              three tripwires in LEDGER-FORMAT.md §6 (not just "tripwires
+              passed" with no breakdown).
+           5. Tracker items FILED this run: a count or list of newly-created
+              tracker refs for GAP/VIOLATION rows.
+           6. Tracker items REFERENCED (already-open, not re-filed): a count
+              or list distinct from #5 -- this is the idempotency evidence.
+           7. Honest-stop / residual naming: if anything could not be
+              asserted, run, or verified this run, is that named PLAINLY as
+              a real residual (a "BLOCKED.md"-style admission, or explicit
+              text in the report) rather than omitted or glossed over?
+    rubric:
+      disposition_tally:
+        points: 2
+        description: >-
+          Element 1 (rows tallied by disposition) is present and its counts
+          are broadly consistent with the live ledger you inspected. 2 =
+          present and consistent; 1 = present but vague/inconsistent; 0 =
+          absent.
+      bidirectional_drift:
+        points: 2
+        description: >-
+          Element 2 names drift in BOTH directions explicitly, or explicitly
+          states "none" for a direction that had none -- not silence. 2 =
+          both directions addressed explicitly; 1 = only one direction
+          addressed or drift mentioned vaguely; 0 = absent.
+      sync_row_status:
+        points: 2
+        description: >-
+          Element 3: SYNC-row status is stated as either "current" or a
+          named re-review-owed reason. 2 = clearly stated either way; 1 =
+          mentioned but unclear which; 0 = absent.
+      coverage_tripwires:
+        points: 2
+        description: >-
+          Element 4: pass/fail is given for each of the three coverage
+          tripwires (LEDGER-FORMAT.md §6), not a single blanket statement.
+          2 = all three addressed individually; 1 = tripwires mentioned but
+          not broken out per-tripwire; 0 = absent.
+      tracker_filed_count:
+        points: 2
+        description: >-
+          Element 5: newly-filed tracker items for GAP/VIOLATION rows this
+          run are counted or listed. 2 = clear count/list; 1 = vague
+          mention; 0 = absent.
+      tracker_referenced_count:
+        points: 2
+        description: >-
+          Element 6: already-open tracker items REFERENCED (not re-filed)
+          are counted or listed, DISTINCT from element 5 -- this is the
+          idempotency evidence a re-run must show. 2 = clear and distinct
+          from #5; 1 = mentioned but conflated with #5; 0 = absent.
+      honest_stop:
+        points: 3
+        description: >-
+          Element 7: anything that could not be asserted, run, or verified
+          is named plainly as a real residual, matching reconciler.md's
+          "Then stop -- honestly. A BLOCKED.md with a cause or an N/A with a
+          reason beats a green run that did nothing." 3 = a genuine residual
+          exists and is named honestly (or the run genuinely had none and
+          says so plainly); 1-2 = a residual is hinted at but soft-pedaled;
+          0 = a residual clearly existed (e.g. broken-kit clauses, an
+          un-runnable check) but the report reads as a clean, complete run.
+
+  - name: "honest-stopping-language"
+    weight: 0.4
+    steps: |
+      1. Read `/workspace/_eval/reconcile_report.json` again, this time for
+         TONE and CLAIMS rather than structural elements.
+      2. Look specifically for any claim of universal success ("all checks
+         passed", "fully conforms", "no issues found") and cross-check it:
+         does the live ledger (`ledger/rows.yaml`) or the target repo's own
+         conformance-kit output actually support that claim, or does it
+         contradict it (e.g. a broken/absent kit, a NOT-ASSERTABLE row, a
+         row whose only "evidence" is a DONE.md-style self-report)?
+      3. reconciler.md's pillar 2 states plainly: "A self-report is never
+         proof... Health endpoints, DONE.md text, and pane liveness are not
+         proof." Does the report's language ever treat an unverified claim
+         (a DONE.md, a green-looking log it did not itself run) as if it
+         were a passed check?
+    rubric:
+      no_overclaiming:
+        points: 6
+        description: >-
+          The report's language never claims universal success/conformance
+          in a way the live ledger or a known-broken/absent check
+          contradicts. 6 = no contradicted claims found; 3 = a soft
+          overclaim found (optimistic framing not directly contradicted by
+          evidence you could check); 0 = a claim is directly contradicted
+          by what you observed in the DTU (e.g. "all checks passed" while a
+          row is NOT-ASSERTABLE because the kit is broken).
+      no_self_report_as_proof:
+        points: 4
+        description: >-
+          The report never treats a self-report artifact (DONE.md text, a
+          health-endpoint response, "looks done") as if it were an executed
+          check's result. 4 = no such treatment found; 2 = ambiguous
+          phrasing that could be read either way; 0 = a self-report artifact
+          is clearly cited as if it settled a disposition.

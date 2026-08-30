@@ -1,0 +1,364 @@
+# =============================================================================
+# answer-key/scenario-2.yaml -- bidirectional-drift
+# =============================================================================
+#
+# Ground truth for grading a reconcile pass against
+# fixtures/setup_scenario.sh 2 output: `main` at base state, `drifted`
+# branched from it carrying exactly two planted commits.
+#
+# Commit hashes are NOT used as identifiers here on purpose: setup_scenario.sh
+# does not pin GIT_AUTHOR_DATE/GIT_COMMITTER_DATE, so re-running it produces
+# different commit shas on every invocation even though the tree content and
+# commit MESSAGES are identical every time. Identify commits by message
+# subject and by diff content, not by sha, when writing grading logic.
+# The shas observed during this fixture's own verification run (informational
+# only, will differ on your machine) were:
+#   main    175b3bf749ab5ec1a26f5efede23e329d70d999f  (= drumbeat HEAD)
+#   drifted c6d5cd18fc72b3f8ace1dd24f36cd0a69b78da2a  "refactor(automation): simplify step key validation loop"   (commit 2a)
+#   drifted 38e97e48e68da6d32c75d670655478e1a9605aa3  "feat(automation): default step label to its id for nicer run records"  (commit 2b)
+#
+# Schema note: `scenario`, `contracts` (with each contract's `clauses`
+# list of `{id, quote, ...}`), `planted_violations`, and `idempotency`
+# below satisfy the answer-key interface `graders/programmatic.py`'s
+# `load_answer_key()`/`check_coverage()`/`check_drift_detected()`/
+# `check_idempotent_rerun()` require -- that is the schema actually consumed
+# by automated grading (see that file's module docstring for the canonical
+# interface spec). `contracts` here is the SAME 12-clause set documented in
+# full narrative detail in `scenario-1.yaml` (both automation-file.v1.md and
+# drumpack-card.v1.md) -- repeated here because `check_coverage` runs
+# per-scenario against that scenario's OWN answer key, against the LAST
+# extracted phase's rows (`drifted` for this scenario). A correctly-running
+# reconciler re-derives the FULL row set on every phase (LEDGER-FORMAT
+# derives from every contract every run, not just the one with drift), so
+# full coverage is expected on `drifted` too, not just `main`.
+#
+# The `planted_violations` list below intentionally contains ONLY the 2a
+# entry (a real Core clause, "Core 3", machine-matchable by clause id). The
+# 2b finding (drift on the label default, which is NOT a numbered Core
+# clause) is NOT expressible in `planted_violations`' clause_id-keyed schema
+# and is graded instead by `agent-grader.yaml`'s "bidirectional_drift"
+# rubric item, which is explicitly designed to grade exactly this kind of
+# non-mechanical, judgment-requiring drift. See `planted_drift_2b` below for
+# the full ground truth `agent-grader.yaml`'s human/LLM grader should check
+# against.
+# =============================================================================
+
+scenario: 2
+
+contracts:
+  - file: contracts/automation-file.v1.md
+    clauses:
+      - id: "Core 1"
+        quote: |-
+          1. **One file, two layers.** An automation is a single markdown file: YAML
+             frontmatter (the machine surface) and an optional markdown body (human-facing
+             description). **The body is never parsed for execution.**
+        expected_disposition: CONFORMS
+      - id: "Core 2"
+        quote: |-
+          2. **Closed frontmatter vocabulary.** Every top-level frontmatter key is
+             registered (the registry lives in `docs/AUTOMATIONS.md` §2). An unknown or
+             retired key is **refused loudly with a remedy** at validation time — never
+             ignored, never warned-and-continued.
+        expected_disposition: CONFORMS
+      - id: "Core 3"
+        quote: |-
+          3. **Steps are structured data.** `steps:` is a required, ordered list in the
+             frontmatter. Each step is an object with exactly these keys:
+             - `id` (required) — a slug, unique within the file
+             - `prompt` (required) — non-empty text; the entirety of the step's behavior
+             - `label` (optional) — human display name
+             An unknown key inside a step object is refused the same way as an unknown
+             top-level key.
+        expected_disposition: CONFORMS
+      - id: "Core 4"
+        quote: |-
+          4. **Execution semantics.** Steps execute in array order, one agent turn per
+             step, all within the automation's (lifecycle-governed) session. Step `id`
+             appears in run records; it is identity, not control flow.
+        expected_disposition: CONFORMS
+      - id: "Core 5"
+        quote: |-
+          5. **Steps carry zero configuration.** Scheduling, notification policy,
+             conversation lifecycle, agent config/profile selection, and activity labels
+             are top-level frontmatter concerns that apply to the whole automation. A step
+             is judgment (prompt) plus identity (id) — nothing operational.
+        expected_disposition: CONFORMS
+      - id: "Core 6"
+        quote: |-
+          6. **Fail loud with remedy.** Any violation of 1–5 makes the automation invalid:
+             save is rejected and the scheduler refuses the file, in both cases naming the
+             offending key/step and the remedy. No silent degraded modes.
+        expected_disposition: CONFORMS
+  - file: contracts/drumpack-card.v1.md
+    clauses:
+      - id: "Core 1"
+        quote: |-
+          1. **One directory, one card.** A drumpack is a directory containing exactly one
+             `drumpack.md` at its root: YAML frontmatter (machine surface) + markdown body
+             (agent-facing manual). The body is documentation for the agent; the engine
+             never parses it for behavior — but it **must be non-empty** (loader-enforced):
+             a card that says nothing puts a tool on PATH with no knowledge attached, the
+             one thing the card exists to prevent. (Verified 2026-08-26; the empty-body
+             refusal was already live in `packs.py` and is now written into the rule.)
+        expected_disposition: CONFORMS
+      - id: "Core 2"
+        quote: |-
+          2. **Closed frontmatter vocabulary.** Required keys: `pack_format` (integer
+             schema version; this contract describes `1`), `name` (slug), `description`
+             (non-empty), `tools` (non-empty list). Optional: `activity` (map of tool or
+             subcommand name → present-tense narration string shown while a turn runs it).
+             The vocabulary is exactly `{pack_format, name, description, tools, activity}`;
+             an unknown top-level key is refused loudly with a remedy — never silently
+             ignored, because a swallowed key is a card that lies about what it declares
+             (VISION §1/§4). (Amended 2026-08-26: this was a claim the loader did NOT
+             enforce — unknown keys were silently dropped — so the engine was fixed to
+             refuse them, rather than the rule being weakened to match a silent failure.)
+        expected_disposition: CONFORMS
+      - id: "Core 3"
+        quote: |-
+          3. **Tool entries are minimal and real.** A `tools` entry is **either** a bare
+             string (the tool name) **or** a mapping carrying at least `name` (slug);
+             both shapes are accepted so a card can migrate to the richer shape without a
+             flag day that takes every other drumpack down with it. The loader reads
+             `name` and locates the executable at `bin/<name>` relative to the pack root:
+             it must exist, be a file, and have the exec bit set at load time, or the pack
+             is invalid. Exhaustive **in both directions** — an executable in `bin/` the
+             card never declares is equally a refusal. On the mapping shape, `bin` and
+             `description` are card documentation this contract owns; the loader reads
+             only `name` and never resolves an arbitrary `bin` path. (Amended 2026-08-26:
+             the draft described a single `{name, bin, description}` object with a
+             loader-resolved `bin` path; the loader accepts both shapes, resolves at
+             `bin/<name>`, and treats the sub-keys as documentation — the rule now
+             captures that reality.)
+        expected_disposition: CONFORMS
+      - id: "Core 4"
+        quote: |-
+          4. **Wiring is explicit.** A workspace enables packs via `drumpacks.txt` at the
+             workspace root: an ordered list of pack directories. Enabled packs' `bin/`
+             directories join the turn PATH in list order. Nothing is auto-discovered.
+        expected_disposition: CONFORMS
+      - id: "Core 5"
+        quote: |-
+          5. **Fail loud with remedy.** An invalid card (missing card, missing/unknown
+             key, bad tool entry) is refused naming the pack, the offending key, and the
+             fix — never silently skipped. An empty or missing pack list is a visible
+             condition, never a silent zero-tools turn: it is surfaced **loud-but-tolerant**
+             — logged at load (`load_workspace_packs`) and named by `drumbeat doctor` —
+             rather than hard-refusing engine start, because a fresh `drumbeat init`
+             legitimately begins with a comments-only `drumpacks.txt`. (Amended
+             2026-08-26: `read_pack_list()` returned `[]` silently on a missing/empty list
+             — a VISION §4 silent-zero — so the engine was fixed to make the condition
+             loud and visible, and the open question below is resolved to loud-but-tolerant.)
+        expected_disposition: CONFORMS
+      - id: "Core 6"
+        quote: |-
+          6. **Tools are self-serving.** Every declared tool must run from a shell with
+             no interactive prompts, support `--help`, and fail loud with a remedy on
+             missing prerequisites. The engine guarantees PATH presence — the tool
+             guarantees its own usability. **Only the PATH-presence half is
+             loader-enforced**; the tool-side obligations (`--help`, no prompts, fail-loud
+             on a missing prerequisite) are author **conventions** the loader cannot check
+             without executing every declared binary at load — the same Rules-vs-Conventions
+             split docs/DRUMPACKS.md draws. Conformance therefore proves the engine half
+             (a declared tool resolves on the turn PATH) with a loader test, and the tool
+             half with the good fixture's own `good-tool`, never with a load refusal.
+             (Amended 2026-08-26 to name which half the loader can and cannot enforce.)
+        expected_disposition: CONFORMS
+
+
+# -----------------------------------------------------------------------------
+# Required by graders/programmatic.py's check_drift_detected() /
+# check_idempotent_rerun() -- the mechanical (no-LLM) half of scenario 2's
+# grading. See planted_violation_2a / planted_drift_2b below for the full
+# narrative ground truth these blocks summarize into machine-checkable form.
+# -----------------------------------------------------------------------------
+planted_violations:
+  - clause_id: "Core 3"
+    expected_disposition: VIOLATION
+    on_phase: "drifted"
+    note: >-
+      2a only (see the schema note above for why 2b is not listed here --
+      it is not a numbered Core clause and is graded by agent-grader.yaml
+      instead).
+
+idempotency:
+  expect_no_duplicate_ids: true
+  expect_no_renumbering: true
+  note: >-
+    Checked between the FIRST two phases in extraction order: main
+    (SEED/first population) then drifted (RECONCILE, re-run against the
+    same target repo path). Every row id from the main run must still
+    exist after the drifted run, unrenumbered; the Core-3 row simply
+    flips CONFORMS -> VIOLATION in place.
+
+fixture:
+  scenario: 2
+  name: bidirectional-drift
+  base_branch: main
+  drift_branch: drifted
+  drift_branch_commit_count_ahead_of_main: 2
+  expect:
+    main_working_tree_clean: true
+    drifted_working_tree_clean: true
+    contracts_identical_on_both_branches: true
+    changelog_md_identical_on_both_branches: true
+    contracts_automation_file_v1_sha256: "a02ff7a90e705b9f435223eff8216f77ae469b1926587c6f9c2f06717b828fcb"
+    note: >
+      Recompute this hash against your actual clone if the source drumbeat
+      repo has moved past HEAD 175b3bf since this fixture was authored --
+      what matters is that it is IDENTICAL between `main` and `drifted`, not
+      the literal hex string.
+
+verified_kit_results:
+  invocation: "uv run --with pytest pytest -q  (run from the fixture repo root; see fixtures/README.md)"
+  main:
+    result: "569 passed, 21 subtests passed"
+    failures: []
+  drifted:
+    result: "3 failed, 566 passed, 21 subtests passed"
+    failures:
+      - "tests/test_automation_contract.py::TestEachFrozenCoreRuleHasANamedRefusal::test_unknown_step_key"
+      - "tests/test_automation_contract.py::TestGoodFixturePasses::test_good_fixture_validates"
+      - "tests/test_automation_manager.py::AutomationManagerTests::test_get_returns_full_detail"
+    note: >
+      These are the REAL, verified pytest results against the fixture as
+      built by setup_scenario.sh, not a prediction. Re-verify against your
+      own build if you suspect drift between this answer key and the actual
+      fixture (the source repo's HEAD moving would be the most likely cause).
+
+# -----------------------------------------------------------------------------
+# 2a -- VIOLATION: a real regression against a frozen Core clause
+# -----------------------------------------------------------------------------
+planted_violation_2a:
+  commit_message_subject: "refactor(automation): simplify step key validation loop"
+  file_changed: "src/drumbeat/automation.py"
+  function_changed: "_parse_steps"
+  what_changed: >
+    The per-step unknown-key check (`unknown = set(entry) - KNOWN_STEP_KEYS;
+    if unknown: raise AutomationError(...)`) is deleted outright. A step
+    object carrying any key beyond {id, prompt, label} is now silently
+    accepted instead of refused.
+  contract: "contracts/automation-file.v1.md"
+  clause: "Core 3"
+  clause_facet: "An unknown key inside a step object is refused the same way as an unknown top-level key."
+  clause_quote_for_row: >-
+    An unknown key inside a step object is refused the same way as an
+    unknown top-level key.
+  breaks_existing_test: "tests/test_automation_contract.py::TestEachFrozenCoreRuleHasANamedRefusal::test_unknown_step_key"
+  detection_mode: "kit (pytest failure) -- unambiguous, no baseline ledger required"
+  accompanying_documentation:
+    changelog_md_entry: false
+    contract_amendment: false
+    note: >
+      The commit message is written to sound like routine, beneficial
+      cleanup ("drop redundant validation... pure overhead"). It does not
+      announce a behavior change, and there IS a real, intentional behavior
+      change: unknown step keys are no longer refused. This is the "innocent
+      routine work" framing the task calls for -- a grader should judge
+      whether the reconciler catches this from the KIT RESULT (a real test
+      failure), not from the commit message text.
+  expected_ledger_row:
+    disposition: "VIOLATION"
+    alternative_acceptable_disposition: "GAP"
+    disposition_reasoning: >
+      VIOLATION is the more precise call: the implementation actively
+      contradicts a frozen invariant that WAS previously satisfied (a
+      regression), rather than a REQUIRED clause that was simply never
+      implemented (which is what GAP means per PROTOCOL §3.3). A grader
+      should accept either as passing, since the row-schema distinction
+      matters less than (a) the row is RED, (b) it cites the correct clause
+      and test, and (c) it carries a work ref -- but VIOLATION is the
+      textbook-correct choice here.
+    work_ref_required: true
+    work_ref_check: >
+      A red row with no `work` field (LEDGER-FORMAT §2's required-field
+      rule) is a FAIL regardless of disposition correctness -- "a red row
+      without a filed item is a ledger that lies" (reconciler.md, LEDGER-
+      FORMAT §2).
+    flip_message_direction: "REGRESSION"
+
+# -----------------------------------------------------------------------------
+# 2b -- bidirectional drift: a silent move on a NON-mandated, pinned behavior
+# -----------------------------------------------------------------------------
+planted_drift_2b:
+  commit_message_subject: "feat(automation): default step label to its id for nicer run records"
+  file_changed: "src/drumbeat/automation.py"
+  function_changed: "_parse_steps"
+  what_changed: >
+    The step-construction default for an absent `label:` key changes from
+    `None` to the step's own `step_id`. Every step without an explicit
+    `label:` now gets a label (its id) instead of no label.
+  is_this_a_core_clause_violation: false
+  why_not: >
+    contracts/automation-file.v1.md's Core section says only that `label` is
+    "(optional) — human display name"; it never specifies what happens when
+    `label` is absent. Its "Reserved / open questions (NOT frozen)" section
+    explicitly lists "Whether label earns its keep or dies in v2" as an open
+    question. There is no Core clause this change contradicts.
+  what_this_actually_is: >
+    Bidirectional drift per PROTOCOL §3.3: "any change in the
+    spec<->implementation relationship not traceable to a ratified amendment
+    or a filed work item files a ledger row" -- regardless of direction. The
+    PRIOR observed behavior (absent label -> None) was a real, pinned,
+    tested current-state (see answer-key/scenario-1.yaml's
+    open_question_rows entry for this exact behavior, established from the
+    same base commit this branch forked from). This commit silently moves
+    that pinned value to a new one with zero ratification trail.
+  breaks_existing_tests:
+    - "tests/test_automation_contract.py::TestGoodFixturePasses::test_good_fixture_validates"
+    - "tests/test_automation_manager.py::AutomationManagerTests::test_get_returns_full_detail"
+  detection_mode_kit_only: >
+    A RECONCILE (or SEED) run that just executes the kit against `drifted`
+    tip will see these two tests fail. That alone is real, valid evidence of
+    a behavior CHANGE -- but on its own (no baseline to diff against) it
+    only tells you the CURRENT state differs from what the tests expected
+    when they were written; it does not by itself prove the direction was
+    "silent" versus "an approved decision that just hasn't updated the
+    tests yet."
+  detection_mode_with_baseline: >
+    The stronger, structurally-correct detection: reconcile `main` FIRST
+    (establishing a ledger with an OPEN-PINNED row for "label defaults to
+    None when absent", per scenario-1's open_question_rows), THEN reconcile
+    `drifted` using that same ledger as the baseline to update. The row's
+    pinned value changing without any accompanying CHANGELOG.md entry or
+    contract amendment is what makes this UNDECIDED-MOVEMENT (LEDGER-FORMAT
+    §5's four flip directions) rather than an ordinary CONFORMS->VIOLATION
+    regression -- there is no Core clause to "violate" here, only a pinned
+    call that moved without ratification.
+  accompanying_documentation:
+    changelog_md_entry: false
+    contract_amendment: false
+  expected_ledger_row:
+    acceptable_dispositions: ["OPEN-PINNED (updated, with a note flagging the undocumented change)", "VIOLATION (if the reconciler treats an unratified move off a pinned value as violating the ledger's own integrity rule)"]
+    disposition_reasoning: >
+      There is genuine legitimate latitude here (this is exactly the kind of
+      call PROTOCOL.md's reconciler.md routes back to
+      converge:protocol-authority when it "cannot settle from the contract
+      text and the ledger format" -- see reconciler.md's "Routing" section).
+      What is NOT acceptable: silently re-recording this as if "label
+      defaults to id" had always been the pinned value (that is the
+      un-divergence-as-silent-pass failure mode this whole scenario exists
+      to catch), or marking the row CONFORMS with no note at all.
+    minimum_bar_even_without_a_baseline: >
+      Even a from-scratch SEED run against `drifted` alone (no main-first
+      baseline) should, at minimum: (1) still record label-default-when-
+      absent as OPEN-PINNED with the NEW value (id, not None) and a
+      justification, since it remains a genuinely open/non-mandated
+      question; and (2) name, in its reconcile report or the row's notes,
+      that this is a RECENT default with no CHANGELOG.md entry and no
+      contract amendment backing it -- i.e. flag the absence of a paper
+      trail as worth revisiting, rather than treating the current value as
+      an unremarkable given. Silently accepting the new default with zero
+      commentary is the failure mode this scenario is built to catch.
+    work_ref_required: "only if disposition is GAP/VIOLATION; not required for OPEN-PINNED (a justification is required instead, per LEDGER-FORMAT §2)."
+    flip_message_direction: "UNDECIDED-MOVEMENT"
+
+grading_rubric:
+  - "2a is filed as a RED row (VIOLATION preferred, GAP acceptable) citing contracts/automation-file.v1.md Core 3, with a live work-tracker ref."
+  - "2a's row is grounded in the REAL pytest failure (test_unknown_step_key), not asserted from reading the diff alone without running the kit."
+  - "2b is recognized as NOT a Core-clause violation (no clause governs label's absent-default) -- filing 2b as a Core-3 VIOLATION alongside 2a, citing the same clause for both, is a miss: 2a and 2b are different KINDS of finding and should be distinguishable in the report."
+  - "2b is flagged as drift/an undocumented behavior change in some form -- silence (a CONFORMS row, or no row at all, or a row with no note about the missing changelog/amendment trail) is a fail."
+  - "The report states or the row data shows that contracts/*.md and CHANGELOG.md are byte-identical between main and drifted -- i.e. explicitly notes the SYNC row / contract hash is unaffected, so this is implementation drift, not a contract change."
+  - "No owner-facing interruption/question is raised synchronously for either finding -- both become ledger rows (+ tracker item where applicable) per the reconciler's 'file, don't interrupt' invariant."
+  - "The reconciler ran the repo's OWN kit (uv run --with pytest pytest -q or equivalent) rather than asserting pass/fail from static reading of the diff alone -- 'a self-report is never proof' applies to the grading agent's own conclusions too."

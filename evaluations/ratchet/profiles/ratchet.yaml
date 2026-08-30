@@ -1,0 +1,204 @@
+# =============================================================================
+# ratchet.yaml -- DTU profile for the Converge "ratchet" evaluation
+# =============================================================================
+#
+# Provisions a single DTU that can run, end to end:
+#
+#   amplifier tool invoke recipes operation=execute \
+#     recipe_path=@converge:recipes/seed-reconcile.yaml \
+#     context='{"target_repo":"/workspace/target-repo","tracker_project":"..."}' -o json
+#
+# Satisfies evaluations/ratchet/README.md "Profile interface":
+#   - amplifier CLI, with the converge bundle composed (so
+#     @converge:recipes/seed-reconcile.yaml + converge:reconciler resolve),
+#     foundation (foundation:explorer), and an Anthropic provider.
+#   - a reachable work-tracker service with `amplifier-work-tracker` on PATH
+#     (bd + dolt backend), so both the work_* agent tools AND the operator
+#     `amplifier-work-tracker list --project <p> --json` the harness shells
+#     out to actually function.
+#   - provider API-key passthrough for the recipe's agent steps.
+#
+# ---- OUT-OF-BAND STATE THIS PROFILE REQUIRES (not self-contained) -----------
+# This profile is deliberately NOT fully self-contained; it depends on:
+#
+#   1. A running Gitea mirror (via amplifier-bundle-gitea) serving:
+#        - admin/amplifier-bundle-converge   (the bundle under test)
+#        - admin/drumbeat                     (the fixture source repo,
+#                                              pinned at drumbeat HEAD)
+#      Passed at launch as ${GITEA_URL} / ${GITEA_TOKEN} (see below).
+#      url_rewrites redirects the github.com URLs below to that mirror.
+#
+#   2. Host-built `bd` (Beads >=1.1.2) and `dolt` binaries, pushed in via
+#      provision.files from /home/bkrabach/.local/bin. This pins the exact
+#      bd/dolt versions the fixtures + answer keys were verified against
+#      (bd 1.1.2, dolt 2.2.3) rather than chasing a "latest" release whose
+#      behavior could drift out from under the work-tracker `doctor` contract.
+#      Both are aarch64 Go binaries; this profile assumes an arm64 DTU host.
+#
+#   3. ANTHROPIC_API_KEY (and ANTHROPIC_BASE_URL) in the launch environment,
+#      forwarded via passthrough.
+#
+# ---- LAUNCH (placeholders the harness must fill) ----------------------------
+#   amplifier-digital-twin launch <this-file> \
+#     --var GITEA_URL=http://10.119.176.1:10230 \
+#     --var GITEA_TOKEN=<gitea-admin-token> \
+#     --name ratchet-<something>
+#
+#   GITEA_URL must be reachable FROM INSIDE the DTU. The Incus bridge gateway
+#   (10.119.176.1 on this host) is the stable choice; `http://localhost:10230`
+#   also works because launch rewrites localhost -> host-gateway for --var
+#   values. GITEA_TOKEN is never baked into this file -- only referenced.
+# =============================================================================
+
+name: ratchet
+description: >
+  DTU for the Converge ratchet eval: amplifier + the converge bundle (from a
+  Gitea mirror) + foundation + an Anthropic provider + a functional
+  work-tracker service (bd/dolt), ready to run @converge:recipes/seed-reconcile.yaml.
+
+base:
+  image: ubuntu:24.04
+
+# --- Redirect the two github.com repos this eval installs to the Gitea mirror.
+#     boundary match-mode so each rule scopes to exactly one repo and the
+#     attached admin credential never leaks to a sibling path. Everything else
+#     (amplifier CLI, foundation, work-tracker, amplifier-agent for drumbeat's
+#     kit) resolves from real github directly through the pass-through proxy.
+url_rewrites:
+  auth:
+    username: admin
+    token_var: GITEA_TOKEN
+  allow_uv_github_fast_path: false
+  default_match_mode: boundary
+  rules:
+    - match: github.com/microsoft/amplifier-bundle-converge
+      target: ${GITEA_URL}/admin/amplifier-bundle-converge
+    # drumbeat is cloned by fixtures/setup_scenario.sh; giving it a rewrite rule
+    # lets the harness pass --gitea-source https://github.com/microsoft/drumbeat.git
+    # and have it transparently resolve (with auth) to the mirror. A direct
+    # ${GITEA_URL}/admin/drumbeat.git source also works (repo is public).
+    - match: github.com/microsoft/drumbeat
+      target: ${GITEA_URL}/admin/drumbeat
+
+passthrough:
+  allow_external: true
+  services:
+    - name: anthropic-key
+      key_env: ANTHROPIC_API_KEY
+    - name: anthropic-base-url
+      key_env: ANTHROPIC_BASE_URL
+
+# --- Push the host-built bd + dolt binaries in. dest is the parent dir; the
+#     source basename (bd / dolt) is preserved, landing at /usr/local/bin/bd
+#     and /usr/local/bin/dolt (both already on PATH).
+provision:
+  files:
+    - src: /home/bkrabach/.local/bin/bd
+      dest: /usr/local/bin/bd
+      mode: "0755"
+    - src: /home/bkrabach/.local/bin/dolt
+      dest: /usr/local/bin/dolt
+      mode: "0755"
+
+  setup_cmds:
+    # -- base tooling --------------------------------------------------------
+    - apt-get update && apt-get install -y git curl ca-certificates rsync
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    # -- amplifier CLI -------------------------------------------------------
+    - uv tool install git+https://github.com/microsoft/amplifier
+
+    # -- Anthropic provider config (skips the first-run wizard). ${VAR}s are
+    #    expanded here from the passthrough'd host env. --
+    - |
+      mkdir -p /root/.amplifier
+      cat > /root/.amplifier/settings.yaml << EOF
+      config:
+        providers:
+          - module: provider-anthropic
+            source: git+https://github.com/microsoft/amplifier-module-provider-anthropic@main
+            config:
+              api_key: ${ANTHROPIC_API_KEY}
+              base_url: ${ANTHROPIC_BASE_URL}
+              default_model: claude-sonnet-5
+      EOF
+
+    # -- work-tracker operator CLI + bd/dolt backend -------------------------
+    #    bd/dolt were pushed to /usr/local/bin by provision.files above.
+    #    The background service uses systemd --user; in a root container that
+    #    needs linger. We try the managed service, fall back to a detached
+    #    `serve`, and finally lean on bd's own lazy shared-server start -- then
+    #    PROVE dolt is reachable with a real project round-trip. Fail loud only
+    #    if no path yields a working queue.
+    - |
+      set -e
+      export BD_NON_INTERACTIVE=1 BD_TELEMETRY_DISABLE=1
+      command -v bd && bd version
+      command -v dolt && dolt version || true
+      # NB: the CLI's import chain (cli -> supervisor -> webpush) hard-imports
+      # httpx, and supervisor lazy-imports uvicorn on the serve path; neither
+      # is in the base `uv tool install` (both live in the `[web]` extra). Pull
+      # them explicitly so the CLI runs at all -- the lean install cannot even
+      # `--help`. (A packaging gap in work-tracker; flagged in the eval report.)
+      uv tool install --with httpx --with uvicorn git+https://github.com/microsoft/amplifier-work-tracker@main
+      amplifier-work-tracker --help >/dev/null
+      # systemd --user is unavailable for root in an Incus container, and bd
+      # does NOT lazily start the shared dolt server on its own here (a bare
+      # op just gets "connection refused" on :3308). So run the work-tracker
+      # supervisor -- which spawns and supervises the `dolt sql-server` child
+      # plus the reap/notify sweeps -- as a detached background process. The
+      # `doctor` contract explicitly treats a foregrounded `serve` as
+      # equivalent to the managed service.
+      mkdir -p /var/log
+      setsid bash -c 'exec amplifier-work-tracker serve' >/var/log/awt-serve.log 2>&1 </dev/null &
+      disown 2>/dev/null || true
+      # Poll until the shared dolt server actually accepts work-tracker ops,
+      # then prove a real project round-trip. Fail the launch loudly if the
+      # backend never comes up.
+      ok=0
+      for i in $(seq 1 60); do
+        if amplifier-work-tracker instances >/tmp/awt-inst.log 2>&1; then ok=1; echo "work-tracker backend up after ${i}s"; break; fi
+        sleep 1
+      done
+      [ "$ok" = 1 ] || { echo "FATAL: shared dolt server never came up:"; tail -40 /var/log/awt-serve.log 2>/dev/null; cat /tmp/awt-inst.log; exit 1; }
+      amplifier-work-tracker new dtu_warm >/tmp/awt-new.log 2>&1 \
+        || { echo "FATAL: work-tracker backend unusable:"; cat /tmp/awt-new.log; exit 1; }
+      amplifier-work-tracker instances
+
+    # -- converge bundle: composed onto the session (github URL -> Gitea via
+    #    url_rewrites). Pulls its foundation + work-tracker includes too. --
+    - amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main --app
+
+    # -- eval workspace + sanity ---------------------------------------------
+    - mkdir -p /workspace
+    - amplifier --version
+    - amplifier bundle list
+
+    # -- warm-up: seat the lazy provider install so the readiness smoke below
+    #    doesn't race a cold cache against the 30s command timeout. --
+    - 'amplifier run "Say exactly: warmup-ok"'
+
+# --- Re-provision a running DTU after pushing fresh code to the Gitea mirror.
+update:
+  cmds:
+    - amplifier bundle remove git+https://github.com/microsoft/amplifier-bundle-converge@main 2>/dev/null || true
+    - amplifier reset --remove cache -y
+    - amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main --app
+    - 'amplifier run "Say exactly: warmup-ok"'
+
+readiness:
+  - name: amplifier-installed
+    command: amplifier --version
+  - name: converge-bundle-loaded
+    # Exits 0 only when @converge:recipes/seed-reconcile.yaml resolves AND its
+    # referenced agents (converge:reconciler, foundation:explorer) are
+    # available -- the exact resolution the harness needs. (`amplifier agents
+    # list` prints per-bundle on/off status, not `bundle:agent` ids, so it
+    # can't be grepped for the agent name.)
+    command: amplifier tool invoke recipes operation=validate recipe_path=@converge:recipes/seed-reconcile.yaml
+  - name: work-tracker-healthy
+    # `instances` reads the project list out of the shared dolt server, so a
+    # clean exit proves the CLI is on PATH AND the dolt backend is reachable.
+    command: amplifier-work-tracker instances
+  - name: provider-smoke
+    command: 'amplifier run "Say exactly: dtu-ready"'
