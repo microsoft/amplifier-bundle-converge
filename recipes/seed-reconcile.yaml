@@ -55,6 +55,22 @@
 #
 # CHANGELOG
 # -----------------------------------------------------------------------------
+# v1.1.1 (2026-08-30):
+#   - BUGFIX: Mandate rows.yaml as a top-level YAML LIST (no wrapper mapping).
+#     * DRIVER: Second live run (DTU) — ran fully end-to-end (25 min, 45 rows,
+#       report written, zero owner prompts) but the reconciler wrote rows.yaml as
+#       a WRAPPER MAPPING `{meta: {...}, rows: [...]}` instead of the ledger
+#       format's top-level LIST of rows.
+#     * ROOT CAUSE: LEDGER-FORMAT.md showed the row shape only by example; the
+#       top-level container was never stated, so a `{meta:, rows:}` wrapper was a
+#       plausible reading. (The format doc is being made explicit in parallel.)
+#     * FIX: derive-rows and file-drift prompts now both mandate that
+#       {{ledger_dir}}/rows.yaml MUST parse as a top-level YAML LIST of row
+#       mappings — no wrapper mapping, no `meta:` key, nothing above the list. Run
+#       metadata belongs in the reconcile report; contract pinning in the SYNC
+#       row(s). file-drift's write-verification now also parses the written file
+#       as a top-level list, alongside the existing non-empty check.
+#
 # v1.1.0 (2026-08-29):
 #   - IMPROVEMENT: Persist the reconcile report as a disk artifact.
 #     * DRIVER: First live run (DTU) — the report existed only as final_output
@@ -84,7 +100,7 @@ description: >
   conformance kit, files work-tracker items for every GAP/VIOLATION, records
   bidirectional drift, and emits a reconcile report. Flat, gate-free, and
   schedulable — it never prompts the owner.
-version: "1.1.0"
+version: "1.1.1"
 author: "converge bundle"
 tags: ["converge", "ratchet", "conformance", "ledger", "reconcile", "drift"]
 
@@ -170,6 +186,12 @@ steps:
         place matched by their stable `id`. Never renumber, never reuse, never
         duplicate an existing row. New clauses get new ids continuing the
         sequence; a clause that has disappeared is drift, not a deletion.
+      - SHAPE (mandatory): `{{ledger_dir}}/rows.yaml` MUST parse as a top-level
+        YAML LIST of row mappings — no wrapper mapping, no `meta:` key, nothing
+        above the list. The SYNC row (`<PREFIX>-000`) is itself just the first
+        row IN that list. Run metadata (repo SHA, timestamps, tallies) belongs in
+        the reconcile report ONLY; contract pinning lives in the SYNC row(s). Do
+        NOT wrap the rows under `{meta: ..., rows: [...]}` or any other key.
 
       Contract inventory:
       {{contract_inventory}}
@@ -241,8 +263,16 @@ steps:
       1. WRITE THE FINAL LEDGER to `{{ledger_dir}}/rows.yaml` in {{target_repo}}
          — the full row set with confirmed dispositions, verbatim quotes,
          assertion refs, and the SYNC row. Update in place by stable row id;
-         never renumber or duplicate. After writing, VERIFY the file exists and
-         is non-empty (a missing artifact is a real result, not a silent pass).
+         never renumber or duplicate.
+         SHAPE (mandatory): the file MUST parse as a top-level YAML LIST of row
+         mappings — no wrapper mapping, no `meta:` key, nothing above the list.
+         The SYNC row (`<PREFIX>-000`) is just the first row IN the list. Run
+         metadata (repo SHA, timestamps, tallies) goes in the reconcile report
+         ONLY; contract pinning lives in the SYNC row(s). Do NOT wrap the rows
+         under `{meta: ..., rows: [...]}` or any other key.
+         After writing, VERIFY the file: it exists, is non-empty, AND parses as a
+         top-level YAML list (not a mapping) — a wrapper mapping or a missing
+         artifact is a real result, not a silent pass.
 
       2. RECORD BIDIRECTIONAL DRIFT as rows: movement AWAY from a frozen clause
          is drift; silent movement BACK toward spec ("un-divergence") from a

@@ -9,12 +9,33 @@ prompts" invariant. The remaining, judgment-requiring half (reconcile-report
 quality, honest-stopping language) is graded by the agent grader in
 `agent-grader.yaml` via the `amplifier_evaluation` library's `Grader` brick.
 
+Quote-verification semantics -- WHITESPACE-COLLAPSED CONTIGUOUS MATCHING:
+
+A row's `contract.quote` verifies against a contract file when, after
+collapsing every whitespace run (spaces, tabs, newlines) to a single space
+on BOTH the quote and the file text, the normalized quote is a contiguous
+substring of the normalized file. This is the single, well-defined rule --
+it replaces the earlier markdown-stripping heuristics (which discarded real
+`**`/`__` characters). It preserves everything load-bearing: exact words,
+markdown markup, character order, and contiguity; it is tolerant only of
+whitespace and line reflow. Rationale: the quotes are LLM-authored and
+YAML-round-tripped, so they reliably lose invisible leading whitespace (YAML
+block scalars strip per-line continuation indentation, and a quote may start
+mid-line after a bold lead-in) -- reproducing that invisible whitespace is
+structurally unreliable, but reproducing the words in order is not. Any true
+paraphrase, word change, or reordering still fails. See
+`_normalize_quote_text` and `check_quote_bytematch`.
+
 Design principles (read before editing):
 
 - FAIL LOUD on malformed input. A missing/wrong-typed REQUIRED field in an
   answer-key or a rows.yaml raises `AnswerKeyError` (a `ValueError` subclass)
   naming exactly what is wrong and where. Never silently coerce or skip a
   structural problem.
+- Distinguish a PATH/EXTRACTION bug from a real content failure. If contract
+  files can't be found at all (the extracted repo nests them one level
+  deeper -- `file_pull` preserves the source dir name), `check_quote_bytematch`
+  reports that as its own loud reason, never as "quotes did not verify".
 - Skip, don't fail, on OPTIONAL per-scenario answer-key sections that are
   genuinely absent (e.g. scenario 1 has no `idempotency:` block). Every skip
   is recorded as a `CheckResult(status="skipped", ...)` with the reason, so a
@@ -481,45 +502,105 @@ def find_row_for_clause(
 # ---------------------------------------------------------------------------
 
 
-_MD_EMPHASIS_RE = re.compile(r"\*\*|__")
 _WHITESPACE_RE = re.compile(r"\s+")
 
 
 def _normalize_quote_text(text: str) -> str:
-    """Normalize text for quote-verification comparison.
+    """Normalize text for quote-verification comparison: collapse every
+    whitespace run (spaces, tabs, newlines) to a single space, then strip.
 
-    Two, and ONLY two, transformations are applied -- both confirmed
-    necessary against the REAL drumbeat contract files (see README.md
-    "Interface assumptions" for how this was verified):
+    ONE well-defined rule -- "whitespace-collapsed contiguous matching" (see
+    the module docstring and README for the full rationale). It preserves
+    everything load-bearing -- exact words, markdown markup (`**bold**`,
+    backticks), character order, contiguity -- and is tolerant only of
+    whitespace and line reflow. It is NOT the earlier markdown-stripping
+    heuristic: those stripped `**`/`__`, which discards real characters and
+    is impossible to reason about; this rule discards nothing but whitespace.
 
-    1. Collapse all whitespace runs (including hard line-wraps in the
-       ~80-col markdown source) to a single space. `fixtures/answer-key/
-       scenario-1.yaml`'s own header calls this out explicitly as required.
-    2. Strip markdown bold markers (`**`/`__`). The real contracts wrap each
-       Core clause's leading phrase (and sometimes more) in `**bold**` for
-       readability (e.g. `**One file, two layers.**`); the answer-key's
-       quotes are plain prose. Verified empirically: whitespace-normalization
-       ALONE does not find the real Core-1 quote in
-       contracts/automation-file.v1.md; stripping `**`/`__` in addition does.
-
-    Never strips single `*`/`_` (italic) -- too easy to collide with
-    legitimate prose content (multiplication, snake_case identifiers).
+    Why whitespace specifically: the row `contract.quote` values are authored
+    (and round-tripped through YAML) by an LLM. YAML block scalars strip the
+    per-line leading indentation of a multi-line quote, and a quote may begin
+    mid-line after a bold lead-in, so the reproduced quote loses invisible
+    leading whitespace the source line carries (measured: a quote line
+    `never parses it for behavior -- but it **must be non-empty**...` vs the
+    contract's `   never parses it for behavior ...` with 3 leading spaces).
+    Requiring an LLM to reproduce invisible leading whitespace through a YAML
+    round-trip is structurally unreliable; requiring exact words in order is
+    not. Collapsing whitespace on BOTH sides makes the check robust to reflow
+    while still catching any true paraphrase, word change, or reordering.
     """
-    return _WHITESPACE_RE.sub(" ", _MD_EMPHASIS_RE.sub("", text)).strip()
+    return _WHITESPACE_RE.sub(" ", text).strip()
+
+
+def _resolve_contract_base(base: Path, relative_files: set[str]) -> Path | None:
+    """Return the directory under which the named contract files actually
+    live, or None if they can't be found under `base` or its immediate
+    subdirectories.
+
+    The harness extracts the target repo with `file_pull`, which preserves
+    the source directory name (cp -r convention): pulling
+    `/workspace/target-repo` into `<trial>/target-repo-<phase>/` lands the
+    tree one level deeper, at `<trial>/target-repo-<phase>/target-repo/`.
+    So the contract files are NOT at `base/<cfile>` but at
+    `base/target-repo/<cfile>`. Rather than hard-code that one nesting level,
+    we resolve the effective base deterministically: try `base` itself, then
+    each immediate subdirectory, returning the first where at least one named
+    contract file exists. Returning None means the files are nowhere under
+    `base` -- a path bug or an extraction-layout change, reported LOUDLY and
+    distinctly from a genuine quote mismatch (see `check_quote_bytematch`).
+    """
+    candidates = [base]
+    if base.is_dir():
+        candidates.extend(sorted(d for d in base.iterdir() if d.is_dir()))
+    for cand in candidates:
+        if any((cand / rel).is_file() for rel in relative_files):
+            return cand
+    return None
 
 
 def check_quote_bytematch(
     rows: list[dict[str, Any]], target_repo_root: Path
 ) -> CheckResult:
-    """Every row's `contract.quote` must be a verbatim (whitespace- and
-    markdown-bold-normalized -- see `_normalize_quote_text`) substring of the
-    named contract file's bytes (LEDGER-FORMAT §2's "binding anchor" rule).
+    """Every row's `contract.quote` must be a whitespace-collapsed contiguous
+    substring of the named contract file (LEDGER-FORMAT §2's "binding anchor"
+    rule; see `_normalize_quote_text` for the exact, single normalization
+    rule and its rationale).
+
+    Two distinct failure kinds are reported LOUDLY and never conflated:
+
+    - "contract files not found at <base>" -- the contract files could not be
+      located under `target_repo_root` (or its immediate subdirs). This is a
+      PATH BUG or an extraction-layout change, not a claim about any quote.
+      When it fires, no quote could be checked at all, so the whole check
+      fails with this as its sole, unmistakable reason.
+    - "quote not found" -- the file WAS read and the quote genuinely is not a
+      whitespace-collapsed substring of it. These are real fabrications or
+      paraphrases and stay FAILs.
 
     Rows with no `contract.quote` (e.g. the SYNC row, which pins a hash
-    rather than a clause) are skipped from this check individually, not
-    treated as failures.
+    rather than a clause) are skipped from this check individually.
     """
+    contract_files = {cf for row in rows if (cf := _row_file(row)) and _row_quote(row)}
+    if not contract_files:
+        return _skip(
+            "quote_bytematch",
+            "no rows carried a contract.quote to verify (empty or SYNC-only ledger)",
+        )
+
+    # Resolve the effective base ONCE (tolerant of file_pull's cp -r nesting).
+    resolved_base = _resolve_contract_base(target_repo_root, contract_files)
+    if resolved_base is None:
+        return _fail(
+            "quote_bytematch",
+            f"contract files not found at {target_repo_root} (or its immediate "
+            f"subdirs) -- PATH BUG or extraction-layout change, NOT a quote "
+            f"mismatch. Looked for: {sorted(contract_files)}",
+            base=str(target_repo_root),
+            contract_files=sorted(contract_files),
+        )
+
     mismatches: list[dict[str, Any]] = []
+    missing_files: list[str] = []
     checked = 0
     file_cache: dict[str, str | None] = {}
 
@@ -530,7 +611,7 @@ def check_quote_bytematch(
             continue
         checked += 1
         if cfile not in file_cache:
-            path = target_repo_root / cfile
+            path = resolved_base / cfile
             file_cache[cfile] = (
                 path.read_text(encoding="utf-8", errors="replace")
                 if path.is_file()
@@ -538,38 +619,47 @@ def check_quote_bytematch(
             )
         text = file_cache[cfile]
         if text is None:
+            # Base resolved but THIS specific file is absent -- a partial
+            # extraction gap, kept distinct from a quote mismatch.
+            if cfile not in missing_files:
+                missing_files.append(cfile)
             mismatches.append(
                 {
                     "row_id": row.get("id"),
                     "file": cfile,
-                    "reason": "contract file missing",
+                    "reason": "contract file absent",
                 }
             )
             continue
-        needle = _normalize_quote_text(quote)
-        haystack = _normalize_quote_text(text)
-        if needle not in haystack:
+        if _normalize_quote_text(quote) not in _normalize_quote_text(text):
             mismatches.append(
-                {
-                    "row_id": row.get("id"),
-                    "file": cfile,
-                    "reason": "quote not found verbatim",
-                }
+                {"row_id": row.get("id"), "file": cfile, "reason": "quote not found"}
             )
 
-    if checked == 0:
-        return _skip(
-            "quote_bytematch",
-            "no rows carried a contract.quote to verify (empty or SYNC-only ledger)",
-        )
+    verified = checked - len(mismatches)
     if mismatches:
+        detail = f"{verified}/{checked} row quotes verified"
+        if missing_files:
+            detail += (
+                f"; contract file(s) absent under {resolved_base}: "
+                f"{sorted(missing_files)} (extraction gap)"
+            )
+        quote_fails = [m for m in mismatches if m["reason"] == "quote not found"]
+        if quote_fails:
+            detail += (
+                f"; {len(quote_fails)} quote(s) did not match (fabrication/paraphrase)"
+            )
         return _fail(
             "quote_bytematch",
-            f"{len(mismatches)}/{checked} row quotes did not verify against contract bytes",
+            detail,
+            resolved_base=str(resolved_base),
             mismatches=mismatches,
         )
     return _pass(
-        "quote_bytematch", f"all {checked} row quotes verified against contract bytes"
+        "quote_bytematch",
+        f"all {checked} row quotes verified (whitespace-collapsed) against "
+        f"contract bytes under {resolved_base}",
+        resolved_base=str(resolved_base),
     )
 
 

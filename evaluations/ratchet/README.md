@@ -119,6 +119,27 @@ traces, is never committed.
    you should never need to go open `agent-grader.yaml` separately to
    understand a score.
 
+### Quote verification — whitespace-collapsed contiguous matching
+
+The `quote_bytematch` check verifies each ledger row's `contract.quote`
+against the contract file it names. The rule is deliberately narrow: collapse
+every whitespace run (spaces, tabs, newlines) to a single space on **both**
+the quote and the file text, then require the normalized quote to be a
+**contiguous substring** of the normalized file. This preserves everything
+load-bearing — exact words, markdown markup (`**bold**`, backticks),
+character order, and contiguity — and is tolerant only of whitespace and
+line reflow. The reason is structural: the quotes are LLM-authored and
+round-tripped through YAML, so they reliably lose invisible leading
+whitespace (YAML block scalars strip the per-line indentation of a multi-line
+quote, and a quote can begin mid-line after a bold lead-in). Requiring an LLM
+to reproduce invisible leading whitespace through a YAML round-trip is
+unreliable; requiring the exact words in order is not — so any true
+paraphrase, word change, or reordering still fails. Separately, if the
+contract files can't be located at all (the extracted repo nests them one
+level deeper — `file_pull` preserves the source directory name), the check
+reports that as its own loud reason ("contract files not found at …, PATH
+BUG or extraction-layout change"), never conflated with a quote mismatch.
+
 ## Interfaces this harness codes against
 
 Neither `fixtures/` nor `profiles/` exists in this repo yet (fixtures are
@@ -300,32 +321,7 @@ previously open launch/wiring assumptions:
 These remain documented, best-effort decisions — flagged here explicitly
 rather than silently treated as verified:
 
-1. **Quote-verification normalization is confirmed necessary but NOT
-   confirmed sufficient, against the real drumbeat contracts.**
-   `fixtures/` landed partway through this harness's construction, so this
-   was checked directly (not assumed): `check_quote_bytematch`'s exact
-   substring check fails against 9/12 of scenario-1's real answer-key quotes
-   when compared to the real files at
-   `/home/bkrabach/dev/drumbeat-team-ci/drumbeat/contracts/*.md` (confirmed
-   at the exact HEAD — `175b3bf749ab5ec1a26f5efede23e329d70d999f` — both
-   answer keys were authored against, ruling out repo drift as the cause).
-   Root cause: the real contracts wrap clause text in markdown emphasis
-   (`**bold**`) and inline code spans (`` `docs/AUTOMATIONS.md` ``) that the
-   answer key's quotes render as plain prose. `_normalize_quote_text` now
-   strips `**`/`__`/backticks in addition to collapsing whitespace, which
-   fixes half the mismatches (9/12 → 6/12). The remaining 6 were NOT chased
-   further with additional regex heuristics — each looked like a genuine,
-   case-by-case paraphrase (list-item restructuring, parenthetical
-   annotations dropped) rather than one more mechanical markdown artifact,
-   and guessing at increasingly specific string transformations to force a
-   match risks silently papering over a real quote-fidelity gap instead of
-   reporting one. **Action for whoever runs this against a live DTU:**
-   re-check `quote_bytematch`'s results on a real scenario-1 run; if the
-   *reconciler's own* derived quotes also don't match by the current
-   normalization, decide there whether the check needs a further-tolerant
-   comparison (e.g. token-overlap ratio) or whether the answer key's quotes
-   should be tightened to be byte-exact after markdown-strip.
-2. **`amplifier tool invoke recipes ... -o json` output shape.** Confirmed
+1. **`amplifier tool invoke recipes ... -o json` output shape.** Confirmed
    the `-o json` flag exists (`amplifier tool invoke --help`, this host).
    The exact JSON envelope (`status`, `recipe`, `session_id`,
    `summary.final_output`, ...) is drawn from `RECIPE_SCHEMA.md`'s "Tool

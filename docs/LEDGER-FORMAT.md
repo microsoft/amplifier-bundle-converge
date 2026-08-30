@@ -33,6 +33,14 @@ don't get run, and a ledger that isn't run is a remembered audit.
 
 ## 2. Row schema
 
+**Top-level shape: `rows.yaml` parses as a top-level YAML LIST of row
+mappings.** No wrapper mapping, no `meta:` key, nothing above the list. The
+SYNC row (§4) is a row *in* the list — by convention the first, id
+`<PREFIX>-000`. Run metadata (repo SHA, timestamps, tallies) belongs in the
+reconcile report, not the ledger. (Made explicit after the first live
+implementation wrapped rows in `{meta, rows}` — the ambiguity was real;
+deviation treated as data per this doc's charter.)
+
 ```yaml
 - id: LGR-011                    # stable forever; never renumbered, never reused
   title: unknown-key refusal (automation file)
@@ -54,7 +62,7 @@ Field rules:
 | Field | Rule |
 |---|---|
 | `id` | Stable forever. Never renumbered, never reused — rows are cited from tracker items and amendments. |
-| `contract.quote` | **The binding anchor.** Verbatim, machine-verified against the contract file's bytes. Line numbers may be stored but are informational — never asserted. |
+| `contract.quote` | **The binding anchor.** Verbatim, machine-verified against the contract file. Matching semantics: whitespace-collapsed contiguous match — every whitespace run (spaces, newlines, tabs) on both sides collapses to a single space, then the quote must be a substring of the contract. Words, markdown markup, and character order are exact; only whitespace/reflow is tolerated (YAML block scalars cannot reliably round-trip leading whitespace). Line numbers may be stored but are informational — never asserted. |
 | `assertion.kind: probe` | A dedicated check function; bidirectional probe↔row-id cross-check enforced. |
 | `assertion.kind: indexed` | Cites existing test(s) by file+name; existence verified **statically** (parse, don't import) so cites may cross environment boundaries. Proves the test exists — not that it still asserts the claim. Prefer `probe` for load-bearing rows. |
 | `assertion.kind: absence` | Asserts a capability is *absent* (e.g. a grep count of 0). Makes EXCLUDED executable: a future silent implementation flips the row red. |
@@ -127,6 +135,9 @@ here, since we own our contracts).
 
 ## Changelog
 
+- **2026-08-30 — Top-level shape made explicit** (list, no wrapper) after the
+  first live reconciler run wrapped rows in `{meta, rows}`. SYNC row placement
+  pinned as first row in the list.
 - **2026-08-29 — Starter format drafted** from better-attractor's
   conformance-matrix design; vocabulary reconciled to PROTOCOL.md §3.3
   (+`DIVERGED` for external contracts). DRAFT convention with named
