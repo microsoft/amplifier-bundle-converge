@@ -72,6 +72,12 @@ AGENT_GRADER_YAML = HERE / "graders" / "agent-grader.yaml"
 RECIPE_PATH = "@converge:recipes/seed-reconcile.yaml"
 WORKSPACE = "/workspace"
 TARGET_REPO = f"{WORKSPACE}/target-repo"
+# The SAME target repo expressed RELATIVE to the workspace root. The recipe is
+# invoked with cwd=/workspace (see `_exec_recipe`), so it receives this
+# workspace-relative path as its `target_repo` context var -- keeping the
+# reconciler's writes inside tool-filesystem's default `allowed_write_paths`
+# (["."] resolved from process cwd). This matches recipe v1.2's new default.
+TARGET_REPO_REL = "./target-repo"
 PROJECTS_ROOT_REMOTE = "~/.amplifier/projects"
 
 # The reconcile deliverables the recipe writes into the target repo. `ledger/`
@@ -259,18 +265,40 @@ async def _exec_recipe(
     as diagnostics. Trial success is judged by exit code + post-run ARTIFACT
     existence (see `evaluate_recipe_outcome`), NOT by anything in stdout.
 
+    IMPORTANT -- CWD = the workspace ROOT. The command is run as
+    `cd /workspace && amplifier tool invoke ...`, and `target_repo` is passed
+    as a path RELATIVE to that cwd (`./target-repo`). This is the owner-
+    ratified "ephemeral workspaces live WITHIN cwd" design: tool-filesystem's
+    default write policy is `allowed_write_paths=["."]`, and `"."` is resolved
+    via `Path(".").resolve()` == the amplifier PROCESS cwd (proven in
+    amplifier-module-tool-filesystem `write.py:38-39` + `path_validation.py`
+    `is_in_path_list`). With cwd=/workspace, `/workspace` becomes a parent of
+    `/workspace/target-repo/...`, so the reconciler's writes to the ledger /
+    reconcile-report land inside the allowed tree -- no policy widening. The
+    previous cwd left target-repo OUTSIDE `.`, causing Access-denied writes
+    that trials laundered through bash heredocs (5) or honestly halted on (1).
+
+    `target_repo` is expected to be a workspace-relative path (e.g.
+    "./target-repo"); it is passed through verbatim as the recipe's
+    `target_repo` context var (recipe v1.2's new default is "./target-repo",
+    which we keep passing explicitly for older/newer recipe versions alike).
+
     Returns the raw `CommandResult` (exit code + stdout + stderr). The caller
     saves stdout verbatim and decides success; this function never raises on
     a non-zero exit, so the caller can attach the stdout/stderr tails to a
     single structural error.
     """
     context = {"target_repo": target_repo, "tracker_project": tracker_project}
-    shell_cmd = (
+    invoke = (
         "amplifier tool invoke recipes "
         "operation=execute "
         f"recipe_path={RECIPE_PATH} "
         f"context={shlex.quote(json.dumps(context))}"
     )
+    # Run FROM the workspace root so tool-filesystem's default write policy
+    # (allowed_write_paths=["."] -> Path(".").resolve() == process cwd) covers
+    # the whole workspace, including the seeded target repo.
+    shell_cmd = f"cd {shlex.quote(WORKSPACE)} && {invoke}"
     return await dtu.exec_cmd(
         ["bash", "-lc", shell_cmd], timeout_s=timeout_s, stream_to_logfile=log_path
     )
@@ -639,7 +667,7 @@ async def run_trial(
             _stage(f"running_agent:{phase}")
             recipe_result = await _exec_recipe(
                 dtu,
-                target_repo=TARGET_REPO,
+                target_repo=TARGET_REPO_REL,
                 tracker_project=tracker_project,
                 timeout_s=args.recipe_timeout,
                 log_path=log_path,

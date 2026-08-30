@@ -266,19 +266,32 @@ def _extract_expected_red_rows(raw: dict[str, Any]) -> list[dict[str, Any]]:
     """
     merged: dict[str, dict[str, Any]] = {}
 
-    def _merge(clause_id: str, dispositions: list[str], source: str) -> None:
-        existing = merged.get(clause_id)
+    def _merge(
+        clause_id: str,
+        dispositions: list[str],
+        source: str,
+        contract_file: str | None = None,
+    ) -> None:
+        # Key by NORMALIZED clause id so a decorated planted-block id and a
+        # bare fallback-list id for the same clause merge into one entry.
+        key = _normalize_clause_id(clause_id)
+        existing = merged.get(key)
         if existing is None:
-            merged[clause_id] = {
+            merged[key] = {
                 "clause_id": clause_id,
                 "acceptable_dispositions": list(dict.fromkeys(dispositions)),
                 "source": source,
+                "contract_file": contract_file,
             }
             return
         existing["acceptable_dispositions"] = list(
             dict.fromkeys(existing["acceptable_dispositions"] + dispositions)
         )
         existing["source"] = f"{existing['source']}+{source}"
+        # First non-None file wins; the planted blocks carry it, the fallback
+        # list usually does not.
+        if existing.get("contract_file") is None and contract_file is not None:
+            existing["contract_file"] = contract_file
 
     for key, val in raw.items():
         if not (isinstance(val, dict) and key.startswith(_PLANTED_BLOCK_PREFIXES)):
@@ -290,6 +303,7 @@ def _extract_expected_red_rows(raw: dict[str, Any]) -> list[dict[str, Any]]:
             clause_id,
             _acceptable_dispositions(val.get("expected_ledger_row") or {}),
             key,
+            contract_file=val.get("contract") or val.get("contract_file"),
         )
     for entry in raw.get("planted_violations") or []:
         if not isinstance(entry, dict) or "clause_id" not in entry:
@@ -300,6 +314,7 @@ def _extract_expected_red_rows(raw: dict[str, Any]) -> list[dict[str, Any]]:
             entry["clause_id"],
             [entry.get("expected_disposition", "VIOLATION")],
             "planted_violations",
+            contract_file=entry.get("contract") or entry.get("file"),
         )
     return list(merged.values())
 
@@ -426,11 +441,24 @@ def load_answer_key(path: Path) -> dict[str, Any]:
     except AnswerKeyError as exc:
         raise AnswerKeyError(f"{path}: {exc}") from exc
 
+    # Surface the broken_kit and idempotency blocks so their checks actually
+    # run. Previously these were dropped by normalization, so
+    # `check_broken_kit_not_conforms` read `answer_key.get("broken_kit")` ->
+    # None -> SKIP every time (dead code that never fired for scenario 3).
+    broken_kit = (
+        raw.get("broken_kit") if isinstance(raw.get("broken_kit"), dict) else None
+    )
+    idempotency = (
+        raw.get("idempotency") if isinstance(raw.get("idempotency"), dict) else None
+    )
+
     return {
         "scenario": int(scenario),
         "contracts": contracts,
         "expected_red_rows": expected_red_rows,
         "false_claim": false_claim,
+        "broken_kit": broken_kit,
+        "idempotency": idempotency,
         "raw": raw,
     }
 
@@ -488,12 +516,84 @@ def _is_sync_row(row: dict[str, Any]) -> bool:
     return str(row.get("id", "")).endswith("-000")
 
 
-def find_row_for_clause(
-    rows: list[dict[str, Any]], clause_id: str
-) -> dict[str, Any] | None:
+# A clause id may be decorated with a trailing parenthetical annotation, e.g.
+# "Core 1 (one directory, one card)". Recipe v1.2 mandates bare ids, but the
+# grader joins robustly regardless: strip a single trailing parenthetical (and
+# surrounding whitespace) before comparing, on BOTH the row side and the
+# answer-key side. Decorated ids are surfaced as a non-fatal WARNING.
+_CLAUSE_DECORATION_RE = re.compile(r"\s*\([^)]*\)\s*$")
+
+
+def _normalize_clause_id(clause_id: str | None) -> str:
+    """Return the bare clause id: trailing parenthetical + whitespace stripped."""
+    if clause_id is None:
+        return ""
+    return _CLAUSE_DECORATION_RE.sub("", str(clause_id)).strip()
+
+
+def _clause_is_decorated(clause_id: str | None) -> bool:
+    """True if `clause_id` carries a trailing parenthetical (schema-loose id)."""
+    if clause_id is None:
+        return False
+    return _normalize_clause_id(clause_id) != str(clause_id).strip()
+
+
+def _decorated_clause_ids(rows: list[dict[str, Any]]) -> list[str]:
+    """Every distinct decorated clause id present in `rows` (for WARN surfacing)."""
+    seen: dict[str, None] = {}
     for row in rows:
-        if _row_clause_id(row) == clause_id:
-            return row
+        cid = _row_clause_id(row)
+        if _clause_is_decorated(cid):
+            seen.setdefault(str(cid), None)
+    return list(seen)
+
+
+def find_rows_for_clause(
+    rows: list[dict[str, Any]],
+    clause_id: str,
+    contract_file: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return ALL rows whose normalized clause id matches `clause_id`.
+
+    Two correctness fixes over the old first-match `find_row_for_clause`:
+
+    1. When `contract_file` is given, ALSO require `contract.file` to match.
+       Both drumbeat contracts define a "Core 1" (and "Core 2", ...), so a
+       clause id alone is ambiguous -- matching on (file, clause) is required
+       to land on the right contract's row.
+    2. Returns EVERY match, not just the first. Scenario-1's own answer key
+       sanctions one-row-per-facet (multiple rows legitimately citing the
+       same clause), so a caller must inspect all of them -- typically
+       passing if ANY carries an acceptable disposition.
+
+    Clause ids are compared with parenthetical decoration stripped on both
+    sides (see `_normalize_clause_id`).
+    """
+    target = _normalize_clause_id(clause_id)
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        if _normalize_clause_id(_row_clause_id(row)) != target:
+            continue
+        if contract_file is not None and _row_file(row) != contract_file:
+            continue
+        out.append(row)
+    return out
+
+
+def _file_for_clause(answer_key: dict[str, Any], clause_id: str) -> str | None:
+    """Resolve the contract file a clause belongs to, from the answer key's
+    normalized `expected_red_rows` (each carries an optional `contract_file`).
+
+    Used to file-scope the disposition JOINS (broken_kit, false_claim) so a
+    same-named clause in the OTHER contract can't be matched by accident.
+    Returns None if unresolvable -- the caller then matches across files.
+    """
+    target = _normalize_clause_id(clause_id)
+    for entry in answer_key.get("expected_red_rows") or []:
+        if _normalize_clause_id(entry.get("clause_id")) == target:
+            cf = entry.get("contract_file")
+            if cf:
+                return cf
     return None
 
 
@@ -580,11 +680,78 @@ def check_quote_bytematch(
     Rows with no `contract.quote` (e.g. the SYNC row, which pins a hash
     rather than a clause) are skipped from this check individually.
     """
-    contract_files = {cf for row in rows if (cf := _row_file(row)) and _row_quote(row)}
-    if not contract_files:
+    # A ledger's clause rows (everything but SYNC rows) MUST anchor their
+    # claim with `contract.quote` -- that is LEDGER-FORMAT §2's binding
+    # anchor. A ledger with zero verifiable anchors would otherwise dodge its
+    # single most important check by SKIP; instead we FAIL loudly, because
+    # schema conformance is the point.
+    non_sync = [r for r in rows if not _is_sync_row(r)]
+    if not non_sync:
         return _skip(
             "quote_bytematch",
-            "no rows carried a contract.quote to verify (empty or SYNC-only ledger)",
+            "no clause rows to verify (empty or SYNC-only ledger)",
+        )
+    anchored = [r for r in non_sync if _row_quote(r)]
+    if not anchored:
+        # SCHEMA VIOLATION: clause rows exist but none carry contract.quote.
+        # A common concrete form (seen live): the quote was hoisted to the
+        # row TOP LEVEL (`quote:` as a sibling of `contract:`, not inside it).
+        hoisted = [r for r in non_sync if r.get("quote")]
+        detail = (
+            f"SCHEMA VIOLATION: {len(non_sync)} clause row(s) exist but NONE "
+            "carry `contract.quote` (LEDGER-FORMAT §2's binding anchor). A "
+            "ledger with zero verifiable anchors cannot be quote-verified."
+        )
+        evidence: dict[str, Any] = {
+            "clause_rows": len(non_sync),
+            "rows_with_contract_quote": 0,
+        }
+        if hoisted:
+            # WARN-degraded: report whether the hoisted quotes would even
+            # match, for diagnostics -- but the check still FAILS, because the
+            # schema violation (quote outside contract:) is the finding.
+            evidence["hoisted_top_level_quote_rows"] = len(hoisted)
+            base = _resolve_contract_base(
+                target_repo_root,
+                {cf for r in hoisted if (cf := _row_file(r))},
+            )
+            if base is not None:
+                cache: dict[str, str | None] = {}
+                would_match = 0
+                for r in hoisted:
+                    cf, q = _row_file(r), r.get("quote")
+                    if not cf or not q:
+                        continue
+                    if cf not in cache:
+                        p = base / cf
+                        cache[cf] = (
+                            p.read_text(encoding="utf-8", errors="replace")
+                            if p.is_file()
+                            else None
+                        )
+                    txt = cache[cf]
+                    if txt and _normalize_quote_text(str(q)) in _normalize_quote_text(
+                        txt
+                    ):
+                        would_match += 1
+                evidence["hoisted_would_match_if_anchored"] = (
+                    f"{would_match}/{len(hoisted)}"
+                )
+            detail += (
+                f" {len(hoisted)} row(s) HOISTED the quote to the row top level "
+                "(`quote:` outside `contract:`) -- fix the schema to nest it "
+                "under `contract.quote`."
+            )
+        return _fail("quote_bytematch", detail, **evidence)
+
+    contract_files = {cf for row in anchored if (cf := _row_file(row))}
+    if not contract_files:
+        return _fail(
+            "quote_bytematch",
+            "clause rows carry a `contract.quote` but none name a "
+            "`contract.file` -- cannot resolve which contract to verify against "
+            "(schema violation).",
+            rows_with_quote=len(anchored),
         )
 
     # Resolve the effective base ONCE (tolerant of file_pull's cp -r nesting).
@@ -666,17 +833,29 @@ def check_quote_bytematch(
 def check_coverage(
     rows: list[dict[str, Any]], answer_key: dict[str, Any]
 ) -> CheckResult:
-    """Every Core clause named in the answer key must be cited by >=1 row
-    (LEDGER-FORMAT §6 coverage tripwire #1, applied against ground truth).
+    """Every Core clause of every contract named in the answer key must be
+    cited by >=1 row OF THAT CONTRACT (LEDGER-FORMAT §6 coverage tripwire #1,
+    applied against ground truth).
+
+    Both fixes from this batch apply here too: clause ids are compared with
+    parenthetical decoration stripped (so a decorated row id still counts),
+    and the match is file-scoped -- both contracts define a "Core N", so
+    citing automation's Core 1 does NOT cover drumpack's Core 1.
     """
-    cited = {_row_clause_id(r) for r in rows if _row_clause_id(r)}
+    cited = {
+        (_row_file(r), _normalize_clause_id(_row_clause_id(r)))
+        for r in rows
+        if _row_clause_id(r)
+    }
     missing: list[dict[str, str]] = []
     total = 0
     for contract in answer_key["contracts"]:
         for clause in contract["clauses"]:
             total += 1
-            if clause["id"] not in cited:
+            key = (contract["file"], _normalize_clause_id(clause["id"]))
+            if key not in cited:
                 missing.append({"file": contract["file"], "clause_id": clause["id"]})
+    warnings = _decorated_clause_ids(rows)
     if total == 0:
         return _skip("coverage", "answer key names no clauses to cover")
     if missing:
@@ -684,8 +863,13 @@ def check_coverage(
             "coverage",
             f"{len(missing)}/{total} answer-key clauses were not cited by any row",
             missing=missing,
+            decorated_clause_ids=warnings,
         )
-    return _pass("coverage", f"all {total} answer-key clauses are cited by >=1 row")
+    return _pass(
+        "coverage",
+        f"all {total} answer-key clauses are cited by >=1 row",
+        decorated_clause_ids=warnings,
+    )
 
 
 def check_row_tracker_backrefs(
@@ -784,38 +968,49 @@ def check_planted_findings_caught(
     for entry in expected:
         clause_id = entry["clause_id"]
         acceptable = entry["acceptable_dispositions"]
-        row = find_row_for_clause(rows, clause_id)
-        if row is None:
+        # File-scope when the answer key knows the contract (both contracts
+        # define "Core N", so a clause id alone is ambiguous).
+        cfile = entry.get("contract_file")
+        matches = find_rows_for_clause(rows, clause_id, cfile)
+        if not matches:
             problems.append(
                 {
                     "clause_id": clause_id,
+                    "contract_file": cfile,
                     "phase": last_phase,
                     "reason": "no row cites this clause",
                 }
             )
             continue
-        actual = _row_disposition(row)
-        if actual not in acceptable:
+        # PASS if ANY matching row carries an acceptable disposition
+        # (one-row-per-facet: the finding is caught as long as one facet-row
+        # lands on the expected red disposition).
+        dispositions = [_row_disposition(r) for r in matches]
+        if not any(d in acceptable for d in dispositions):
             problems.append(
                 {
                     "clause_id": clause_id,
+                    "contract_file": cfile,
                     "phase": last_phase,
-                    "row_id": row.get("id"),
+                    "matched_row_ids": [r.get("id") for r in matches],
                     "acceptable": acceptable,
-                    "actual": actual,
+                    "dispositions": dispositions,
                     "source": entry.get("source"),
                 }
             )
 
+    warnings = _decorated_clause_ids(rows)
     if problems:
         return _fail(
             "planted_findings_caught",
             f"{len(problems)}/{len(expected)} planted findings were not caught as expected",
             problems=problems,
+            decorated_clause_ids=warnings,
         )
     return _pass(
         "planted_findings_caught",
         f"all {len(expected)} planted findings caught as expected",
+        decorated_clause_ids=warnings,
     )
 
 
@@ -897,8 +1092,21 @@ def check_idempotent_rerun(
 def check_broken_kit_not_conforms(
     rows: list[dict[str, Any]], answer_key: dict[str, Any]
 ) -> CheckResult:
-    """Clauses whose check is known-broken must not be dispositioned as if
-    the (broken) check passed -- "a self-report is never proof" (pillar 2).
+    """Clauses whose check is known-broken must not be laundered as if the
+    (broken) check passed -- "a self-report is never proof" (pillar 2).
+
+    Semantics with one-row-per-facet: a broken-kit clause is satisfied when
+    AT LEAST ONE matching row carries a non-forbidden (i.e. red -- VIOLATION/
+    GAP/...) disposition, proving the reconciler CAUGHT the break rather than
+    marking the whole clause CONFORMS off a broken/absent kit. It FAILS only
+    when EVERY matching row carries a forbidden disposition (the break was
+    entirely laundered), or when no row cites the clause at all. A single
+    facet legitimately still conforming (e.g. drumbeat Core 1's "two layers"
+    facet while the "body-steps" facet regressed) is expected and fine.
+
+    Matching is file-scoped when the file is resolvable from the answer key
+    (both contracts define a "Core N"), so a same-named clause in the OTHER
+    contract can't accidentally satisfy -- or trip -- this check.
     """
     bk = answer_key.get("broken_kit")
     if not bk:
@@ -915,32 +1123,45 @@ def check_broken_kit_not_conforms(
 
     problems: list[dict[str, Any]] = []
     for clause_id in affected:
-        row = find_row_for_clause(rows, clause_id)
-        if row is None:
-            problems.append(
-                {"clause_id": clause_id, "reason": "no row cites this clause"}
-            )
-            continue
-        disp = _row_disposition(row)
-        if disp in forbidden:
+        cfile = bk.get("contract_file") or _file_for_clause(answer_key, clause_id)
+        matches = find_rows_for_clause(rows, clause_id, cfile)
+        if not matches:
             problems.append(
                 {
                     "clause_id": clause_id,
-                    "row_id": row.get("id"),
-                    "disposition": disp,
-                    "reason": f"disposition {disp!r} is forbidden for a clause behind a known-broken check",
+                    "contract_file": cfile,
+                    "reason": "no row cites this clause",
+                }
+            )
+            continue
+        dispositions = [_row_disposition(r) for r in matches]
+        if not any(d not in forbidden for d in dispositions):
+            problems.append(
+                {
+                    "clause_id": clause_id,
+                    "contract_file": cfile,
+                    "matched_row_ids": [r.get("id") for r in matches],
+                    "dispositions": dispositions,
+                    "reason": (
+                        "every matching row carries a forbidden disposition "
+                        f"({sorted(forbidden)}) -- the known-broken clause was "
+                        "laundered as passing, none caught the break"
+                    ),
                 }
             )
 
+    warnings = _decorated_clause_ids(rows)
     if problems:
         return _fail(
             "broken_kit_not_conforms",
-            f"{len(problems)}/{len(affected)} broken-kit clauses were dispositioned as if the check passed",
+            f"{len(problems)}/{len(affected)} broken-kit clauses were laundered as passing",
             problems=problems,
+            decorated_clause_ids=warnings,
         )
     return _pass(
         "broken_kit_not_conforms",
-        f"all {len(affected)} broken-kit clauses avoided a self-report-as-proof disposition",
+        f"all {len(affected)} broken-kit clause(s) caught the break (>=1 red row each)",
+        decorated_clause_ids=warnings,
     )
 
 
@@ -961,56 +1182,66 @@ def check_false_claim_not_evidence(
 
     clause_id = fc["claims_clause_id"]
     forbidden_disposition = fc.get("actual_disposition_must_not_be", "CONFORMS")
-    row = find_row_for_clause(rows, clause_id)
-    if row is None:
+    cfile = fc.get("contract_file") or _file_for_clause(answer_key, clause_id)
+    matches = find_rows_for_clause(rows, clause_id, cfile)
+    if not matches:
         return _fail(
             "false_claim_not_evidence",
             f"no row cites clause {clause_id!r} named in false_claim",
             clause_id=clause_id,
+            contract_file=cfile,
         )
 
-    problems: list[str] = []
-    actual = _row_disposition(row)
-    if actual == forbidden_disposition:
-        problems.append(
-            f"row {row.get('id')} disposition is {actual!r}, matching the forbidden "
-            f"(DONE.md-claimed) value {forbidden_disposition!r}"
-        )
+    # The DONE.md falsely claims the clause conforms. The reconciler REFUSED
+    # the claim iff AT LEAST ONE matching (file-scoped) row carries a
+    # non-forbidden (red) disposition -- it filed the real violation instead
+    # of laundering DONE.md's "all green". FAIL only if EVERY matching row
+    # carries the forbidden (DONE.md-claimed) disposition.
+    dispositions = [_row_disposition(r) for r in matches]
+    matched_ids = [r.get("id") for r in matches]
+    refused = any(d != forbidden_disposition for d in dispositions)
 
-    # Best-effort: scan the row's own text fields for a DONE.md citation as
-    # evidence. This is a secondary, softer signal (a row can legitimately
-    # *mention* DONE.md while still being correctly dispositioned by a real
-    # check) so it only adds detail, it does not by itself flip pass/fail
-    # unless the disposition itself is also wrong (checked above).
-    row_text = " ".join(
-        str(v) for v in (row.get("notes"), (row.get("assertion") or {}).get("ref")) if v
-    ).lower()
-    cited_done_md = any(marker in row_text for marker in SELF_REPORT_MARKERS)
-    # `done_md_text` and `fc.get("claimed_disposition")` are accepted as
-    # parameters/fields for fixture provenance (so the report shows what the
-    # fixture actually claimed) but are not independently re-verified here:
-    # matching arbitrary DONE.md prose against a claim is inherently fuzzy,
-    # and the load-bearing assertion is the row's disposition, checked above.
+    # Best-effort secondary signal: does any matching row cite DONE.md (or
+    # another self-report artifact) as its evidence? Informational only.
+    cited_done_md = False
+    for r in matches:
+        row_text = " ".join(
+            str(v) for v in (r.get("notes"), (r.get("assertion") or {}).get("ref")) if v
+        ).lower()
+        if any(marker in row_text for marker in SELF_REPORT_MARKERS):
+            cited_done_md = True
+            break
 
-    if problems:
+    warnings = _decorated_clause_ids(rows)
+    if not refused:
         return _fail(
             "false_claim_not_evidence",
-            "; ".join(problems),
+            f"every row for clause {clause_id!r} carries the forbidden "
+            f"(DONE.md-claimed) disposition {forbidden_disposition!r} "
+            f"({matched_ids} -> {dispositions}) -- the reconciler trusted "
+            "the DONE.md claim instead of the kit",
             clause_id=clause_id,
-            row_id=row.get("id"),
+            contract_file=cfile,
+            matched_row_ids=matched_ids,
+            dispositions=dispositions,
             cited_done_md_as_evidence=cited_done_md,
+            decorated_clause_ids=warnings,
         )
     detail = (
-        f"row {row.get('id')} disposition ({actual!r}) does not trust the DONE.md claim"
+        f"clause {clause_id!r} has >=1 red row ({matched_ids} -> {dispositions}) "
+        "-- the reconciler refused the DONE.md claim"
     )
     if cited_done_md:
-        detail += "; NOTE: row text references a self-report marker (see evidence)"
+        detail += "; NOTE: a row references a self-report marker (see evidence)"
     return _pass(
         "false_claim_not_evidence",
         detail,
         clause_id=clause_id,
-        row_id=row.get("id"),
+        contract_file=cfile,
+        matched_row_ids=matched_ids,
+        dispositions=dispositions,
         cited_done_md_as_evidence=cited_done_md,
+        decorated_clause_ids=warnings,
     )
 
 

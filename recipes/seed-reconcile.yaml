@@ -23,6 +23,12 @@
 #   - tracker filing checks for an existing OPEN item per row id and references
 #     it rather than blind-duplicating.
 #
+# WORKSPACE (within-cwd invariant) — the recipe is invoked FROM the ephemeral
+# workspace root: cwd IS the workspace. Everything this recipe writes lands
+# within cwd; the target repo is a subdirectory of cwd (`target_repo` defaults to
+# `./target-repo`, overridable). Writing outside cwd is never assumed — it
+# requires explicit user/environment configuration.
+#
 # Requirements:
 #   - foundation bundle (provides `foundation:explorer`, recipes runtime)
 #   - converge bundle  (provides `converge:reconciler` — the one mutating agent,
@@ -30,11 +36,14 @@
 #     work-tracker tools it files GAP/VIOLATION items with)
 #   - a reachable work-tracker service + the named `tracker_project`
 #
-# Usage (in session): "run seed-reconcile on <repo> filing gaps into <project>"
-# Usage (CLI):
+# Usage (in session): "run seed-reconcile filing gaps into <project>"
+# Usage (CLI): invoke FROM the workspace root (cwd IS the workspace). target_repo
+# defaults to ./target-repo, so only tracker_project is required:
 #   amplifier tool invoke recipes operation=execute \
 #     recipe_path=@converge:recipes/seed-reconcile.yaml \
-#     context='{"target_repo": "/path/to/drumbeat", "tracker_project": "drumbeat-conformance"}'
+#     context='{"tracker_project": "drumbeat-conformance"}'
+#   # override target_repo only for a repo elsewhere WITHIN cwd, e.g.
+#   #   context='{"tracker_project": "...", "target_repo": "./sub/drumbeat"}'
 #
 # Outputs (all in the target repo; consumers grade from the disk artifacts, not
 # from the in-session stream — artifacts-not-liveness):
@@ -47,14 +56,40 @@
 #   - final_output                        the same reconcile report, in-session
 #
 # Context variables:
-#   - target_repo     (required) path to the repo to reconcile
 #   - tracker_project (required) work-tracker project for GAP/VIOLATION items
+#   - target_repo     (optional) default "./target-repo" — a subdirectory of cwd
 #   - contracts_glob  (optional) default "contracts/*.md"
 #   - ledger_dir      (optional) default "ledger/"
 # =============================================================================
 #
 # CHANGELOG
 # -----------------------------------------------------------------------------
+# v1.2.0 (2026-08-30):
+#   - NEW: Within-cwd workspace invariant (owner-ratified design decision).
+#     * DRIVER: Full live run — the recipe is invoked FROM the ephemeral
+#       workspace root; cwd IS the workspace. `target_repo` default changed from
+#       "" (required) to "./target-repo" (still overridable). Header + file-drift
+#       now state: everything written lands within cwd; the target repo is a
+#       subdirectory of cwd; writing outside cwd requires explicit configuration.
+#   - CANONIZED: Write-denial doctrine (canonizes measured behavior).
+#     * DRIVER: Full live run — one trial was denied filesystem writes by tool
+#       policy; it refused to covertly bypass via bash, filed a blocker tracker
+#       item, and stopped honestly. That is EXACTLY right — now the stated rule.
+#     * CHANGE: derive-rows and file-drift now instruct: a denied write is NOT
+#       circumvented (not via bash, not any other tool); a denial means the
+#       ephemeral workspace is misconfigured — file a blocker tracker item naming
+#       the denied path, note it in output, and stop that write path honestly.
+#   - BUGFIX: Ledger schema tightening (clause id + quote nesting).
+#     * DRIVER: Full live run — one trial hoisted `quote` to row top level (which
+#       silently dodged quote verification) and decorated clause ids like
+#       "Core 1 (one file, two layers)" (breaking clause joins).
+#     * FIX: derive-rows and file-drift SHAPE sections now mandate `contract.clause`
+#       be the bare numbered id exactly as the contract names it ("Core 1", never
+#       a paraphrase or parenthetical-decorated form), and `quote` live nested
+#       under `contract:` (contract.quote), never at row top level — a row whose
+#       quote is not under `contract:` is malformed. file-drift's post-write
+#       verification now also rejects a hoisted top-level quote.
+#
 # v1.1.1 (2026-08-30):
 #   - BUGFIX: Mandate rows.yaml as a top-level YAML LIST (no wrapper mapping).
 #     * DRIVER: Second live run (DTU) — ran fully end-to-end (25 min, 45 rows,
@@ -100,14 +135,15 @@ description: >
   conformance kit, files work-tracker items for every GAP/VIOLATION, records
   bidirectional drift, and emits a reconcile report. Flat, gate-free, and
   schedulable — it never prompts the owner.
-version: "1.1.1"
+version: "1.2.0"
 author: "converge bundle"
 tags: ["converge", "ratchet", "conformance", "ledger", "reconcile", "drift"]
 
 context:
   # --- required (no default — must be supplied at invocation) ---
-  target_repo: ""          # path to the repo being reconciled
   tracker_project: ""      # work-tracker project GAP/VIOLATION items are filed into
+  # --- workspace-relative (overridable; default assumes cwd IS the workspace) ---
+  target_repo: "./target-repo"       # the repo being reconciled — a subdirectory of cwd
   # --- optional (defaults per mechanism-spec §4.2) ---
   contracts_glob: "contracts/*.md"   # where the seam contracts live
   ledger_dir: "ledger/"              # where rows.yaml and checks/ live (LEDGER-FORMAT §1)
@@ -166,6 +202,12 @@ steps:
       Contracts:   {{contracts_glob}}
       Ledger dir:  {{ledger_dir}}
 
+      WRITE-DENIAL DOCTRINE: If a file write is denied by tool policy, do NOT
+      circumvent it (not via bash, not via any other tool). A write denial in an
+      ephemeral workspace means the environment is misconfigured — file a blocker
+      tracker item naming the denied path, note it in your output, and stop that
+      write path honestly.
+
       Using the contract inventory below, DERIVE or UPDATE the ledger rows per
       LEDGER-FORMAT (your carried knowledge). Do NOT run the conformance kit in
       this step — that is the next step. Here:
@@ -192,13 +234,22 @@ steps:
         row IN that list. Run metadata (repo SHA, timestamps, tallies) belongs in
         the reconcile report ONLY; contract pinning lives in the SYNC row(s). Do
         NOT wrap the rows under `{meta: ..., rows: [...]}` or any other key.
+      - SHAPE — clause + quote (mandatory): `contract.clause` MUST be the bare
+        numbered identifier exactly as the contract names it ("Core 1", "Core 3")
+        — never a paraphrase, never a parenthetical-decorated form like
+        "Core 1 (one file, two layers)" (decoration breaks clause joins). And
+        `quote` MUST live NESTED under `contract:` (i.e. `contract.quote`), NEVER
+        at row top level — a row whose quote is not under `contract:` is malformed
+        and silently dodges quote verification.
 
       Contract inventory:
       {{contract_inventory}}
 
       Output the derived/updated row set — dispositions, verbatim quotes,
       assertion refs, and the SYNC row — as your result for the next step. Do NOT
-      file tracker items and do NOT write the final rows.yaml yet.
+      file GAP/VIOLATION tracker items and do NOT write the final rows.yaml yet
+      (file-drift does both) — the one exception is a write-denial blocker per the
+      doctrine above.
 
   # ---------------------------------------------------------------------------
   # 3. run-conformance — invoke the repo's OWN kit, map results onto rows
@@ -258,6 +309,17 @@ steps:
       Ledger dir:      {{ledger_dir}}
       Tracker project: {{tracker_project}}
 
+      WORKSPACE (within-cwd invariant): this recipe is invoked FROM the ephemeral
+      workspace root — cwd IS the workspace. Everything you write lands WITHIN
+      cwd; {{target_repo}} is a subdirectory of cwd. Writing outside cwd is never
+      assumed — it requires explicit user/environment configuration.
+
+      WRITE-DENIAL DOCTRINE: If a file write is denied by tool policy, do NOT
+      circumvent it (not via bash, not via any other tool). A write denial in an
+      ephemeral workspace means the environment is misconfigured — file a blocker
+      tracker item naming the denied path, note it in your output, and stop that
+      write path honestly.
+
       Using the confirmed conformance results below:
 
       1. WRITE THE FINAL LEDGER to `{{ledger_dir}}/rows.yaml` in {{target_repo}}
@@ -270,9 +332,18 @@ steps:
          metadata (repo SHA, timestamps, tallies) goes in the reconcile report
          ONLY; contract pinning lives in the SYNC row(s). Do NOT wrap the rows
          under `{meta: ..., rows: [...]}` or any other key.
-         After writing, VERIFY the file: it exists, is non-empty, AND parses as a
-         top-level YAML list (not a mapping) — a wrapper mapping or a missing
-         artifact is a real result, not a silent pass.
+         SHAPE — clause + quote (mandatory): each row's `contract.clause` MUST be
+         the bare numbered identifier exactly as the contract names it ("Core 1",
+         "Core 3") — never a paraphrase, never a parenthetical-decorated form like
+         "Core 1 (one file, two layers)" (decoration breaks clause joins). And
+         `quote` MUST live NESTED under `contract:` (i.e. `contract.quote`), NEVER
+         at row top level — a row whose quote is not under `contract:` is
+         malformed and silently dodges quote verification. Repair any such row
+         before writing.
+         After writing, VERIFY the file: it exists, is non-empty, parses as a
+         top-level YAML list (not a mapping), AND no row carries a top-level
+         `quote` (every quote nested under `contract:`) — a wrapper mapping, a
+         hoisted quote, or a missing artifact is a real result, not a silent pass.
 
       2. RECORD BIDIRECTIONAL DRIFT as rows: movement AWAY from a frozen clause
          is drift; silent movement BACK toward spec ("un-divergence") from a
