@@ -165,18 +165,77 @@ provision:
         || { echo "FATAL: work-tracker backend unusable:"; cat /tmp/awt-new.log; exit 1; }
       amplifier-work-tracker instances
 
-    # -- converge bundle: composed onto the session (github URL -> Gitea via
-    #    url_rewrites). Pulls its foundation + work-tracker includes too. --
+    # -- converge bundle: register it, then make it the ACTIVE (primary)
+    #    bundle. `--app` alone only app-lists it, and the `tool invoke recipes
+    #    ... execute` path composes ONLY the active bundle -- so a `@converge:`
+    #    recipe would run step 1 (foundation:explorer, in anchors' include
+    #    chain) but then fail step 2 with "Agent 'converge:reconciler' not
+    #    found in configuration". `bundle use converge` makes converge primary;
+    #    its includes (foundation + the work-tracker behavior) compose
+    #    transitively, so foundation:explorer and the work_* tools stay
+    #    available. The `@converge:` prefix is a file locator, not a bundle
+    #    activator -- activation is what `bundle use` does.
     - amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main --app
+    - amplifier bundle use converge
 
     # -- eval workspace + sanity ---------------------------------------------
     - mkdir -p /workspace
     - amplifier --version
     - amplifier bundle list
 
-    # -- warm-up: seat the lazy provider install so the readiness smoke below
-    #    doesn't race a cold cache against the 30s command timeout. --
+    # -- warm-up: seat the lazy provider install so the gate/readiness below
+    #    don't race a cold cache against a command timeout. --
     - 'amplifier run "Say exactly: warmup-ok"'
+
+    # -- COMPOSITION GATE (fail-loud): prove converge:reconciler resolves at
+    #    EXECUTION time under the active converge bundle -- the exact path the
+    #    live smoke run failed on ("Agent 'converge:reconciler' not found in
+    #    configuration"). A `recipes validate` is warning-only and does NOT
+    #    prove this; only actually spawning the agent through
+    #    `tool invoke recipes operation=execute` does. This throwaway 1-step
+    #    probe recipe (NOT seed-reconcile: no repo, no tracker writes, no tools)
+    #    makes converge:reconciler reply a sentinel. If the active bundle does
+    #    not compose it, the execute path errors and provisioning fails here. --
+    - |
+      set -e
+      cat > /tmp/probe-reconciler.yaml <<'YAML'
+      name: probe-reconciler
+      description: Execution-time resolution probe for converge:reconciler (not a real reconcile).
+      version: "1.0.0"
+      context: {}
+      steps:
+        - id: resolve-probe
+          agent: "converge:reconciler"
+          timeout: 120
+          output: final_output
+          prompt: |
+            COMPOSITION PROBE ONLY -- this is not a reconcile. Do NOT read files,
+            run bash, write anything, or call any tool. Reply with exactly this
+            text and nothing else: reconciler-resolved
+      YAML
+      # Invoked exactly as the harness does (auto-detect bundle, prefixed
+      # agent ref, -o json). Fails loud if converge:reconciler cannot be
+      # spawned. NOTE: this gate currently (and correctly) FAILS unless the
+      # converge bundle EXPOSES ITS OWN AGENTS -- see the header
+      # "KNOWN BLOCKER" note. `bundle add`/`bundle use`/`-b converge` do NOT
+      # help: converge/bundle.md has `includes:` but no `agents:` block, so its
+      # own agents/*.md are discoverable (`agents show`) yet never composed
+      # into coordinator.config["agents"], which is what the recipe spawner
+      # (app-cli session_spawner) looks up. Verified fix (in the converge repo,
+      # NOT here): add to bundle.md front-matter --
+      #     agents:
+      #       include:
+      #         - converge:reconciler
+      #         - converge:protocol-authority
+      out=$(amplifier tool invoke recipes operation=execute recipe_path=/tmp/probe-reconciler.yaml -o json 2>&1) \
+        || { echo "FATAL: reconciler execution probe exited non-zero:"; echo "$out" | tail -30; exit 1; }
+      if echo "$out" | grep -q "not found in configuration"; then
+        echo "FATAL: converge:reconciler NOT resolvable at EXECUTION time."; echo "$out" | tail -20
+        echo "ROOT CAUSE: converge/bundle.md exposes no agents. Add an 'agents: include:' block (see comment above)."; exit 1
+      fi
+      echo "$out" | grep -Eq '"status": *"completed"|reconciler-resolved' \
+        || { echo "FATAL: reconciler probe did not complete cleanly:"; echo "$out" | tail -30; exit 1; }
+      echo "COMPOSITION_GATE_OK: converge:reconciler resolved and ran at execution time"
 
 # --- Re-provision a running DTU after pushing fresh code to the Gitea mirror.
 update:
@@ -184,18 +243,25 @@ update:
     - amplifier bundle remove git+https://github.com/microsoft/amplifier-bundle-converge@main 2>/dev/null || true
     - amplifier reset --remove cache -y
     - amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main --app
+    # Re-activate converge as the primary bundle (its own agents still need the
+    # `agents: include:` block in converge/bundle.md to actually compose -- see
+    # the provisioning gate comment and the header KNOWN BLOCKER note).
+    - amplifier bundle use converge
     - 'amplifier run "Say exactly: warmup-ok"'
 
 readiness:
   - name: amplifier-installed
     command: amplifier --version
-  - name: converge-bundle-loaded
-    # Exits 0 only when @converge:recipes/seed-reconcile.yaml resolves AND its
-    # referenced agents (converge:reconciler, foundation:explorer) are
-    # available -- the exact resolution the harness needs. (`amplifier agents
-    # list` prints per-bundle on/off status, not `bundle:agent` ids, so it
-    # can't be grepped for the agent name.)
-    command: amplifier tool invoke recipes operation=validate recipe_path=@converge:recipes/seed-reconcile.yaml
+  - name: converge-active
+    # Cheap (no-LLM) liveness re-assert that converge is the active bundle.
+    # The AUTHORITATIVE agent-resolution proof is the provisioning composition
+    # gate above (an actual recipe execution spawning converge:reconciler) --
+    # this readiness check is deliberately NOT an `agents show` check, because
+    # `agents show reconciler` returns [on] (discovery) even in the broken
+    # state where the recipe spawner cannot resolve the agent. Discovery green
+    # + execution red was the exact trap that masked the bundle defect; don't
+    # reintroduce it here.
+    command: amplifier bundle list | grep -qi converge
   - name: work-tracker-healthy
     # `instances` reads the project list out of the shared dolt server, so a
     # clean exit proves the CLI is on PATH AND the dolt backend is reachable.

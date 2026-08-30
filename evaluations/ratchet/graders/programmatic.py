@@ -936,6 +936,16 @@ def check_zero_owner_prompts(session_event_files: list[Path]) -> CheckResult:
     """Scan every extracted `events.jsonl` for an owner-facing interruption
     signal (see `APPROVAL_EVENT_MARKERS` for the exact, documented vocabulary
     this eval treats as one).
+
+    Matches ONLY on an event's `event` NAME field against the approval markers
+    (`approval`/`input_request`/`elicit`/`human_input`/...). It deliberately
+    does NOT treat a failed/errored TOOL result as an owner prompt: a tool
+    error surfaces as a `tool:post`/`tool:error`-style event (or an error flag
+    on a tool result), whose name contains none of the approval markers, so it
+    is never counted here. This matters because a normal reconcile run can
+    contain benign tool errors -- e.g. an `ls` against a not-yet-created ledger
+    dir -- which are expected agent behavior, not a request for owner
+    attention. Only an actual approval/input-request event counts.
     """
     if not session_event_files:
         return _skip(

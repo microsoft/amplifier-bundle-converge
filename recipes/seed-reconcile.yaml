@@ -5,7 +5,8 @@
 # Reconciles a target repo against its FROZEN contracts. Derives/updates a
 # clause-granular conformance ledger, runs the repo's OWN conformance kit, maps
 # results onto rows, files work-tracker items for every GAP/VIOLATION, records
-# bidirectional drift, and emits a reconcile report.
+# bidirectional drift, and emits a reconcile report (both as the recipe's final
+# output AND as a disk artifact at {{ledger_dir}}/reconcile-report.md).
 #
 # Mechanism spec: @converge:docs/design/mechanism-spec.md §4.2
 # Ledger format:  @converge:docs/LEDGER-FORMAT.md
@@ -35,6 +36,16 @@
 #     recipe_path=@converge:recipes/seed-reconcile.yaml \
 #     context='{"target_repo": "/path/to/drumbeat", "tracker_project": "drumbeat-conformance"}'
 #
+# Outputs (all in the target repo; consumers grade from the disk artifacts, not
+# from the in-session stream — artifacts-not-liveness):
+#   - {{ledger_dir}}/rows.yaml            updated ledger rows (confirmed
+#                                         dispositions + required fields + SYNC row)
+#   - work-tracker items                  one per GAP/VIOLATION row, with the row
+#                                         id as the back-reference
+#   - {{ledger_dir}}/reconcile-report.md  the reconcile report as a disk artifact
+#                                         (overwritten each run; history in git)
+#   - final_output                        the same reconcile report, in-session
+#
 # Context variables:
 #   - target_repo     (required) path to the repo to reconcile
 #   - tracker_project (required) work-tracker project for GAP/VIOLATION items
@@ -44,6 +55,17 @@
 #
 # CHANGELOG
 # -----------------------------------------------------------------------------
+# v1.1.0 (2026-08-29):
+#   - IMPROVEMENT: Persist the reconcile report as a disk artifact.
+#     * DRIVER: First live run (DTU) — the report existed only as final_output
+#       (in-session/stdout). Consumers (an eval harness; future CI) need to grade
+#       from an artifact, not a stream — grading from liveness violates the
+#       artifacts-not-liveness principle the recipe itself encodes.
+#     * CHANGE: file-drift now ALSO writes the report to
+#       {{ledger_dir}}/reconcile-report.md in the target repo (overwritten on
+#       re-run — the report reflects the latest reconcile; history lives in git),
+#       in addition to emitting it as final_output. No step/agent/context changes.
+#
 # v1.0.0 (2026-08-29):
 #   - NEW FEATURE: Initial seed-reconcile recipe (Converge increment 1).
 #     * Flat, gate-free, unattended reconcile loop per mechanism-spec §4.2.
@@ -62,7 +84,7 @@ description: >
   conformance kit, files work-tracker items for every GAP/VIOLATION, records
   bidirectional drift, and emits a reconcile report. Flat, gate-free, and
   schedulable — it never prompts the owner.
-version: "1.0.0"
+version: "1.1.0"
 author: "converge bundle"
 tags: ["converge", "ratchet", "conformance", "ledger", "reconcile", "drift"]
 
@@ -198,7 +220,7 @@ steps:
       coverage-tripwire results.
 
   # ---------------------------------------------------------------------------
-  # 4. file-drift — write final rows.yaml, file tracker items, emit report
+  # 4. file-drift — write final rows.yaml, file tracker items, write + emit report
   # ---------------------------------------------------------------------------
   - id: "file-drift"
     agent: "converge:reconciler"
@@ -240,7 +262,7 @@ steps:
          gets a fresh `work_add`. Every filed item's description must carry the
          row id as a back-reference.
 
-      4. EMIT THE RECONCILE REPORT as your final result:
+      4. PRODUCE THE RECONCILE REPORT containing:
          - rows tallied by disposition (CONFORMS / GAP / VIOLATION / OPEN-PINNED
            / NOT-ASSERTABLE / EXCLUDED / DIVERGED);
          - bidirectional drift found (each direction, or "none");
@@ -248,6 +270,18 @@ steps:
            changed>");
          - coverage-tripwire results (pass/fail for each of the three);
          - tracker items filed vs. already-open items referenced.
+
+      5. PERSIST AND EMIT THE REPORT — consumers (an eval harness, future CI)
+         grade from a DISK ARTIFACT, not from this session's stream
+         (artifacts-not-liveness — the same principle this recipe enforces on the
+         repos it audits):
+         - WRITE the report to `{{ledger_dir}}/reconcile-report.md` in
+           {{target_repo}}. OVERWRITE it on every run — the report reflects the
+           LATEST reconcile; history lives in git, not in the file. After
+           writing, VERIFY the file exists and is non-empty (a missing artifact
+           is a real result, not a silent pass).
+         - ALSO emit the same report as your final result (final_output), so an
+           in-session caller sees it too.
          Then STOP honestly — if something could not be asserted or run, name it
          as a real residual rather than reporting a clean run that did nothing.
 

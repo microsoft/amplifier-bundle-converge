@@ -29,6 +29,16 @@
 # interface") and fixtures (see README.md "Fixtures interface") -- this
 # script does NOT create either; it fails loud if they're missing, same as
 # harness.py itself.
+#
+# CRITICAL -- INTERPRETER: harness.py must run under the amplifier-evaluation
+# library's OWN uv venv, NOT the system python. The agent grader
+# (Grader.setup) composes an Amplifier bundle ON THE HOST, and foundation's
+# activator installs that bundle's deps into the RUNNING interpreter
+# (`uv pip install -e ... --python <this-interpreter>`). System
+# /usr/bin/python3 is externally-managed, so that install fails with exit 2
+# before any DTU launches. The venv interpreter is writable, so the install
+# lands in the venv's site-packages and setup() completes. This script
+# therefore resolves and runs under "$AMPLIFIER_EVALUATION_SRC/.venv/bin/python".
 
 set -euo pipefail
 
@@ -57,23 +67,43 @@ fi
 # also re-checks this and fails loud; we check early for a friendlier message.
 [ -n "${GITEA_TOKEN:-}" ] || die "GITEA_TOKEN not set and not in ~/.amplifier/keys.env (required: the DTU profile's url_rewrites uses it to install the converge bundle from the Gitea mirror). Export it; never pass it as a flag."
 
-# ---- deps -----------------------------------------------------------------
+# ---- resolve the interpreter (the amplifier-evaluation venv) --------------
 # amplifier_evaluation ships as a package inside the amplifier-bundle-
-# evaluation repo, not as a published PyPI package this repo depends on
-# directly. We resolve it the same way examples/*/run.sh in that repo do:
-# prefer an already-activated venv, then fall back to a local checkout via
-# PYTHONPATH if AMPLIFIER_EVALUATION_SRC is set, then fail loud with the
-# exact remediation.
-if ! python3 -c "import amplifier_evaluation" >/dev/null 2>&1; then
-    if [ -n "${AMPLIFIER_EVALUATION_SRC:-}" ] && [ -d "$AMPLIFIER_EVALUATION_SRC/src" ]; then
-        export PYTHONPATH="$AMPLIFIER_EVALUATION_SRC/src:${PYTHONPATH:-}"
+# evaluation repo, not as a published PyPI package. We must run harness.py
+# under THAT repo's uv venv (see the "CRITICAL -- INTERPRETER" note above),
+# never system python. Resolution:
+#   1. AMPLIFIER_EVALUATION_SRC set  -> use "$SRC/.venv/bin/python" (running
+#      `uv sync` first if the venv is missing). This is the documented path.
+#   2. Otherwise, if an already-ACTIVATED venv's python3 can import the
+#      library, use it -- but refuse a system python (externally-managed;
+#      the grader's dep install would fail there exactly as it did before).
+PY=""
+if [ -n "${AMPLIFIER_EVALUATION_SRC:-}" ]; then
+    [ -d "$AMPLIFIER_EVALUATION_SRC" ] || die "AMPLIFIER_EVALUATION_SRC=$AMPLIFIER_EVALUATION_SRC is not a directory"
+    VENV_PY="$AMPLIFIER_EVALUATION_SRC/.venv/bin/python"
+    if [ ! -x "$VENV_PY" ]; then
+        log "no venv at $VENV_PY -- running 'uv sync' in $AMPLIFIER_EVALUATION_SRC"
+        command -v uv >/dev/null || die "uv not on PATH; cannot create the amplifier_evaluation venv. Install uv or pre-create the venv."
+        ( cd "$AMPLIFIER_EVALUATION_SRC" && uv sync ) || die "uv sync failed in $AMPLIFIER_EVALUATION_SRC"
     fi
+    [ -x "$VENV_PY" ] || die "still no venv python at $VENV_PY after 'uv sync'"
+    PY="$VENV_PY"
+elif python3 -c "import amplifier_evaluation" >/dev/null 2>&1; then
+    PY="$(command -v python3)"
+    # sys.prefix != sys.base_prefix means we're inside a venv (writable, safe
+    # for the grader's dep install). A bare system python is NOT, and is the
+    # exact failure this fix exists to prevent -- refuse it with the remedy.
+    if ! python3 -c "import sys; sys.exit(0 if sys.prefix != sys.base_prefix else 1)" >/dev/null 2>&1; then
+        die "amplifier_evaluation is importable under a non-venv python ($PY), which is externally-managed: the agent grader's on-host bundle-dependency install would fail there (exit 2, before any DTU launches). Set AMPLIFIER_EVALUATION_SRC=/path/to/amplifier-bundle-evaluation and re-run, or activate that bundle's venv first."
+    fi
+else
+    die "amplifier_evaluation not resolvable. Set AMPLIFIER_EVALUATION_SRC=/path/to/amplifier-bundle-evaluation (a checkout; 'uv sync' is run automatically if its .venv is missing), or activate that bundle's venv first."
 fi
-python3 -c "import amplifier_evaluation" >/dev/null 2>&1 || die \
-    "amplifier_evaluation is not importable. Either activate its bundle venv \
-first, or set AMPLIFIER_EVALUATION_SRC=/path/to/amplifier-bundle-evaluation \
-(a checkout with 'uv sync' already run in it)."
-python3 -c "import yaml" >/dev/null 2>&1 || die "PyYAML is not importable (needed by graders/programmatic.py)"
+
+# Verify the chosen interpreter can actually import both deps we rely on.
+"$PY" -c "import amplifier_evaluation" >/dev/null 2>&1 || die "chosen interpreter $PY cannot import amplifier_evaluation (a broken/incomplete venv? re-run 'uv sync' in \$AMPLIFIER_EVALUATION_SRC)"
+"$PY" -c "import yaml" >/dev/null 2>&1 || die "chosen interpreter $PY cannot import PyYAML (needed by graders/programmatic.py)"
+log "interpreter: $PY"
 
 # ---- output dir -------------------------------------------------------
 RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -83,7 +113,7 @@ log "output: $OUTPUT_DIR"
 
 # ---- run --------------------------------------------------------------
 log "running harness.py $*"
-python3 "$HERE/harness.py" --output "$OUTPUT_DIR" "$@"
+"$PY" "$HERE/harness.py" --output "$OUTPUT_DIR" "$@"
 HARNESS_EXIT=$?
 
 log "harness exit: $HARNESS_EXIT"

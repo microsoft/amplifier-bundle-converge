@@ -41,6 +41,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -53,7 +54,7 @@ from typing import Any
 
 from amplifier_evaluation.grader import Grader
 from amplifier_evaluation.grader.schema import GraderConfig
-from amplifier_evaluation.harness.dtu import DTU, DTUError, cli_available
+from amplifier_evaluation.harness.dtu import CommandResult, DTU, DTUError, cli_available
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from graders import programmatic  # noqa: E402
@@ -71,8 +72,69 @@ AGENT_GRADER_YAML = HERE / "graders" / "agent-grader.yaml"
 RECIPE_PATH = "@converge:recipes/seed-reconcile.yaml"
 WORKSPACE = "/workspace"
 TARGET_REPO = f"{WORKSPACE}/target-repo"
-GRADING_FILE_REMOTE = f"{WORKSPACE}/_eval/reconcile_report.json"
 PROJECTS_ROOT_REMOTE = "~/.amplifier/projects"
+
+# The reconcile deliverables the recipe writes into the target repo. `ledger/`
+# is the recipe's own `ledger_dir` default (seed-reconcile.yaml context var,
+# default "ledger/"); the harness does not override it, so these paths are
+# fixed. The reconcile REPORT path is a v1.1.0+ recipe contract: the recipe is
+# patched (in parallel) to write its reconcile report to
+# `{{ledger_dir}}/reconcile-report.md` in the target repo. Trial success is
+# judged by these ARTIFACTS existing after an exit-0 run -- NOT by parsing the
+# recipe's stdout, which is a rendered session log (thinking blocks, tool
+# panels, token usage), not a JSON envelope.
+LEDGER_DIR_REMOTE = f"{TARGET_REPO}/ledger"
+ROWS_REMOTE = f"{LEDGER_DIR_REMOTE}/rows.yaml"
+RECONCILE_REPORT_REMOTE = f"{LEDGER_DIR_REMOTE}/reconcile-report.md"
+
+# Post-run artifacts (basename -> remote path) that MUST exist after a
+# successful reconcile. Both are required; a missing one after exit 0 is a
+# structural trial failure naming exactly which artifact is absent.
+REQUIRED_ARTIFACTS: dict[str, str] = {
+    "ledger/rows.yaml": ROWS_REMOTE,
+    "ledger/reconcile-report.md": RECONCILE_REPORT_REMOTE,
+}
+
+# The work-tracker service enforces this exact pattern on project names
+# (verified live: `amplifier-work-tracker new ratchet-1-t1-4b1b4a` -> exit 1,
+# "must match ^[a-z][a-z0-9_]{1,30}$"). Hyphens are REJECTED. This name is not
+# just the harness's own `new`/`list` operand -- it is passed to the recipe as
+# {{tracker_project}} and used by the reconciler's `work_add` inside the DTU,
+# so an invalid name breaks any scenario that files GAP/VIOLATION items
+# (scenarios 2 and 3 always do). Names must therefore use UNDERSCORES and cap
+# at 31 chars total (1 leading letter + up to 30 of [a-z0-9_]).
+_TRACKER_PROJECT_RE = re.compile(r"^[a-z][a-z0-9_]{1,30}$")
+_TRACKER_PROJECT_MAXLEN = 31
+
+
+def make_tracker_project(
+    scenario: int, trial_number: int, rand: str | None = None
+) -> str:
+    """Generate a work-tracker project name valid under the service's
+    ^[a-z][a-z0-9_]{1,30}$ constraint.
+
+    Shape: ``ratchet_s<scenario>_t<trial>_<rand>`` (all underscores, never
+    hyphens). `rand` defaults to 6 hex chars (all within [0-9a-f], so always
+    valid). If the assembled name would exceed 31 chars (only reachable with
+    absurdly large trial/scenario numbers), the random suffix is trimmed to
+    fit rather than the identifying prefix. A defensive assertion guarantees
+    the returned name matches the pattern before it is ever used -- as the
+    `new` operand, as {{tracker_project}} for the recipe, and as the `list
+    --project` operand at extraction.
+    """
+    if rand is None:
+        rand = uuid.uuid4().hex[:6]
+    prefix = f"ratchet_s{scenario}_t{trial_number}_"
+    name = f"{prefix}{rand}"
+    if len(name) > _TRACKER_PROJECT_MAXLEN:
+        keep = max(1, _TRACKER_PROJECT_MAXLEN - len(prefix))
+        name = f"{prefix}{rand[:keep]}"[:_TRACKER_PROJECT_MAXLEN]
+    assert _TRACKER_PROJECT_RE.match(name), (
+        f"generated tracker project name {name!r} does not match the "
+        f"work-tracker service's required pattern ^[a-z][a-z0-9_]{{1,30}}$ "
+        f"(scenario={scenario}, trial_number={trial_number})"
+    )
+    return name
 
 
 # ---------------------------------------------------------------------------
@@ -139,8 +201,13 @@ class TrialStepError(RuntimeError):
 
 
 # ---------------------------------------------------------------------------
-# JSON stdout parsing (tolerant of a banner line before the real payload,
-# same defensive shape as harness/dtu.py's own envelope unwrapper)
+# JSON stdout parsing for the work-tracker `list --json` CLI ONLY.
+#
+# NOTE: this is deliberately NOT used for the seed-reconcile recipe. The
+# recipe's stdout is a rendered session log, never JSON (see _exec_recipe).
+# `amplifier-work-tracker list --json` IS a plain CLI that genuinely emits
+# JSON, so parsing it here is correct. Tolerant of a banner line before the
+# real payload, same defensive shape as harness/dtu.py's own envelope unwrapper.
 # ---------------------------------------------------------------------------
 
 
@@ -174,61 +241,79 @@ def _parse_json_stdout(stdout: str) -> dict[str, Any] | None:
 
 async def _exec_recipe(
     dtu: DTU, *, target_repo: str, tracker_project: str, timeout_s: int, log_path: Path
-) -> dict[str, Any]:
+) -> CommandResult:
     """Invoke seed-reconcile non-interactively via `amplifier tool invoke`.
 
-    Exact CLI shape settled on (verified against `amplifier tool invoke
-    --help` and the recipe's own header-comment usage example):
+    CLI shape (verified running against a live DTU):
 
         amplifier tool invoke recipes operation=execute \\
             recipe_path=@converge:recipes/seed-reconcile.yaml \\
-            context='{"target_repo": "...", "tracker_project": "..."}' \\
-            -o json
+            context='{"target_repo": "...", "tracker_project": "..."}'
 
-    `-o json` is the CLI's own documented flag for structured output; without
-    it we would be parsing the human-readable text format, which is not a
-    stable interface. Returns the parsed JSON tool-result envelope. Raises
-    `TrialStepError` (never returns a partially-parsed result) on any
-    non-zero exit or unparseable stdout.
+    IMPORTANT -- stdout is a LOG, not structured output. An earlier version
+    of this harness passed `-o json` and parsed stdout as a JSON tool-result
+    envelope; a live smoke run proved that `-o json` streams the RENDERED
+    SESSION output (thinking blocks, tool panels, token usage), not JSON, so
+    stdout can never be parsed for control flow. We therefore drop `-o json`
+    (its only purpose was the JSON we no longer parse) and treat stdout purely
+    as diagnostics. Trial success is judged by exit code + post-run ARTIFACT
+    existence (see `evaluate_recipe_outcome`), NOT by anything in stdout.
+
+    Returns the raw `CommandResult` (exit code + stdout + stderr). The caller
+    saves stdout verbatim and decides success; this function never raises on
+    a non-zero exit, so the caller can attach the stdout/stderr tails to a
+    single structural error.
     """
     context = {"target_repo": target_repo, "tracker_project": tracker_project}
     shell_cmd = (
         "amplifier tool invoke recipes "
         "operation=execute "
         f"recipe_path={RECIPE_PATH} "
-        f"context={shlex.quote(json.dumps(context))} "
-        "-o json"
+        f"context={shlex.quote(json.dumps(context))}"
     )
-    result = await dtu.exec_cmd(
+    return await dtu.exec_cmd(
         ["bash", "-lc", shell_cmd], timeout_s=timeout_s, stream_to_logfile=log_path
     )
-    if result.returncode != 0:
-        raise TrialStepError(
-            "running_agent",
-            f"seed-reconcile invocation failed (exit {result.returncode}):\n"
-            f"stdout(tail): {result.stdout[-3000:]}\nstderr(tail): {result.stderr[-3000:]}",
-            exit_code=result.returncode,
-        )
-    payload = _parse_json_stdout(result.stdout)
-    if payload is None:
-        raise TrialStepError(
-            "running_agent",
-            "recipe invocation exited 0 but stdout was not parseable JSON "
-            "(the `-o json` output shape may have changed since this harness "
-            f"was written). First 2000 chars: {result.stdout[:2000]!r}",
-        )
-    return payload
 
 
-async def _pull_rows(dtu: DTU, target_repo: str, host_dest: Path) -> bool:
-    remote = f"{target_repo.rstrip('/')}/ledger/rows.yaml"
-    check = await dtu.exec_cmd(
-        ["bash", "-lc", f"test -f {shlex.quote(remote)}"], timeout_s=30
-    )
-    if check.returncode != 0:
-        return False
-    await dtu.file_pull(remote, host_dest)
-    return True
+def evaluate_recipe_outcome(
+    exit_code: int, artifacts_present: dict[str, bool]
+) -> str | None:
+    """Decide whether a reconcile run succeeded, from its exit code and which
+    required artifacts exist afterward. PURE (no I/O) so it is unit-testable
+    standalone.
+
+    Success == exit 0 AND every required artifact present. Returns None on
+    success, or a structural error message (naming the exact problem) on
+    failure:
+      - non-zero exit                -> "... exited nonzero (<code>)"
+      - exit 0 but artifact(s) gone  -> "... but did not write: <names>"
+
+    The second case is the whole point of judging by artifacts, not stdout:
+    the recipe can exit 0 while its agent silently failed to produce the
+    ledger or the reconcile report.
+    """
+    if exit_code != 0:
+        return f"seed-reconcile invocation exited nonzero ({exit_code})"
+    missing = sorted(name for name, present in artifacts_present.items() if not present)
+    if missing:
+        return (
+            "seed-reconcile exited 0 but did not write required artifact(s): "
+            + ", ".join(missing)
+        )
+    return None
+
+
+async def _artifacts_present(dtu: DTU) -> dict[str, bool]:
+    """Test-f each `REQUIRED_ARTIFACTS` path inside the DTU; return
+    basename -> exists. Deterministic, no LLM."""
+    present: dict[str, bool] = {}
+    for name, remote in REQUIRED_ARTIFACTS.items():
+        check = await dtu.exec_cmd(
+            ["bash", "-lc", f"test -f {shlex.quote(remote)}"], timeout_s=30
+        )
+        present[name] = check.returncode == 0
+    return present
 
 
 async def _pull_tracker_items(dtu: DTU, tracker_project: str, host_dest: Path) -> None:
@@ -342,27 +427,6 @@ def _token_totals(event_files: list[Path]) -> dict[str, int]:
     return totals
 
 
-async def _push_report_for_grading(dtu: DTU, report_payload: dict[str, Any]) -> None:
-    """Write the last phase's recipe-result JSON to a known DTU path so the
-    agent grader (bash + DTU exec only, no host filesystem access) can find
-    it deterministically instead of hunting for it."""
-    import tempfile
-
-    with tempfile.NamedTemporaryFile(
-        "w", suffix=".json", delete=False, encoding="utf-8"
-    ) as f:
-        json.dump(report_payload, f, indent=2)
-        tmp_path = Path(f.name)
-    try:
-        await dtu.exec_cmd(
-            ["bash", "-lc", f"mkdir -p {shlex.quote(WORKSPACE + '/_eval')}"],
-            timeout_s=30,
-        )
-        await dtu.file_push(tmp_path, GRADING_FILE_REMOTE)
-    finally:
-        tmp_path.unlink(missing_ok=True)
-
-
 _AGENT_GRADER_CONFIG: GraderConfig | None = None
 
 
@@ -377,12 +441,19 @@ def _agent_grader_config() -> GraderConfig:
 
 
 def _build_agent_grader_task_context(
-    scenario: Scenario, answer_key: dict[str, Any]
+    scenario: Scenario, answer_key: dict[str, Any], report_host_path: Path
 ) -> str:
     """Task context handed to the agent grader -- includes the scenario
     description AND the recipe's own final-step spec text, inlined so the
     auditor (and anyone reading its `initial_report.md` afterward) has the
-    exact bar it is grading against, not just a reference to it."""
+    exact bar it is grading against, not just a reference to it.
+
+    The report-quality input is the reconcile report the recipe wrote at
+    `RECONCILE_REPORT_REMOTE` inside the DTU (a plain markdown file, NOT a
+    JSON envelope -- the recipe streams a rendered session log to stdout, so
+    the written artifact is the only reliable source). `report_host_path` is
+    the host-extracted copy, referenced here for provenance only; the grader
+    reads the live file in the DTU."""
     return f"""\
 Scenario under test: converge ratchet eval, scenario {scenario.number} ({scenario.name}).
 {scenario.description}
@@ -404,9 +475,10 @@ against it directly:
     Then STOP honestly -- if something could not be asserted or run, name it
     as a real residual rather than reporting a clean run that did nothing.
 
-The full report JSON is at {GRADING_FILE_REMOTE} inside this DTU. The
-target repo (with its live ledger at `<target_repo>/ledger/rows.yaml`) is at
-{TARGET_REPO}.
+The reconcile report to grade is a markdown file at `{RECONCILE_REPORT_REMOTE}`
+inside this DTU -- `cat` it. The target repo (with its live ledger at
+`{ROWS_REMOTE}`) is at `{TARGET_REPO}`. (Host-archived copy of the report,
+for provenance: `{report_host_path.name}`.)
 """
 
 
@@ -441,9 +513,7 @@ async def run_trial(
         logger.info("[%s] -> %s", trial_id, name)
 
     dtu: DTU | None = None
-    tracker_project = (
-        f"ratchet-{scenario.number}-t{trial_number}-{uuid.uuid4().hex[:6]}"
-    )
+    tracker_project = make_tracker_project(scenario.number, trial_number)
     all_event_files: list[Path] = []
 
     try:
@@ -540,9 +610,9 @@ async def run_trial(
 
         # ---- per-phase: run + extract ------------------------------------
         rows_by_phase: dict[str, Path] = {}
+        report_by_phase: dict[str, Path] = {}
         tracker_items_by_phase: dict[str, Path] = {}
         target_repo_by_phase: dict[str, Path] = {}
-        last_report_payload: dict[str, Any] | None = None
         done_md_path: Path | None = None
 
         for phase in scenario.phases:
@@ -567,26 +637,65 @@ async def run_trial(
             await _touch_marker(dtu, marker)
 
             _stage(f"running_agent:{phase}")
-            recipe_payload = await _exec_recipe(
+            recipe_result = await _exec_recipe(
                 dtu,
                 target_repo=TARGET_REPO,
                 tracker_project=tracker_project,
                 timeout_s=args.recipe_timeout,
                 log_path=log_path,
             )
-            (trial_dir / f"recipe-result-{phase}.json").write_text(
-                json.dumps(recipe_payload, indent=2), encoding="utf-8"
+            # Save the recipe's stdout/stderr VERBATIM as diagnostics. It is a
+            # rendered session log (thinking blocks, tool panels, token usage),
+            # never structured output -- valuable to read, never parsed for
+            # control flow.
+            (trial_dir / f"recipe-stdout-{phase}.log").write_text(
+                recipe_result.stdout, encoding="utf-8"
             )
-            last_report_payload = recipe_payload
+            if recipe_result.stderr.strip():
+                (trial_dir / f"recipe-stderr-{phase}.log").write_text(
+                    recipe_result.stderr, encoding="utf-8"
+                )
+
+            # Success signal: exit 0 AND both post-run artifacts exist in the
+            # target repo (ledger/rows.yaml AND ledger/reconcile-report.md).
+            # The recipe can exit 0 while its agent silently failed to write a
+            # deliverable -- that is a trial failure, named structurally.
+            artifacts_present = await _artifacts_present(dtu)
+            outcome_error = evaluate_recipe_outcome(
+                recipe_result.returncode, artifacts_present
+            )
+            if outcome_error is not None:
+                raise TrialStepError(
+                    "running_agent",
+                    f"{outcome_error}\n"
+                    f"stdout(tail): {recipe_result.stdout[-3000:]}\n"
+                    f"stderr(tail): {recipe_result.stderr[-3000:]}",
+                    exit_code=recipe_result.returncode,
+                )
 
             _stage(f"extracting:{phase}")
+            # Artifact existence was just verified above, so these pulls should
+            # not fail; keep defensive errors anyway.
             rows_dest = trial_dir / f"rows-{phase}.yaml"
-            if not await _pull_rows(dtu, TARGET_REPO, rows_dest):
+            if await _pull_optional_file(dtu, ROWS_REMOTE, rows_dest) is None:
                 raise TrialStepError(
                     "extracting",
-                    f"{TARGET_REPO}/ledger/rows.yaml not found after phase={phase!r}",
+                    f"{ROWS_REMOTE} not found after phase={phase!r} "
+                    "(unexpected: it existed at the running_agent artifact check)",
                 )
             rows_by_phase[phase] = rows_dest
+
+            report_dest = trial_dir / f"reconcile-report-{phase}.md"
+            if (
+                await _pull_optional_file(dtu, RECONCILE_REPORT_REMOTE, report_dest)
+                is None
+            ):
+                raise TrialStepError(
+                    "extracting",
+                    f"{RECONCILE_REPORT_REMOTE} not found after phase={phase!r} "
+                    "(unexpected: it existed at the running_agent artifact check)",
+                )
+            report_by_phase[phase] = report_dest
 
             tracker_dest = trial_dir / f"tracker-items-{phase}.json"
             await _pull_tracker_items(dtu, tracker_project, tracker_dest)
@@ -639,11 +748,17 @@ async def run_trial(
         }
 
         # ---- agent grading (judgment residue) ----------------------------
+        # The report-quality input is the reconcile-report.md the recipe wrote
+        # (extracted per phase above). The grader runs against the live DTU and
+        # reads it at its real, deterministic path RECONCILE_REPORT_REMOTE --
+        # no push needed (the file already exists there); the host-extracted
+        # copy under report_by_phase is the archived artifact.
         _stage("grading:agent")
-        assert last_report_payload is not None  # at least one phase always runs
-        await _push_report_for_grading(dtu, last_report_payload)
+        last_phase = scenario.phases[-1]
         grader_dir = trial_dir / "grader"
-        task_context = _build_agent_grader_task_context(scenario, answer_key)
+        task_context = _build_agent_grader_task_context(
+            scenario, answer_key, report_by_phase[last_phase]
+        )
         grader_result = await grader.run(
             grader_yaml_path=AGENT_GRADER_YAML,
             task_context=task_context,
@@ -802,7 +917,11 @@ def _capture_run_meta(args: argparse.Namespace) -> dict[str, Any]:
                 ["amplifier-digital-twin", "--version"]
             ),
             "amplifier": _host_cmd_version(["amplifier", "--version"]),
-            "python3": _host_cmd_version(["python3", "--version"]),
+            # The interpreter ACTUALLY running this harness (must be the
+            # amplifier-evaluation venv, per run.sh -- recording sys.executable
+            # here makes a wrong-interpreter run self-evident in run_meta.json,
+            # rather than reporting whatever `python3` resolves to on PATH).
+            "python": f"{sys.executable} ({sys.version.split()[0]})",
         },
     }
 

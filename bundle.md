@@ -20,6 +20,29 @@ includes:
   # Foundation does NOT provide these. URI verified against a live installation
   # (settings.yaml of a working session composing this exact behavior).
   - bundle: git+https://github.com/microsoft/amplifier-work-tracker@main#subdirectory=behaviors/work-tracker.yaml
+
+# Compose converge's own agents into the coordinator. Without this block the
+# agents are DISCOVERABLE (amplifier agents show converge:reconciler) but never
+# COMPOSED into coordinator.config["agents"], so recipe execution fails with
+# "Agent 'converge:reconciler' not found in configuration". Discovery != composition.
+# (Live-verified fix — DTU dogfood, increment 1.)
+agents:
+  include:
+    - converge:reconciler
+    - converge:protocol-authority
+
+# Register converge's own skills directory with tool-skills so load_skill() finds
+# them in a composed session. Foundation provides the tool-skills MODULE (so
+# load_skill exists) but its config.skills points only at foundation's own skills
+# dir — converge's five skills would be DISCOVERABLE but not COMPOSED (same
+# discovery != composition trap as agents). A top-level `skills:` key is silently
+# ignored; the tool-skills config.skills list is the sanctioned wiring.
+tools:
+  - module: tool-skills
+    source: git+https://github.com/microsoft/amplifier-bundle-skills@main#subdirectory=modules/tool-skills
+    config:
+      skills:
+        - "@converge:skills"
 ---
 
 # Converge

@@ -657,3 +657,31 @@ have the material to exercise them.
     `negotiator`+`encode`; then `full-wave`. Mode held per §5.1.
   - `behavioral-model.md` left **untouched** as the immutable artifact of the
     model run.
+
+- **2026-08-30 — increment-1 DTU dogfood: composition defect (live-verified).**
+  The evaluation harness caught a real composition bug of exactly the class the
+  behavioral model flagged as needing *live* verification (limitation #2,
+  composition loopholes; and the D1/D3 post-build live-eval targets).
+  **Defect — discovery ≠ composition:** `bundle.md` declared `includes:` but no
+  `agents:` block, so `converge:reconciler` / `converge:protocol-authority` were
+  *discoverable* (`amplifier agents show converge:reconciler` → on) yet never
+  *composed* into `coordinator.config["agents"]`; recipe execution failed with
+  *"Agent 'converge:reconciler' not found in configuration."* `amplifier bundle
+  show converge` listed 41 composed agents, zero `converge:*`.
+  **Fix (proven live — a probe recipe spawning `converge:reconciler` returned
+  `reconciler-resolved`):** added an `agents: include:` block naming both
+  agents.
+  **Same-class audit — skills:** the five skills were subject to the identical
+  trap. Foundation supplies the `tool-skills` *module* (so `load_skill` exists),
+  but its `config.skills` points only at foundation's own skills dir, and
+  `converge` had no `tools:` block — so the five `SKILL.md`s were discoverable
+  but not composed. **Fix:** added a `tools: - module: tool-skills` block with
+  `config.skills: ["@converge:skills"]` (the sanctioned wiring per the skills
+  bundle's own convention; a top-level `skills:` key is silently ignored).
+  **Lesson for the provenance chain:** in this ecosystem, *discovery is not
+  composition* — an artifact showing green in `agents show` / skills visibility
+  can still be absent from the composed coordinator. Every agent needs an
+  `agents:` entry and every shipped skills dir needs a `tool-skills`
+  `config.skills` entry; neither is auto-composed from mere presence on disk.
+  Files changed: `bundle.md` (agents + tools blocks). Behavioral-model artifact
+  left untouched.
