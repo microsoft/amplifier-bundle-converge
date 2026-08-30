@@ -1,11 +1,14 @@
 ---
 name: candidate-amendment
 description: >
-  Author a CANDIDATE amendment to a frozen vision or contract clause — a
-  sibling proposal file, never a direct edit. Use when a lane or orchestrator
-  wants to change a frozen clause, when a measured cost or failure suggests a
-  clause is wrong, or when deciding whether a change is convergent (just do it)
-  or divergent (owes evidence first). Applies PROTOCOL.md §5 and pillar 3.
+  Procedure for authoring a CANDIDATE amendment to a frozen vision or contract
+  clause — a sibling proposal file, never a direct edit. Load this for
+  procedural asks: "how do I amend a frozen clause?", "how do I author a
+  CANDIDATE?", "how do I propose a contract change?", or when a measured cost or
+  failure means a divergent change to a frozen clause is warranted. NOT for
+  permission/conformance questions ("can I edit this?", "am I allowed to change
+  this?", "does this conform?") — those route to converge:protocol-authority.
+  Applies PROTOCOL.md §5 and pillar 3.
 version: 0.1.0
 ---
 
@@ -15,6 +18,12 @@ version: 0.1.0
 procedure. Amendments are CANDIDATE artifacts, never direct edits — lanes and
 orchestrators may propose; **only the owner ratifies, in so many words**
 (pillar 3).
+
+> **Routing note.** This skill answers *"how do I author an amendment?"* — the
+> procedure. A *"can I / am I allowed / does this conform?"* question is
+> interpretive and belongs to `converge:protocol-authority`, not here. If you
+> arrived via a permission question, get the ruling first, then return here to
+> author.
 
 ## First: is an amendment even required? (change pricing)
 

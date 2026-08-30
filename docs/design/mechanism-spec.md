@@ -18,14 +18,27 @@ mechanism's `purpose` field (first line) so it survives extraction:
   should confirm it behaves as intended.
 - **PLANNED** — behavior-heavy, **not built.** This is what the model exists to
   verify before we build it.
-- **CANDIDATE (OPEN QUESTION)** — a proposed mechanism that *is itself* one of
-  the open design questions. The spec states it and its named alternative; the
-  model must help decide whether it is warranted. **The spec does not
-  pre-decide it.**
+- **CANDIDATE (OPEN QUESTION)** — a proposed mechanism that *was itself* one of
+  the open design questions. The spec states it and its named alternative.
+- **DECIDED** — an open question the owner has now ratified. Carries the
+  decision (`DEFERRED` or `BUILD`) and its rationale inline. As of the
+  increment-1 patch (see Patch log at the end), the two former CANDIDATE
+  mechanisms are DECIDED: the mode (§5.1) is DEFERRED, the hook (§6.1) is BUILD.
 
 Anti-scope (non-goals) and the five verification objectives are not their own
 mechanism types, so they are also woven into individual mechanisms'
 `behavioral_directives` (which the extractor captures) — see §C and §D.
+
+**Routing authority (Finding #1 — RESOLVED).** The **root session is the only
+router.** It holds `converge-awareness` and decides, per utterance, whether to
+consult `protocol-authority` (interpretive/conformance), load a skill
+(procedure), or spawn a worker agent (`negotiator` / `reconciler` /
+`amendment-drafter`). **Sub-agents return needs; they do not re-route.** A
+worker that discovers mid-task that it needs a conformance ruling or a seam
+judgment **returns that need** to the root (e.g. *"needs a conformance ruling
+on X"*); the root makes the call and feeds the answer back. No agent in this
+bundle spawns another agent or loads a skill on its own behalf — the delegation
+graph stays one level deep and the router stays single.
 
 ---
 
@@ -56,11 +69,14 @@ mechanism types, so they are also woven into individual mechanisms'
 - **purpose:** AS-BUILT. A thin routing pointer, always loaded into the root
   session via `bundle.md`. It states that the stack exists
   (Strategy → Vision → Contracts → Ledger → Lanes), states the four-item owner
-  attention budget verbatim (§6), and routes: protocol-conformance questions →
-  `converge:protocol-authority`; specific procedures → the matching skill. **It
-  contains NO protocol rules of its own — only awareness and routing.** Its
-  design intent is to make the root session *delegate*, never to let the root
-  session answer protocol questions from this file (verification objective D3).
+  attention budget verbatim (§6), and carries **the disambiguating routing
+  rule (Finding #2):** *"am I allowed / does this conform?"* → consult
+  `converge:protocol-authority` (interpretive); *"how do I author / perform X?"*
+  → load the matching skill (procedural). **It contains NO protocol rules of its
+  own — only awareness and routing.** Its design intent is to make the root
+  session *delegate*, never to let the root session answer protocol questions
+  from this file (verification objective D3). The root is the **only** router
+  (see the Routing authority note above §2).
 - **estimated_tokens:** 400
 - **always_loaded:** true
 
@@ -128,16 +144,23 @@ mechanism types, so they are also woven into individual mechanisms'
   - **Does NOT ratify** — decisions are owner acts; the negotiator only frames
     them (§C anti-scope; §6.1).
   - **Does NOT manufacture a contract for a repo with no seam** (§3.2, §7; §C).
-    Defers seam judgment to the `seam-test` skill.
-  - Delegates deep conformance questions to `protocol-authority` rather than
-    carrying the full spec itself (relates to D4).
+  - **Returns needs; does not re-route (Finding #1).** When a conformance
+    ruling or a seam judgment is required, the negotiator **returns the need**
+    to the root (e.g. *"needs a conformance ruling on X"* / *"needs a seam
+    judgment on Y"*); the **root** calls `protocol-authority` or loads
+    `seam-test` and feeds the answer back. The negotiator never spawns another
+    agent or loads a skill itself — it carries no delegation tools, which is
+    why a thin context slice is sufficient (relates to D4).
 - **tool_requirements:** read_file, grep (reads investigation briefs; produces
-  text minutes)
+  text minutes). **No delegation/spawn/`load_skill` tools** — consistent with
+  returning needs to the root (Finding #1).
 - **context_loading:** Phase-0 investigation briefs; a thin negotiation-
-  relevant slice of `PROTOCOL.md` §1/§4; consults `converge:protocol-authority`
-  for conformance calls.
+  relevant slice of `PROTOCOL.md` §1/§4. Does **not** load the full spec and
+  does **not** consult other agents directly; surfaces a conformance/seam
+  *need* to the root instead.
 - **exit_conditions:** per-call options + recommendation delivered as minutes;
-  stops for the owner to decide.
+  any conformance/seam needs surfaced to the root; stops for the owner to
+  decide.
 
 ### 2.3 reconciler — **PLANNED**
 
@@ -168,14 +191,26 @@ mechanism types, so they are also woven into individual mechanisms'
     full-ledger re-review, never a silent hash bump** (LEDGER-FORMAT §4).
   - A self-report is never proof (pillar 2): promotes a check to "passing" only
     by running the artifact itself.
+  - **Never synchronously interrupts the owner (Finding #4).** A finding that
+    needs an owner decision is filed as a ledger row + tracker item and the
+    reconciler **stops**; the decision is taken asynchronously at the next
+    `full-wave` `priority-kill` gate, drawn from the ledger/tracker (§4.2).
+  - **Returns needs; does not re-route (Finding #1).** For an interpretive
+    conformance call (e.g. *"is this clause REQUIRED or IDIOM?"*) the reconciler
+    **returns the need** to the root rather than spawning `protocol-authority`
+    itself. Its tools are execution tools only — no delegation/spawn/`load_skill`.
 - **tool_requirements:** read_file, grep, glob, bash (run the repo's kit),
-  write_file (ledger rows in the target repo), work-tracker (`work_add` /
-  `work_file`), git (provenance, content hash)
+  write_file (ledger rows in the target repo), work-tracker (`work_list` for
+  read/idempotency lookup, `work_add` / `work_file` to file), git (provenance,
+  content hash). **No delegation/spawn/`load_skill` tools** (Finding #1).
 - **context_loading:** `@converge:docs/LEDGER-FORMAT.md` (full), `PROTOCOL.md`
-  §3.3; the target repo's `contracts/` and `ledger/`.
+  §3.3 (for its own reading; interpretive calls it cannot settle are returned to
+  the root, not resolved by loading the full spec); the target repo's
+  `contracts/` and `ledger/`.
 - **exit_conditions:** ledger rows written/updated in the target repo; drift
-  rows and GAP/VIOLATION tracker items filed; coverage tripwires pass
-  (LEDGER-FORMAT §6); stops.
+  rows and GAP/VIOLATION tracker items filed (with live `work` refs); coverage
+  tripwires pass (LEDGER-FORMAT §6); any owner-decision needs left as filed
+  rows/items for the next wave; stops without interrupting the owner.
 
 ### 2.4 amendment-drafter — **PLANNED**
 
@@ -241,8 +276,12 @@ current session via `load_skill`. None fork; none delegate. Each answers
 - **purpose:** AS-BUILT. How to author a CANDIDATE amendment file and how to
   price the change first (convergent vs divergent) (§5).
 - **invocation:** `load_skill(skill_name="candidate-amendment")`; **triggered
-  by** "can I edit this frozen clause?", "how do I change the contract?", "draft
-  an amendment" (verification objective D2).
+  by procedural phrasings** — "how do I amend a frozen clause?", "how do I
+  author a CANDIDATE?", "how do I propose a contract change?" (Finding #2:
+  procedural forms only). **Permission/conformance phrasings** ("*can I* edit
+  this?", "*am I allowed* to change this?", "does this conform?") route to
+  `protocol-authority` instead, per the §1.1 routing rule (verification
+  objective D2).
 - **workflow_phases:** price the change (convergent → just do it; divergent →
   amendment owed) → author `CANDIDATE-<topic>.md` (diff · evidence · what-does-
   NOT-change · ask) → route to owner for literal-word ratification.
@@ -341,17 +380,41 @@ current session via `load_skill`. None fork; none delegate. Each answers
   purpose: "anything that depends on someone remembering to run it will
   eventually not run" (§4).
 - **execution_mode:** flat
+- **schedulable:** yes — designed to run unattended on every merge and on a
+  schedule (no owner in the loop).
+- **inputs (recipe context):**
+  - `target_repo` (required) — path to the repo being reconciled (increment-1
+    dogfood target: `drumbeat` and its frozen contract).
+  - `contracts_glob` (default `contracts/*.md`) — where the seam contracts live.
+  - `ledger_dir` (default `ledger/`) — where `rows.yaml` and `checks/` live
+    (LEDGER-FORMAT §1).
+  - `tracker_project` (required) — the work-tracker project GAP/VIOLATION items
+    are filed into.
+- **outputs:**
+  - updated ledger rows file(s) in `{{ledger_dir}}/rows.yaml` (dispositions +
+    required fields);
+  - work-tracker items for every `GAP`/`VIOLATION` row (with the row id as the
+    back-reference);
+  - a **reconcile report** (stdout/file) summarizing rows by disposition, drift
+    detected (both directions), SYNC-row status, and coverage-tripwire results.
 - **steps:**
-  | id | agent | produces | consumes |
+  | id | agent | consumes | produces |
   |---|---|---|---|
-  | load-contracts | foundation:explorer | contract inventory + tree evidence | target repo |
-  | derive-rows | converge:reconciler | ledger rows with dispositions | contract inventory |
-  | run-conformance | converge:reconciler | check results (invokes repo kit) | ledger rows |
-  | file-drift | converge:reconciler | filed rows + tracker items (GAP/VIOLATION) + bidirectional drift rows | check results |
-- **approval_gates:** none (autonomous audit; surfaces a decision only when one
-  arises).
-- **relationship_to_modes:** standing/background; independent of the owner
-  attention budget except when a surfaced row needs a decision.
+  | load-contracts | foundation:explorer | `target_repo`, `contracts_glob` | contract inventory + tree evidence |
+  | derive-rows | converge:reconciler | contract inventory, existing `ledger_dir` | ledger rows with dispositions (SYNC row incl.) |
+  | run-conformance | converge:reconciler | ledger rows, target repo kit | check results (invokes repo kit via `bash`) |
+  | file-drift | converge:reconciler | check results, `tracker_project` | filed rows + tracker items (GAP/VIOLATION) + bidirectional drift rows + reconcile report |
+- **approval_gates:** none.
+- **owner_interaction (Finding #4):** **This loop NEVER synchronously
+  interrupts the owner.** It has zero gates and zero owner-facing moments. A
+  finding that needs an owner decision (a priority/kill call, an irreversible
+  fix) is **filed as a ledger row + a work-tracker item and left there**; the
+  decision is taken asynchronously at the **next `full-wave` `priority-kill`
+  gate**, which draws from the ledger/tracker. Nothing here pages the owner —
+  that is what keeps standing reconcile inside the §6 attention budget.
+- **relationship_to_modes:** standing/background; fully independent of the owner
+  attention budget (decisions are deferred to the next wave, never surfaced
+  synchronously).
 
 ### 4.3 full-wave — **PLANNED**
 
@@ -367,37 +430,55 @@ current session via `load_skill`. None fork; none delegate. Each answers
   | seed | converge:reconciler | populated ledger | contracts + tree |
   | queue | converge:reconciler | tracker items with clause-quoting acceptance (via lane-brief) | ledger rows |
   | execute | foundation:explorer (worktree lanes) | lane commits + DONE.md | tracker items |
-  | merge-verify | foundation:git-ops + converge:reconciler | merged main; each verdict promoted only by its own artifact check | lane artifacts |
-  | close | converge:reconciler | freeze-bar report; residuals named honestly | merged state |
-- **approval_gates:**
-  | name | placed_after_step | semantic | owner-attention item |
+  | merge | foundation:git-ops | merged main | lane artifacts |
+  | verify | converge:reconciler | each verdict promoted only by its own artifact check; ledger re-run post-merge | merged main |
+  | close | converge:reconciler | freeze-bar report; residuals named honestly | verified state |
+  - **Finding #3:** the former single `merge-verify` step is **split into
+    `merge` then `verify`** so the two distinct owner-attention gates each
+    attach to a clean stage boundary (an `authorizes_next` gate before `merge`
+    ops, a `validates_previous` gate after `verify`) instead of two gates with
+    opposite semantics bracketing one step. This also resolves the gate-ordering
+    ambiguity the model flagged.
+- **approval_gates (exactly four — 1:1 with §6, no fifth):**
+  | name | placed_after_step | semantic | §6 owner-attention item |
   |---|---|---|---|
-  | priority-kill | queue | authorizes_next | #4 priority/kill before lanes launch |
-  | irreversible-ops | merge-verify | authorizes_next | #2 irreversible/destructive calls |
-  | human-device-verify | merge-verify | validates_previous | #3 verification only a human/device can do |
-  | ratify-changes | close | validates_previous | #1 ratify any vision/contract change or FROZEN stamp |
-- **relationship_to_modes:** the whole wave runs under the candidate
-  `converge-orchestration` mode if adopted. The four gates map 1:1 to §6's four
-  items; the model must confirm **no fifth gate** leaks owner attention below
-  the contract layer (§C).
+  | priority-kill | queue | authorizes_next | §6 #4 — priority/kill before lanes launch |
+  | irreversible-ops | execute | authorizes_next | §6 #2 — irreversible/destructive calls (authorizes the `merge`) |
+  | human-device-verify | verify | validates_previous | §6 #3 — verification only a human/device can do |
+  | ratify-changes | close | validates_previous | §6 #1 — ratify any vision/contract change or FROZEN stamp |
+  - Each gate maps to a **distinct** §6 item; all four §6 items are covered
+    exactly once. `irreversible-ops` (`authorizes_next` after `execute`)
+    authorizes the irreversible `merge`; `human-device-verify`
+    (`validates_previous` after `verify`) confirms human/device verification of
+    what merged. Clean boundaries, no ordering ambiguity.
+- **relationship_to_modes:** runs under **no dedicated mode** — the
+  `converge-orchestration` mode is DEFERRED (§5.1); phase discipline is carried
+  by the recipe's stage structure + the `hooks-candidate-guard` hook (§6.1) +
+  agent/skill routing. The four gates map 1:1 to §6's four items; **any fifth
+  owner-facing gate is a protocol defect** (§C).
 
 ---
 
 ## 5. Modes
 
-### 5.1 converge-orchestration — **CANDIDATE (OPEN QUESTION #1)**
+### 5.1 converge-orchestration — **DECIDED: DEFERRED (was OPEN QUESTION #1)**
 
-> **Open design question, not pre-decided.** Does phase discipline warrant a
-> mode, or does pure delegation (the `converge-awareness` pointer + agent
-> routing, no mode) suffice? Modes carry real adoption friction. The behavioral
-> model must help decide. Both options are stated; neither is chosen here.
+> **DECIDED — DEFERRED (owner-ratified, increment-1 patch).** Phase discipline
+> does **not** warrant a dedicated mode. **Rationale:** the mode's residual
+> value is subsumed — phase-order enforcement moves to `hooks-candidate-guard`
+> (§6.1); the four owner-attention moments are delivered by the `full-wave`
+> recipe gates (§4.3), not by mode policy; and the mode's only unique remaining
+> contribution (confirm-gates on git-ops-destructive / `work_resolve`) is itself
+> defeated by composition loopholes (empty block list, per-tool policies
+> bypassable through delegated foundation agents). **Chosen path:** pure
+> delegation + recipe gates + hook. This section is retained as a record and a
+> re-open trigger, **not** as something to build.
 
 - **name:** converge-orchestration
-- **purpose:** CANDIDATE (OPEN QUESTION #1). A proposed orchestrator mode that
-  keeps loop phase discipline (§4) and reserves owner attention (§6) while a
-  wave runs. **ALTERNATIVE UNDER EVALUATION:** no mode — the awareness pointer
-  plus agent/skill routing may be enough. The model must determine whether the
-  mode earns its cost.
+- **purpose:** DECIDED: DEFERRED. Was a proposed orchestrator mode to keep loop
+  phase discipline (§4) and reserve owner attention (§6) during a wave. Not
+  being built. **Re-open trigger:** a concrete need for session-wide
+  confirm-gating that the recipe gates and the hook demonstrably do not cover.
 - **tool_policies:**
   - **safe:** read_file, grep, glob, work_list, work_status
   - **warn:** write_file, edit_file (see the per-tool-not-per-path limitation
@@ -424,28 +505,32 @@ current session via `load_skill`. None fork; none delegate. Each answers
 
 ## 6. Hooks
 
-### 6.1 hooks-candidate-guard — **CANDIDATE (OPEN QUESTION #2)**
+### 6.1 hooks-candidate-guard — **DECIDED: BUILD (increment 2) (was OPEN QUESTION #2)**
 
-> **Open design question, not pre-decided.** Do "CANDIDATE-not-direct-edit"
-> (§5, pillar 3) and "ENCODE-before-implement" (§4 Phase 2) need *structural*
-> enforcement (a hook), or do they hold as *convention* via the
-> `candidate-amendment` skill + `protocol-authority` guidance? The spec states
-> the hook and its alternative; the model must help decide.
+> **DECIDED — BUILD (owner-ratified, increment-1 patch; scheduled increment 2).**
+> "CANDIDATE-not-direct-edit" (§5, pillar 3) and "ENCODE-before-implement" (§4
+> Phase 2) **do** need structural enforcement. **Rationale (from the model,
+> Scenario E):** a per-tool policy cannot distinguish an implementation write
+> from any other write, nor a frozen-path edit from any other path, so neither
+> convention nor the (now-deferred) mode closes the gap; only a path+phase-aware
+> hook does. **Hard build requirement:** the hook MUST intercept writes made by
+> *delegated foundation agents* (`file-ops`, `git-ops`, worktree lanes), not
+> only root-session writes — otherwise the composition loophole (§ limitations)
+> reopens the very hole the hook closes.
 
 - **name:** hooks-candidate-guard
-- **purpose:** CANDIDATE (OPEN QUESTION #2). A proposed pre-tool-use hook that
-  intercepts file-writing tools and (a) blocks/redirects direct edits to
-  `contracts/**`, `docs/VISION.md`, or FROZEN-stamped files into the CANDIDATE
-  amendment flow, and (b) blocks implementation writes before ENCODE is
-  committed. **ALTERNATIVE UNDER EVALUATION:** no hook — these hold as
-  convention. The model must determine whether guidance holds or structural
-  enforcement is warranted (verification objective D5).
-- **triggers_on:** pre-tool-use on `write_file`, `edit_file`, `apply_patch`.
+- **purpose:** DECIDED: BUILD (increment 2). A pre-tool-use hook that intercepts
+  file-writing tools and (a) blocks/redirects direct edits to `contracts/**`,
+  `docs/VISION.md`, or FROZEN-stamped files into the CANDIDATE amendment flow,
+  and (b) blocks implementation writes before ENCODE is committed. Fills the gap
+  the (deferred) mode cannot — per-path + per-phase, which per-tool policies
+  cannot express (§5.1). Closes verification objective D5's finding.
+- **triggers_on:** pre-tool-use on `write_file`, `edit_file`, `apply_patch`,
+  **across delegated sub-agent sessions, not just the root session.**
 - **behavior:** inspect the target path and current phase; if a protected path
   is edited directly (not via a `CANDIDATE-<topic>.md`), or an implementation
   write occurs before ENCODE is committed, **block with a remedy message**
-  pointing to the CANDIDATE flow / the ENCODE phase; otherwise allow. Fills the
-  gap the mode cannot (per-path, which per-tool policies cannot express — §5.1).
+  pointing to the CANDIDATE flow / the ENCODE phase; otherwise allow.
 
 ---
 
@@ -489,16 +574,24 @@ have the material to exercise them.
   this procedure."* Exercise **both** failure directions: (a) over-delegation
   to the authority making the skills dead weight; (b) never consulting the
   authority so conformance judgment gets skipped. (Encoded on §2.1, §3.)
+  **POST-BUILD LIVE-EVAL TARGET:** a from-spec model can only depict the
+  intended split; both failure directions are runtime-routing behaviors that
+  require a live session (or `bundle-behavioral-model` on the built bundle) to
+  exercise. Carry D1 into the DTU eval harness, not just the model review.
 
-- **D2 — Skill trigger routing.** "Is this a seam?" → `seam-test`; "can I edit
-  this frozen clause?" → `candidate-amendment`; a flipped/red ledger row →
-  `ledger-disposition`. Exercise that the trigger phrases pull the right skill.
-  (Encoded on §3.1, §3.2, §3.4 `invocation`.)
+- **D2 — Skill trigger routing.** "Is this a seam?" → `seam-test`; **"how do I
+  amend a frozen clause?"** → `candidate-amendment` (procedural phrasing per
+  Finding #2; the permission form *"can I edit…"* routes to `protocol-authority`
+  instead); a flipped/red ledger row → `ledger-disposition`. Exercise that the
+  trigger phrases pull the right skill. (Encoded on §3.1, §3.2, §3.4
+  `invocation`.)
 
 - **D3 — Thin-pointer handoff.** A protocol question arriving in the root
   session must cause **delegation** to `protocol-authority`, not a wung answer
   from the ~400-token `converge-awareness` file. Exercise the temptation to
-  answer locally. (Encoded on §1.1 `purpose`.)
+  answer locally. (Encoded on §1.1 `purpose`.) **POST-BUILD LIVE-EVAL TARGET:**
+  like D1, the failure (root answers locally) is a runtime behavior — carry it
+  into the live eval harness, not just the from-spec model.
 
 - **D4 — Heavy-doc placement.** Test whether `protocol-authority` carrying
   `LEDGER-FORMAT.md` (alongside `PROTOCOL.md`) dilutes its conformance answers
@@ -519,12 +612,48 @@ have the material to exercise them.
 ## Notes for the model generator
 
 - **Status is load-bearing.** Distinguish AS-BUILT (confirm behavior), PLANNED
-  (verify before build), and CANDIDATE/OPEN-QUESTION (help decide, do not
-  assume built). The status tag is the first token of each mechanism's
+  (verify before build), and DECIDED (question settled — build or defer per the
+  recorded decision). The status tag is the first token of each mechanism's
   `purpose`.
-- **The two CANDIDATE mechanisms (mode §5.1, hook §6.1) are open questions.**
-  Model them as proposed, present their stated alternatives, and let the
-  scenarios (esp. D5) inform the decision. Do not treat their existence in this
-  spec as a commitment to build them.
+- **The two former CANDIDATE mechanisms are now DECIDED** (increment-1 patch):
+  the mode (§5.1) is **DEFERRED** (do not build); the hook (§6.1) is **BUILD**
+  (increment 2, must intercept delegated-agent writes). A re-run of the
+  behavioral model should treat them accordingly, not as open questions.
 - **Owner-attention gates must number exactly four** in `full-wave` (§4.3),
-  mapping 1:1 to §6. A fifth gate would itself be a modeled protocol defect.
+  mapping 1:1 to §6 (each item once, no fifth). A fifth gate would itself be a
+  protocol defect.
+
+---
+
+## Patch log
+
+- **2026-08-29 — increment-1 patch (owner-ratified).** Applied the behavioral
+  model's findings and recorded the two open-question decisions:
+  - **Finding #1 (RESOLVED, option b):** the **root is the only router**;
+    worker agents (`negotiator`, `reconciler`, `amendment-drafter`) **return
+    needs, they do not re-route**. Added the Routing authority note (above §2);
+    updated `negotiator` (§2.2) and `reconciler` (§2.3) to carry no
+    delegation/spawn/`load_skill` tools.
+  - **Finding #2 (disambiguation):** added the *"am I allowed / does this
+    conform"* → authority vs *"how do I author/perform X"* → skill rule to §1.1;
+    reworded `candidate-amendment` triggers (§3.2) to procedural forms. Mirrored
+    into the built `skills/candidate-amendment/SKILL.md` and
+    `context/converge-awareness.md`.
+  - **Finding #3:** split `full-wave`'s `merge-verify` into `merge` | `verify`
+    (§4.3) so the two owner gates attach to clean boundaries; ordering ambiguity
+    resolved.
+  - **Finding #4:** stated explicitly that standing reconcile (§4.2, §2.3)
+    **never synchronously interrupts the owner** — decisions defer to the next
+    wave's `priority-kill` gate via the ledger/tracker.
+  - **Finding #5 (fidelity):** confirmed §4.3's gate→§6 mapping is correct
+    (priority-kill→§6 #4, ratify-changes→§6 #1); the numeric-annotation drift
+    lived only in `behavioral-model.md` (immutable) and is noted there, not
+    here. No inventory arithmetic exists in this spec to correct.
+  - **Decisions (Finding #6):** §5.1 mode → **DECIDED: DEFERRED**; §6.1 hook →
+    **DECIDED: BUILD (increment 2)**. D1 and D3 marked **post-build live-eval
+    targets** (runtime-routing behaviors a from-spec model cannot exercise).
+  - **Build order confirmed:** increment 1 = `reconciler` + `seed-reconcile`
+    (this patch); increment 2 = `hooks-candidate-guard`; then
+    `negotiator`+`encode`; then `full-wave`. Mode held per §5.1.
+  - `behavioral-model.md` left **untouched** as the immutable artifact of the
+    model run.

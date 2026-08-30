@@ -6,14 +6,20 @@ bundle:
     Vision-first, contract-driven development. The owner and the orchestrator
     negotiate at the contract level; work is derived from the gap between repo
     reality and the contracts, never invented; a standing conformance ledger
-    (the "ratchet") prevents silent backsliding. This is the EARLY build:
-    the knowledge layer only (awareness pointer, protocol-authority agent, and
-    the procedure skills). The behavior-heavy parts — recipes, modes, hooks,
-    and the negotiator/reconciler agents — are deferred pending a behavioral
-    model.
+    (the "ratchet") prevents silent backsliding. Build increment 1: the
+    knowledge layer (awareness pointer, protocol-authority agent, five procedure
+    skills) plus the **reconciler** agent — the ratchet that derives ledger rows
+    and detects bidirectional drift. Still deferred: the recipes (encode,
+    seed-reconcile, full-wave), the hooks-candidate-guard hook (increment 2), and
+    the negotiator/amendment-drafter agents. The orchestration mode is DEFERRED
+    by decision (pure delegation + recipe gates + hook instead).
 
 includes:
   - bundle: git+https://github.com/microsoft/amplifier-foundation@main
+  # Work-tracker tools (work_list / work_add / work_file) for converge:reconciler.
+  # Foundation does NOT provide these. URI verified against a live installation
+  # (settings.yaml of a working session composing this exact behavior).
+  - bundle: git+https://github.com/microsoft/amplifier-work-tracker@main#subdirectory=behaviors/work-tracker.yaml
 ---
 
 # Converge
@@ -28,14 +34,19 @@ between waves and refuses silent drift in either direction.
 
 @converge:context/converge-awareness.md
 
-## What this bundle provides (knowledge layer)
+## What this bundle provides
 
 - **`converge:protocol-authority`** — THE carrier of the ratified protocol.
-  Delegate any question about protocol conformance, the stack, the phases, the
-  lifecycle, the Freeze Bar, the amendment protocol, or the owner attention
-  budget. It holds the full `docs/PROTOCOL.md` so the root session doesn't
-  have to.
-- **Skills** (load on demand for a specific procedure):
+  Delegate any *interpretive* question ("does this conform? / am I allowed?"):
+  the stack, the phases, the lifecycle, the Freeze Bar, the amendment protocol,
+  the owner attention budget. It holds the full `docs/PROTOCOL.md` so the root
+  session doesn't have to.
+- **`converge:reconciler`** — the **ratchet**. SEED and standing RECONCILE:
+  derives clause-granular ledger rows from a repo's frozen contracts, runs the
+  repo's own conformance kit, detects bidirectional drift, and files
+  GAP/VIOLATION rows with tracker refs. The one mutating agent; never
+  synchronously interrupts the owner. Carries `docs/LEDGER-FORMAT.md`.
+- **Skills** (load on demand for a *procedural* "how do I…" ask):
   - `seam-test` — is this a seam? does it warrant a contract?
   - `candidate-amendment` — how to author a `CANDIDATE-<topic>.md` proposal
   - `freeze-bar` — the four-condition DRAFT → FROZEN checklist
@@ -51,11 +62,14 @@ to them rather than restating them.
 
 ## Status
 
-Early build — **knowledge layer only.** Not yet present (deferred to a
-behavioral-model step): the phase-loop recipes (encode, seed/reconcile, full
-wave), an orchestrator mode, enforcement hooks, and the negotiator and
-reconciler agents. This bundle does not own the tracker, does not ratify, and
-does not store any repo's vision, contracts, or ledger — those live in each
-target repo.
+**Build increment 1** — knowledge layer + the `reconciler` (ratchet) agent,
+dogfooded against drumbeat's frozen contract. Not yet present: the phase-loop
+recipes (`encode`, `seed-reconcile`, `full-wave` — specced in
+`docs/design/mechanism-spec.md` §4, authored next via `recipes:recipe-author`),
+the `hooks-candidate-guard` hook (increment 2), and the `negotiator` /
+`amendment-drafter` agents. The orchestration mode is **DEFERRED by decision**
+(pure delegation + recipe gates + hook). This bundle does not own the tracker,
+does not ratify, and does not store any repo's vision, contracts, or ledger —
+those live in each target repo.
 
 @foundation:context/shared/common-system-base.md

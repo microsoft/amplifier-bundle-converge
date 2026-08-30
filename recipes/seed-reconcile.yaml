@@ -1,0 +1,255 @@
+# =============================================================================
+# seed-reconcile — the Converge "ratchet"
+# =============================================================================
+#
+# Reconciles a target repo against its FROZEN contracts. Derives/updates a
+# clause-granular conformance ledger, runs the repo's OWN conformance kit, maps
+# results onto rows, files work-tracker items for every GAP/VIOLATION, records
+# bidirectional drift, and emits a reconcile report.
+#
+# Mechanism spec: @converge:docs/design/mechanism-spec.md §4.2
+# Ledger format:  @converge:docs/LEDGER-FORMAT.md
+# Protocol:       @converge:docs/PROTOCOL.md §3.3 (drift + disposition semantics)
+#
+# SCHEDULABLE / UNATTENDED — this loop NEVER prompts the owner. It has zero
+# approval gates and zero owner-facing moments (mechanism-spec §4.2
+# owner_interaction, Finding #4). Any finding that would need an owner decision
+# is filed as a ledger row + tracker item and LEFT there for the next
+# `full-wave` priority-kill gate. Nothing here pages a human.
+#
+# IDEMPOTENT-ish — designed to run repeatedly (every merge + on schedule):
+#   - ledger rows are UPDATED in place by stable id, never renumbered/duplicated;
+#   - tracker filing checks for an existing OPEN item per row id and references
+#     it rather than blind-duplicating.
+#
+# Requirements:
+#   - foundation bundle (provides `foundation:explorer`, recipes runtime)
+#   - converge bundle  (provides `converge:reconciler` — the one mutating agent,
+#     carries LEDGER-FORMAT.md; has read/glob/grep/bash/write_file/git + the
+#     work-tracker tools it files GAP/VIOLATION items with)
+#   - a reachable work-tracker service + the named `tracker_project`
+#
+# Usage (in session): "run seed-reconcile on <repo> filing gaps into <project>"
+# Usage (CLI):
+#   amplifier tool invoke recipes operation=execute \
+#     recipe_path=@converge:recipes/seed-reconcile.yaml \
+#     context='{"target_repo": "/path/to/drumbeat", "tracker_project": "drumbeat-conformance"}'
+#
+# Context variables:
+#   - target_repo     (required) path to the repo to reconcile
+#   - tracker_project (required) work-tracker project for GAP/VIOLATION items
+#   - contracts_glob  (optional) default "contracts/*.md"
+#   - ledger_dir      (optional) default "ledger/"
+# =============================================================================
+#
+# CHANGELOG
+# -----------------------------------------------------------------------------
+# v1.0.0 (2026-08-29):
+#   - NEW FEATURE: Initial seed-reconcile recipe (Converge increment 1).
+#     * Flat, gate-free, unattended reconcile loop per mechanism-spec §4.2.
+#     * 4 sequential steps: load-contracts (foundation:explorer) → derive-rows,
+#       run-conformance, file-drift (all converge:reconciler), with context
+#       accumulated forward via step outputs.
+#     * Encodes the anti-scope guards: derive-never-invent, run-the-repo's-own-
+#       kit, self-report-is-never-proof, file-don't-interrupt, bidirectional
+#       drift, idempotent re-runs.
+# =============================================================================
+
+name: "seed-reconcile"
+description: >
+  The Converge ratchet. Reconciles a target repo against its frozen contracts:
+  derives/updates a clause-granular conformance ledger, runs the repo's own
+  conformance kit, files work-tracker items for every GAP/VIOLATION, records
+  bidirectional drift, and emits a reconcile report. Flat, gate-free, and
+  schedulable — it never prompts the owner.
+version: "1.0.0"
+author: "converge bundle"
+tags: ["converge", "ratchet", "conformance", "ledger", "reconcile", "drift"]
+
+context:
+  # --- required (no default — must be supplied at invocation) ---
+  target_repo: ""          # path to the repo being reconciled
+  tracker_project: ""      # work-tracker project GAP/VIOLATION items are filed into
+  # --- optional (defaults per mechanism-spec §4.2) ---
+  contracts_glob: "contracts/*.md"   # where the seam contracts live
+  ledger_dir: "ledger/"              # where rows.yaml and checks/ live (LEDGER-FORMAT §1)
+
+steps:
+  # ---------------------------------------------------------------------------
+  # 1. load-contracts — read-only intake (no mutation)
+  # ---------------------------------------------------------------------------
+  - id: "load-contracts"
+    agent: "foundation:explorer"
+    timeout: 600
+    output: "contract_inventory"
+    prompt: |
+      Read-only intake for a conformance reconcile of the repo at:
+        {{target_repo}}
+
+      Do NOT modify anything. Produce a CONTRACT INVENTORY the downstream
+      reconciler will derive ledger rows from. Gather:
+
+      1. Every contract file matching `{{contracts_glob}}` (relative to
+         {{target_repo}}). For each: its path, and its frozen Core clauses — the
+         numbered invariants (e.g. "Core 1", "Core 2", ...). Quote each clause
+         VERBATIM (exact bytes). The reconciler anchors rows on these quotes and
+         machine-verifies them against contract bytes, so do NOT paraphrase.
+      2. Any REQUIRED / EXCLUDED matrix entries present in those contracts.
+      3. Current repo-tree evidence relevant to each clause: the files,
+         functions, tests, or config that appear to implement, satisfy, or
+         contradict it — with concrete paths. This is orientation for
+         disposition, NOT a verdict.
+      4. The current contents of `{{ledger_dir}}` if it already exists
+         (`rows.yaml` and `checks/`), so the reconciler UPDATES rather than
+         recreates. If `{{ledger_dir}}` is absent, say so plainly — that means
+         this is a first-population SEED run.
+      5. The repo's conformance-kit entry point if discoverable (a pytest
+         target, a Makefile check, `ledger/checks/`, etc.) — NAME the command;
+         do NOT run it (running the kit is a later step).
+
+      Report the inventory as structured prose. Every clause quote must be
+      verbatim. If `{{contracts_glob}}` matches no files, say so explicitly — a
+      repo with no contracts gets no drift detector, only the demand to write a
+      contract. That is a real result to report, not an error to paper over.
+
+  # ---------------------------------------------------------------------------
+  # 2. derive-rows — derive/update ledger rows + SYNC row (no kit run yet)
+  # ---------------------------------------------------------------------------
+  - id: "derive-rows"
+    agent: "converge:reconciler"
+    timeout: 900
+    output: "derived_rows"
+    prompt: |
+      SCHEDULED, UNATTENDED reconcile run — you never prompt the owner. Any
+      decision that would need a human is left as a ledger row (and, in the final
+      step, a tracker item), never surfaced as a question.
+
+      Target repo: {{target_repo}}
+      Contracts:   {{contracts_glob}}
+      Ledger dir:  {{ledger_dir}}
+
+      Using the contract inventory below, DERIVE or UPDATE the ledger rows per
+      LEDGER-FORMAT (your carried knowledge). Do NOT run the conformance kit in
+      this step — that is the next step. Here:
+
+      - Emit one row PER CHECKABLE CLAUSE. Derive, never invent: no row without a
+        backing clause. Every row quotes its clause verbatim; verify each quote
+        against the contract bytes.
+      - Assign a PROVISIONAL disposition from the fixed vocabulary
+        (CONFORMS / GAP / VIOLATION / OPEN-PINNED / NOT-ASSERTABLE / EXCLUDED;
+        DIVERGED only for externally-governed contracts). "Provisional" = before
+        the kit runs; the next step confirms it against real results. Attach the
+        required fields: a `justification` for every OPEN-PINNED / NOT-ASSERTABLE.
+      - Write/refresh the SYNC row (`<PREFIX>-000`) pinning each contract file's
+        path + content hash. If a hash differs from the existing ledger, FLAG
+        that a mandatory full-ledger re-review is owed — never a silent hash bump
+        (LEDGER-FORMAT §4).
+      - IDEMPOTENCY: if `{{ledger_dir}}/rows.yaml` already exists, UPDATE rows in
+        place matched by their stable `id`. Never renumber, never reuse, never
+        duplicate an existing row. New clauses get new ids continuing the
+        sequence; a clause that has disappeared is drift, not a deletion.
+
+      Contract inventory:
+      {{contract_inventory}}
+
+      Output the derived/updated row set — dispositions, verbatim quotes,
+      assertion refs, and the SYNC row — as your result for the next step. Do NOT
+      file tracker items and do NOT write the final rows.yaml yet.
+
+  # ---------------------------------------------------------------------------
+  # 3. run-conformance — invoke the repo's OWN kit, map results onto rows
+  # ---------------------------------------------------------------------------
+  - id: "run-conformance"
+    agent: "converge:reconciler"
+    timeout: 1200
+    output: "conformance_results"
+    prompt: |
+      SCHEDULED, UNATTENDED reconcile run — no owner prompts.
+
+      Target repo: {{target_repo}}
+
+      Run the TARGET REPO'S OWN conformance kit and map its results onto the
+      derived rows below. You own NO checks; the repo does. Invoke its existing
+      kit via `bash` (e.g. `pytest -q` in {{target_repo}}, or the Makefile /
+      check entry point the intake identified). Do NOT reimplement, own, or
+      invent checks.
+
+      Rules:
+      - A disposition follows the RESULT YOU RAN, never any artifact's claim. A
+        `DONE.md`, a health endpoint, a green badge, or a passing-looking log is
+        NOT evidence — only the check you executed and observed is (pillar 2).
+      - Map each row to its real state from the run: kit-passing backing →
+        CONFORMS; a required behavior missing → GAP; a contradicted invariant →
+        VIOLATION. A row with no runnable assertion stays NOT-ASSERTABLE (with
+        its justification).
+      - A NON-ZERO kit exit is DATA, not a failure of this run. Failing checks
+        become GAP / VIOLATION dispositions — do NOT treat test failures as an
+        error to abort on.
+      - If the repo has NO discoverable conformance kit, say so honestly and mark
+        the affected rows NOT-ASSERTABLE with that reason. Do NOT fabricate a
+        pass.
+      - Run the coverage tripwires (LEDGER-FORMAT §6) and report their status.
+
+      Derived rows:
+      {{derived_rows}}
+
+      Output, for the final step: each row with its CONFIRMED post-run
+      disposition, the exact command(s) you ran and what you observed, and the
+      coverage-tripwire results.
+
+  # ---------------------------------------------------------------------------
+  # 4. file-drift — write final rows.yaml, file tracker items, emit report
+  # ---------------------------------------------------------------------------
+  - id: "file-drift"
+    agent: "converge:reconciler"
+    timeout: 900
+    output: "final_output"
+    prompt: |
+      FINAL step of a scheduled, unattended reconcile — no owner prompts, ever.
+      Any finding that needs an owner decision becomes a ledger row + a tracker
+      item and is LEFT there for the next wave's priority-kill gate. You never
+      page a human (mechanism-spec §4.2, Finding #4).
+
+      Target repo:     {{target_repo}}
+      Ledger dir:      {{ledger_dir}}
+      Tracker project: {{tracker_project}}
+
+      Using the confirmed conformance results below:
+
+      1. WRITE THE FINAL LEDGER to `{{ledger_dir}}/rows.yaml` in {{target_repo}}
+         — the full row set with confirmed dispositions, verbatim quotes,
+         assertion refs, and the SYNC row. Update in place by stable row id;
+         never renumber or duplicate. After writing, VERIFY the file exists and
+         is non-empty (a missing artifact is a real result, not a silent pass).
+
+      2. RECORD BIDIRECTIONAL DRIFT as rows: movement AWAY from a frozen clause
+         is drift; silent movement BACK toward spec ("un-divergence") from a
+         pinned behavior is EQUALLY drift. Any change in the
+         spec↔implementation relationship not traceable to a ratified amendment
+         or a filed work item gets a row (PROTOCOL §3.3).
+
+      3. FILE TRACKER ITEMS for every GAP and VIOLATION row into the work-tracker
+         project "{{tracker_project}}", and record the returned item ref back
+         onto the row's `work` field. A red row without a live `work` ref is a
+         ledger that lies. work-tracker stays authoritative — you file INTO it,
+         you never replace it.
+         IDEMPOTENCY (this recipe runs repeatedly): BEFORE filing, check the
+         tracker for an existing OPEN item already referencing that row id. If
+         one exists, do NOT file a duplicate — reference the existing item on the
+         row and note it in the report. Only a newly-red row with no open item
+         gets a fresh `work_add`. Every filed item's description must carry the
+         row id as a back-reference.
+
+      4. EMIT THE RECONCILE REPORT as your final result:
+         - rows tallied by disposition (CONFORMS / GAP / VIOLATION / OPEN-PINNED
+           / NOT-ASSERTABLE / EXCLUDED / DIVERGED);
+         - bidirectional drift found (each direction, or "none");
+         - SYNC-row status ("current", or "re-review owed: <which contract hash
+           changed>");
+         - coverage-tripwire results (pass/fail for each of the three);
+         - tracker items filed vs. already-open items referenced.
+         Then STOP honestly — if something could not be asserted or run, name it
+         as a real residual rather than reporting a clean run that did nothing.
+
+      Confirmed conformance results:
+      {{conformance_results}}

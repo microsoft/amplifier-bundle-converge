@@ -16,17 +16,26 @@ Strategy → Vision → Contracts → Ledger → Lanes.
 
 Anything else that reaches the owner is a protocol defect — file it as one.
 
-**Routing:**
-- For any question about protocol conformance, the stack, the phases, the
-  lifecycle, the Freeze Bar, the amendment protocol, or the owner attention
-  budget → delegate to **`converge:protocol-authority`** (it carries the full
-  spec).
-- For a specific procedure → load the skill: `seam-test`,
-  `candidate-amendment`, `freeze-bar`, `ledger-disposition`, `lane-brief`.
+**Routing — you (the root session) are the only router.** Route by the *shape*
+of the ask:
+- **"Am I allowed / does this conform / what does the protocol say?"**
+  (interpretive) → delegate to **`converge:protocol-authority`** (it carries the
+  full spec). This covers conformance, the stack, the phases, the lifecycle, the
+  Freeze Bar, the amendment protocol, and the owner attention budget.
+- **"How do I author / perform X?"** (procedural) → load the matching skill:
+  `seam-test`, `candidate-amendment`, `freeze-bar`, `ledger-disposition`,
+  `lane-brief`.
+- **Worker agents return needs; they do not re-route.** When a spawned agent
+  (`reconciler`, and later `negotiator` / `amendment-drafter`) reports it needs
+  a conformance ruling or a seam judgment, *you* make the call
+  (protocol-authority / skill) and feed the answer back — the agent does not
+  delegate on its own.
 
 **Source of truth:** `@converge:docs/PROTOCOL.md` (ratified v2) and
 `@converge:docs/LEDGER-FORMAT.md` (starter ledger convention). Quote or point;
 never paraphrase them into drift.
 
-**Status:** knowledge layer only. The phase-loop recipes, orchestrator mode,
-enforcement hooks, and negotiator/reconciler agents are not built yet.
+**Status:** build increment 1 — knowledge layer + the `converge:reconciler`
+(ratchet) agent. The phase-loop recipes, the `hooks-candidate-guard` hook
+(increment 2), and the `negotiator`/`amendment-drafter` agents are not built
+yet. The orchestration mode is deferred by decision.
