@@ -9,6 +9,50 @@ silent backsliding: drift in either direction files a row. The owner's
 attention is spent only at the contract layer; everything below it that
 reaches the owner is a protocol defect.
 
+## Install
+
+**THE install path — the behavior (`--app`):**
+
+```
+amplifier bundle add git+https://github.com/bkrabach/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml --app
+```
+
+This composes converge's **capability layer** onto whatever bundle is already
+active: the four agents (`protocol-authority`, `reconciler`, `negotiator`,
+`amendment-drafter`), the five procedure skills, the `hooks-candidate-guard`
+hook (structural PROTOCOL.md §5 enforcement, on by default), the thin awareness
+context, and — via a behavior-includes-behavior include — the `amplifier-work-tracker`
+behavior that gives `reconciler` its `work_*` filing tools. Use this to add
+converge to an existing workspace/session (which must already provide foundation).
+
+**Full-workspace path — converge as the primary bundle:**
+
+```
+amplifier bundle add git+https://github.com/bkrabach/amplifier-bundle-converge@main
+amplifier bundle use converge
+```
+
+This composes the **root** `bundle.md`, which pulls in `amplifier-foundation`
+**and** `amplifier-work-tracker` **and** the same behavior. Use this to run the
+phase-loop recipes (`seed-reconcile`, `encode`, `full-wave`) end-to-end against
+a target repo.
+
+### What differs between the two paths (honestly)
+
+| | `--app` behavior | `bundle use converge` (root) |
+|---|---|---|
+| 4 agents · 5 skills · guard hook · awareness | ✅ | ✅ |
+| `foundation` present | assumes the active bundle already provides it (agents use `@foundation:` refs) | ✅ pulled in by `bundle.md` |
+| `work-tracker` present (reconciler's `work_*` filing) | ✅ the behavior includes the work-tracker **behavior** (behavior-includes-behavior), so `reconciler` gets `work_*` filing on this path too | ✅ pulled in by `bundle.md` |
+| `spawn.exclude_tools` structural enforcement of the agents' "no delegate / no skills / no shell" contracts | **carried in the behavior, but propagation of a behavior's top-level `spawn:` via `--app` is UNVERIFIED** — if it doesn't take effect, those claims degrade to the agents' behavioral instructions (a live probe is needed) | ✅ **guaranteed** — `spawn` is declared at the root mount plan |
+
+Both paths give the four agents, five skills, guard hook, awareness context, and
+work-tracker filing. The root path additionally pulls `foundation` itself and
+**guarantees** the `spawn.exclude_tools` structural enforcement — so for
+end-to-end recipe runs against a target repo, prefer `bundle use converge`. For
+lightweight composition of the knowledge/enforcement layer onto a session that
+already provides foundation, the `--app` behavior is the quick path.
+
 ## Status
 
 **Increment 4 build (final) — the agent roster is complete.** This bundle
@@ -27,16 +71,21 @@ ships:
 - `skills/` — five procedure skills (seam test, CANDIDATE amendment authoring,
   Freeze Bar checklist, ledger dispositions, lane-brief discipline)
 - `modules/hooks-candidate-guard/` — the ratchet's teeth: a `tool:pre` hook,
-  wired on by default in `bundle.md`, that structurally enforces PROTOCOL.md
-  §5 (no direct write to a FROZEN contract/`VISION.md`; amendments land only
-  via a ratified `CANDIDATE-<topic>.md`). See that module's own README for
-  the full contract and documented non-coverage.
+  wired on by default via `behaviors/converge.yaml`'s `hooks:` block, that
+  structurally enforces PROTOCOL.md §5 (no direct write to a FROZEN
+  contract/`VISION.md`; amendments land only via a ratified
+  `CANDIDATE-<topic>.md`). See that module's own README for the full contract
+  and documented non-coverage.
 
-All three phase-loop recipes are specced as complete recipe-author handoffs in
-`docs/design/mechanism-spec.md` §4 — `encode` (§4.1), `seed-reconcile` (§4.2),
-`full-wave` (§4.3) — authored via `recipes:recipe-author`, not shipped as
-bundle files. The orchestration mode is deferred by decision (pure delegation +
-recipe gates + hook instead).
+- `recipes/` — the phase loop, shipped and live-verified:
+  `@converge:recipes/seed-reconcile.yaml` (SEED + standing RECONCILE),
+  `@converge:recipes/encode.yaml` (Phase 2 ENCODE, owner-gated), and
+  `@converge:recipes/full-wave.yaml` (the owner-gated wave with the four §6
+  attention gates). Spec of record: `docs/design/mechanism-spec.md` §4
+  (`encode` §4.1, `seed-reconcile` §4.2, `full-wave` §4.3).
+
+The orchestration mode is deferred by decision (pure delegation + recipe gates +
+hook instead).
 
 ## The authoritative spec
 

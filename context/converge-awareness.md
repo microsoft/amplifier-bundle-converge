@@ -40,6 +40,7 @@ layer + `converge:reconciler` (ratchet) + `hooks-candidate-guard` (on by
 default, structurally enforcing PROTOCOL.md §5) + `converge:negotiator`
 (Phase 1 NEGOTIATE: evidence → decision-level minutes; returns needs,
 read-only) + `converge:amendment-drafter` (authors `CANDIDATE-<topic>.md` and
-stops; the guard escape hatch's upstream author). The three phase-loop recipes
-(`encode`/`seed-reconcile`/`full-wave`) are specced for `recipes:recipe-author`
+stops; the guard escape hatch's upstream author). All three phase-loop recipes
+(`@converge:recipes/seed-reconcile.yaml`, `encode.yaml`, `full-wave.yaml`) ship
+in `recipes/` and are live-verified (spec of record: mechanism-spec §4)
 in mechanism-spec §4. The orchestration mode is deferred by decision.

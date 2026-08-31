@@ -18,94 +18,44 @@ bundle:
     read-only). Build increment 4 (final): the **amendment-drafter** agent —
     authors CANDIDATE-<topic>.md proposals and stops (the guard escape hatch's
     upstream author) — completing the four-agent roster. All three phase-loop
-    recipes (encode, seed-reconcile, full-wave) are specced as complete
-    recipe-author handoffs in docs/design/mechanism-spec.md §4. The
+    recipes (encode, seed-reconcile, full-wave) SHIP in recipes/ and are
+    live-verified (spec of record: docs/design/mechanism-spec.md §4). The
     orchestration mode is DEFERRED by decision (pure delegation +
     recipe gates + hook instead).
 
 includes:
   - bundle: git+https://github.com/microsoft/amplifier-foundation@main
-  # Work-tracker tools (work_list / work_add / work_file) for converge:reconciler.
-  # Foundation does NOT provide these. URI verified against a live installation
-  # (settings.yaml of a working session composing this exact behavior).
+  # Work-tracker BEHAVIOR — supplies converge:reconciler's work_list/work_add/
+  # work_file tools (foundation does NOT provide these). behaviors/converge.yaml
+  # ALSO includes this same behavior (behavior-includes-behavior, the standard
+  # pattern) so tracker filing works on the --app path too; declaring it here as
+  # well keeps the root path self-contained and lets composition dedupe the two
+  # references (identical URI) to one instance.
   - bundle: git+https://github.com/microsoft/amplifier-work-tracker@main#subdirectory=behaviors/work-tracker.yaml
+  # Converge's own capability payload — agents, skills, hook, awareness context —
+  # lives in the behavior, which is ALSO the standalone --app install target.
+  # bundle.md includes it so the full-workspace (root) path and the --app path
+  # compose the identical capability (DRY; mirrors work-tracker's own bundle.md,
+  # which includes work-tracker:behaviors/work-tracker). The `converge:` namespace
+  # resolves to this repo's checkout root (bundle.md is the root, name: converge).
+  - bundle: converge:behaviors/converge
 
-# Compose converge's own agents into the coordinator. Without this block the
-# agents are DISCOVERABLE (amplifier agents show converge:reconciler) but never
-# COMPOSED into coordinator.config["agents"], so recipe execution fails with
-# "Agent 'converge:reconciler' not found in configuration". Discovery != composition.
-# (Live-verified fix — DTU dogfood, increment 1.)
-agents:
-  include:
-    - converge:reconciler
-    - converge:protocol-authority
-    - converge:negotiator
-    - converge:amendment-drafter
-
-# Structural enforcement of the agents' negative-capability contracts (Finding #1,
-# post-publication validation). Verified against installed app-cli source:
-#   apply_spawn_tool_policy (agent_config.py:16-65) strips these modules from the
-#   PARENT tool list on EVERY spawn (session_spawner.py:298 merge_configs path);
-#   an agent that RE-DECLARES a tool in its own frontmatter gets it back
-#   (_filter_tools session_spawner.py:72-132: final = (inherited - excluded) + explicit).
-# Safe for the live-verified recipes: foundation:git-ops and foundation:modular-builder
-#   BOTH re-declare tool-bash explicitly, so excluding it does NOT strip their git/build
-#   shell; none of git-ops/file-ops/modular-builder/explorer declares or needs
-#   tool-delegate or tool-skills. Net effect: converge's own agents cannot delegate,
-#   load skills, or (except reconciler, which re-declares it) shell out — making the
-#   "returns needs / no delegation / no shell" claims TRUE, not prose-only.
+# Structural enforcement of the agents' negative-capability contracts (Finding #1).
+# Declared HERE at the root as the GUARANTEED path: apply_spawn_tool_policy
+# (app-cli agent_config.py:16-65) reads `spawn` from the composed root mount plan
+# and strips these from the PARENT tool list on every spawn (an agent that
+# re-declares a tool keeps it — reconciler re-declares filesystem/search/bash/
+# work-tracker; git-ops/modular-builder re-declare bash, so the live-verified
+# recipes are unaffected). Also declared in behaviors/converge.yaml so the
+# capability travels with the behavior; whether an --app-listed behavior's
+# top-level `spawn:` propagates is unverified (see that file's PROPAGATION
+# CAVEAT), so this root declaration is the belt-and-suspenders guarantee for the
+# `bundle use converge` full-workspace path.
 spawn:
   exclude_tools:
     - tool-delegate
     - tool-skills
     - tool-bash
-
-# Register converge's own skills directory with tool-skills so load_skill() finds
-# them in a composed session. Foundation provides the tool-skills MODULE (so
-# load_skill exists) but its config.skills points only at foundation's own skills
-# dir — converge's five skills would be DISCOVERABLE but not COMPOSED (same
-# discovery != composition trap as agents). A top-level `skills:` key is silently
-# ignored; the tool-skills config.skills list is the sanctioned wiring.
-tools:
-  - module: tool-skills
-    source: git+https://github.com/microsoft/amplifier-bundle-skills@main#subdirectory=modules/tool-skills
-    config:
-      skills:
-        - "@converge:skills"
-
-# Increment 2 — the ratchet's teeth (mechanism-spec.md §6.1 DECIDED: BUILD).
-# Structural enforcement of PROTOCOL.md §5, pillar 3: no direct write to a
-# FROZEN contract/VISION.md; amendments land only via a ratified
-# CANDIDATE-<topic>.md. On by default (spec §3.2) — a guard that ships
-# off-by-default recreates exactly the convention-only gap the behavioral
-# model proved insufficient (OQ2). Full design: docs/design/hooks-candidate-guard-spec.md.
-#
-# Pre-publication note (spec §3.1): amplifier-bundle-converge is not published
-# yet, so this uses a same-repo relative path source. Switch to
-# `git+https://github.com/microsoft/amplifier-bundle-converge@main#subdirectory=modules/hooks-candidate-guard`
-# once the repo is published — never hardcode an absolute filesystem path here.
-hooks:
-  - module: hooks-candidate-guard
-    source: ./modules/hooks-candidate-guard
-    config:
-      enabled: true
-      guarded_globs: ["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md"]
-      require_frozen_marker: true
-      frozen_marker_regex: '(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN'
-      always_allow_globs: ["**/CANDIDATE-*.md"]
-      intercept_tools: ["write_file", "edit_file", "apply_patch"]
-      tool_name_aliases: ["Write", "Edit", "MultiEdit"]
-      path_fields: ["file_path", "path"]
-      scan_bash: true
-      bash_tool_name: "bash"
-      escape_mode: "ratified_candidate"        # ratified_candidate | token | both
-      candidate_glob: ["**/CANDIDATE-*.md"]
-      ratified_stamp_regex: '(?im)^ratified(?:\s+as\s+edited)?\b.*\bby\s+owner\b'
-      candidate_target_field: "target"
-      allow_emergency_unlock: false
-      emergency_unlock_token: ".converge/UNLOCK"
-      fail_closed_on_error: true
-      enforce_encode_before_impl: false        # rule (b), opt-in — see spec §4.6
 ---
 
 # Converge
@@ -118,7 +68,11 @@ autonomous lanes close them; a standing conformance audit — the **ratchet**
 (the ledger + reconcile enforcement layer) — keeps the gap ledger honest
 between waves and refuses silent drift in either direction.
 
-@converge:context/converge-awareness.md
+> The capability payload (agents, skills, hook, awareness context) lives in
+> `behaviors/converge.yaml`, which this bundle includes and which is also THE
+> standalone install target (`--app`). The awareness context loads via that
+> behavior's `context.include` — it is deliberately not re-`@`-mentioned here to
+> avoid double-loading. See **Install** in `README.md` for the two paths.
 
 ## What this bundle provides
 
@@ -144,6 +98,16 @@ between waves and refuses silent drift in either direction.
   Amendments land only via a ratified `CANDIDATE-<topic>.md` sibling. See
   `modules/hooks-candidate-guard/README.md` for the full contract, the
   config surface, and documented non-coverage.
+- **Recipes** (the phase loop — ship in `recipes/`, live-verified; spec of
+  record `docs/design/mechanism-spec.md` §4):
+  - `@converge:recipes/seed-reconcile.yaml` — SEED + standing RECONCILE:
+    derive/refresh the ledger from a target repo's contracts, detect
+    bidirectional drift, file GAP/VIOLATION tracker items (§4.2).
+  - `@converge:recipes/encode.yaml` — Phase 2 ENCODE: draft `VISION.md` +
+    per-seam contracts as DRAFT, owner-gated ratify, then commit (§4.1).
+  - `@converge:recipes/full-wave.yaml` — the owner-gated wave
+    SEED→QUEUE→EXECUTE→MERGE→VERIFY→CLOSE with the four §6 attention gates
+    (§4.3, post-stage gate semantics).
 
 ## The authoritative spec
 
@@ -157,8 +121,8 @@ to them rather than restating them.
 **Build increment 1** — knowledge layer + the `reconciler` (ratchet) agent,
 dogfooded against drumbeat's frozen contract.
 
-**Build increment 2** — the `hooks-candidate-guard` hook, wired into this
-bundle's `hooks:` block, on by default. Structural (not conventional)
+**Build increment 2** — the `hooks-candidate-guard` hook, wired via
+`behaviors/converge.yaml`'s `hooks:` block, on by default. Structural (not conventional)
 enforcement of PROTOCOL.md §5, pillar 3: a direct write/edit/patch/bash
 write to a FROZEN `contracts/*.md` or `VISION.md` is denied; amendments land
 only via a ratified `CANDIDATE-<topic>.md`. See
@@ -180,12 +144,12 @@ NOT change" · ratification ask · the `target:` field the guard escape hatch
 consumes) and **stops** — never edits the frozen file, never self-ratifies,
 returns needs.
 
-All three phase-loop recipes are now specced as complete recipe-author
-handoffs in `docs/design/mechanism-spec.md` §4: `encode` (§4.1),
-`seed-reconcile` (§4.2), `full-wave` (§4.3, expressed under the engine's
-post-stage gate semantics). These are authored via `recipes:recipe-author`,
-not shipped as bundle files. The orchestration mode is **DEFERRED by
-decision** (pure delegation + recipe gates + hook). This bundle
+All three phase-loop recipes **ship** in `recipes/` and are live-verified:
+`seed-reconcile.yaml`, `encode.yaml`, `full-wave.yaml` (invoke via
+`@converge:recipes/<name>.yaml`; `full-wave` expresses the engine's post-stage
+gate semantics). Their spec of record is `docs/design/mechanism-spec.md` §4
+(`encode` §4.1, `seed-reconcile` §4.2, `full-wave` §4.3). The orchestration
+mode is **DEFERRED by decision** (pure delegation + recipe gates + hook). This bundle
 does not own the tracker, does not ratify, and does not store any repo's
 vision, contracts, or ledger — those live in each target repo.
 

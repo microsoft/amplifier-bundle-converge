@@ -1,0 +1,127 @@
+bundle:
+  name: converge-behavior
+  version: 0.1.0
+  description: >-
+    Vision-first, contract-driven development — the composable capability
+    package. Adds converge's four agents (protocol-authority, reconciler,
+    negotiator, amendment-drafter), its five procedure skills (via tool-skills),
+    the hooks-candidate-guard tool:pre hook (structural PROTOCOL.md §5
+    enforcement, on by default), and the thin always-on awareness context. THE
+    install path:
+      amplifier bundle add git+https://github.com/bkrabach/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml --app
+    Composes onto whatever bundle is already active (which must already provide
+    foundation). Includes the work-tracker BEHAVIOR (so converge:reconciler gets
+    its work_* filing tools on BOTH install paths); does NOT include foundation
+    itself — see bundle.md and README.md "Install".
+
+includes:
+  # The work-tracker BEHAVIOR (not a root bundle) supplies converge:reconciler's
+  # work_list / work_add / work_file tools. Behavior-includes-behavior is the
+  # standard ecosystem pattern (context-intelligence, dot-graph, digital-twin-
+  # universe all do it). Including it HERE closes the --app gap: the behavior-only
+  # install now gets tracker filing too, not just the full-workspace root path.
+  # Same URI form bundle.md consumes, so composition dedupes to one instance.
+  - bundle: git+https://github.com/microsoft/amplifier-work-tracker@main#subdirectory=behaviors/work-tracker.yaml
+
+# Namespace note (verified against foundation registry.py:467-523): loading this
+# file via `#subdirectory=behaviors/converge.yaml` also loads the sibling root
+# bundle.md (name: converge), which registers `@converge:` -> the repo CHECKOUT
+# ROOT. So every `converge:` / `@converge:` ref below resolves to repo-root/agents,
+# /context, /skills — NOT to behaviors/. This is exactly the work-tracker pattern
+# (root name `work-tracker`, behavior name `work-tracker-behavior`, refs use the
+# root name). This behavior is deliberately named `converge-behavior` (distinct
+# from the root `converge`) so it does not shadow the root namespace.
+
+tools:
+  # Register converge's five skills with tool-skills so load_skill() finds them
+  # in a composed session. Foundation ships the tool-skills MODULE (so load_skill
+  # exists) but points config.skills only at foundation's own skills dir — without
+  # this block converge's skills are DISCOVERABLE but not COMPOSED (the same
+  # discovery != composition trap as agents). A top-level `skills:` key is
+  # silently ignored; this tool-skills config.skills list is the sanctioned wiring.
+  - module: tool-skills
+    source: git+https://github.com/microsoft/amplifier-bundle-skills@main#subdirectory=modules/tool-skills
+    config:
+      skills:
+        - "@converge:skills"
+
+hooks:
+  # The ratchet's teeth (mechanism-spec §6.1 DECIDED: BUILD). Structural
+  # enforcement of PROTOCOL.md §5, pillar 3: no direct write/edit/patch/bash-write
+  # to a FROZEN contract/VISION.md; amendments land only via a ratified
+  # CANDIDATE-<topic>.md. On by default (a guard that ships off recreates the
+  # convention-only gap the behavioral model proved insufficient, OQ2).
+  #
+  # Module source is RELATIVE TO THIS FILE'S DIRECTORY (behaviors/), verified
+  # against foundation's FileSource + the work-tracker behavior's own comment:
+  # `../modules/...` is correct (-> repo-root/modules); `./modules/...` silently
+  # resolves to behaviors/modules/ and the module never loads. On publish this
+  # still resolves because relative sources bind to the behavior file's dir.
+  - module: hooks-candidate-guard
+    source: ../modules/hooks-candidate-guard
+    config:
+      enabled: true
+      guarded_globs: ["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md"]
+      require_frozen_marker: true
+      frozen_marker_regex: '(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN'
+      always_allow_globs: ["**/CANDIDATE-*.md"]
+      intercept_tools: ["write_file", "edit_file", "apply_patch"]
+      tool_name_aliases: ["Write", "Edit", "MultiEdit"]
+      path_fields: ["file_path", "path"]
+      scan_bash: true
+      bash_tool_name: "bash"
+      escape_mode: "ratified_candidate"        # ratified_candidate | token | both
+      candidate_glob: ["**/CANDIDATE-*.md"]
+      ratified_stamp_regex: '(?im)^ratified(?:\s+as\s+edited)?\b.*\bby\s+owner\b'
+      candidate_target_field: "target"
+      # Break-glass emergency-unlock keys omitted on purpose: GuardConfig's own
+      # defaults (allow_emergency_unlock=false, unlock path=.converge/UNLOCK) already
+      # give the intended off-by-default behavior. Not restating them keeps the
+      # config minimal and avoids a path literal that secret-scanners keep
+      # misreading. See modules/hooks-candidate-guard/README.md to enable it.
+      fail_closed_on_error: true
+      enforce_encode_before_impl: false        # rule (b), opt-in — see hooks-candidate-guard-spec §4.6
+
+agents:
+  # Compose converge's four agents into coordinator.config["agents"]. Without an
+  # agents: block the agents are DISCOVERABLE (`amplifier agents show`) but never
+  # COMPOSED, so recipe execution fails "Agent 'converge:reconciler' not found in
+  # configuration". Discovery != composition (live-verified, DTU increment 1).
+  include:
+    - converge:reconciler
+    - converge:protocol-authority
+    - converge:negotiator
+    - converge:amendment-drafter
+
+context:
+  include:
+    - converge:context/converge-awareness.md
+
+# Structural enforcement of the agents' negative-capability contracts (Finding #1).
+# Verified against installed app-cli source: apply_spawn_tool_policy
+# (agent_config.py:16-65) strips these modules from the PARENT tool list on every
+# spawn; an agent that RE-DECLARES a tool in its own frontmatter gets it back
+# (_filter_tools session_spawner.py:72-132: final = (inherited - excluded) + explicit).
+# reconciler re-declares tool-filesystem/tool-search/tool-bash/tool-work-tracker,
+# so it keeps read/write + shell + work_* filing; negotiator & amendment-drafter
+# re-declare nothing → genuinely lose delegate/skills/bash. Foundation's
+# git-ops/modular-builder re-declare tool-bash, so excluding it does NOT break the
+# live-verified recipes; none of the recipe-critical foundation agents needs
+# tool-delegate/tool-skills.
+#
+# ⚠ PROPAGATION CAVEAT (honest gap, design question (a)): apply_spawn_tool_policy
+# reads spawn from the COMPOSED mount plan. This is GUARANTEED to take effect when
+# converge is composed as a BUNDLE that carries this spawn key into the root mount
+# plan (the `bundle use converge` / root-bundle path — bundle.md also declares
+# spawn for exactly that guarantee). Whether an --app-listed behavior's top-level
+# `spawn:` merges into the active session's mount plan could NOT be verified from
+# source (no compose-layer code proving app-list carries top-level `spawn`). It is
+# carried here so it applies IF top-level bundle keys propagate via --app; if a
+# live probe shows they do not, structural enforcement holds only on the root path
+# and the agents' "structurally removed" body lines degrade to behavioral rules on
+# the --app path. This needs a live probe (cf. increment-2 Test §T5).
+spawn:
+  exclude_tools:
+    - tool-delegate
+    - tool-skills
+    - tool-bash
