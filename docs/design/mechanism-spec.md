@@ -478,43 +478,111 @@ current session via `load_skill`. None fork; none delegate. Each answers
 ### 4.3 full-wave — **PLANNED**
 
 - **name:** full-wave
-- **purpose:** PLANNED. The zero-touch wave — SEED → QUEUE → EXECUTE →
-  MERGE+VERIFY → CLOSE (§4) — with approval gates at **exactly the four owner-
-  attention points and nowhere else** (§6). Anything else that would reach the
-  owner is a protocol defect (§6; §C).
-- **execution_mode:** staged
-- **steps:**
-  | id | agent | produces | consumes |
+- **purpose:** PLANNED. The owner-gated wave — SEED/RECONCILE → QUEUE → EXECUTE
+  → MERGE → VERIFY → CLOSE (§4) — with approval gates at **exactly the four
+  owner-attention points and nowhere else** (§6). Anything else that would reach
+  the owner is a protocol defect (§6; §C).
+- **execution_mode:** staged · **schedulable:** no (owner-gated).
+
+- **ENGINE SEMANTICS — read first (increment-3 hard-won lesson):**
+  1. **Gates fire AFTER the declaring stage's steps complete; a gate governs the
+     transition to the NEXT stage.** So a gate is **declared on the PRIOR
+     stage**, and the steps that must act on the owner's answer live in the
+     **NEXT stage**. (encode v1.0.0 inverted this — commit ran before the ask;
+     v1.1.0 fixed it to this shape.)
+  2. **`{{_approval_message}}` holds ONLY the most-recent gate's message.** A
+     multi-gate recipe (this one has four) **must persist each gate's record**
+     the moment it is consumed — write it to a file under the workspace (e.g.
+     `.converge/wave/<gate>.approval`) via an update-step in the consuming stage
+     — because a later stage's `{{_approval_message}}` will have been overwritten
+     by the intervening gate.
+  3. **Fail loud on empty approvals.** Every stage that consumes a gate must run
+     a bash assert that the approval record is non-empty (and, where the protocol
+     needs it, contains the literal ratifying word) — an empty/auto-approved
+     record must **halt the wave**, never silently proceed. (This is the encode
+     v1.1.0 fail-loud assert, generalized to four gates.)
+
+- **stages (each stage = ordered steps; the gate a stage DECLARES fires after
+  that stage, gating entry to the next):**
+
+  | stage | steps (agents) | declares gate (fires after this stage) | consumes prior gate's record |
   |---|---|---|---|
-  | seed | converge:reconciler | populated ledger | contracts + tree |
-  | queue | converge:reconciler | tracker items with clause-quoting acceptance (via lane-brief) | ledger rows |
-  | execute | foundation:explorer (worktree lanes) | lane commits + DONE.md | tracker items |
-  | merge | foundation:git-ops | merged main | lane artifacts |
-  | verify | converge:reconciler | each verdict promoted only by its own artifact check; ledger re-run post-merge | merged main |
-  | close | converge:reconciler | freeze-bar report; residuals named honestly | verified state |
-  - **Finding #3:** the former single `merge-verify` step is **split into
-    `merge` then `verify`** so the two distinct owner-attention gates each
-    attach to a clean stage boundary (an `authorizes_next` gate before `merge`
-    ops, a `validates_previous` gate after `verify`) instead of two gates with
-    opposite semantics bracketing one step. This also resolves the gate-ordering
-    ambiguity the model flagged.
-- **approval_gates (exactly four — 1:1 with §6, no fifth):**
-  | name | placed_after_step | semantic | §6 owner-attention item |
-  |---|---|---|---|
-  | priority-kill | queue | authorizes_next | §6 #4 — priority/kill before lanes launch |
-  | irreversible-ops | execute | authorizes_next | §6 #2 — irreversible/destructive calls (authorizes the `merge`) |
-  | human-device-verify | verify | validates_previous | §6 #3 — verification only a human/device can do |
-  | ratify-changes | close | validates_previous | §6 #1 — ratify any vision/contract change or FROZEN stamp |
-  - Each gate maps to a **distinct** §6 item; all four §6 items are covered
-    exactly once. `irreversible-ops` (`authorizes_next` after `execute`)
-    authorizes the irreversible `merge`; `human-device-verify`
-    (`validates_previous` after `verify`) confirms human/device verification of
-    what merged. Clean boundaries, no ordering ambiguity.
-- **relationship_to_modes:** runs under **no dedicated mode** — the
-  `converge-orchestration` mode is DEFERRED (§5.1); phase discipline is carried
+  | **S0 seed** | invoke `seed-reconcile` as a sub-recipe (flat, gateless) → populated/ refreshed ledger + filed GAP/VIOLATION tracker items | — | — |
+  | **S1 queue** | `converge:reconciler` turns READY ledger rows into tracker items with clause-quoting acceptance (applies `lane-brief` discipline: honesty gate + file-ownership split) → a **candidate queue** for the owner to pick/kill | **priority-kill** (§6 #4) | — |
+  | **S2 execute** | assert+persist `priority-kill` record → work ONLY the owner-authorized item set (see EXECUTOR below) → lane commits + `DONE.md` per item | **irreversible-ops** (§6 #2) | `priority-kill` |
+  | **S3 merge** | assert+persist `irreversible-ops` record → `foundation:git-ops` merges the authorized, completed lanes to main | **human-device-verify** (§6 #3) | `irreversible-ops` |
+  | **S4 verify** | assert+persist `human-device-verify` record → `converge:reconciler` re-runs the ledger post-merge; **each verdict promoted only by its own artifact check** (pillar 2; `lane-brief` provenance — inherited-from-fork artifacts are the #1 false signal) → verify report | **ratify-changes** (§6 #1) | `human-device-verify` |
+  | **S5 close** | assert+persist `ratify-changes` record → `converge:reconciler` emits the **freeze-bar report** (residuals named honestly per §5/pillar 5); if the owner's ratify message stamped any DRAFT→FROZEN or amendment, record it (the recipe still **does not stamp FROZEN itself** — it records the owner's literal word) | — | `ratify-changes` |
+
+- **approval_gates (exactly four — 1:1 with §6, no fifth) — under post-stage semantics:**
+  | gate | DECLARED on stage | FIRES before stage | CONSUMED by stage | semantic | §6 item |
+  |---|---|---|---|---|---|
+  | **priority-kill** | S1 queue | S2 execute | S2 execute | authorizes_next | §6 #4 — owner picks/kills queued items before any work runs |
+  | **irreversible-ops** | S2 execute | S3 merge | S3 merge | authorizes_next | §6 #2 — owner authorizes the irreversible merge |
+  | **human-device-verify** | S4 verify | S5 close | S5 close | validates_previous | §6 #3 — owner/device confirms the post-merge verification |
+  | **ratify-changes** | S4 verify → gate before S5 close | S5 close | S5 close | validates_previous | §6 #1 — owner ratifies any vision/contract change / FROZEN stamp surfaced by the wave |
+  - **Ordering note (two gates around the merge→close boundary).** `human-device-
+    verify` and `ratify-changes` are BOTH `validates_previous`-style and both sit
+    late. Under this engine a single stage boundary carries a single gate, so
+    they must occupy **distinct boundaries**: place `human-device-verify` after
+    **S4 verify** (gating entry to S5), and `ratify-changes` after a short
+    **S4b ratify-review** stage (a no-op review stage between verify and close)
+    so each has its own clean post-stage gate. Net stages: S0,S1,S2,S3,S4,S4b,S5
+    — still exactly four gates, still 1:1 with §6, **no fifth owner-facing gate.**
+  - Each of the four §6 items is covered exactly once; every other transition is
+    gateless. A fifth owner-facing gate would be a protocol defect (§C).
+
+- **EXECUTOR — honest v1 scope (what a recipe CAN deliver):**
+  - **Deliverable now:** a **`foreach` over the owner-authorized queued items**,
+    each handled by a **work-capable agent step** that claims the tracker item
+    (`work_claim`), does the bounded change **within cwd**, writes `DONE.md` +
+    commits, and resolves/records the item. Bounded parallelism via the engine's
+    `foreach` concurrency cap. This is real, in-engine, and testable.
+  - **Residual (NOT deliverable as a recipe — named, not hidden):** full
+    **autonomous lane orchestration with true parallel worktree custody** (the
+    cortex-style N-lane highway with per-lane tmux/worktree lease management) is
+    **out of scope for the recipe engine.** A recipe `foreach` is bounded
+    fan-out, not durable multi-session custody: no cross-session lease/reclaim,
+    no per-lane liveness independent of the wave, no worktree-per-lane isolation
+    guarantee. `full-wave` v1 therefore executes items **sequentially or in
+    bounded `foreach` batches inside the wave's own session**, and DEFERS true
+    lane custody to an external orchestrator (the ten-lane-highway / goal-batch
+    tooling) invoked *outside* the recipe. The `lane-brief` skill still governs
+    how each item is briefed and how completion is judged (git artifacts, not
+    liveness) — that discipline holds regardless of executor.
+
+- **inputs (recipe context):** `target_repo` (required; = session cwd or within
+  it) · `contracts_glob`, `ledger_dir`, `tracker_project` (passed through to the
+  `seed-reconcile` sub-recipe) · `authorized_items` (populated from the
+  `priority-kill` gate message; the item ids the owner picked) · `wave_dir`
+  (default `.converge/wave/`, where gate records persist).
+- **outputs:** refreshed ledger + filed tracker items (from S0) · lane commits +
+  `DONE.md` per executed item · merged main (S3) · post-merge verify report (S4)
+  · freeze-bar report with honestly-named residuals (S5) · four persisted gate
+  records under `wave_dir` (the wave's owner-decision audit trail).
+- **constraints (hard — recipe-author honors, zero latitude):**
+  - **Within-cwd invariant (v1.2.0):** every write, merge, and commit resolves
+    inside cwd / `target_repo`.
+  - **Write-denial doctrine (increment 2):** `hooks-candidate-guard` is on. The
+    wave writes ledger rows, tracker items, lane code, `DONE.md`, and reports —
+    none of which are FROZEN contract/`VISION.md` files, so none are guard-
+    denied. The wave **never** writes a FROZEN file directly; any vision/contract
+    change rides the CANDIDATE flow and lands only via the owner's `ratify-
+    changes` word. The wave **never stamps FROZEN itself** (owner-only, §5).
+  - **Tracker via `work_*` tools:** items are claimed/filed/resolved through
+    work-tracker (`work_claim`/`work_add`/`work_file`/`work_resolve`); the wave
+    files into the tracker, never replaces it (§C).
+  - **Fail-loud empties (encode lesson):** every gate-consuming stage asserts a
+    non-empty approval record (and the literal ratifying word where §5 requires
+    it) via bash, and **halts the wave** on empty — never proceeds on an
+    auto-approved or missing record.
+  - **Derive nothing new:** work is drawn from the ledger/tracker gap, never
+    invented (§C); S0's `seed-reconcile` is the only source of queued work.
+- **relationship_to_modes:** runs under **no dedicated mode** (the
+  `converge-orchestration` mode is DEFERRED, §5.1); phase discipline is carried
   by the recipe's stage structure + the `hooks-candidate-guard` hook (§6.1) +
-  agent/skill routing. The four gates map 1:1 to §6's four items; **any fifth
-  owner-facing gate is a protocol defect** (§C).
+  root-as-router agent/skill routing. The four gates map 1:1 to §6's four items;
+  **any fifth owner-facing gate is a protocol defect** (§C).
 
 ---
 

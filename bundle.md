@@ -15,9 +15,12 @@ bundle:
     via a ratified CANDIDATE-<topic>.md). Build increment 3: the
     **negotiator** agent — Phase 1 NEGOTIATE, turning investigation evidence
     into decision-level minutes for the owner (returns needs, never re-routes;
-    read-only). Still deferred: the phase-loop recipes (encode, seed-reconcile,
-    full-wave — encode is specced for recipe-author) and the amendment-drafter
-    agent. The orchestration mode is DEFERRED by decision (pure delegation +
+    read-only). Build increment 4 (final): the **amendment-drafter** agent —
+    authors CANDIDATE-<topic>.md proposals and stops (the guard escape hatch's
+    upstream author) — completing the four-agent roster. All three phase-loop
+    recipes (encode, seed-reconcile, full-wave) are specced as complete
+    recipe-author handoffs in docs/design/mechanism-spec.md §4. The
+    orchestration mode is DEFERRED by decision (pure delegation +
     recipe gates + hook instead).
 
 includes:
@@ -37,6 +40,7 @@ agents:
     - converge:reconciler
     - converge:protocol-authority
     - converge:negotiator
+    - converge:amendment-drafter
 
 # Register converge's own skills directory with tool-skills so load_skill() finds
 # them in a composed session. Foundation provides the tool-skills MODULE (so
@@ -150,11 +154,20 @@ decision-level minutes for the owner (options + recommendation + the one
 decision to make), returns needs rather than re-routing (root-as-router,
 Finding #1), and is strictly read-only — it never ratifies and never writes.
 
-Not yet present: the phase-loop recipes (`encode`, `seed-reconcile`,
-`full-wave`). `encode` is specced as a complete recipe-author handoff in
-`docs/design/mechanism-spec.md` §4.1; `seed-reconcile` in §4.2. The
-`amendment-drafter` agent is still deferred. The orchestration mode is
-**DEFERRED by decision** (pure delegation + recipe gates + hook). This bundle
+**Build increment 4 (final)** — the `amendment-drafter` agent, wired into
+`agents: include`, **completing the four-agent roster** (`protocol-authority`,
+`reconciler`, `negotiator`, `amendment-drafter`). It authors
+`CANDIDATE-<topic>.md` proposals (exact diff · real-evidence bar · "what does
+NOT change" · ratification ask · the `target:` field the guard escape hatch
+consumes) and **stops** — never edits the frozen file, never self-ratifies,
+returns needs.
+
+All three phase-loop recipes are now specced as complete recipe-author
+handoffs in `docs/design/mechanism-spec.md` §4: `encode` (§4.1),
+`seed-reconcile` (§4.2), `full-wave` (§4.3, expressed under the engine's
+post-stage gate semantics). These are authored via `recipes:recipe-author`,
+not shipped as bundle files. The orchestration mode is **DEFERRED by
+decision** (pure delegation + recipe gates + hook). This bundle
 does not own the tracker, does not ratify, and does not store any repo's
 vision, contracts, or ledger — those live in each target repo.
 

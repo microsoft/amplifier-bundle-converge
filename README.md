@@ -11,7 +11,8 @@ reaches the owner is a protocol defect.
 
 ## Status
 
-**Increment 3 build.** This bundle ships:
+**Increment 4 build (final) — the agent roster is complete.** This bundle
+ships:
 
 - `context/converge-awareness.md` — a thin pointer wired into the root session
 - `agents/protocol-authority.md` — THE carrier of the ratified protocol
@@ -19,6 +20,10 @@ reaches the owner is a protocol defect.
 - `agents/negotiator.md` — Phase 1 NEGOTIATE: turns investigation evidence into
   decision-level minutes for the owner (options + recommendation + the one
   decision to make); returns needs rather than re-routing; read-only.
+- `agents/amendment-drafter.md` — authors `CANDIDATE-<topic>.md` proposals
+  (exact diff · real-evidence bar · "what does NOT change" · ratification ask ·
+  the `target:` field the guard escape hatch consumes) and **stops**; never
+  edits the frozen file, never self-ratifies, returns needs.
 - `skills/` — five procedure skills (seam test, CANDIDATE amendment authoring,
   Freeze Bar checklist, ledger dispositions, lane-brief discipline)
 - `modules/hooks-candidate-guard/` — the ratchet's teeth: a `tool:pre` hook,
@@ -27,11 +32,11 @@ reaches the owner is a protocol defect.
   via a ratified `CANDIDATE-<topic>.md`). See that module's own README for
   the full contract and documented non-coverage.
 
-Deliberately **not yet built**: the phase-loop recipes (`encode` and
-`seed-reconcile` are specced as complete recipe-author handoffs in
-`docs/design/mechanism-spec.md` §4.1/§4.2; `full-wave` follows) and the
-amendment-drafter agent. The orchestration mode is deferred by decision (pure
-delegation + recipe gates + hook instead).
+All three phase-loop recipes are specced as complete recipe-author handoffs in
+`docs/design/mechanism-spec.md` §4 — `encode` (§4.1), `seed-reconcile` (§4.2),
+`full-wave` (§4.3) — authored via `recipes:recipe-author`, not shipped as
+bundle files. The orchestration mode is deferred by decision (pure delegation +
+recipe gates + hook instead).
 
 ## The authoritative spec
 
