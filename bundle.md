@@ -9,9 +9,12 @@ bundle:
     (the "ratchet") prevents silent backsliding. Build increment 1: the
     knowledge layer (awareness pointer, protocol-authority agent, five procedure
     skills) plus the **reconciler** agent — the ratchet that derives ledger rows
-    and detects bidirectional drift. Still deferred: the recipes (encode,
-    seed-reconcile, full-wave), the hooks-candidate-guard hook (increment 2), and
-    the negotiator/amendment-drafter agents. The orchestration mode is DEFERRED
+    and detects bidirectional drift. Build increment 2: the
+    **hooks-candidate-guard** hook — structural enforcement of PROTOCOL.md §5
+    (no direct write to a FROZEN contract or VISION.md; amendments land only
+    via a ratified CANDIDATE-<topic>.md). Still deferred: the phase-loop
+    recipes (encode, seed-reconcile, full-wave) and the
+    negotiator/amendment-drafter agents. The orchestration mode is DEFERRED
     by decision (pure delegation + recipe gates + hook instead).
 
 includes:
@@ -43,6 +46,40 @@ tools:
     config:
       skills:
         - "@converge:skills"
+
+# Increment 2 — the ratchet's teeth (mechanism-spec.md §6.1 DECIDED: BUILD).
+# Structural enforcement of PROTOCOL.md §5, pillar 3: no direct write to a
+# FROZEN contract/VISION.md; amendments land only via a ratified
+# CANDIDATE-<topic>.md. On by default (spec §3.2) — a guard that ships
+# off-by-default recreates exactly the convention-only gap the behavioral
+# model proved insufficient (OQ2). Full design: docs/design/hooks-candidate-guard-spec.md.
+#
+# Pre-publication note (spec §3.1): amplifier-bundle-converge is not published
+# yet, so this uses a same-repo relative path source. Switch to
+# `git+https://github.com/microsoft/amplifier-bundle-converge@main#subdirectory=modules/hooks-candidate-guard`
+# once the repo is published — never hardcode an absolute filesystem path here.
+hooks:
+  - module: hooks-candidate-guard
+    source: ./modules/hooks-candidate-guard
+    config:
+      enabled: true
+      guarded_globs: ["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md"]
+      require_frozen_marker: true
+      frozen_marker_regex: '(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN'
+      always_allow_globs: ["**/CANDIDATE-*.md"]
+      intercept_tools: ["write_file", "edit_file", "apply_patch"]
+      tool_name_aliases: ["Write", "Edit", "MultiEdit"]
+      path_fields: ["file_path", "path"]
+      scan_bash: true
+      bash_tool_name: "bash"
+      escape_mode: "ratified_candidate"        # ratified_candidate | token | both
+      candidate_glob: ["**/CANDIDATE-*.md"]
+      ratified_stamp_regex: '(?im)^ratified(?:\s+as\s+edited)?\b.*\bby\s+owner\b'
+      candidate_target_field: "target"
+      allow_emergency_unlock: false
+      emergency_unlock_token: ".converge/UNLOCK"
+      fail_closed_on_error: true
+      enforce_encode_before_impl: false        # rule (b), opt-in — see spec §4.6
 ---
 
 # Converge
@@ -75,6 +112,12 @@ between waves and refuses silent drift in either direction.
   - `freeze-bar` — the four-condition DRAFT → FROZEN checklist
   - `ledger-disposition` — the ledger disposition vocabulary + row schema
   - `lane-brief` — honesty gate, file-ownership split, provenance discipline
+- **`hooks-candidate-guard`** — the ratchet's teeth. A `tool:pre` hook, on by
+  default, that structurally denies a direct write/edit/patch (or a bash
+  write-laundering attempt) targeting a FROZEN contract file or `VISION.md`.
+  Amendments land only via a ratified `CANDIDATE-<topic>.md` sibling. See
+  `modules/hooks-candidate-guard/README.md` for the full contract, the
+  config surface, and documented non-coverage.
 
 ## The authoritative spec
 
@@ -86,13 +129,23 @@ to them rather than restating them.
 ## Status
 
 **Build increment 1** — knowledge layer + the `reconciler` (ratchet) agent,
-dogfooded against drumbeat's frozen contract. Not yet present: the phase-loop
-recipes (`encode`, `seed-reconcile`, `full-wave` — specced in
-`docs/design/mechanism-spec.md` §4, authored next via `recipes:recipe-author`),
-the `hooks-candidate-guard` hook (increment 2), and the `negotiator` /
-`amendment-drafter` agents. The orchestration mode is **DEFERRED by decision**
-(pure delegation + recipe gates + hook). This bundle does not own the tracker,
-does not ratify, and does not store any repo's vision, contracts, or ledger —
-those live in each target repo.
+dogfooded against drumbeat's frozen contract.
+
+**Build increment 2** — the `hooks-candidate-guard` hook, wired into this
+bundle's `hooks:` block, on by default. Structural (not conventional)
+enforcement of PROTOCOL.md §5, pillar 3: a direct write/edit/patch/bash
+write to a FROZEN `contracts/*.md` or `VISION.md` is denied; amendments land
+only via a ratified `CANDIDATE-<topic>.md`. See
+`modules/hooks-candidate-guard/README.md` for the T2 tool-shape confirmation,
+the escape hatch, and documented non-coverage (bash obfuscation,
+unverified delegated-agent propagation — spec §2.9).
+
+Not yet present: the phase-loop recipes (`encode`, `seed-reconcile`,
+`full-wave` — specced in `docs/design/mechanism-spec.md` §4, authored next
+via `recipes:recipe-author`), and the `negotiator` / `amendment-drafter`
+agents. The orchestration mode is **DEFERRED by decision** (pure delegation
++ recipe gates + hook). This bundle does not own the tracker, does not
+ratify, and does not store any repo's vision, contracts, or ledger — those
+live in each target repo.
 
 @foundation:context/shared/common-system-base.md

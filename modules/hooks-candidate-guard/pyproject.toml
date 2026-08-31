@@ -1,0 +1,30 @@
+[project]
+name = "amplifier-module-hooks-candidate-guard"
+version = "0.1.0"
+description = "Structural enforcement of PROTOCOL.md §5 (CANDIDATE amendment protocol): denies direct writes to FROZEN contracts/VISION.md"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Microsoft", email = "amplifier@microsoft.com" }]
+dependencies = ["amplifier-core>=0.1.0"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.entry-points."amplifier.modules"]
+hooks-candidate-guard = "amplifier_module_hooks_candidate_guard:mount"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["amplifier_module_hooks_candidate_guard"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

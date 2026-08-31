@@ -525,12 +525,23 @@ current session via `load_skill`. None fork; none delegate. Each answers
   and (b) blocks implementation writes before ENCODE is committed. Fills the gap
   the (deferred) mode cannot — per-path + per-phase, which per-tool policies
   cannot express (§5.1). Closes verification objective D5's finding.
-- **triggers_on:** pre-tool-use on `write_file`, `edit_file`, `apply_patch`,
-  **across delegated sub-agent sessions, not just the root session.**
-- **behavior:** inspect the target path and current phase; if a protected path
-  is edited directly (not via a `CANDIDATE-<topic>.md`), or an implementation
-  write occurs before ENCODE is committed, **block with a remedy message**
-  pointing to the CANDIDATE flow / the ENCODE phase; otherwise allow.
+- **triggers_on:** the `tool:pre` event (kernel `HOOK_CONTRACT.md`) for
+  `write_file`, `edit_file`, `apply_patch` (+ configurable aliases), and a
+  best-effort `bash` write-scan; **coverage across delegated sub-agent sessions
+  is a live-verified property, not a kernel guarantee** — see the implementation
+  spec §2.9.
+- **behavior:** inspect the target path; if it is a FROZEN guarded file
+  (`contracts/**`, `docs/VISION.md`) edited directly rather than via a
+  `CANDIDATE-<topic>.md` — and no ratified CANDIDATE escape applies — **deny**
+  with a remedy message naming the file, PROTOCOL.md §5, and the CANDIDATE flow.
+  ENCODE-before-implement is an opt-in secondary rule. Deny is non-bypassable
+  (`HOOKS_API.md` action precedence); fail-closed on guarded-path errors.
+- **IMPLEMENTATION SPEC:** `@converge:docs/design/hooks-candidate-guard-spec.md`
+  — the build-ready spec (event/deny cited to the hook contract; guarded-path +
+  FROZEN-marker mechanism; the ratified-CANDIDATE escape hatch; the bash
+  best-effort-deny doctrine; the delegated-agent coverage finding with its
+  `SESSION_FORK_SPECIFICATION.md` citation; wiring block; unit + live-probe test
+  plan). `modular-builder` implements from that doc.
 
 ---
 
@@ -685,3 +696,29 @@ have the material to exercise them.
   `config.skills` entry; neither is auto-composed from mere presence on disk.
   Files changed: `bundle.md` (agents + tools blocks). Behavioral-model artifact
   left untouched.
+
+- **2026-08-30 — increment-2 kickoff: hooks-candidate-guard implementation spec.**
+  Authored `@converge:docs/design/hooks-candidate-guard-spec.md` (build-ready for
+  `modular-builder`) from PROTOCOL.md §5 + the behavioral model's OQ2/Scenario-E
+  evidence + the increment-1 review flags. Settled every mechanism decision
+  against the kernel contracts: event = `tool:pre` and deny-shape
+  (`HOOK_CONTRACT.md` / `HOOKS_API.md`, deny is highest-precedence and
+  non-bypassable); guarded-path = `guarded_globs` AND a FROZEN-marker read (so a
+  DRAFT contract stays writable during ENCODE, `CANDIDATE-*.md` always allowed);
+  block message names file + §5 + remedy; escape hatch = a **ratified CANDIDATE**
+  sibling (explicit/auditable/file-scoped/protocol-native — env var rejected as
+  ambient), token break-glass as opt-in fallback; `bash` = best-effort literal
+  redirect/heredoc scan → deny on match, obfuscation documented as non-coverage;
+  fail-closed on guarded-path evaluation error. **Delegated-agent coverage
+  settled from the contract, not assumed:** `SESSION_FORK_SPECIFICATION.md`
+  Kernel Guarantee #4 ("Independence") + "Configuration Policy" non-provision
+  mean the kernel gives **no** hook-inheritance guarantee — sub-sessions mount
+  their own config — so §6.1's "must intercept delegated agents" is a
+  **live-verified** acceptance property (Test §T5), with compose-into-overlays
+  and a target-repo git pre-commit backstop as the mitigations if propagation
+  does not hold. Wiring: own-repo `git+…#subdirectory=modules/hooks-candidate-guard`
+  (matches attractor's local-module convention), **on by default** (the ratchet's
+  teeth). Honest gaps flagged for the owner: (1) real `tool_name`/`tool_input`
+  field names at `tool:pre` need a live probe (Test §T2) — defaults are a
+  hypothesis; (2) delegated-agent coverage is unprovable from contracts and must
+  be closed live (Test §T5). §6.1 updated with the pointer.

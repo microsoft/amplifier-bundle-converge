@@ -36,6 +36,9 @@ of the ask:
 never paraphrase them into drift.
 
 **Status:** build increment 1 — knowledge layer + the `converge:reconciler`
-(ratchet) agent. The phase-loop recipes, the `hooks-candidate-guard` hook
-(increment 2), and the `negotiator`/`amendment-drafter` agents are not built
-yet. The orchestration mode is deferred by decision.
+(ratchet) agent — plus build increment 2 — the `hooks-candidate-guard` hook,
+wired on by default, structurally enforcing PROTOCOL.md §5 (no direct write
+to a FROZEN contract/`VISION.md`; amendments land only via a ratified
+`CANDIDATE-<topic>.md`). The phase-loop recipes and the
+`negotiator`/`amendment-drafter` agents are not built yet. The orchestration
+mode is deferred by decision.
