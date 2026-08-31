@@ -35,10 +35,10 @@ of the ask:
 `@converge:docs/LEDGER-FORMAT.md` (starter ledger convention). Quote or point;
 never paraphrase them into drift.
 
-**Status:** build increment 1 — knowledge layer + the `converge:reconciler`
-(ratchet) agent — plus build increment 2 — the `hooks-candidate-guard` hook,
-wired on by default, structurally enforcing PROTOCOL.md §5 (no direct write
-to a FROZEN contract/`VISION.md`; amendments land only via a ratified
-`CANDIDATE-<topic>.md`). The phase-loop recipes and the
-`negotiator`/`amendment-drafter` agents are not built yet. The orchestration
-mode is deferred by decision.
+**Status:** increments 1–3 shipped — knowledge layer + `converge:reconciler`
+(ratchet) + `hooks-candidate-guard` (on by default, structurally enforcing
+PROTOCOL.md §5) + `converge:negotiator` (Phase 1 NEGOTIATE: evidence →
+decision-level minutes for the owner; returns needs, read-only). Not built
+yet: the phase-loop recipes (`encode`/`seed-reconcile` specced for
+recipe-author) and the `amendment-drafter` agent. The orchestration mode is
+deferred by decision.

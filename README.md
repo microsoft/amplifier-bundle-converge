@@ -11,11 +11,14 @@ reaches the owner is a protocol defect.
 
 ## Status
 
-**Increment 2 build.** This bundle ships:
+**Increment 3 build.** This bundle ships:
 
 - `context/converge-awareness.md` — a thin pointer wired into the root session
 - `agents/protocol-authority.md` — THE carrier of the ratified protocol
 - `agents/reconciler.md` — the ratchet: SEED + standing RECONCILE
+- `agents/negotiator.md` — Phase 1 NEGOTIATE: turns investigation evidence into
+  decision-level minutes for the owner (options + recommendation + the one
+  decision to make); returns needs rather than re-routing; read-only.
 - `skills/` — five procedure skills (seam test, CANDIDATE amendment authoring,
   Freeze Bar checklist, ledger dispositions, lane-brief discipline)
 - `modules/hooks-candidate-guard/` — the ratchet's teeth: a `tool:pre` hook,
@@ -24,10 +27,11 @@ reaches the owner is a protocol defect.
   via a ratified `CANDIDATE-<topic>.md`). See that module's own README for
   the full contract and documented non-coverage.
 
-Deliberately **not yet built** (deferred to a behavioral-model step): the
-phase-loop recipes and the negotiator / amendment-drafter agents. The
-orchestration mode is deferred by decision (pure delegation + recipe gates
-+ hook instead).
+Deliberately **not yet built**: the phase-loop recipes (`encode` and
+`seed-reconcile` are specced as complete recipe-author handoffs in
+`docs/design/mechanism-spec.md` §4.1/§4.2; `full-wave` follows) and the
+amendment-drafter agent. The orchestration mode is deferred by decision (pure
+delegation + recipe gates + hook instead).
 
 ## The authoritative spec
 

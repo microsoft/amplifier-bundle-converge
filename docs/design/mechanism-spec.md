@@ -353,23 +353,82 @@ current session via `load_skill`. None fork; none delegate. Each answers
 ### 4.1 encode — **PLANNED**
 
 - **name:** encode
-- **purpose:** PLANNED. Phase 2 ENCODE (§4). Write VISION.md + contracts from
-  ratified negotiation decisions and **commit them before any implementation.**
+- **purpose:** PLANNED. Phase 2 ENCODE (§4). Take the owner's **already-ratified**
+  negotiation decisions and author `VISION.md` + `contracts/<seam>.v1.md` as
+  **DRAFT** artifacts, present them for the owner's literal-word ratification,
+  and **commit them before any implementation** — the commit being the
+  ratification record. The recipe does **not** run negotiation (that is the
+  interactive owner+`negotiator` work of Phase 1, upstream) and it **never
+  stamps FROZEN** (owner-only, Freeze Bar §5).
 - **execution_mode:** staged
+- **schedulable:** no — interactive, owner-gated (one owner ratification).
+- **inputs (recipe context):**
+  - `target_repo` (required) — path to the repo being encoded (must be the
+    session cwd or within it; see the within-cwd constraint below).
+  - `negotiated_decisions` (required) — the **intake** context var carrying the
+    owner-approved Phase-1 minutes: for each call, the decision the owner made
+    (which seams get contracts, each contract's Core/Backlogged/Conformance/
+    Reserved intent, and the VISION end-state + principles + "deliberately
+    resists" content). The recipe consumes this; it does not re-derive it.
+  - `seams` (optional, default derived from `negotiated_decisions`) — the list
+    of seam names → one `contracts/<seam>.v1.md` each.
+  - `vision_path` (default `docs/VISION.md`), `contracts_dir` (default
+    `contracts/`).
+- **outputs:**
+  - `{{vision_path}}` written as **DRAFT** (genre per PROTOCOL.md §3.1: desired
+    end state as though already true · numbered operating principles · required
+    "What this repo deliberately resists" · dated changelog — nothing else;
+    thin-pointer to a governing contract where one exists);
+  - one `{{contracts_dir}}/<seam>.v1.md` per seam, **DRAFT** (anatomy per §3.2:
+    Core · Backlogged with named promotion triggers · Conformance · Reserved ·
+    Changelog);
+  - a git commit on `target_repo` recording the ratified DRAFT artifacts, whose
+    message embeds the ratification record (see step 3);
+  - an **encode report** naming files written, seams covered, and the explicit
+    residual: these are DRAFT — the Freeze Bar (§5) is a later, owner-only act.
 - **steps:**
-  | id | agent | produces | consumes |
+  | id | agent | consumes | produces |
   |---|---|---|---|
-  | draft-vision-contracts | foundation:file-ops | VISION.md + contract drafts | negotiation minutes (from `negotiator`) |
-  | commit-encoded | foundation:git-ops | committed VISION + contracts | ratified drafts |
+  | intake-decisions | foundation:file-ops (or a read-only prep step) | `negotiated_decisions`, `target_repo` | a normalized plan: seam→contract map + vision outline (no repo writes) |
+  | draft-vision-contracts | foundation:file-ops | intake plan | `VISION.md` (DRAFT) + `contracts/<seam>.v1.md` (DRAFT), written to `target_repo` |
+  | commit-encoded | foundation:git-ops | ratified DRAFT artifacts + gate approval message | a commit recording the encoded artifacts + ratification record |
 - **approval_gates:**
-  | name | placed_after_step | semantic |
-  |---|---|---|
-  | ratify-encoded | draft-vision-contracts | validates_previous |
-  - `ratify-encoded` = owner attention item #1 (§6.1): the owner ratifies the
-    drafted vision/contracts in literal words before they are committed. No
-    self-ratification (§C).
-- **relationship_to_modes:** runs under the candidate `converge-orchestration`
-  mode if adopted; the gate enforces ENCODE-before-implement (relates to D5).
+  | name | placed_after_step | semantic | §6 owner-attention item |
+  |---|---|---|---|
+  | ratify-encoded | draft-vision-contracts | validates_previous | §6 #1 — ratify vision/contract changes |
+  - `ratify-encoded` presents the drafted `VISION.md` + contract DRAFTs to the
+    owner, who answers with the **literal word** (`ratified` / `ratified as
+    edited` / declined-with-reason). No self-ratification (§C, pillar 3). The
+    gate's approval message (the owner's literal word + any edits) is passed to
+    `commit-encoded` and embedded in the commit body as the ratification record.
+    A decline stops the recipe before any commit; "ratified as edited" loops
+    back to a re-draft of the named edits before committing.
+- **constraints (hard — recipe-author must honor, zero design latitude):**
+  - **Within-cwd invariant (increment-1 v1.2.0):** every write and the commit
+    target must resolve inside the session cwd / `target_repo`. No writes
+    outside the workspace.
+  - **Write-denial / candidate-guard interplay (increment-2):** the
+    `hooks-candidate-guard` hook is composed and on. **DRAFT contracts and a
+    DRAFT VISION.md are writable by design** — the guard only denies writes to
+    files carrying the FROZEN/RATIFIED marker. Therefore `draft-vision-contracts`
+    **must write DRAFT status** (`**Status:** DRAFT`) and must **never** write
+    the FROZEN/RATIFIED marker into these files. If encode ever targeted an
+    already-FROZEN file it would (correctly) be denied — encode's job is initial
+    authoring of DRAFTs, not amending frozen artifacts (that is the CANDIDATE
+    flow, a different mechanism).
+  - **Never stamp FROZEN.** Stamping FROZEN is an owner-only Freeze Bar act
+    (§5, §6.1); the recipe stops at DRAFT + committed. The encode report must
+    state this residual honestly.
+  - **Derive nothing new.** The recipe encodes the owner's ratified decisions;
+    it does not invent contract clauses or vision content beyond
+    `negotiated_decisions`. A genuinely missing decision is surfaced back to the
+    owner, not filled in (pillar 5).
+- **relationship_to_modes:** runs under **no dedicated mode** (the orchestration
+  mode is DEFERRED, §5.1). The single `ratify-encoded` gate is the whole
+  owner-attention surface; ENCODE-before-implement is enforced downstream by the
+  guard's opt-in `enforce_encode_before_impl` (spec §4.6 of the hook spec) and
+  by sequencing — implementation lanes (EXECUTE) run only after encode has
+  committed. Relates to D5.
 
 ### 4.2 seed-reconcile — **PLANNED**
 
