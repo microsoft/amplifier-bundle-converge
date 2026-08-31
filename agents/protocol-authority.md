@@ -30,10 +30,6 @@ meta:
     assistant: 'I will consult converge:protocol-authority on the CANDIDATE
     amendment protocol — whether this is a convergent or divergent change and
     what evidence and ratification it requires.'
-    <commentary>
-    Amending a frozen clause is governed by the lifecycle rules; the authority
-    owns them.
-    </commentary>
     </example>
 
     <example>
@@ -42,11 +38,18 @@ meta:
     assistant: 'I will check converge:protocol-authority against the owner
     attention budget — routine merge mechanics are explicitly not one of the
     four things the owner is in the loop for.'
-    <commentary>
-    The authority draws the line between owner-attention items and protocol
-    defects.
-    </commentary>
     </example>
+model_role: reasoning
+
+# Explicit tool set. Matches mechanism-spec.md tool_requirements
+# (read_file, grep — read-only; reasons over carried docs). Neither module
+# is in spawn.exclude_tools, so sources inherit.
+# MUST NOT re-declare tool-delegate / tool-skills / tool-bash: an explicit
+# entry RE-ADDS a module post-exclusion (additive semantics), which would
+# falsify this agent's "returns needs, never re-routes" contract.
+tools:
+  - module: tool-filesystem
+  - module: tool-search
 ---
 
 # Converge Protocol Authority

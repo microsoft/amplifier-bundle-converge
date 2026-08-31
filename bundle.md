@@ -42,6 +42,24 @@ agents:
     - converge:negotiator
     - converge:amendment-drafter
 
+# Structural enforcement of the agents' negative-capability contracts (Finding #1,
+# post-publication validation). Verified against installed app-cli source:
+#   apply_spawn_tool_policy (agent_config.py:16-65) strips these modules from the
+#   PARENT tool list on EVERY spawn (session_spawner.py:298 merge_configs path);
+#   an agent that RE-DECLARES a tool in its own frontmatter gets it back
+#   (_filter_tools session_spawner.py:72-132: final = (inherited - excluded) + explicit).
+# Safe for the live-verified recipes: foundation:git-ops and foundation:modular-builder
+#   BOTH re-declare tool-bash explicitly, so excluding it does NOT strip their git/build
+#   shell; none of git-ops/file-ops/modular-builder/explorer declares or needs
+#   tool-delegate or tool-skills. Net effect: converge's own agents cannot delegate,
+#   load skills, or (except reconciler, which re-declares it) shell out — making the
+#   "returns needs / no delegation / no shell" claims TRUE, not prose-only.
+spawn:
+  exclude_tools:
+    - tool-delegate
+    - tool-skills
+    - tool-bash
+
 # Register converge's own skills directory with tool-skills so load_skill() finds
 # them in a composed session. Foundation provides the tool-skills MODULE (so
 # load_skill exists) but its config.skills points only at foundation's own skills

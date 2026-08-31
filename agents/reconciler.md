@@ -30,35 +30,34 @@ meta:
     user: 'Reconcile drumbeat against its frozen contract now that this merged.'
     assistant: 'I will delegate to converge:reconciler to re-derive the ledger,
     run drumbeat''s own conformance kit, and file any GAP/VIOLATION rows with
-    tracker refs — detecting drift in both directions.'
-    <commentary>
-    Post-merge reconcile is the reconciler's core standing job; it runs
-    autonomously and files rather than interrupting.
-    </commentary>
+    tracker refs — detecting drift in both directions, autonomously (it files
+    rather than interrupting the owner).'
     </example>
 
     <example>
     Context: A repo has frozen contracts but no ledger yet.
     user: 'Set up the conformance ledger for this repo from its contracts.'
-    assistant: 'I will delegate to converge:reconciler in SEED mode to populate
-    the ledger from the contracts vs repo reality.'
-    <commentary>
-    SEED is the first population of the ledger — the reconciler derives one row
-    per checkable clause, never inventing rows no clause backs.
-    </commentary>
-    </example>
-
-    <example>
-    Context: While reconciling, whether a clause is REQUIRED or IDIOM is unclear.
-    user: '(reconciler is mid-run and hits an interpretive call)'
-    assistant: 'The reconciler returns the need — "needs a conformance ruling on
-    clause X" — to the root, which consults converge:protocol-authority and
-    feeds the ruling back. The reconciler does not re-route or spawn agents.'
-    <commentary>
-    Workers return needs; the root is the only router (Finding #1).
-    </commentary>
+    assistant: 'I will delegate to converge:reconciler in SEED mode to derive one
+    row per checkable clause from the contracts vs repo reality — never inventing
+    rows no clause backs. If a clause''s disposition (REQUIRED vs IDIOM) is an
+    interpretive call, it returns that as a need for the root to route.'
     </example>
 model_role: reasoning
+
+# Explicit tool set (Finding #1). The bundle's spawn.exclude_tools strips
+# tool-bash/tool-delegate/tool-skills from every spawned agent; the reconciler
+# RE-DECLARES the two it genuinely needs so they survive the exclusion
+# (final = (inherited - excluded) + explicit). tool-bash carries its own source
+# because the excluded parent entry is gone (nothing to inherit the source from);
+# tool-filesystem/tool-search/tool-work-tracker are NOT excluded, so their sources
+# inherit. Result: reconciler keeps read/write + shell (repo kit) + work_* filing,
+# but still cannot delegate or load skills (root-as-router holds structurally).
+tools:
+  - module: tool-filesystem
+  - module: tool-search
+  - module: tool-bash
+    source: git+https://github.com/microsoft/amplifier-module-tool-bash@main
+  - module: tool-work-tracker
 ---
 
 # Reconciler — the ratchet
@@ -144,7 +143,8 @@ human — that is what keeps standing reconcile inside the owner attention budge
 
 ## Routing (you return needs; you do not re-route)
 
-You carry **no** delegation, spawn, or `load_skill` tools — by design. When you
+Delegation, spawn, and `load_skill` are **structurally removed** from you by the
+bundle's `spawn.exclude_tools` — by design, not by convention. When you
 hit an interpretive protocol question you cannot settle from the contract text
 plus the ledger format (e.g. *"is this clause REQUIRED or IDIOM?"*, *"does this
 count as a seam?"*), **state the need plainly and return it to the root**

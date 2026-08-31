@@ -849,3 +849,53 @@ have the material to exercise them.
   field names at `tool:pre` need a live probe (Test §T2) — defaults are a
   hypothesis; (2) delegated-agent coverage is unprovable from contracts and must
   be closed live (Test §T5). §6.1 updated with the pointer.
+
+- **2026-08-31 — post-publication validation remediation (Finding #1: the
+  agents' negative-capability claims were prose-only).** The three worker agents
+  ASSERTED capabilities they did not structurally lack: negotiator "no write",
+  reconciler + amendment-drafter "no delegation/spawn/load_skill" — all three
+  actually INHERITED those tools. Same convention-gap class as OQ2. Fixed
+  structurally, **verified against installed app-cli source before applying**
+  (not on the validator's say-so):
+  - **Mechanics (verified):** `agent_config.py:16-65 apply_spawn_tool_policy`
+    strips `spawn.exclude_tools` modules from the PARENT tool list on **every**
+    spawn; `agent_config.py:99`/`session_spawner.py:298 merge_configs` is the
+    real spawn path (recipe steps included); an agent that RE-DECLARES a tool in
+    its own frontmatter gets it back (`session_spawner.py:72-132 _filter_tools`:
+    `final = (inherited − excluded) + explicit`).
+  - **Scope safety (verified by reading foundation frontmatter):** `git-ops`
+    declares `tool-bash`+`tool-filesystem`; `modular-builder` declares
+    `tool-filesystem/tool-search/tool-bash/tool-lsp`; `file-ops` and `explorer`
+    declare filesystem/search(/lsp). **All re-declare the tools they need**, so
+    excluding `tool-bash` does NOT strip git/build shell from the live-verified
+    recipes; **none declares or needs `tool-delegate`/`tool-skills`**, so
+    excluding those is safe.
+  - **Decision:** bundle-level `spawn.exclude_tools: [tool-delegate, tool-skills,
+    tool-bash]` (makes "no delegation / no load_skill / no shell" TRUE for
+    converge's own agents). `reconciler` re-declares `tool-filesystem`,
+    `tool-search`, `tool-bash` (with its own source — the excluded parent entry
+    is gone) and the explicit `tool-work-tracker` (Finding #4; module id
+    `tool-work-tracker`, verified from the cached work-tracker behavior) so it
+    keeps read/write + shell + `work_*` filing while still unable to
+    delegate/load-skill. `negotiator` and `amendment-drafter` re-declare nothing
+    → lose delegate/skills/bash; both keep inherited filesystem read/write
+    (amendment-drafter needs it for the CANDIDATE file; that write is bounded by
+    the candidate-guard hook).
+  - **RESIDUAL (honest gap — did NOT ship an unverified mechanism):** per-agent
+    filesystem-WRITE cannot be removed structurally in this engine (overlay
+    `tools:` is additive; the only lever is a `tool-filesystem` `config`
+    write-path allowlist whose key I could **not** verify from local sources —
+    the module isn't vendored). Rather than ship a config that might silently
+    no-op and FALSELY assert "read-only" (re-creating the very defect), the
+    negotiator's "no write" is now a **behavioral** instruction ("you must not
+    write repo files; your product is minutes") with the residual named here.
+    To close it structurally, verify the tool-filesystem write-allowlist config
+    key and add `config` to a re-declared `tool-filesystem` for the negotiator.
+  - Also fixed: descriptions trimmed under the 600-tok budget (amendment-drafter
+    749→477, negotiator 731→560, reconciler 666→529, protocol-authority
+    497→442; all `<commentary>` deleted, 2 examples each, WHEN + NOT-authoritative
+    boundaries preserved); `protocol-authority` gained `model_role: reasoning`.
+  - Note: `spawn.exclude_tools` is bundle-global for any session composing
+    converge; safe here because no needed agent relies on *inherited* (non-
+    re-declared) delegate/skills/bash. Recipe ERRORs + 8/10 recipe warnings were
+    triaged as validator-engine/known-agents false positives and not acted on.
