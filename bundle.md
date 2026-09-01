@@ -118,39 +118,8 @@ to them rather than restating them.
 
 ## Status
 
-**Build increment 1** — knowledge layer + the `reconciler` (ratchet) agent,
-dogfooded against drumbeat's frozen contract.
+**Live**: 4 agents (protocol-authority, reconciler, negotiator, amendment-drafter), 5 skills, candidate-guard hook, 3 recipes — all live-verified. Eval harness 6/6.
 
-**Build increment 2** — the `hooks-candidate-guard` hook, wired via
-`behaviors/converge.yaml`'s `hooks:` block, on by default. Structural (not conventional)
-enforcement of PROTOCOL.md §5, pillar 3: a direct write/edit/patch/bash
-write to a FROZEN `contracts/*.md` or `VISION.md` is denied; amendments land
-only via a ratified `CANDIDATE-<topic>.md`. See
-`modules/hooks-candidate-guard/README.md` for the T2 tool-shape confirmation,
-the escape hatch, and documented non-coverage (bash obfuscation,
-unverified delegated-agent propagation — spec §2.9).
-
-**Build increment 3** — the `negotiator` agent (Phase 1 NEGOTIATE), wired
-into `agents: include`. It turns Phase-0 investigation evidence into
-decision-level minutes for the owner (options + recommendation + the one
-decision to make), returns needs rather than re-routing (root-as-router,
-Finding #1), and is strictly read-only — it never ratifies and never writes.
-
-**Build increment 4 (final)** — the `amendment-drafter` agent, wired into
-`agents: include`, **completing the four-agent roster** (`protocol-authority`,
-`reconciler`, `negotiator`, `amendment-drafter`). It authors
-`CANDIDATE-<topic>.md` proposals (exact diff · real-evidence bar · "what does
-NOT change" · ratification ask · the `target:` field the guard escape hatch
-consumes) and **stops** — never edits the frozen file, never self-ratifies,
-returns needs.
-
-All three phase-loop recipes **ship** in `recipes/` and are live-verified:
-`seed-reconcile.yaml`, `encode.yaml`, `full-wave.yaml` (invoke via
-`@converge:recipes/<name>.yaml`; `full-wave` expresses the engine's post-stage
-gate semantics). Their spec of record is `docs/design/mechanism-spec.md` §4
-(`encode` §4.1, `seed-reconcile` §4.2, `full-wave` §4.3). The orchestration
-mode is **DEFERRED by decision** (pure delegation + recipe gates + hook). This bundle
-does not own the tracker, does not ratify, and does not store any repo's
-vision, contracts, or ledger — those live in each target repo.
+See `README.md` for build history. Spec of record: `docs/design/mechanism-spec.md`.
 
 @foundation:context/shared/common-system-base.md

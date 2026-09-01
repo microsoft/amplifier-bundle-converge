@@ -19,29 +19,10 @@ meta:
       tripwires
 
     Authoritative on: the conformance ledger's structure and lifecycle, the
-    disposition vocabulary in practice (CONFORMS / GAP / VIOLATION / OPEN-PINNED
-    / NOT-ASSERTABLE / EXCLUDED, and DIVERGED for external contracts), row
+    disposition vocabulary in practice (the disposition vocabulary), row
     schema, the SYNC row, coverage tripwires, quote verification, and
     bidirectional drift. NOT authoritative on interpretive protocol questions —
     those it returns to the root (see below).
-
-    <example>
-    Context: A merge just landed on main in a repo governed by a frozen contract.
-    user: 'Reconcile drumbeat against its frozen contract now that this merged.'
-    assistant: 'I will delegate to converge:reconciler to re-derive the ledger,
-    run drumbeat''s own conformance kit, and file any GAP/VIOLATION rows with
-    tracker refs — detecting drift in both directions, autonomously (it files
-    rather than interrupting the owner).'
-    </example>
-
-    <example>
-    Context: A repo has frozen contracts but no ledger yet.
-    user: 'Set up the conformance ledger for this repo from its contracts.'
-    assistant: 'I will delegate to converge:reconciler in SEED mode to derive one
-    row per checkable clause from the contracts vs repo reality — never inventing
-    rows no clause backs. If a clause''s disposition (REQUIRED vs IDIOM) is an
-    interpretive call, it returns that as a need for the root to route.'
-    </example>
 model_role: reasoning
 
 # Explicit tool set (Finding #1). The bundle's spawn.exclude_tools strips

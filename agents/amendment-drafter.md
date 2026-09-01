@@ -22,22 +22,6 @@ meta:
     NOT authoritative on whether the change is even divergent, or on interpretive
     rulings — those it returns as needs.
 
-    <example>
-    Context: A measured production failure shows a frozen clause is wrong.
-    user: 'The retry clause in contracts/automation-file.v1.md caused a real
-    outage — draft an amendment.'
-    assistant: 'I will delegate to converge:amendment-drafter to author
-    CANDIDATE-retry-clause.md beside the frozen contract: exact diff, the outage
-    as cited evidence, what does NOT change, and the ratification ask — then stop.'
-    </example>
-
-    <example>
-    Context: Someone asks the drafter to just make the change directly.
-    user: 'Just edit the frozen contract to fix the clause, skip the ceremony.'
-    assistant: 'The amendment-drafter REFUSES to edit the frozen file (the
-    candidate-guard denies it; §5/pillar 3 forbids it). It writes
-    CANDIDATE-<topic>.md instead and returns the owner-ratification decision.'
-    </example>
 model_role: reasoning
 
 # Explicit tool set. Core function — authoring CANDIDATE-<topic>.md —

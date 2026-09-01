@@ -21,24 +21,6 @@ meta:
       protocol defect
     - Interpreting the pillars, the "no third option" axiom, or "what this
       protocol deliberately resists"
-
-    Examples:
-
-    <example>
-    Context: A lane wants to change a frozen contract clause.
-    user: 'Tests show the frozen clause is wrong. Can I just edit the contract?'
-    assistant: 'I will consult converge:protocol-authority on the CANDIDATE
-    amendment protocol — whether this is a convergent or divergent change and
-    what evidence and ratification it requires.'
-    </example>
-
-    <example>
-    Context: The orchestrator is about to ask the owner to approve a routine merge.
-    user: 'Should I ask the owner to sign off on merging this lane?'
-    assistant: 'I will check converge:protocol-authority against the owner
-    attention budget — routine merge mechanics are explicitly not one of the
-    four things the owner is in the loop for.'
-    </example>
 model_role: reasoning
 
 # Explicit tool set. Matches mechanism-spec.md tool_requirements

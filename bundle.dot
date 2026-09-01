@@ -1,0 +1,91 @@
+// The "converge" bundle helps multiple AI agents agree on a shared plan before work begins — it adds negotiation, protocol enforcement, and conflict-resolution roles to an Amplifier session.
+digraph converge {
+    rankdir=LR
+    fontname="Helvetica"
+    fontsize=12
+    label="Converge — Multi-Agent Agreement Toolkit\nHelps separate AI agents negotiate and settle on a shared plan (v0.1.0)"
+    labelloc=t
+    labeljust=c
+    nodesep=0.6
+    ranksep=0.7
+    bgcolor="white"
+    source_hash="eadc3cc2153f4478264062aa55889e151a505ac2bb1687a0a0622a6de5e9e748"
+
+    node [fontname="Helvetica", fontsize=11, style="filled,rounded"]
+    edge [fontname="Helvetica", fontsize=9]
+
+    root_converge [label="Converge — The Whole Package\nEverything below, bundled together\nv0.1.0\n0 tools · 0 agents\n~2257 tok aggregate", shape=box, fillcolor="#80cbc4", style="filled,rounded,bold", penwidth=2]
+
+    subgraph cluster_behaviors {
+        label="What This Bundle Adds To A Session"
+        style="filled"
+        fillcolor="#f9f9f9"
+        color="#999999"
+
+        beh_converge_behavior [label="Negotiate-Before-You-Build\nTurns on the agreement process\n2 tools · 1 ctx\n~4455 tok", shape=box, fillcolor="#e0f2f1", style="filled,rounded"]
+    }
+
+    subgraph cluster_agents {
+        label="The Specialists — Each Has One Job"
+        style="filled"
+        fillcolor="#f9f9f9"
+        color="#999999"
+
+        agt_amendment_drafter [label="Change Writer\nDrafts revisions to an existing agreement\n~477 tok desc", shape=box, fillcolor="#c8e6c9", style="filled,rounded"]
+        agt_negotiator [label="Deal Maker\nProposes and trades terms toward agreement\n~560 tok desc", shape=box, fillcolor="#c8e6c9", style="filled,rounded"]
+        agt_protocol_authority [label="Rule Keeper\nDecides what the process allows\n~442 tok desc", shape=box, fillcolor="#c8e6c9", style="filled,rounded"]
+        agt_reconciler [label="Difference Settler\nResolves conflicting positions\n~529 tok desc", shape=box, fillcolor="#c8e6c9", style="filled,rounded"]
+    }
+
+    subgraph cluster_modules {
+        label="Built-In Safeguards"
+        style="filled"
+        fillcolor="#f9f9f9"
+        color="#999999"
+
+        mod_hooks_candidate_guard [label="Proposal Gatekeeper\nBlocks proposals that break the rules", shape=box, fillcolor="#bbdefb", style="filled,rounded"]
+    }
+
+    subgraph cluster_context {
+        label="Background Reading Loaded Into Every Session"
+        style="filled"
+        fillcolor="#f9f9f9"
+        color="#999999"
+
+        ctx_converge_awareness_md [label="How Agreement Works Here\nconverge-awareness.md\n~624 tok", shape=box, fillcolor="#e1bee7", style="filled,rounded"]
+    }
+
+    subgraph cluster_legend {
+        label="Legend — What The Colors Mean"
+        style="filled"
+        fillcolor="white"
+        color="#cccccc"
+        fontsize=9
+
+        leg_root [label="the whole bundle", shape=box, fillcolor="#80cbc4", style="filled,rounded,bold", fontsize=9]
+        leg_behavior [label="added behavior", shape=box, fillcolor="#e0f2f1", style="filled,rounded", fontsize=9]
+        leg_agent [label="specialist role", shape=box, fillcolor="#c8e6c9", style="filled,rounded", fontsize=9]
+        leg_module [label="safeguard / plug-in", shape=box, fillcolor="#bbdefb", style="filled,rounded", fontsize=9]
+        leg_provider [label="AI service", shape=box, fillcolor="#e0e0e0", style="filled,rounded", fontsize=9]
+        leg_context [label="background reading", shape=box, fillcolor="#e1bee7", style="filled,rounded", fontsize=9]
+        leg_standalone [label="works on its own", shape=box, fillcolor="#80cbc4", style="filled,rounded", fontsize=9]
+        leg_experiment [label="experimental", shape=box, fillcolor="#e1bee7", style="filled,rounded", fontsize=9]
+        leg_ext_cost [label="borrowed, adds cost", shape=box, fillcolor="#80cbc4", style="dashed", color="red", penwidth=2, fontsize=9]
+        leg_ext_muted [label="borrowed, free", shape=box, fillcolor="#f5f5f5", style="dashed", fontsize=9]
+    }
+
+    disclaimer [label="\"Tokens\" measure how much reading material the AI loads (~4 characters each).\nSolid border = lives in this repo (counted here)\nDashed + red = borrowed from elsewhere, still adds reading cost (not counted)\nDashed + muted = borrowed from elsewhere, adds no cost\nNot included: work done by helper sessions, anything decided while running", shape=note, fillcolor="#eceff1", style="filled", fontsize=9]
+
+    ext_githttps___github_com_microsoft_amplifier_foundation_main [label="Amplifier Foundation\nShared base toolkit borrowed from another repo\n(external, cost)", shape=box, fillcolor="#80cbc4", style="dashed", color="red", penwidth=2]
+    ext_githttps___github_com_microsoft_amplifier_work_tracker_mainsubdirectorybehaviors_work_tracker_yaml [label="Work Tracker\nShared task-queue behavior borrowed from another repo\nwork-tracker.yaml\n(external, cost)", shape=box, fillcolor="#80cbc4", style="dashed", color="red", penwidth=2]
+
+    root_converge -> ext_githttps___github_com_microsoft_amplifier_foundation_main [style=dashed]
+    root_converge -> ext_githttps___github_com_microsoft_amplifier_work_tracker_mainsubdirectorybehaviors_work_tracker_yaml [style=dashed]
+    root_converge -> beh_converge_behavior [label="composes"]
+    beh_converge_behavior -> agt_reconciler [label="owns"]
+    beh_converge_behavior -> agt_protocol_authority [label="owns"]
+    beh_converge_behavior -> agt_negotiator [label="owns"]
+    beh_converge_behavior -> agt_amendment_drafter [label="owns"]
+    beh_converge_behavior -> mod_hooks_candidate_guard [label="uses", penwidth=0.8]
+    beh_converge_behavior -> ctx_converge_awareness_md [style=dotted, color=purple]
+}
