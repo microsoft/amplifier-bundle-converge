@@ -14,7 +14,7 @@ reaches the owner is a protocol defect.
 **THE install path — the behavior (`--app`):**
 
 ```
-amplifier bundle add git+https://github.com/bkrabach/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml --app
+amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml --app
 ```
 
 This composes converge's **capability layer** onto whatever bundle is already
@@ -28,7 +28,7 @@ converge to an existing workspace/session (which must already provide foundation
 **Full-workspace path — converge as the primary bundle:**
 
 ```
-amplifier bundle add git+https://github.com/bkrabach/amplifier-bundle-converge@main
+amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main
 amplifier bundle use converge
 ```
 

@@ -8,7 +8,7 @@ bundle:
     the hooks-candidate-guard tool:pre hook (structural PROTOCOL.md §5
     enforcement, on by default), and the thin always-on awareness context. THE
     install path:
-      amplifier bundle add git+https://github.com/bkrabach/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml --app
+      amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml --app
     Composes onto whatever bundle is already active (which must already provide
     foundation). Includes the work-tracker BEHAVIOR (so converge:reconciler gets
     its work_* filing tools on BOTH install paths); does NOT include foundation
