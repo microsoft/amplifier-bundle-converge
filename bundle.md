@@ -40,22 +40,16 @@ includes:
   # resolves to this repo's checkout root (bundle.md is the root, name: converge).
   - bundle: converge:behaviors/converge
 
-# Structural enforcement of the agents' negative-capability contracts (Finding #1).
-# Declared HERE at the root as the GUARANTEED path: apply_spawn_tool_policy
-# (app-cli agent_config.py:16-65) reads `spawn` from the composed root mount plan
-# and strips these from the PARENT tool list on every spawn (an agent that
-# re-declares a tool keeps it — reconciler re-declares filesystem/search/bash/
-# work-tracker; git-ops/modular-builder re-declare bash, so the live-verified
-# recipes are unaffected). Also declared in behaviors/converge.yaml so the
-# capability travels with the behavior; whether an --app-listed behavior's
-# top-level `spawn:` propagates is unverified (see that file's PROPAGATION
-# CAVEAT), so this root declaration is the belt-and-suspenders guarantee for the
-# `bundle use converge` full-workspace path.
-spawn:
-  exclude_tools:
-    - tool-delegate
-    - tool-skills
-    - tool-bash
+# NO top-level `spawn:` block — deliberately (DTU-verified 2026-09-02).
+# A composed bundle's `spawn.exclude_tools` applies to EVERY spawned sub-agent in
+# EVERY session it composes into — including via `--app` (live probe: a plain
+# foundation session's foundation:explorer lost bash/delegate/load_skill; the
+# removal control restored a byte-identical baseline). That blast radius is
+# unacceptable for a composable surface. The agents' "no delegate / no skills /
+# no shell" rules are BEHAVIORAL (their body instructions + explicit tools:
+# blocks); the candidate-guard hook remains the structural enforcement that
+# matters. Do NOT reintroduce a session-wide spawn policy here — per-agent spawn
+# tool policy is an upstream feature request.
 ---
 
 # Converge

@@ -97,31 +97,16 @@ context:
   include:
     - converge:context/converge-awareness.md
 
-# Structural enforcement of the agents' negative-capability contracts (Finding #1).
-# Verified against installed app-cli source: apply_spawn_tool_policy
-# (agent_config.py:16-65) strips these modules from the PARENT tool list on every
-# spawn; an agent that RE-DECLARES a tool in its own frontmatter gets it back
-# (_filter_tools session_spawner.py:72-132: final = (inherited - excluded) + explicit).
-# reconciler re-declares tool-filesystem/tool-search/tool-bash/tool-work-tracker,
-# so it keeps read/write + shell + work_* filing; negotiator & amendment-drafter
-# re-declare nothing → genuinely lose delegate/skills/bash. Foundation's
-# git-ops/modular-builder re-declare tool-bash, so excluding it does NOT break the
-# live-verified recipes; none of the recipe-critical foundation agents needs
-# tool-delegate/tool-skills.
-#
-# ⚠ PROPAGATION CAVEAT (honest gap, design question (a)): apply_spawn_tool_policy
-# reads spawn from the COMPOSED mount plan. This is GUARANTEED to take effect when
-# converge is composed as a BUNDLE that carries this spawn key into the root mount
-# plan (the `bundle use converge` / root-bundle path — bundle.md also declares
-# spawn for exactly that guarantee). Whether an --app-listed behavior's top-level
-# `spawn:` merges into the active session's mount plan could NOT be verified from
-# source (no compose-layer code proving app-list carries top-level `spawn`). It is
-# carried here so it applies IF top-level bundle keys propagate via --app; if a
-# live probe shows they do not, structural enforcement holds only on the root path
-# and the agents' "structurally removed" body lines degrade to behavioral rules on
-# the --app path. This needs a live probe (cf. increment-2 Test §T5).
-spawn:
-  exclude_tools:
-    - tool-delegate
-    - tool-skills
-    - tool-bash
+# NO top-level `spawn:` block — deliberately (DTU-verified 2026-09-02).
+# The live probe this file's old PROPAGATION CAVEAT asked for was run: a
+# behavior's top-level `spawn:` DOES merge into the session mount plan via
+# `--app`, and `spawn.exclude_tools` then strips the listed tools from EVERY
+# spawned sub-agent in EVERY session — not just converge's agents (measured:
+# foundation:explorer in a plain foundation session lost bash/delegate/
+# load_skill; functional proof BASH_ABSENT; removal control restored a
+# byte-identical baseline). That is unacceptable collateral for a composable
+# behavior, so the block was removed everywhere. The agents' "no delegate /
+# no skills / no shell" rules are BEHAVIORAL (agent body instructions +
+# explicit tools: blocks); the candidate-guard hook remains the structural
+# enforcement. Do NOT reintroduce a session-wide spawn policy — per-agent
+# spawn tool policy is an upstream feature request.

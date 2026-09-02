@@ -26,11 +26,10 @@ model_role: reasoning
 
 # Explicit tool set. Core function — authoring CANDIDATE-<topic>.md —
 # depended on inheritance alone; declaring it makes the capability portable
-# outside this bundle's parent context. Neither module is in
-# spawn.exclude_tools, so sources inherit.
-# MUST NOT re-declare tool-delegate / tool-skills / tool-bash: an explicit
-# entry RE-ADDS a module post-exclusion (additive semantics), which would
-# falsify this agent's "returns needs, never re-routes" contract.
+# outside this bundle's parent context. Sources inherit.
+# MUST NOT declare tool-delegate / tool-skills / tool-bash: this agent's
+# "returns needs, never re-routes" contract is behavioral — do not hand it
+# the tools to violate it.
 tools:
   - module: tool-filesystem
   - module: tool-search
@@ -91,8 +90,8 @@ that as a need for `protocol-authority`, don't draft it as an ordinary CANDIDATE
 ## Routing — you RETURN NEEDS, you do not re-route (Finding #1)
 
 You keep read + filesystem-write (to author the CANDIDATE file), but delegation,
-spawn, `load_skill`, and shell are **structurally removed** from you by the
-bundle's `spawn.exclude_tools` — by design, not by convention. The **root is the
+spawn, `load_skill`, and shell are **off-limits to you** — a behavioral contract
+of this role, by design, not by convention. The **root is the
 only router.** When you hit a ruling rather than an authoring task — "is this actually divergent?", "does
 this shape conform to §5?", "is this a version bump?" — **return the need**
 (*"needs a change-pricing ruling on X"* / *"needs a conformance ruling on Y"*).

@@ -44,14 +44,17 @@ a target repo.
 | 4 agents · 5 skills · guard hook · awareness | ✅ | ✅ |
 | `foundation` present | assumes the active bundle already provides it (agents use `@foundation:` refs) | ✅ pulled in by `bundle.md` |
 | `work-tracker` present (reconciler's `work_*` filing) | ✅ the behavior includes the work-tracker **behavior** (behavior-includes-behavior), so `reconciler` gets `work_*` filing on this path too | ✅ pulled in by `bundle.md` |
-| `spawn.exclude_tools` structural enforcement of the agents' "no delegate / no skills / no shell" contracts | **carried in the behavior, but propagation of a behavior's top-level `spawn:` via `--app` is UNVERIFIED** — if it doesn't take effect, those claims degrade to the agents' behavioral instructions (a live probe is needed) | ✅ **guaranteed** — `spawn` is declared at the root mount plan |
+| Agents' "no delegate / no skills / no shell" rules | behavioral — agent body instructions + explicit `tools:` blocks (per-agent structural spawn policy is an upstream feature request) | behavioral (same) |
 
 Both paths give the four agents, five skills, guard hook, awareness context, and
-work-tracker filing. The root path additionally pulls `foundation` itself and
-**guarantees** the `spawn.exclude_tools` structural enforcement — so for
-end-to-end recipe runs against a target repo, prefer `bundle use converge`. For
-lightweight composition of the knowledge/enforcement layer onto a session that
-already provides foundation, the `--app` behavior is the quick path.
+work-tracker filing. The root path additionally pulls `foundation` itself — so
+for end-to-end recipe runs against a target repo, prefer `bundle use converge`.
+For lightweight composition of the knowledge/enforcement layer onto a session
+that already provides foundation, the `--app` behavior is the quick path.
+Neither path imposes any session-wide `spawn:` policy: a live probe
+(2026-09-02) showed a composed `spawn.exclude_tools` strips tools from **every**
+spawned sub-agent in every session — unacceptable collateral for a composable
+bundle, so it is deliberately absent everywhere.
 
 ## Status
 

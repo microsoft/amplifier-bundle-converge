@@ -854,9 +854,10 @@ have the material to exercise them.
   agents' negative-capability claims were prose-only).** The three worker agents
   ASSERTED capabilities they did not structurally lack: negotiator "no write",
   reconciler + amendment-drafter "no delegation/spawn/load_skill" — all three
-  actually INHERITED those tools. Same convention-gap class as OQ2. Fixed
-  structurally, **verified against installed app-cli source before applying**
-  (not on the validator's say-so):
+  actually INHERITED those tools. Same convention-gap class as OQ2. Initially
+  fixed structurally (bundle-level spawn excludes), **revised 2026-09-02 to
+  behavioral rules after DTU evidence** — mechanics below retained as the
+  verified record of why:
   - **Mechanics (verified):** `agent_config.py:16-65 apply_spawn_tool_policy`
     strips `spawn.exclude_tools` modules from the PARENT tool list on **every**
     spawn; `agent_config.py:99`/`session_spawner.py:298 merge_configs` is the
@@ -870,17 +871,23 @@ have the material to exercise them.
     excluding `tool-bash` does NOT strip git/build shell from the live-verified
     recipes; **none declares or needs `tool-delegate`/`tool-skills`**, so
     excluding those is safe.
-  - **Decision:** bundle-level `spawn.exclude_tools: [tool-delegate, tool-skills,
-    tool-bash]` (makes "no delegation / no load_skill / no shell" TRUE for
-    converge's own agents). `reconciler` re-declares `tool-filesystem`,
-    `tool-search`, `tool-bash` (with its own source — the excluded parent entry
-    is gone) and the explicit `tool-work-tracker` (Finding #4; module id
-    `tool-work-tracker`, verified from the cached work-tracker behavior) so it
-    keeps read/write + shell + `work_*` filing while still unable to
-    delegate/load-skill. `negotiator` and `amendment-drafter` re-declare nothing
-    → lose delegate/skills/bash; both keep inherited filesystem read/write
-    (amendment-drafter needs it for the CANDIDATE file; that write is bounded by
-    the candidate-guard hook).
+  - **Decision (revised 2026-09-02, DTU evidence):** NO session-wide
+    `spawn.exclude_tools` anywhere in the bundle — neither `bundle.md` nor
+    `behaviors/converge.yaml`. A live DTU probe (the probe the old PROPAGATION
+    CAVEAT asked for) proved a composed bundle's top-level `spawn:` DOES merge
+    into the session mount plan **including via `--app`**, and the exclusion
+    then strips bash/delegate/load_skill from EVERY spawned sub-agent in EVERY
+    session: `foundation:explorer` in a plain foundation session lost all
+    three (functional proof: asked to run a shell command it replied
+    BASH_ABSENT); removing both converge registry entries restored a
+    byte-identical baseline (causal control). Unacceptable blast radius for a
+    composable surface. The agents' negative-capability rules ("no delegation /
+    no load_skill / no shell") are now BEHAVIORAL, carried in each agent body;
+    each agent declares an explicit self-contained `tools:` block (retained —
+    reconciler keeps filesystem/search/bash/work-tracker with sources); the
+    candidate-guard hook remains the structural enforcement that matters.
+    Per-agent spawn tool policy is filed upstream as the mechanism that would
+    make these rules structural without collateral.
   - **RESIDUAL (honest gap — did NOT ship an unverified mechanism):** per-agent
     filesystem-WRITE cannot be removed structurally in this engine (overlay
     `tools:` is additive; the only lever is a `tool-filesystem` `config`
@@ -895,7 +902,10 @@ have the material to exercise them.
     749→477, negotiator 731→560, reconciler 666→529, protocol-authority
     497→442; all `<commentary>` deleted, 2 examples each, WHEN + NOT-authoritative
     boundaries preserved); `protocol-authority` gained `model_role: reasoning`.
-  - Note: `spawn.exclude_tools` is bundle-global for any session composing
-    converge; safe here because no needed agent relies on *inherited* (non-
-    re-declared) delegate/skills/bash. Recipe ERRORs + 8/10 recipe warnings were
-    triaged as validator-engine/known-agents false positives and not acted on.
+  - Note: the original "bundle-global is safe here because no needed agent
+    relies on inherited delegate/skills/bash" assumption was FALSIFIED by the
+    2026-09-02 DTU probe — the exclusion is session-global across ALL agents
+    (host, custom, and foundation alike), and it propagates on the `--app`
+    path; hence the revised decision above. Recipe ERRORs + 8/10 recipe
+    warnings were triaged as validator-engine/known-agents false positives and
+    not acted on.

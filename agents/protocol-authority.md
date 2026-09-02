@@ -24,11 +24,10 @@ meta:
 model_role: reasoning
 
 # Explicit tool set. Matches mechanism-spec.md tool_requirements
-# (read_file, grep — read-only; reasons over carried docs). Neither module
-# is in spawn.exclude_tools, so sources inherit.
-# MUST NOT re-declare tool-delegate / tool-skills / tool-bash: an explicit
-# entry RE-ADDS a module post-exclusion (additive semantics), which would
-# falsify this agent's "returns needs, never re-routes" contract.
+# (read_file, grep — read-only; reasons over carried docs); sources inherit.
+# MUST NOT declare tool-delegate / tool-skills / tool-bash: this agent's
+# "returns needs, never re-routes" contract is behavioral — do not hand it
+# the tools to violate it.
 tools:
   - module: tool-filesystem
   - module: tool-search

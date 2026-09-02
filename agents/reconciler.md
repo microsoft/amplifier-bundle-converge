@@ -25,11 +25,10 @@ meta:
     those it returns to the root (see below).
 model_role: reasoning
 
-# Explicit tool set (Finding #1). The bundle's spawn.exclude_tools strips
-# tool-bash/tool-delegate/tool-skills from every spawned agent; the reconciler
-# RE-DECLARES the two it genuinely needs so they survive the exclusion
-# (final = (inherited - excluded) + explicit). tool-bash carries its own source
-# because the excluded parent entry is gone (nothing to inherit the source from);
+# Explicit tool set (Finding #1). The reconciler declares the tools it
+# genuinely needs so its capability set is self-contained and portable
+# across host compositions. tool-bash carries its own source so it resolves
+# regardless of what the parent session composes;
 # tool-filesystem/tool-search/tool-work-tracker are NOT excluded, so their sources
 # inherit. Result: reconciler keeps read/write + shell (repo kit) + work_* filing,
 # but still cannot delegate or load skills (root-as-router holds structurally).
@@ -124,8 +123,8 @@ human — that is what keeps standing reconcile inside the owner attention budge
 
 ## Routing (you return needs; you do not re-route)
 
-Delegation, spawn, and `load_skill` are **structurally removed** from you by the
-bundle's `spawn.exclude_tools` — by design, not by convention. When you
+Delegation, spawn, and `load_skill` are **off-limits to you** — a behavioral
+contract of this role, by design, not by convention. When you
 hit an interpretive protocol question you cannot settle from the contract text
 plus the ledger format (e.g. *"is this clause REQUIRED or IDIOM?"*, *"does this
 count as a seam?"*), **state the need plainly and return it to the root**
