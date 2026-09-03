@@ -1,49 +1,110 @@
 ---
 name: lane-brief
 description: >
-  Write and judge autonomous lane briefs with the discipline the protocol
-  requires — an honesty gate, a file-ownership split when lanes share a repo,
-  and provenance checks so completion is credited from git artifacts, never
-  from liveness or self-report. Use when briefing an EXECUTE-phase lane, when
-  deciding whether a lane is actually done, or when a run looks successful but
-  may have produced nothing. Applies PROTOCOL.md §4 (lane discipline) and
-  pillars 2 and 5.
-version: 0.1.0
+  Write a lane brief a worker session can run alone, and judge honestly whether
+  a lane is done. Carries the proven charter: an honesty gate, an explicit
+  file-ownership split, two exits and no third, the terminal marker outside the
+  worktree, and completion credited from commits rather than from liveness or
+  self-report. Use when briefing a worker session, when deciding whether a lane
+  is actually done, or when a run looks successful but may have produced
+  nothing. Applies operation.v1 §5 (lanes are real sessions) and §7 (done means
+  the manager session re-ran the check).
+version: 0.2.0
 ---
 
 # Lane briefs and honest completion
 
-**Owned by `@converge:docs/PROTOCOL.md` §4 (lane discipline, imported intact
-from cortex-core — all measured) and pillars 2 & 5.** This skill is the
-procedure.
+A **lane** is one bounded piece of work carried out by a **worker session** —
+a short-lived AI session working alone in its own copy of the code. The
+**manager session** writes the brief, launches the lane, and judges the result.
+The **intent steward** — the person the work is for — is not in this loop.
+
+The brief is the whole of what a worker session gets. It sees the goal file and
+its working copy, never the manager session's conversation. Everything the lane
+needs is in the file, or it does not exist.
+
+Governing text: `contracts/operation.v1.md` §5, §7 and `docs/PROTOCOL.md` §4.
+
+## Runtime: a lane is a tmux `/goal` session in its own worktree and branch, started externally — `delegate()` and in-session agent fan-out never execute lane work
+
+Every lane runs as its own tmux `/goal` session, in its own git worktree, on its
+own branch `lane/<item id>`, started by an external launcher. A wave that cannot
+reach a launcher **fails loud** and says so; it never quietly falls back to
+spawning agents inside the manager session.
+
+### The four sanctioned in-session sub-agent roles
+
+A manager session may spawn a sub-agent for exactly four things, and **none of
+them executes lane work**:
+
+1. **Read-only investigation under half an hour** — look, report, change nothing.
+2. **Protocol ruling** — ask the authority what the rules require, and relay it.
+3. **Janitorial queue recording** — file or update items in the shared queue.
+4. **The watcher** — absorb waiting. It must stay in the main agent loop so it
+   can report back, and it observes only.
+
+Anything beyond these four is a lane, and a lane is a session.
 
 ## What every lane brief carries
 
-- **An honesty gate:** name what "not proven" looks like *before* work starts.
-  The enemy is the successful-looking run that did nothing (pillar 5).
-- **A file-ownership split:** two lanes in one repo require an explicit split
-  of which files each owns.
-- **Clause-quoting acceptance criteria:** the ledger row / contract clause the
-  lane closes, quoted — so "done" is checkable against the spec, not vibes.
+- **The honesty gate: name the exact outcome that means "not proven" before the
+  work starts.** Write the sentence the lane must be able to say — *"no macOS
+  host here, so verification is unit-level only, and the resolution must say
+  so."* The enemy is the successful-looking run that produced nothing. A lane
+  that knows in advance what failure looks like will report it.
+- **An explicit file-ownership split.** When two lanes share one repository,
+  each brief names the exact paths that lane owns and states that everything
+  else is off-limits. Where one file must be shared, name that one file and no
+  others. Width is a collision decision, not a speed decision: items touching
+  adjacent code run as one lane claiming them in order.
+- **Acceptance that quotes the contract.** Quote the clause the lane closes, so
+  "done" is checkable against the promise rather than against a feeling.
+- **The boundaries it must not cross.** Live services, shared tooling, other
+  people's files — named, not implied.
 
-## How completion is known (not from liveness)
+## Two exits and no third
 
-- **Completion is knowable only from git artifacts** (`DONE.md`, commits) —
-  **never** from pane or session liveness.
-- **Inherited-from-fork artifacts are the #1 false signal.** Check provenance
-  (commit, mtime) before crediting any artifact as this lane's work.
+A lane ends one of exactly two ways, and the brief says so in these words:
+
+- **A) SUCCESS** — every acceptance item met with evidence shown as it was
+  produced; the work committed; the queue item resolved with a reason written
+  for the person who asked.
+- **B) BLOCKED** — a named blocker the lane cannot clear; whatever is sound is
+  committed; the cause is written down; the lane stops.
+
+There is no third outcome, and no improving after A or B. An honest stop with a
+cause always beats a green report nobody can back up. A single item that proves
+impossible does not strand the rest: release it with the blocker named and
+continue to the next.
+
+## The terminal marker lives OUTSIDE the worktree
+
+The brief names the marker's absolute path, and that path is outside the
+repository on purpose. A lane's own `git add -A` can then never stage the marker,
+and two lanes' markers can never collide when their branches merge. A brief that
+puts the marker inside the working copy is a brief that will cause a merge
+conflict later.
+
+## A commit is the only durable evidence
+
+Completion is read back from git, never from anything else:
+
+- **A branch whose tip still equals its base committed nothing.** It is recorded
+  *stuck*, whatever its marker claims. An artifact inherited from the base is the
+  most common false signal there is — check what commit produced it before
+  crediting it.
+- **A lane still running at the deadline is stuck, not done.** Never write down
+  an outcome that has not happened yet.
+- **A self-report is never proof.** A worker session's verdict, a monitor's
+  verdict, a marker file's text and a live terminal pane are all raw
+  observations. They become *proven* only when the manager session re-runs the
+  check itself and sees the result.
 - **Health endpoints are not a working system.** Numbers reported are real or
-  absent.
+  they are absent; there is no third state.
 
-## A self-report is never proof (pillar 2)
+## A missing artifact is a real result
 
-An agent's or monitor's verdict is a *raw observation*. Promotion to **proven**
-requires an artifact check the orchestrator runs itself. Fabricated PASS
-verdicts were measured in two independent sessions — do not trust a verdict you
-did not verify.
-
-## A missing artifact is a real result (pillar 5)
-
-Honest stopping — `N/A` with a reason, `BLOCKED.md` with a cause — always beats
-fabricated compliance. A lane that stops honestly and says why has done better
-than one that reports a green result it cannot back with an artifact.
+Stopping honestly — recording *can't check* with a reason, writing down a
+blocker with its cause — is a genuine outcome and is recorded as one. A lane
+that stops and says why has done better than a lane that reports green and
+cannot show the artifact behind it.
