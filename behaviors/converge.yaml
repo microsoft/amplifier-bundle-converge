@@ -49,9 +49,17 @@ tools:
 hooks:
   # The ratchet's teeth (mechanism-spec §6.1 DECIDED: BUILD). Structural
   # enforcement of PROTOCOL.md §5, pillar 3: no direct write/edit/patch/bash-write
-  # to a FROZEN contract/VISION.md; amendments land only via a ratified
-  # CANDIDATE-<topic>.md. On by default (a guard that ships off recreates the
-  # convention-only gap the behavioral model proved insufficient, OQ2).
+  # to a locked contract/VISION.md; amendments land only via a ratified sibling
+  # proposal — `<contract>.vN-candidate.md` (contracts/documents.v1 clause 8) or
+  # the legacy `CANDIDATE-<topic>.md` (PROTOCOL.md §5), both admitted. On by
+  # default (a guard that ships off recreates the convention-only gap the
+  # behavioral model proved insufficient, OQ2).
+  #
+  # Every value below is a deliberate restatement of the module's own default,
+  # kept BYTE-IDENTICAL to it. They drifted apart once — the module learned the
+  # versioned proposal name and the H1 locked marker while this file did not —
+  # and that drift is why converge-diw / -9vw / -ksg were each filed separately.
+  # modules/hooks-candidate-guard/tests/test_guard.py asserts the two agree.
   #
   # Module source is RELATIVE TO THIS FILE'S DIRECTORY (behaviors/), verified
   # against foundation's FileSource + the work-tracker behavior's own comment:

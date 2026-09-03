@@ -73,8 +73,26 @@ class GuardConfig:
         ]
     )
     require_frozen_marker: bool = True
+    # THREE locked-marker forms, in one alternation. Byte-identical to the
+    # shipped `frozen_marker_regex` in behaviors/converge.yaml -- if you change
+    # one, change the other, or a repo on module defaults and a repo on the
+    # shipped config disagree about what "locked" means.
+    #
+    #   ^#.*\(FROZEN\b        the RATIFIED anatomy: contracts/documents.v1
+    #                         clause 6 -- "status lives in the H1 parenthetical
+    #                         and nowhere else", e.g.
+    #                         `# Documents Contract - v1 (FROZEN 2026-09-02)`.
+    #                         This is the form .githooks/pre-push also checks.
+    #   **Status:** ...       legacy body marker, still honored so a repo that
+    #   status: FROZEN        locked a contract under the older convention does
+    #                         not silently become writable on upgrade.
+    #
+    # Deliberately loose on the H1 branch (any `#`-led line, case-insensitive):
+    # over-matching only ever guards MORE, and a guard that under-matches fails
+    # silently. Proposal files that quote a locked H1 are unaffected --
+    # always_allow_globs is checked first (decision order step 5).
     frozen_marker_regex: str = (
-        r"(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN"
+        r"(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN|^#.*\(FROZEN\b"
     )
     always_allow_globs: list[str] = field(default_factory=lambda: list(PROPOSAL_GLOBS))
 
@@ -123,6 +141,16 @@ class GuardConfig:
 
     # §2.8 fail-closed on internal error
     fail_closed_on_error: bool = True
+
+    # Second write path: direct tool dispatch that never emits `tool:pre`.
+    # `amplifier tool invoke <tool> ...` builds a full session (this hook DOES
+    # mount and IS registered on tool:pre -- measured) and then calls
+    # `tools[name].execute(args)` itself, so no `tool:pre` is ever emitted and
+    # NO hook on that event can see the write. With this on (the default), the
+    # guard also wraps the mounted tool instances' own `execute`, evaluating
+    # the identical pure function, so the deny holds on both paths.
+    # See the module README, "The two write paths".
+    wrap_tool_execute: bool = True
 
     # §4.6 rule (b), ENCODE-before-implement -- opt-in, off by default
     enforce_encode_before_impl: bool = False

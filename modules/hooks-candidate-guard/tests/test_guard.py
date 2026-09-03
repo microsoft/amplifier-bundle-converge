@@ -827,3 +827,384 @@ def test_w1_glob_character_classes(pattern: str, path: str, expected: bool) -> N
     from amplifier_module_hooks_candidate_guard.guard import _glob_match_any
 
     assert _glob_match_any(path, [pattern]) is expected
+
+
+# ---------------------------------------------------------------------------
+# W3 -- the ratified locked marker, and the second write path
+#
+# Four reports, one cause: the guard's notion of "a locked contract" and "a
+# proposal file" lagged the ratified anatomy, and one write path never reached
+# the guard at all.
+#
+#   converge-diw  the H1 parenthetical `(FROZEN <date>)` -- the ONLY place
+#                 contracts/documents.v1 clause 6 allows status to live -- was
+#                 not a marker the guard recognised.
+#   converge-ksg  the module default globs / deny message vs the new proposal
+#                 name `<contract>.vN-candidate.md`.
+#   converge-9vw  the shipped behaviors/ config vs that same name.
+#   converge-ldz  `amplifier tool invoke` calls tools[name].execute() itself
+#                 and never emits tool:pre, so no hook could see the write.
+#
+# W3a-W3c cover the marker and both proposal names; W3d covers the second
+# write path.
+# ---------------------------------------------------------------------------
+
+H1_FROZEN = "# Probe Contract — v1 (FROZEN 2026-09-02)\n\n"
+H1_DRAFT = "# Probe Contract — v1 (DRAFT)\n\n"
+BEHAVIOR_YAML = (
+    Path(__file__).resolve().parents[3] / "behaviors" / "converge.yaml"
+)
+
+
+# --- W3a: the H1 locked marker (converge-diw) ------------------------------
+
+
+@pytest.mark.parametrize(
+    ("tool_name", "tool_input"),
+    [
+        ("write_file", {"file_path": "contracts/x.v1.md", "content": "hijacked"}),
+        (
+            "edit_file",
+            {
+                "file_path": "contracts/x.v1.md",
+                "old_string": "the locked clause",
+                "new_string": "a different clause",
+            },
+        ),
+    ],
+    ids=["write_file", "edit_file"],
+)
+def test_w3a_h1_locked_contract_is_denied(
+    tmp_path: Path, tool_name: str, tool_input: dict
+) -> None:
+    """converge-diw: `(FROZEN <date>)` in the H1 IS the locked marker.
+
+    The file carries no `**Status:**` line at all -- exactly the anatomy
+    contracts/documents.v1 clause 6 mandates and .githooks/pre-push checks.
+    Before this fix the guard saw no marker and allowed the write.
+    """
+    _write(tmp_path, "contracts/x.v1.md", H1_FROZEN + "the locked clause\n")
+
+    decision = evaluate_tool_pre(tool_name, tool_input, _config(), str(tmp_path))
+
+    assert decision.result.action == "deny"
+    reason = decision.result.reason or ""
+    # The remedy names the versioned form, and the concrete path to write.
+    assert "contracts/x.v2-candidate.md" in reason
+    assert "<contract>.vN-candidate.md" in reason
+
+
+def test_w3a_h1_draft_contract_stays_writable(tmp_path: Path) -> None:
+    """`(DRAFT)` in the H1 is not a lock -- ENCODE must still be able to write."""
+    _write(tmp_path, "contracts/x.v1.md", H1_DRAFT + "still being authored\n")
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "more drafting"},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+
+
+@pytest.mark.parametrize(
+    "marker",
+    ["**Status:** FROZEN\n\n", "**Status:** RATIFIED\n\n", "status: FROZEN\n\n"],
+    ids=["status-frozen", "status-ratified", "front-matter"],
+)
+def test_w3a_legacy_body_markers_still_detected(tmp_path: Path, marker: str) -> None:
+    """Teaching the guard the H1 form must not un-teach it the legacy forms.
+
+    A repo that locked a contract under the older convention would otherwise
+    become silently writable on upgrade -- a regression in the direction that
+    fails open.
+    """
+    _write(tmp_path, "contracts/x.v1.md", "# Legacy Contract\n\n" + marker + "text\n")
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "hijacked"},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+
+
+def test_w3a_module_default_matches_the_shipped_behavior_config(tmp_path: Path) -> None:
+    """Drift tripwire (converge-diw + converge-9vw's shared cause).
+
+    The four reports exist because guard.py's defaults and the shipped
+    behaviors/converge.yaml config disagreed about what "locked" and
+    "proposal" mean. Assert they cannot silently diverge again.
+    """
+    import re as _re
+
+    text = BEHAVIOR_YAML.read_text(encoding="utf-8")
+    config = _config()
+
+    m = _re.search(r"^\s*frozen_marker_regex:\s*'(.+)'\s*$", text, _re.MULTILINE)
+    assert m, "behaviors/converge.yaml no longer sets frozen_marker_regex"
+    assert m.group(1) == config.frozen_marker_regex
+
+    for key in ("always_allow_globs", "candidate_glob"):
+        m = _re.search(rf"^\s*{key}:\s*\[(.+)\]\s*$", text, _re.MULTILINE)
+        assert m, f"behaviors/converge.yaml no longer sets {key}"
+        shipped = {v.strip().strip("\"'") for v in m.group(1).split(",")}
+        assert shipped == set(getattr(config, key))
+
+
+# --- W3b: both proposal names beside an H1-locked contract (ksg / 9vw) ------
+
+
+@pytest.mark.parametrize(
+    "rel",
+    ["contracts/x.v2-candidate.md", "contracts/CANDIDATE-x.md"],
+    ids=["versioned", "legacy"],
+)
+def test_w3b_proposal_beside_h1_locked_contract_is_allowed(
+    tmp_path: Path, rel: str
+) -> None:
+    """Both sanctioned names are writable beside an H1-locked contract.
+
+    The proposal is seeded already carrying the locked H1 -- a proposal quotes
+    the contract's own text, status line included, so it reads as locked
+    itself. Writing to a path that does not exist yet would prove nothing.
+    """
+    _write(tmp_path, "contracts/x.v1.md", H1_FROZEN + "the locked clause\n")
+    _write(tmp_path, rel, H1_FROZEN + "quoting the locked H1\n")
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": rel, "content": "target: contracts/x.v1.md\n"},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+
+
+def test_w3b_ratified_versioned_proposal_unlocks_an_h1_locked_contract(
+    tmp_path: Path,
+) -> None:
+    """The escape hatch works under the H1 marker AND the versioned name.
+
+    Both halves of converge-ksg in one assertion: admitting the new name for
+    *writing* a proposal, while the escape hatch recognised only the old one,
+    would leave a ratified proposal unable to land.
+    """
+    _write(tmp_path, "contracts/x.v1.md", H1_FROZEN + "the locked clause\n")
+    _write(
+        tmp_path,
+        "contracts/x.v2-candidate.md",
+        "target: contracts/x.v1.md\n\n# The exact change\n...\n",
+    )
+    config = _config()
+    edit = ("write_file", {"file_path": "contracts/x.v1.md", "content": "amended"})
+
+    # Unratified -> still denied.
+    assert evaluate_tool_pre(*edit, config, str(tmp_path)).result.action == "deny"
+
+    # The owner's literal stamp -> the amendment lands.
+    _write(
+        tmp_path,
+        "contracts/x.v2-candidate.md",
+        "target: contracts/x.v1.md\n\n# The exact change\n...\n\n" + RATIFIED_STAMP,
+    )
+    decision = evaluate_tool_pre(*edit, config, str(tmp_path))
+    assert decision.result.action == "continue"
+    assert decision.events[0][0] == "converge:guard_allowed_ratified"
+    assert decision.events[0][1]["candidate"] == "contracts/x.v2-candidate.md"
+
+
+# --- W3c: bash laundering under the H1 marker -------------------------------
+
+
+def test_w3c_bash_laundering_into_an_h1_locked_contract_is_denied(
+    tmp_path: Path,
+) -> None:
+    _write(tmp_path, "contracts/x.v1.md", H1_FROZEN + "the locked clause\n")
+
+    decision = evaluate_tool_pre(
+        "bash",
+        {"command": "echo hijacked > contracts/x.v1.md"},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+    assert "via shell" in (decision.result.reason or "")
+
+
+# --- W3d: the second write path -- direct dispatch (converge-ldz) -----------
+#
+# MEASURED, not inferred (2026-09-02): in the session `amplifier tool invoke`
+# builds, `candidate-guard` IS registered on tool:pre -- and the write lands
+# anyway, because the CLI calls `tools[name].execute(args)` itself and no
+# tool:pre is ever emitted. No hook on that event can see it. The guard
+# therefore also wraps the mounted tool instances' own execute().
+
+
+class _FakeTool:
+    """Minimal stand-in for a mounted tool: `async execute(input: dict)`."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict] = []
+
+    async def execute(self, input: dict) -> dict:  # noqa: A002 -- matches the real signature
+        self.calls.append(input)
+        return {"file_path": input.get("file_path"), "bytes": 8}
+
+
+def _wrapped_tools(config: GuardConfig, cwd: str) -> tuple[dict, list]:
+    from amplifier_module_hooks_candidate_guard import wrap_mounted_tools
+
+    tools = {"write_file": _FakeTool(), "edit_file": _FakeTool(), "bash": _FakeTool()}
+    restored = wrap_mounted_tools(tools, config, cwd)
+    return tools, restored
+
+
+async def test_w3d_direct_execute_on_a_locked_contract_raises(tmp_path: Path) -> None:
+    """The write must not land, and the refusal must be loud.
+
+    A returned error dict would be indistinguishable from a successful write
+    to a caller that does not inspect it; `amplifier tool invoke` prints a
+    raised exception and exits non-zero.
+    """
+    from amplifier_module_hooks_candidate_guard import CandidateGuardBlocked
+
+    _write(tmp_path, "contracts/x.v1.md", H1_FROZEN + "the locked clause\n")
+    tools, _ = _wrapped_tools(_config(), str(tmp_path))
+
+    with pytest.raises(CandidateGuardBlocked) as excinfo:
+        await tools["write_file"].execute(
+            {"file_path": "contracts/x.v1.md", "content": "hijacked"}
+        )
+
+    assert "contracts/x.v2-candidate.md" in str(excinfo.value)
+    # The underlying tool was never reached -- not called and then undone.
+    assert tools["write_file"].calls == []
+
+
+async def test_w3d_direct_execute_passes_through_an_unguarded_write(
+    tmp_path: Path,
+) -> None:
+    """The wrapper must not become a second, broader guard."""
+    tools, _ = _wrapped_tools(_config(), str(tmp_path))
+
+    result = await tools["write_file"].execute(
+        {"file_path": "notes.md", "content": "ordinary"}
+    )
+
+    assert result == {"file_path": "notes.md", "bytes": 8}
+    assert tools["write_file"].calls == [{"file_path": "notes.md", "content": "ordinary"}]
+
+
+async def test_w3d_direct_execute_allows_a_proposal_and_a_draft(tmp_path: Path) -> None:
+    _write(tmp_path, "contracts/x.v1.md", H1_FROZEN + "the locked clause\n")
+    _write(tmp_path, "contracts/x.v2-candidate.md", H1_FROZEN + "quoting\n")
+    _write(tmp_path, "contracts/draft.v1.md", H1_DRAFT + "authoring\n")
+    tools, _ = _wrapped_tools(_config(), str(tmp_path))
+
+    for rel in ("contracts/x.v2-candidate.md", "contracts/draft.v1.md"):
+        assert await tools["write_file"].execute({"file_path": rel, "content": "x"})
+
+
+async def test_w3d_direct_execute_denies_bash_laundering(tmp_path: Path) -> None:
+    from amplifier_module_hooks_candidate_guard import CandidateGuardBlocked
+
+    _write(tmp_path, "contracts/x.v1.md", H1_FROZEN + "the locked clause\n")
+    tools, _ = _wrapped_tools(_config(), str(tmp_path))
+
+    with pytest.raises(CandidateGuardBlocked):
+        await tools["bash"].execute({"command": "echo x > contracts/x.v1.md"})
+    assert tools["bash"].calls == []
+
+
+def test_w3d_wrapping_is_opt_outable_and_idempotent(tmp_path: Path) -> None:
+    """Removal control + double-mount safety.
+
+    Off: nothing is touched, so the pre-fix behaviour (the write lands) is
+    exactly recoverable. On, twice: wrapped once, so unwrap is not
+    order-dependent and the evaluator does not run twice per call.
+    """
+    from amplifier_module_hooks_candidate_guard import wrap_mounted_tools
+
+    # NB: `instance.execute` builds a NEW bound-method object on every access,
+    # so identity against a previously-read attribute proves nothing. The
+    # marker the wrapper stamps is the honest signal.
+    def _is_wrapped(t) -> bool:
+        return getattr(t.execute, "__converge_candidate_guard_wrapped__", False)
+
+    tools = {"write_file": _FakeTool()}
+
+    assert wrap_mounted_tools(tools, _config(wrap_tool_execute=False), str(tmp_path)) == []
+    assert not _is_wrapped(tools["write_file"])
+
+    first = wrap_mounted_tools(tools, _config(), str(tmp_path))
+    assert len(first) == 1
+    assert _is_wrapped(tools["write_file"])
+    wrapped_once = tools["write_file"].execute
+    assert wrap_mounted_tools(tools, _config(), str(tmp_path)) == []
+    assert tools["write_file"].execute is wrapped_once
+
+
+def test_w3d_a_tool_that_cannot_be_wrapped_does_not_break_the_guard(
+    tmp_path: Path,
+) -> None:
+    """A slotted/read-only tool must degrade to tool:pre-only, never crash.
+
+    Silent degradation is the failure mode this whole lane is about, so the
+    module logs a warning naming the tool; the assertion here is only that
+    mounting survives and the wrappable tools are still wrapped.
+    """
+    from amplifier_module_hooks_candidate_guard import wrap_mounted_tools
+
+    class _Unwrappable:
+        __slots__ = ()
+
+        async def execute(self, input: dict) -> dict:  # noqa: A002
+            return {}
+
+    tools = {"write_file": _Unwrappable(), "edit_file": _FakeTool()}
+    restored = wrap_mounted_tools(tools, _config(), str(tmp_path))
+
+    assert len(restored) == 1
+    assert restored[0][0] is tools["edit_file"]
+
+
+async def test_w3d_mount_wraps_the_mounted_tools_and_cleanup_restores_them(
+    tmp_path: Path,
+) -> None:
+    """End-to-end through mount(): the real wiring, not just the helper.
+
+    Mount order makes this safe -- amplifier_core/_session_init.py mounts
+    `tools` before `hooks`, so every tool instance already exists in the
+    coordinator when this hook mounts.
+    """
+    from amplifier_module_hooks_candidate_guard import CandidateGuardBlocked
+
+    _write(tmp_path, "contracts/x.v1.md", H1_FROZEN + "the locked clause\n")
+    tool = _FakeTool()
+
+    coordinator = MagicMock()
+    coordinator.hooks.register = MagicMock(return_value=MagicMock())
+    coordinator.hooks.emit = AsyncMock()
+    coordinator.get = MagicMock(
+        side_effect=lambda key: {"write_file": tool} if key == "tools" else None
+    )
+    coordinator.get_capability = MagicMock(return_value=str(tmp_path))
+
+    cleanup = await mount(coordinator, {})
+
+    assert getattr(tool.execute, "__converge_candidate_guard_wrapped__", False)
+    with pytest.raises(CandidateGuardBlocked):
+        await tool.execute({"file_path": "contracts/x.v1.md", "content": "hijacked"})
+    assert tool.calls == []  # the tool was never reached
+
+    cleanup()
+    assert not getattr(tool.execute, "__converge_candidate_guard_wrapped__", False)
+    # Restored means restored: the same write now reaches the tool.
+    assert await tool.execute({"file_path": "contracts/x.v1.md", "content": "x"})
+    assert len(tool.calls) == 1
