@@ -5,14 +5,6 @@ session that runs the loop; every autonomous work session that closes an item
 against it; and any colleague or coding agent who has to know why work here
 happens the way it does. Its ratification date is in the heading.
 
-**Supersedes:** `drumbeat-team-ci/CONTRACT-DRIVEN-WORKFLOW.md` (v1, 2026-08-25).
-**Sources:**
-- `foundation:docs/PER_REPO_CONVENTIONS.md` — the VISION.md convention this extends
-- `cortex-core` — contract-first governance loop; ~40-lane integration evidence; convergent/divergent change pricing
-- `drumbeat-team-ci` — the phase pipeline, proven end-to-end twice (once at 18 items, once 3 hours zero-touch)
-- `better-attractor` — conformance matrix, CANDIDATE amendment protocol, disposition vocabulary, 40-hour session forensics
-- `~/dev/ai-context/workflows/` — the cross-session corpus these were distilled from
-
 ## 0. Words used here
 
 Every term below is used later in this document. The left column is what to
@@ -35,11 +27,22 @@ its tooling also use. Both are correct. Neither replaces the other.
 | toward / away from the contract | convergent / divergent | Which direction a change moves. Toward is cheap; away owes evidence first (§5). |
 | settles | converges | Stops changing, once it is right. |
 
-The six words the ledger uses for a clause's state (§3.3) also have plain
-forms: **Kept** (`CONFORMS`) · **Not yet** (`GAP`) · **Broken**
-(`VIOLATION`) · **Pinned open** (`OPEN-PINNED`) · **Can't check**
-(`NOT-ASSERTABLE`) · **Ruled out** (`EXCLUDED`). The precise names remain the
-ones written in ledger rows; the plain names are for saying out loud.
+A ledger row's state word — its **disposition** — is one of six (§3.3), and
+each of the six also has a plain form: **Kept** (`CONFORMS`) · **Not yet**
+(`GAP`) · **Broken** (`VIOLATION`) · **Pinned open** (`OPEN-PINNED`) ·
+**Can't check** (`NOT-ASSERTABLE`) · **Ruled out** (`EXCLUDED`). The precise
+names remain the ones written in ledger rows; the plain names are for saying
+out loud.
+
+---
+
+**Supersedes:** `drumbeat-team-ci/CONTRACT-DRIVEN-WORKFLOW.md` (v1, 2026-08-25).
+**Sources:**
+- `foundation:docs/PER_REPO_CONVENTIONS.md` — the VISION.md convention this extends
+- `cortex-core` — contract-first governance loop; ~40-lane integration evidence; convergent/divergent change pricing
+- `drumbeat-team-ci` — the phase pipeline, proven end-to-end twice (once at 18 items, once 3 hours zero-touch)
+- `better-attractor` — conformance matrix, CANDIDATE amendment protocol, disposition vocabulary, 40-hour session forensics
+- `~/dev/ai-context/workflows/` — the cross-session corpus these were distilled from
 
 ---
 
@@ -296,6 +299,13 @@ protocol defect — file it as one, against the protocol.
 
 ## Changelog
 
+- **2026-09-03 — v3 wording fix (`converge-3l7`).** §0 "Words used here" now
+  sits above the Supersedes/Sources credits, and a ledger row's state word is
+  named there as its *disposition*, so *lane*, *CANDIDATE*, *disposition* and
+  *convergent / divergent* are each defined at their first use in this file
+  (documents.v1 clause 1). Placement and one gloss only — no rule, gate,
+  phase, threshold or freeze condition changed in meaning, and the
+  rule-by-rule table below is untouched.
 - **2026-09-03 — v3 RATIFIED.** The steward ratified
   `docs/PROTOCOL.v3-candidate.md` with the word *"ok, all lgtm, continue"*;
   the record is `docs/workflow/owner-ratifications-2026-09-03.md`, and the
