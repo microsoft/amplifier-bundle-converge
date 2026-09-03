@@ -288,6 +288,50 @@
 # That is a split, and a split is a re-derivation this lane was not briefed for.
 # Filed as converge-njn rather than guessed at, exactly as converge-jc9 filed
 # these four.
+#   THAT SPLIT IS NOW DONE (2026-09-03, converge-njn) — see THE CLAUSE 9 SPLIT
+#   below. The forecast above was right in both halves and neither disposition
+#   was guessed: each was re-derived from its own rule's live verdict.
+#
+# THE CLAUSE 9 SPLIT (2026-09-03 — converge-njn)
+# ----------------------------------------------
+# One row became two, because after wave 4 the two halves of documents.v1
+# clause 9 stopped being the same kind of claim. RAN 2026-09-03,
+# `uv run conformance/documents/run.py .`, both verdicts read off that run:
+#
+#   CVG-051  "…names its contract … defines done in plain words,"
+#            GAP, unchanged — but for a re-derived reason and against a new ref.
+#            Rule 9a SKIPs for a MISSING SUBJECT: this repo exports no work
+#            queue. The check itself is complete and mechanical; converge-8om
+#            already ran it against the live 24-item queue and got a real FAIL.
+#            A check that works and has nothing to read is a gap with a fix.
+#   CVG-069  "and quotes the feedback or gap it came from."   NEW ROW
+#            NOT-ASSERTABLE. Rule 9b SKIPs on a PUBLISHED MEASUREMENT: the
+#            literal test passes 7 of 24 real items and most of the 17 it fails
+#            do point at their origin. Same shape as rule 7d, so the same
+#            judgment converge-jc9 gave CVG-063.
+#
+# THE DISTINCTION IS THE POINT, and it is why one GAP could not stand for both:
+# 9a has nothing to READ; 9b has nothing a machine can JUDGE. The first is
+# closable by supplying a file. The second is not closable by anyone here.
+# Publishing one disposition over those two truths is the defect the cross-check
+# found between CVG-048/CVG-049. Third split for that reason, same treatment:
+# CVG-059 → CVG-067 (converge-jc9), CVG-052 → CVG-068 (converge-12o), now this.
+#
+# A CLOSED ITEM STOPPED BEING CITED AS A FIX. CVG-051 carried `work:
+# converge-8om`, which is RESOLVED — it is the item that BUILT rules 9a and 9b.
+# This file's own tally already says a closed item may not stay cited as the
+# thing that will fix a red row, and CVG-051 was the last row still doing it.
+# The fix is now filed for real, as converge-gmo (export the work queue to
+# docs/work-items.json), and that is what the row cites.
+# NOTE FOR THE NEXT RECONCILE: landing converge-gmo is expected to turn CVG-051
+# from "GAP, check cannot run" into a RED ROW WITH A RUNNING CHECK — 4 of 24
+# items named no contract when 9a last ran for real (converge-vc0). That is
+# progress, not a regression, and the probe is written to force the re-read.
+#
+# BOTH PROBES REPLACED AN `indexed` REF and were negative-controlled in a
+# scratch copy, each break observed to land and then restored (see the foot of
+# this file). One control did not land on the first attempt and that is recorded
+# on CVG-069 rather than silently re-run.
 #
 # ONE THING THAT WAS FIXED IN PASSING, because it is in ledger/ and it was
 # silently eating this file's own tripwire: `ledger/checks/verify.py` globbed
@@ -301,12 +345,12 @@
 #
 # ROW COUNTS BY CONTRACT (full tally at the foot of this file)
 #   composition.v1   9 rows      operation.v1   15 rows
-#   surface.v1      13 rows      documents.v1   26 rows
-#   + CVG-000 SYNC   1                                     = 64 rows total
+#   surface.v1      13 rows      documents.v1   27 rows
+#   + CVG-000 SYNC   1                                     = 65 rows total
 #
 # Ids are stable forever, never renumbered, never reused. Rows added by the
 # cross-check revision and the reconciles after it take fresh ids (CVG-009,
-# CVG-056..CVG-068) rather than
+# CVG-056..CVG-069) rather than
 # renumbering their neighbours, which is why the id blocks are not contiguous.
 #
 # No row exists that a contract clause (or a sentence of a contract's own
@@ -1856,44 +1900,126 @@
     and the header's note stands for the next one.
 
 - id: CVG-051
-  title: a work item names its contract, defines done, and quotes its source
+  title: a work item names its contract and defines done — the mechanical half, which cannot run here
   contract:
     file: contracts/documents.v1.md
     clause: "Core 9"
-    quote: |
-      **A work item names its contract** in one line, defines done in plain words,
-      and quotes the feedback or gap it came from.
+    quote: "**A work item names its contract** in one line, defines done in plain words,"
   disposition: GAP
   assertion:
-    kind: indexed
-    ref: conformance/documents/run.py (rules 9a, 9b)
+    kind: probe
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"work_item_names_a_contract\"][0];print(\"WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT\" if r[\"status\"]==\"SKIP\" and \"no work-item export\" in r[\"reason\"] else \"WORK-ITEM-CHECK-NOW-RUNS-\"+r[\"status\"])"'
+    expect:
+      exit: 0
+      stdout_contains: "WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT"
+  proves: >
+    Only that rule 9a is present, mechanical, and still has nothing to read in
+    this tree. It proves NOTHING about whether this repository's work items name
+    their contract or define done in plain words — that is the promise, and it is
+    unasserted here, which is what GAP says. The probe is written to flip the
+    moment the gap closes: land a work-queue export and it reports
+    WORK-ITEM-CHECK-NOW-RUNS-PASS or -FAIL instead, forcing this row to be
+    re-derived rather than quietly enjoying a check that started passing.
   notes: >
-    RAN 2026-09-03 (re-run by converge-12o)
-    → rules 9a and 9b, BOTH SKIP, and the reason changed under
-    this row without the disposition changing. 9a: "no work-item export at
-    docs/work-items.json and none named with --work-items — work items live in
-    the work queue". 9b: "measured against this repository's own queue: the
-    literal test — a blockquote or a quoted span — passes 7 of 24".
-    RE-DERIVED 2026-09-03 by converge-12o, and it STAYS GAP for a re-derived
-    reason. The seed said "no such check exists on disk today"; wave 4 built one.
-    Rule 9a reads a work-queue export and asserts both halves the clause names —
-    that an item names an existing contract, and that it defines done in plain
-    words. It SKIPs here only because this repository exports no queue, which is
-    a fixable absence, not a refusal: supply `docs/work-items.json` and the check
-    runs. That is GAP in its plainest sense — nothing asserts the clause against
-    this tree today.
-    ONE HALF OF THIS ROW IS NO LONGER GAP-SHAPED, AND THIS LANE DID NOT SPLIT IT.
-    Rule 9b ("quotes the feedback or gap it came from") is a MEASURED refusal of
-    exactly the kind that made CVG-063 NOT-ASSERTABLE: the literal test was
-    built, run against 24 real items, and retired at 7/24 because most of the 17
-    it failed did point at their origin. A row whose two halves carry different
-    dispositions is one this ledger splits (CVG-059 → CVG-067). Splitting it is
-    a re-derivation converge-12o was not briefed for and did not guess at; filed
-    as discovered work instead, at converge-njn, with both rules' verdicts quoted
-    in it.
-    RULE NUMBER CORRECTED in the same pass: the ref read `(rule 4)`, which after
-    wave 4's renumber names `contract_section_order` under Core 4.
-  work: converge-8om
+    RAN 2026-09-03 (converge-njn) → rule 9a (`work_item_names_a_contract`) SKIP,
+    "no work-item export at docs/work-items.json and none named with
+    --work-items — work items live in the work queue, not in this tree, so the
+    kit has nothing to read" → WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT.
+    QUOTE NARROWED AND THE ROW SPLIT 2026-09-03 by converge-njn. This row used to
+    carry the WHOLE of clause 9 under one GAP, against `(rules 9a, 9b)`. After
+    wave 4 the clause's two halves stopped being the same kind of thing:
+    9a SKIPs for a MISSING SUBJECT (fixable — plain GAP), 9b SKIPs on a
+    PUBLISHED MEASUREMENT (a refusal — NOT-ASSERTABLE). Keeping them in one row
+    would publish one disposition over two different truths, which is the defect
+    the cross-check found between CVG-048/CVG-049 and converge-jc9 fixed by
+    splitting CVG-059 → CVG-067. The second half is now CVG-069, quoting the
+    disjoint remainder of the sentence. Fresh id, per this file's never-renumber
+    rule; this id keeps the half it was mostly about.
+    WHY THIS HALF IS GAP AND NOT NOT-ASSERTABLE. Rule 9a is complete and
+    mechanical: it asserts both promises the sentence makes — that an item names
+    a contract which EXISTS in `contracts/`, by stem and version, and that its
+    definition of done carries no machine state word. It declines only for want
+    of a subject. Supply the export and it runs; converge-8om already ran it
+    against the live 24-item queue and got a real FAIL (4 items named no
+    contract, filed as converge-vc0). A check that works and has nothing to read
+    is a gap with a named fix, not a refusal.
+    THE FIX IS NOW FILED AND THIS ROW CITES IT. The `work` ref moved from
+    converge-8om to converge-gmo. converge-8om is RESOLVED — it built these
+    rules — and this file's own tally already says "a closed item may not stay
+    cited as the thing that will fix a red row". converge-gmo is the open item
+    for the export itself.
+    THE PROBE REPLACED AN `indexed` REF, for the reason the third reconcile gives
+    in the header: an `indexed` ref proves only that the rule exists. This one
+    pins rule 9a's own verdict AND its reason, so it flips on every event that
+    should move this row.
+    NEGATIVE-CONTROLLED 2026-09-03 in a scratch copy of this tree, twice, each
+    break observed to land and then restored: adding a `docs/work-items.json`
+    export → WORK-ITEM-CHECK-NOW-RUNS-PASS; rewording rule 9a's SKIP reason →
+    WORK-ITEM-CHECK-NOW-RUNS-SKIP. Renaming the rule id makes the probe exit 1
+    rather than pass on a vanished rule (controlled on 9b, same probe shape).
+  work: converge-gmo
+
+- id: CVG-069
+  title: a work item quotes the feedback or gap it came from — telling a quotation from a cited filename needs a reader
+  contract:
+    file: contracts/documents.v1.md
+    clause: "Core 9"
+    quote: "and quotes the feedback or gap it came from."
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: probe
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"work_item_quotes_its_source\"][0];print(\"SOURCE-QUOTE-TEST-STILL-NEEDS-A-READER\" if r[\"status\"]==\"SKIP\" and \"needs a reader\" in r[\"reason\"] else \"SOURCE-QUOTE-TEST-NOW-MECHANICAL\")"'
+    expect:
+      exit: 0
+      stdout_contains: "SOURCE-QUOTE-TEST-STILL-NEEDS-A-READER"
+  proves: >
+    Only that rule 9b still declines, and still declines for the measured reason.
+    It proves nothing about whether this repository's work items quote the
+    feedback or gap they came from.
+  justification: >
+    RAN 2026-09-03: rule 9b (`work_item_quotes_its_source`) reports SKIP and
+    shows its working — "measured against this repository's own queue: the
+    literal test — a blockquote or a quoted span — passes 7 of 24 real items, and
+    most of the 17 it fails do point at their origin, in the item's own words
+    rather than the source's. Widening it to accept any clause or item reference
+    passes 20 of 24, but would also pass an item that merely names its contract,
+    which rule 9a already checks — so the widened form proves nothing. Telling a
+    quotation of feedback from a quoted filename needs a reader."
+    That is the SAME SHAPE as rule 7d, and the same judgment converge-jc9 applied
+    when it moved CVG-063 to NOT-ASSERTABLE: the mechanical form was built, run
+    against real subjects, and retired on a measured false-positive rate. GAP
+    would be wrong here — GAP files work against a check nobody can build from
+    this sentence, which operation.v1 Core 1 forbids. The distinction from
+    CVG-051 is exact: 9a has nothing to READ, 9b has nothing a machine can JUDGE.
+  notes: >
+    RAN 2026-09-03 (converge-njn) → rule 9b SKIP →
+    SOURCE-QUOTE-TEST-STILL-NEEDS-A-READER.
+    SPLIT OUT OF CVG-051 by converge-njn, which carried the whole of clause 9
+    under one GAP. CVG-051's quote narrowed to the first sentence-half so the two
+    rows are disjoint: neither word of the clause is claimed twice, and no word
+    is left uncited. The third such split in this ledger, all for one reason —
+    CVG-059 → CVG-067 (converge-jc9), CVG-052 → CVG-068 (converge-12o), and now
+    this. Fresh id, per this file's never-renumber rule.
+    NO `work` REF, DELIBERATELY. This row is not red and there is no item to
+    file: nobody has been asked to build a check that was already built, run and
+    retired on evidence. What would move this row is a reader, or a rule 9b that
+    finds a discriminating signal — either would flip the probe to
+    SOURCE-QUOTE-TEST-NOW-MECHANICAL and force a re-derivation.
+    THE HONEST COST, the same one CVG-063 and CVG-068 name: nothing here can go
+    red on a work item that quotes nothing at all. NOT-ASSERTABLE says that out
+    loud rather than hiding it behind CVG-051's GAP, which was never about this
+    half. Rule 9a does still report the count, in `observed_quoting_a_source`.
+    NEGATIVE-CONTROLLED 2026-09-03 in a scratch copy of this tree, each break
+    observed to land and then restored: rewording rule 9b's refusal (its own line
+    in run.py, not the identically-worded line under 7c) →
+    SOURCE-QUOTE-TEST-NOW-MECHANICAL; renaming the rule id → the probe exits 1
+    rather than pass on a rule that no longer exists.
+    THE FIRST ATTEMPT AT THAT CONTROL DID NOT LAND — the replacement string
+    matched nothing, because the sentence is line-wrapped in the source, and the
+    probe went on printing STILL-NEEDS-A-READER. Recorded rather than quietly
+    re-run, because it is the exact failure the header names: a negative control
+    that passes because the break never landed is the false green it exists to
+    catch. It was re-run against the real line and then flipped.
 
 - id: CVG-052
   title: plain state words everywhere
@@ -2154,25 +2280,44 @@
     MOVED BY converge-jc9, on this run and not on that item's mapping.
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TALLY — 62 rows, third reconcile 2026-09-02 @ 10a8d76 (converge-jc9).
+# TALLY — 64 rows, the clause 9 split 2026-09-03 (converge-njn).
 # Printed by `uv run --with pyyaml ledger/checks/verify.py`, not counted by hand.
 #
 #   contract          rows   CONFORMS  GAP  VIOLATION  OPEN-PINNED  NOT-ASSERTABLE
 #   composition.v1       9          7    2          0            0               0
 #   operation.v1        15          1   14          0            0               0
-#   surface.v1          13         10    3          0            0               0
-#   documents.v1        25         13    3          0            3               6
+#   surface.v1          13         12    1          0            0               0
+#   documents.v1        27         15    1          0            3               8
 #   ─────────────────────────────────────────────────────────────────────────────
-#   totals              62         31   22          0            3               6
+#   totals              64         35   18          0            3               8
 #   + CVG-000 SYNC       1
-#   TOTAL               63
+#   TOTAL               65
 #
-# In the steward's words (documents.v1 Core 10): 31 Kept · 22 Not yet ·
-# 0 Broken · 3 Pinned open · 6 Can't check.
+# In the steward's words (documents.v1 Core 10): 35 Kept · 18 Not yet ·
+# 0 Broken · 3 Pinned open · 8 Can't check.
 #
-# WHAT MOVED SINCE THE SECOND RECONCILE (was: 28 / 28 / 0 / 3 / 2, 62 rows):
+# WHAT THIS PASS ITSELF MOVED — exactly one thing, on purpose:
+#   +1 row, +1 Can't check. CVG-051 split; CVG-069 is the new row. The GAP
+#   count did not move, because CVG-051 stayed GAP — it is the same red, now
+#   scoped to the half that is actually red, with the other half named as the
+#   refusal it has been since wave 4.
+#
+# THIS BLOCK WAS TWO MERGES BEHIND WHEN THIS PASS FOUND IT, and that is worth
+# recording rather than quietly overwriting. It read "62 rows, 31 / 22 / 0 / 3
+# / 6" from the third reconcile, while the tree it sat in already measured 63
+# rows, 35 / 18 / 0 / 3 / 7 — the difference is the w5-surface-kit and
+# w5-ledger-drift merges (cf6a927), which moved rows and did not re-run this
+# hand-written summary. The rows themselves were right the whole time; only
+# this prose was stale, and it read as if nothing had happened since.
+# THE STANDING RULE THAT EXPOSES: a tally comment is a claim like any other,
+# and nothing in verify.py checks it — the one number in this file with no
+# tripwire under it. Re-print this block from the run; never adjust the
+# numbers it disagrees with by hand.
+#
+# WHAT MOVED IN THE THIRD RECONCILE, kept for the record (28 / 28 / 0 / 3 / 2,
+# 62 rows → 31 / 22 / 0 / 3 / 6):
 #   +3 Kept, -6 Not yet, +4 Can't check, +1 row.
-# All of it is documents.v1 and all of it is one cause — wave 4's kit. Three
+# All of it was documents.v1 and all of it one cause — wave 4's kit. Three
 # clauses gained a real check; three gained a published refusal; one row split
 # (CVG-067) rather than let a clause sentence ride a green it does not share.
 # No other contract's rows were re-derived by that pass, and none moved.
@@ -2185,22 +2330,40 @@
 # WHERE THE WEIGHT SITS, IN ONE LINE EACH:
 #   composition.v1  the healthy one — 7 of 9 kept, each by a kit rule or a
 #                   command that fails when the fact stops being true.
-#   surface.v1      transformed today. The companion page shipped mid-session
-#                   and took 9 rows from "not yet" to "kept" in one commit.
-#   documents.v1    13 kept, 3 not yet, 6 can't check. The "asserts the first
-#                   sentence of its clause and stops" shape that described its
-#                   9 not-yet rows is gone: wave 4's kit went back for the
-#                   second sentences, and where it could not, said so.
+#   surface.v1      12 of 13 kept. The companion page shipped mid-session and
+#                   took 9 rows from "not yet" to "kept" in one commit; the
+#                   w5-surface-kit merge took two more.
+#   documents.v1    15 kept, 1 not yet, 3 pinned open, 8 can't check. The
+#                   "asserts the first sentence of its clause and stops" shape
+#                   that once described its 9 not-yet rows is gone: wave 4's kit
+#                   went back for the second sentences, and where it could not,
+#                   said so. The single remaining red is CVG-051, and the eight
+#                   can't-checks are not one thing. Counted 2026-09-03: three
+#                   are PUBLISHED, MEASURED refusals where the mechanical form
+#                   was built, run and retired on its false-positive rate
+#                   (CVG-063 rule 7d, CVG-069 rule 9b, CVG-068 rule 10b —
+#                   exactly the three the kit's README marks measured); three
+#                   need a named HUMAN READER (CVG-040, CVG-058, CVG-049); one
+#                   has NO SUBJECT in this tree (CVG-067, a brief); one is a
+#                   claim about a LIVE SESSION, not a file (CVG-065, rule 13b).
+#                   Only the first three cost a check that was possible.
 #   operation.v1    14 of 15 not yet, and the contract says why in its own
 #                   words. Its kit now EXISTS and is RED — which is progress:
-#                   at seed it did not exist to be red.
+#                   at seed it did not exist to be red. Untouched by every pass
+#                   since; it is where the weight actually sits.
 #
-# The two 28s are a coincidence of one day's arithmetic, not a milestone.
+# The two 28s were a coincidence of one day's arithmetic, not a milestone.
 #
-# Tracker refs carried by red rows: converge-qtp (16) · converge-fmz (3) ·
-# converge-8om (3). converge-nht carried 6 and now carries none — those six are
-# the rows converge-jc9 moved off GAP; a closed item may not stay cited as the
-# thing that will fix a red row.
+# Tracker refs carried by red rows, RE-COUNTED 2026-09-03 from the file itself:
+# converge-qtp (16) · converge-fmz (1) · converge-gmo (1).
+# converge-nht carried 6 and now carries none — those six are the rows
+# converge-jc9 moved off GAP. converge-8om carried 3 and now carries none: two
+# of its rows went CONFORMS in converge-12o's pass, and the last, CVG-051, was
+# re-pointed at converge-gmo by converge-njn when the split found it citing a
+# RESOLVED item as the thing that would fix it. A closed item may not stay cited
+# as the fix for a red row — this is the second time that rule has had to be
+# enforced by hand, and nothing in verify.py checks it: the tripwire asserts a
+# `work` ref EXISTS, never that it is still open.
 # CVG-007 carries `stale_open` (not `work`) for three items that call a
 # now-passing clause broken — see that row.
 #
@@ -2271,4 +2434,30 @@
 # it exists to catch, so it was re-run until each break was observed to land.
 # WHAT THIS DOES NOT PROVE: that a row READS its clause correctly. Four of the
 # seven assert a kit REFUSAL, not the clause — see each row's `proves`.
+#
+# NEGATIVE CONTROL FOR THE CLAUSE 9 SPLIT, RUN 2026-09-03 (converge-njn) —
+# both probes it wrote, each broken on purpose in a scratch copy of this tree,
+# each observed to flip, each restored:
+#   a docs/work-items.json export   WORK-ITEM-CHECK-CANNOT-  -> WORK-ITEM-CHECK-
+#     added (rule 9a gains a          RUN-NO-EXPORT               NOW-RUNS-PASS
+#     subject — the exact event
+#     that closes CVG-051's gap)
+#   rule 9a's SKIP reason reworded  WORK-ITEM-CHECK-CANNOT-  -> WORK-ITEM-CHECK-
+#                                     RUN-NO-EXPORT               NOW-RUNS-SKIP
+#   rule 9b's refusal reworded      SOURCE-QUOTE-TEST-STILL- -> SOURCE-QUOTE-TEST-
+#                                     NEEDS-A-READER              NOW-MECHANICAL
+#   rule 9b's id renamed            SOURCE-QUOTE-TEST-STILL- -> exit 1 (IndexError);
+#                                     NEEDS-A-READER              the probe refuses
+#                                                                 to pass on a rule
+#                                                                 that vanished
+# ONE OF THOSE BREAKS DID NOT LAND ON THE FIRST ATTEMPT, and it is recorded for
+# the same reason the two above it are: the replacement string matched nothing
+# (the sentence is line-wrapped in run.py), the file was unchanged, and the
+# probe went on printing STILL-NEEDS-A-READER — which reads exactly like a
+# passing control. It was re-run against the real line and then flipped. The
+# grep that proves a break landed is not optional.
+# NOTE ON THE FIRST CONTROL: it is the only one here that simulates a FIX rather
+# than a regression. CVG-051's probe is written so that closing its gap breaks
+# its expectation — drift toward spec flips the row just as loudly as drift away,
+# which is LEDGER-FORMAT §3's bidirectional rule made executable on one row.
 # ─────────────────────────────────────────────────────────────────────────────
