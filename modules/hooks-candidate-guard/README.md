@@ -204,6 +204,17 @@ disposable fixture repo and all recorded GREEN — results in spec §5.3,
 including T5 (delegated-agent coverage), which closed the propagation
 loophole with live evidence.
 
+**T5 has NOT been re-probed since the 2026-09-02 change, and it should be.**
+That change added a second mechanism — wrapping each mounted tool's
+`execute` — and its propagation into a spawned sub-session is a *different*
+question from the hook's. A sub-session has its own coordinator and its own
+tool instances, so the wrapper protects it only if the guard is composed there
+and mounts after that session's tools. Expected to hold by the same mount
+ordering, but expectation is not evidence, and the kernel guarantees no
+automatic hook inheritance. Until T5 is re-run, treat delegated-agent coverage
+of the *direct-dispatch* path as unverified; the `tool:pre` path is unchanged
+and still carries the 2026-08-30 evidence.
+
 The two-proposal-name change did **not** touch the interception surface those
 probes exercise: `intercept_tools`, `tool_name_aliases`, `path_fields`,
 `bash_write_patterns`, and the mount wiring are all unchanged, so T2 (tool
