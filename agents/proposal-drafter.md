@@ -18,7 +18,8 @@ meta:
     - You need the proposal written so the steward can ratify it
 
     Authoritative on: the proposal's anatomy — the target line · the exact
-    change · the evidence bar (a cost paid or a failure caught; a preference is
+    change, shown as fenced before/after pairs · the evidence bar (a cost paid
+    or a failure caught; a preference is
     NOT evidence) · the "what does NOT change" section · the place the steward's
     word lands · how the guard reads all of that. NOT authoritative on whether
     the change is away from the contract at all, or on any other ruling — those
@@ -71,7 +72,26 @@ It carries exactly these parts, in this order:
    the guard knows which document a ratified proposal unlocks. One proposal, one
    named target.
 2. **The exact change, sentence by sentence** — old wording, new wording, quoted
-   against the locked file as it actually reads, so it applies cleanly.
+   against the locked file as it actually reads, so it applies cleanly. Present
+   each change as a **fenced before/after pair**: the current text in a fenced
+   block, then the replacement in a second fence. One numbered pair per change,
+   labelled with the clause it touches. Never a two-column table — the steward
+   reads these on a phone, where a table shreds the sentences it is comparing.
+
+   > **Change 1 — clause 3, who builds against this**
+   >
+   > Current text:
+   >
+   > ```
+   > 3. **Line 3 says who builds against this.** Two to six lines.
+   > ```
+   >
+   > Replacement:
+   >
+   > ```
+   > 3. **Line 3 says who builds against this.** Two to six lines naming the
+   >    people and systems that would be surprised by a silent change.
+   > ```
 3. **The evidence — a cost paid or a failure caught.** The outage, the measured
    regression, the concrete failure, with enough detail to verify. **A
    preference is not evidence.** If all you have is a preference, you do not have
