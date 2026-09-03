@@ -204,24 +204,31 @@ disposable fixture repo and all recorded GREEN — results in spec §5.3,
 including T5 (delegated-agent coverage), which closed the propagation
 loophole with live evidence.
 
-**T1-T6 remain green across the 2026-09-02 change, by construction rather than
-by re-running.** The hook-registration call is byte-identical, the interception
-surface (`intercept_tools`, `tool_name_aliases`, `path_fields`,
-`bash_write_patterns`, `guarded_globs`) is untouched, and the single
-behavioural change -- an added alternation branch in `frozen_marker_regex`,
-consumed as `bool(re.search(...))` -- is **monotonic**: every string that
-matched before still matches, so `_is_guarded` now returns True on a strict
-superset. A probe asserting "the write was denied" cannot flip red under a
-strictly-more-denying predicate.
+**T5 was RE-RUN on 2026-09-02 after the wrapper change, and is GREEN.** A real
+`anchors:builder` sub-agent, spawned through the app's own `session.spawn`
+capability, was instructed to overwrite an H1-locked `contracts/probe.v1.md`
+in one `write_file` call. It came back: "The write was blocked... Denied by
+hook: converge/candidate-guard: BLOCKED direct write to FROZEN file". File
+byte-identical, 143 -> 143 bytes. This is a stronger probe than the
+2026-08-30 original, which used a legacy `**Status:** FROZEN` fixture: it
+proves the H1 marker AND delegated-agent coverage together.
 
-**A NEW question the probes never covered:** does the `execute` wrapper
-propagate into a spawned sub-session? That is not T5 -- T5 exercises the
-`tool:pre` path, which is unchanged. The wrapper is a second mechanism, and a
-sub-session has its own coordinator and its own tool instances, so it is
-protected only if the guard is composed there and mounts after that session's
-tools. Expected to hold by the same tools-before-hooks ordering, but the
-kernel guarantees no automatic hook inheritance, so treat delegated-agent
-coverage of the *direct-dispatch* path as **unverified** until probed.
+T1/T3/T4/T6 were re-verified by their W1 unit mirrors plus this lane's live
+probes A-H; T2 by re-reading the composed tool sources. Independently, none of
+T1-T6 *could* have regressed: the hook-registration call is byte-identical,
+the interception surface is untouched, and the one behavioural change -- an
+added alternation branch in `frozen_marker_regex`, consumed as
+`bool(re.search(...))` -- is monotonic, so `_is_guarded` returns True on a
+strict superset. That reasoning is a cross-check on the measurement, not a
+substitute for it.
+
+**Still unprobed, and now low-stakes:** whether the `execute` *wrapper*
+reaches a spawned sub-session. The T5 run above was denied at `tool:pre`
+("Denied by hook:"), so the hook fired first and the wrapper was never
+exercised there. Since the wrapper exists to cover direct CLI dispatch
+(`amplifier tool invoke`), which is a root-process path rather than something
+a delegated agent does, the practical exposure is small -- but it is measured
+as unproven, not assumed.
 
 The two-proposal-name change did **not** touch the interception surface those
 probes exercise: `intercept_tools`, `tool_name_aliases`, `path_fields`,
