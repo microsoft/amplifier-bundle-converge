@@ -64,15 +64,15 @@ hooks:
       enabled: true
       guarded_globs: ["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md"]
       require_frozen_marker: true
-      frozen_marker_regex: '(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN'
-      always_allow_globs: ["**/CANDIDATE-*.md"]
+      frozen_marker_regex: '(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN|^#.*\(FROZEN\b'
+      always_allow_globs: ["**/CANDIDATE-*.md", "**/*.v[0-9]*-candidate.md"]
       intercept_tools: ["write_file", "edit_file", "apply_patch"]
       tool_name_aliases: ["Write", "Edit", "MultiEdit"]
       path_fields: ["file_path", "path"]
       scan_bash: true
       bash_tool_name: "bash"
       escape_mode: "ratified_candidate"        # ratified_candidate | token | both
-      candidate_glob: ["**/CANDIDATE-*.md"]
+      candidate_glob: ["**/CANDIDATE-*.md", "**/*.v[0-9]*-candidate.md"]
       ratified_stamp_regex: '(?im)^ratified(?:\s+as\s+edited)?\b.*\bby\s+owner\b'
       candidate_target_field: "target"
       # Break-glass emergency-unlock keys omitted on purpose: GuardConfig's own
