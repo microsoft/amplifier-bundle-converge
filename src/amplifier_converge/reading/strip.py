@@ -34,6 +34,13 @@ class Decision:
     link: str
     rank: int = 50
     words: tuple[str, ...] = field(default=WORDS)
+    #: The project's own name for the thing this is about, as it appears
+    #: inside `what`. The card marks it, so the sentence around it stays the
+    #: page's own words.
+    subject: str = ""
+    #: Words written by something else — a lane's note, most often. Shown as a
+    #: quotation, never as the page speaking.
+    quote: str = ""
 
     def __post_init__(self) -> None:
         if len(self.trade_offs) > 2:
@@ -56,6 +63,7 @@ def _document_decisions(snapshot: Snapshot) -> list[Decision]:
             Decision(
                 key=f"doc:{doc.slug}",
                 what=f"Put your word on “{doc.title}”.",
+                subject=doc.title,
                 why_now=(
                     f"It is a draft, and three of the four conditions for locking it are already green. "
                     f"Yours is the one that is missing."
@@ -98,6 +106,7 @@ def _proposal_decisions(snapshot: Snapshot) -> list[Decision]:
             Decision(
                 key=f"proposal:{proposal.key}",
                 what=f"Answer the proposal “{proposal.title}”.",
+                subject=proposal.title,
                 why_now=why,
                 recommendation=recommendation,
                 trade_offs=trade_offs,
@@ -130,7 +139,9 @@ def _lane_decisions(snapshot: Snapshot) -> list[Decision]:
                 Decision(
                     key=f"lane-stuck:{lane.name}",
                     what=f"The lane “{lane.name}” stopped and said why.",
-                    why_now=lane.summary or "It wrote a note explaining what it could not get past.",
+                    subject=lane.name,
+                    why_now="It wrote a note about what it could not get past.",
+                    quote=lane.summary,
                     recommendation="Read its note and decide whether to clear the way or set the work aside.",
                     trade_offs=(
                         "Clearing it puts the work back in motion now.",
@@ -151,6 +162,7 @@ def _lane_decisions(snapshot: Snapshot) -> list[Decision]:
                 Decision(
                     key=f"lane-silent:{lane.name}",
                     what=f"The lane “{lane.name}” has gone silent.",
+                    subject=lane.name,
                     why_now=f"It has written nothing for {int(lane.seconds_since_write // 60)} minutes. It may have died.",
                     recommendation="Let it be restarted, or accept whatever it committed and move on.",
                     trade_offs=(

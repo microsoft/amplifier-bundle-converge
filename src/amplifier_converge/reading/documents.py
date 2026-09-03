@@ -11,6 +11,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ..words import surface_word
 from . import Reading
 
 H1_RE = re.compile(r"^#\s+(?P<title>.+?)\s*$")
@@ -53,10 +54,13 @@ class Document:
 
     @property
     def state_word(self) -> str:
-        """The state in the words a reader uses: Draft, or Locked."""
-        if self.locked:
-            return "Locked"
-        return "Draft"
+        """The state in the words a reader uses: Draft, or Locked.
+
+        Read through the one vocabulary map (`amplifier_converge.words`), so
+        `FROZEN 2026-09-02` in a document's H1 reaches the page as *Locked*
+        and never as itself.
+        """
+        return surface_word(self.state, unknown="Draft")
 
 
 def _split_paragraphs(text: str) -> tuple[Paragraph, ...]:
