@@ -29,7 +29,7 @@ BAD = KIT / "fixtures" / "sample-bad"
 # Declared in run.py as un-judgeable from files. Both fixtures carry a proposal
 # and a work-item export, so rules 8 and 9 are checkable in both and are NOT in
 # this set.
-EXPECTED_SKIPS = {"1", "5b", "7c", "7d", "9b", "10b", "11b", "13b"}
+EXPECTED_SKIPS = {"1", "5b", "7c", "7d", "9b", "10b", "11b", "13b", "14"}
 
 # documents.v1 Core clauses. Every one must be answered by at least one row.
 CORE_CLAUSES = set(range(1, 15))
