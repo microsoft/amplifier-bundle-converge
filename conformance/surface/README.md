@@ -129,6 +129,29 @@ had no check at all before (converge-fmz).
 | 8b | Core 8a | the same clause's other half: the vocabularies are actually **used** | At least one lane must be shown in the lane words, and at least one contract in the contract words. Showing only a document's own status (Draft / Locked) leaves a reader unable to see whether the promise is being kept. |
 | 9 | Core 9 | "The whole operation in view" | Eight things on one page: lanes running against intended, truly ready against waiting on you, the plan in order with reasons, each lane's state and evidence with a fold to drill into, your limits, the feedback drop, every manager session with "tell all" — and **no control on the board that stops anything**, because "Stopping something is never a board button." |
 
+### The three clause-halves that had no check, and the ledger rows they answer
+
+Three halves of surface.v1 had no assertion anywhere once the app shipped
+(converge-fmz). Each now has a rule with a negative fixture:
+
+| Ledger row | The half | The rule that answers it |
+|---|---|---|
+| CVG-038 | Core 9, "The whole operation in view" | **9** — the eight things on one page, and no stop control on the board. |
+| CVG-057 | Core 8, first half — the app must **speak** the plain state words | **8a** (nothing foreign is ever shown as a state) and **8b** (both vocabularies are actually used). |
+| CVG-066 | Core 8, second half — no rule-5 equivalent ran against the shipped app | **5** — closed by the target itself: the kit reads the app's own rendered words, on every page it serves. |
+
+A note for whoever owns `ledger/rows.yaml`: CVG-066's `ref` today is
+`grep -rl "conformance/surface" tests/`, which asks whether the app's *test
+suite* mentions the kit. That is now a second-hand question — the kit reads the
+app directly. `uv run conformance/surface/run.py <the app> | jq '.results[]
+| select(.rule=="5")'` answers it first-hand, and CVG-038 and CVG-057 have the
+same shape with rules 9 and 8a/8b.
+
+**8b FAILs against the app today**, and that is the finding, not a bug in the
+rule: Direction chips every promise `Draft`, its own status, and never says
+whether it is Kept. Filed as converge-6s8 against
+`src/amplifier_converge/reading/` and `web/pages.py`.
+
 ### Rule 5 scans the app's own words, and says so
 
 Three spans of text are deliberately **out of scope**, and each has its own
