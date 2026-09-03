@@ -383,10 +383,32 @@ line at all.
 | ratified `probe.v2-candidate.md` → edit the locked contract | allow | landed |
 | same proposal *unratified* | deny | blocked |
 
-**One deviation, stated rather than buried:** the probe reproduces
-`_invoke_tool_from_bundle_async` verbatim but excludes **app bundles** from
-composition. Two converge behaviors are registered as app bundles from git on
-that host, and their copy of this module shadows the worktree copy under test
-(composition dedupes to one). Re-probing this from a lane needs its own stable
-bundle registration *and* that exclusion, or it silently measures a different
-module — which is what makes this failure mode worth writing down.
+**The literal binary, no reproduction, no deviation.** The exact command from
+the original report:
+
+```
+$ amplifier tool invoke write_file file_path=contracts/probe.v1.md \
+      content=hijacked -b <bundle>
+BEFORE: 158 bytes
+  …Remedy: write a sibling proposal 'contracts/probe.v2-candidate.md' …
+AFTER:  158 bytes        # unchanged
+```
+
+Before the fix, the same command reported success and wrote 8 bytes.
+
+Getting the worktree module to be the one actually under test needs one thing,
+and it is worth knowing. Two converge behaviors are registered as app bundles
+from git on this host; app bundles compose onto **every** session and
+composition dedupes to one, so their copy shadows the worktree copy and you
+silently measure the wrong module. The clean fix is a **project-local**
+`.amplifier/settings.local.yaml` in the probe directory:
+
+```yaml
+bundle:
+  app: []
+```
+
+That scopes the exclusion to one directory, mutates nothing global, and
+disturbs no concurrent work. Use it whenever probing a local module — the
+earlier probes here predate it and reproduced
+`_invoke_tool_from_bundle_async` in-process instead.
