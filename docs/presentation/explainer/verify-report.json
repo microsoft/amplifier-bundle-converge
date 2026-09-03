@@ -1,0 +1,384 @@
+{
+ "network_refs": 0,
+ "banned_terms": [],
+ "words": {
+  "per": [
+   {
+    "id": "hero",
+    "words": 68
+   },
+   {
+    "id": "why-now",
+    "words": 122
+   },
+   {
+    "id": "roles",
+    "words": 159
+   },
+   {
+    "id": "documents",
+    "words": 184
+   },
+   {
+    "id": "through-line",
+    "words": 162
+   },
+   {
+    "id": "what-you-do",
+    "words": 100
+   },
+   {
+    "id": "operation",
+    "words": 273
+   },
+   {
+    "id": "app",
+    "words": 184
+   },
+   {
+    "id": "not",
+    "words": 128
+   },
+   {
+    "id": "start",
+    "words": 90
+   }
+  ],
+  "body": 1470,
+  "visible": 2286
+ },
+ "sections": [
+  {
+   "id": "hero",
+   "h2": "READ THIS FIRST",
+   "h3": 0,
+   "takeaway": true,
+   "img": 1,
+   "svg": 0,
+   "composed": 0,
+   "altless": 0
+  },
+  {
+   "id": "why-now",
+   "h2": "One person now builds what recently took a team.",
+   "h3": 1,
+   "takeaway": true,
+   "img": 0,
+   "svg": 1,
+   "composed": 0,
+   "altless": 0
+  },
+  {
+   "id": "roles",
+   "h2": "Three roles run the project, and two of them are AI.",
+   "h3": 1,
+   "takeaway": true,
+   "img": 1,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "id": "documents",
+   "h2": "You write two documents, and the direction is grown, not declared.",
+   "h3": 2,
+   "takeaway": true,
+   "img": 1,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "id": "through-line",
+   "h2": "One text serves two audiences.",
+   "h3": 2,
+   "takeaway": true,
+   "img": 1,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "id": "what-you-do",
+   "h2": "Your attention is spent only where you are irreplaceable.",
+   "h3": 1,
+   "takeaway": true,
+   "img": 0,
+   "svg": 1,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "id": "operation",
+   "h2": "The manager session runs the whole operation, and waiting on you is never the bottleneck.",
+   "h3": 3,
+   "takeaway": true,
+   "img": 1,
+   "svg": 1,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "id": "app",
+   "h2": "The app has two places and keeps no data of its own.",
+   "h3": 2,
+   "takeaway": true,
+   "img": 0,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "id": "not",
+   "h2": "It is not a tracker, a dashboard, or one-shot magic.",
+   "h3": 2,
+   "takeaway": true,
+   "img": 0,
+   "svg": 1,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "id": "start",
+   "h2": "One line, onto the Amplifier CLI you already have.",
+   "h3": 1,
+   "takeaway": true,
+   "img": 0,
+   "svg": 1,
+   "composed": 1,
+   "altless": 0
+  }
+ ],
+ "section_count": 9,
+ "nav": {
+  "hrefs": [
+   "#why-now",
+   "#roles",
+   "#documents",
+   "#through-line",
+   "#what-you-do",
+   "#operation",
+   "#app",
+   "#not",
+   "#start"
+  ],
+  "ids": [
+   "why-now",
+   "roles",
+   "documents",
+   "through-line",
+   "what-you-do",
+   "operation",
+   "app",
+   "not",
+   "start"
+  ]
+ },
+ "nav_highlight": [
+  "why-now->#why-now",
+  "roles->#roles",
+  "documents->#documents",
+  "through-line->#through-line",
+  "what-you-do->#what-you-do",
+  "operation->#operation",
+  "app->#app",
+  "not->#not",
+  "start->#start"
+ ],
+ "progress_after_scroll": "91.72%",
+ "nojs": {
+  "title": "Amplifier Converge \u2014 the explainer",
+  "nav_links": 9,
+  "sections": 9,
+  "anchor_scrolled_to_start": true
+ },
+ "layout_1280x800": [
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "rightMost": 1440,
+   "rightMostEl": "NAV",
+   "section": "hero",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "rightMost": 1447,
+   "rightMostEl": "NAV",
+   "section": "why-now",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "rightMost": 1450,
+   "rightMostEl": "NAV",
+   "section": "roles",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "rightMost": 1452,
+   "rightMostEl": "NAV",
+   "section": "documents",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "rightMost": 1451,
+   "rightMostEl": "NAV",
+   "section": "through-line",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "rightMost": 1450,
+   "rightMostEl": "NAV",
+   "section": "what-you-do",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "rightMost": 1451,
+   "rightMostEl": "NAV",
+   "section": "operation",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "rightMost": 1446,
+   "rightMostEl": "NAV",
+   "section": "app",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "rightMost": 1452,
+   "rightMostEl": "NAV",
+   "section": "not",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "rightMost": 1453,
+   "rightMostEl": "NAV",
+   "section": "start",
+   "h_overflow": false
+  }
+ ],
+ "console_1280x800": [],
+ "layout_390x844": [
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "rightMost": 1082,
+   "rightMostEl": "NAV",
+   "section": "hero",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "rightMost": 1089,
+   "rightMostEl": "NAV",
+   "section": "why-now",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "rightMost": 1092,
+   "rightMostEl": "NAV",
+   "section": "roles",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "rightMost": 1095,
+   "rightMostEl": "NAV",
+   "section": "documents",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "rightMost": 1093,
+   "rightMostEl": "NAV",
+   "section": "through-line",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "rightMost": 1092,
+   "rightMostEl": "NAV",
+   "section": "what-you-do",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "rightMost": 1094,
+   "rightMostEl": "NAV",
+   "section": "operation",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "rightMost": 1088,
+   "rightMostEl": "NAV",
+   "section": "app",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "rightMost": 1094,
+   "rightMostEl": "NAV",
+   "section": "not",
+   "h_overflow": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "rightMost": 1096,
+   "rightMostEl": "NAV",
+   "section": "start",
+   "h_overflow": false
+  }
+ ],
+ "console_390x844": [],
+ "network_requests": [],
+ "console_main": [],
+ "problems": []
+}

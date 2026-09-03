@@ -1,0 +1,15 @@
+[
+  {
+    "_fixture_note": "CONFORMS to rule 9: names a contract that exists in contracts/, defines done in plain words, and quotes the note it came from.",
+    "id": "sample-1",
+    "title": "The who-line is missing from the second contract",
+    "description": "Serves sample.v1 clause 1. A reader opened the contract and could not tell whether it was about them.\n\n> \"I read the whole thing before working out it wasn't for me.\"",
+    "acceptance": "GIVEN the contract WHEN a reader opens it THEN line 3 names who builds against it."
+  },
+  {
+    "_fixture_note": "CONFORMS to rule 9: the source is quoted inline rather than as a blockquote, and done is stated in the body rather than in a field.",
+    "id": "sample-2",
+    "title": "A contract runs past one screen",
+    "description": "Serves sample.v1 clause 2. The steward said \"I stopped reading halfway down\" when it reached a hundred and forty lines.\n\nDone means: the contract is back inside fifty to a hundred lines, and nothing it promised is lost."
+  }
+]

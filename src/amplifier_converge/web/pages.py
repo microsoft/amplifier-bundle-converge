@@ -17,8 +17,9 @@ from ..reading.queue import QueueSummary, WorkItem
 from ..reading.snapshot import Snapshot
 from ..reading.strip import Decision, empty_state
 from ..reading.whatchanged import WhatChanged
+from ..words import GATE_WORDS
 from ..writing import WRITES
-from .markup import document_html, esc, inline
+from .markup import document_html, esc, inline, quoted, quoted_markup
 from .styles import STYLESHEET, WORDMARK
 
 
@@ -116,11 +117,30 @@ def _answer_form(decision: Decision) -> str:
 </form>"""
 
 
+def _with_quotes(sentence: str, borrowed: str) -> str:
+    """The app's own sentence, with the project's words inside it marked.
+
+    A decision names the thing it is about — a document, a lane, a proposal —
+    and that name is the project's word, not the page's. Marking it keeps the
+    sentence around it the page's own, and plainly so.
+    """
+    if borrowed and borrowed in sentence:
+        head, _, tail = sentence.partition(borrowed)
+        return f"{esc(head)}{quoted(borrowed)}{esc(tail)}"
+    return esc(sentence)
+
+
 def decision_card(decision: Decision) -> str:
     trade_offs = "".join(f"<li>{esc(t)}</li>" for t in decision.trade_offs)
+    note = (
+        f'<p class="why">{quoted(decision.quote)}</p>'
+        if decision.quote
+        else ""
+    )
     return f"""<article class="card decision">
-  <h3>{esc(decision.what)}</h3>
+  <h3>{_with_quotes(decision.what, decision.subject)}</h3>
   <p class="why">{esc(decision.why_now)}</p>
+  {note}
   <p class="rec"><span class="lbl">We suggest</span><br>{esc(decision.recommendation)}</p>
   <ul class="tradeoffs">{trade_offs}</ul>
   {_answer_form(decision)}
@@ -174,7 +194,7 @@ def _document_row(doc: Document, repo) -> str:
         else f"{green} of the four conditions for locking are green."
     )
     return f"""<article class="card">
-  <h3><a href="/direction/{esc(doc.slug)}">{esc(doc.title)}</a></h3>
+  <h3><a href="/direction/{esc(doc.slug)}">{quoted(doc.title)}</a></h3>
   <p class="muted" style="margin-top:6px">{chip} &nbsp; {esc(gate)}</p>
 </article>"""
 
@@ -219,10 +239,21 @@ def _proposal_row(proposal: Proposal) -> str:
         + ".</p>"
     )
     return f"""<article class="card">
-  <h3><a href="/direction/proposal?key={esc(proposal.key)}">{esc(proposal.title)}</a></h3>
-  <p class="muted" style="margin-top:6px">Changes {esc(proposal.target)} — {esc(proposal.origin_detail)}.</p>
+  <h3><a href="/direction/proposal?key={esc(proposal.key)}">{quoted(proposal.title)}</a></h3>
+  <p class="muted" style="margin-top:6px">Changes {quoted(proposal.target)} — {esc(proposal.origin_detail)}.</p>
   {flag}
+  {_where_fold(proposal)}
 </article>"""
+
+
+def _where_fold(proposal: Proposal) -> str:
+    """Where the proposal is kept — a path or a link, so behind the fold."""
+    if not proposal.where:
+        return ""
+    return (
+        "<details><summary>Details</summary>"
+        f'<div class="inner"><p>{esc(proposal.where)}</p></div></details>'
+    )
 
 
 def _what_changed_card(doc: Document, changed: WhatChanged) -> str:
@@ -241,12 +272,15 @@ def _what_changed_card(doc: Document, changed: WhatChanged) -> str:
   <p class="muted" style="margin-top:8px">{esc(changed.summary)}</p>
 </article>"""
 
+    # Every sentence here is the document's own, added or taken away. They are
+    # marked as quoted for the same reason the document itself is: their
+    # wording is documents.v1's business, not this page's.
     added = "".join(f'<li class="added">{esc(s)}</li>' for s in changed.added[:40])
     removed = "".join(f'<li class="removed">{esc(s)}</li>' for s in changed.removed[:40])
     return f"""<article class="card">
   <span class="lbl">What changed since you last read this</span>
   <p class="muted" style="margin-top:8px">{esc(changed.summary)}</p>
-  <ul class="diff">{removed}{added}</ul>
+  <ul class="diff doc">{removed}{added}</ul>
   <form method="post" action="/direction/{esc(doc.slug)}/mark-read" class="words">
     <button class="word" type="submit">I have read this</button>
   </form>
@@ -263,7 +297,12 @@ def _lock_card(doc: Document, repo) -> str:
 
     rows = []
     for text, ok, why in lock_conditions(doc, repo):
-        state = '<span class="state green">Green</span>' if ok else '<span class="state not-yet">Not yet</span>'
+        met, not_yet = GATE_WORDS
+        state = (
+            f'<span class="state green">{esc(met)}</span>'
+            if ok
+            else f'<span class="state not-yet">{esc(not_yet)}</span>'
+        )
         rows.append(f"<li>{state}<span>{esc(text)}<br><span class='muted'>{esc(why)}</span></span></li>")
     ready = lock_is_available(doc, repo)
     button = (
@@ -313,7 +352,8 @@ def direction_document(snapshot: Snapshot, doc: Document, changed: WhatChanged) 
     chip = f'<span class="chip{" locked" if doc.locked else ""}">{esc(doc.state_word)}</span>'
     body = document_html(doc.text, ask_href=f"/direction/{doc.slug}/ask?anchor={{anchor}}")
     return f"""<p class="muted"><a href="/direction">← Direction</a></p>
-<div class="section"><h2>{esc(doc.title)}</h2><p>{chip} &nbsp; {esc(doc.relpath)}</p></div>
+<div class="section"><h2>{quoted(doc.title)}</h2><p>{chip}</p>
+<details><summary>Details</summary><div class="inner"><p>{esc(doc.relpath)}</p></div></details></div>
 {_what_changed_card(doc, changed)}
 {_answer_document_card(doc)}
 {_lock_card(doc, snapshot.repo)}
@@ -321,12 +361,12 @@ def direction_document(snapshot: Snapshot, doc: Document, changed: WhatChanged) 
 
 
 def ask_a_question(doc: Document, anchor: str, paragraph: str) -> str:
-    return f"""<p class="muted"><a href="/direction/{esc(doc.slug)}#{esc(anchor)}">← {esc(doc.title)}</a></p>
+    return f"""<p class="muted"><a href="/direction/{esc(doc.slug)}#{esc(anchor)}">← {quoted(doc.title)}</a></p>
 <div class="section"><h2>Ask about this paragraph</h2>
 <p>Your question goes to the manager session as feedback, attached to this paragraph.
 It is not filed as work — the manager session reads it against the contracts and decides what it is.</p></div>
 <article class="card">
-  <blockquote class="muted" style="border-left:3px solid var(--rule);padding-left:12px">{inline(paragraph)}</blockquote>
+  <blockquote class="muted" style="border-left:3px solid var(--rule);padding-left:12px">{quoted_markup(inline(paragraph))}</blockquote>
   <form method="post" action="/do/drop-feedback" style="margin-top:16px">
     <input type="hidden" name="looking_at" value="{esc(doc.relpath)} — paragraph {esc(anchor)}: {esc(paragraph[:300])}">
     <input type="hidden" name="back" value="/direction/{esc(doc.slug)}">
@@ -350,8 +390,9 @@ def proposal_page(snapshot: Snapshot, proposal: Proposal) -> str:
         else ""
     )
     return f"""<p class="muted"><a href="/direction#proposals">← Direction</a></p>
-<div class="section"><h2>{esc(proposal.title)}</h2>
-<p>Changes {esc(proposal.target)} — {esc(proposal.origin_detail)}. The original stands until you ratify this.</p>{link}</div>
+<div class="section"><h2>{quoted(proposal.title)}</h2>
+<p>Changes {quoted(proposal.target)} — {esc(proposal.origin_detail)}. The original stands until you ratify this.</p>{link}
+{_where_fold(proposal)}</div>
 {part("The exact change", proposal.change, "This proposal does not say what it changes. That alone is reason to decline it.")}
 {part("The evidence", proposal.evidence, "No evidence is given — no cost paid, no failure caught. A preference is not evidence.")}
 {part("What does not change", proposal.not_change, "It does not say what stays the same, so the blast radius is unknown.")}
@@ -433,14 +474,18 @@ def _lane_card(lane: Lane) -> str:
         "Silent — may have died": "bad",
         "Can't check": "",
     }.get(lane.liveness, "warn")
+    # A badge's label is the page's word for the evidence; the detail beside
+    # it is what the lane or the code record actually said, so it is quoted.
     badges = "".join(
-        f'<span class="badge">{esc(e.label)}: {esc(e.detail)}</span>' for e in lane.evidence
+        f'<span class="badge">{esc(e.label)}: {quoted(e.detail)}</span>' for e in lane.evidence
     )
-    summary = f'<p class="why">{esc(lane.summary)}</p>' if lane.summary else ""
+    # The lane's own note. Nothing here is a worker session's account of
+    # itself — so when the page shows one, it shows it as a quotation.
+    summary = f'<p class="why">{quoted(lane.summary)}</p>' if lane.summary else ""
     return f"""<article class="card" id="lane-{esc(lane.name)}">
   <div class="step">
     <div class="body">
-      <h3>{esc(lane.name)}</h3>
+      <h3>{quoted(lane.name)}</h3>
       <p class="muted" style="margin-top:4px"><span class="mark {mark}">{esc(lane.liveness)}</span></p>
       {summary}
       <div class="evidence">{badges}</div>
@@ -475,7 +520,7 @@ def _plan_card(steps: list[PlanStep], items: Reading[list[WorkItem]], project: s
         rows.append(f"""<div class="step" style="margin-top:16px">
   <span class="n">{step.position}</span>
   <div class="body">
-    <p><strong>{esc(step.title)}</strong></p>
+    <p><strong>{quoted(step.title)}</strong></p>
     <p class="why">{esc(step.why)}</p>
     <form method="post" action="/do/signal-priority" class="words" style="margin-top:8px">
       <input type="hidden" name="item_id" value="{esc(step.id)}">
@@ -501,7 +546,7 @@ def _ready_card(snapshot: Snapshot) -> str:
     def listing(items: list[WorkItem]) -> str:
         if not items:
             return '<p class="muted">None.</p>'
-        return "".join(f'<p class="why">{esc(i.title)}</p>' for i in items[:6])
+        return "".join(f'<p class="why">{quoted(i.title)}</p>' for i in items[:6])
     return f"""<div class="rows two">
   <article class="card">
     <span class="lbl">Truly ready — needs nothing from you</span>
@@ -574,7 +619,7 @@ def _managers_card(managers: Reading[list[QueueSummary]], current: str) -> str:
     for summary in managers.value:
         here = " — this one" if summary.project == current else ""
         rows.append(
-            f'<p class="why"><strong>{esc(summary.project)}</strong>{esc(here)}: '
+            f'<p class="why"><strong>{quoted(summary.project)}</strong>{esc(here)}: '
             f"{summary.ready} truly ready, {summary.held} being worked, {summary.resolved_24h} finished today.</p>"
         )
     note = f'<p class="muted" style="margin-top:6px">{esc(managers.note)}</p>' if managers.note else ""

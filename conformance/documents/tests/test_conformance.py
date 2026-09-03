@@ -15,6 +15,7 @@ Runnable two ways (the assertions are identical):
 """
 
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -25,9 +26,13 @@ REPO = KIT.parent.parent  # the repository root this kit ships in
 GOOD = KIT / "fixtures" / "sample-good"
 BAD = KIT / "fixtures" / "sample-bad"
 
-# Declared in run.py as un-judgeable from files. Both fixtures carry a proposal,
-# so rule 3 is checkable in both and is NOT in this set.
-EXPECTED_SKIPS = {"2c", "4", "7"}
+# Declared in run.py as un-judgeable from files. Both fixtures carry a proposal
+# and a work-item export, so rules 8 and 9 are checkable in both and are NOT in
+# this set.
+EXPECTED_SKIPS = {"1", "5b", "7c", "9b", "10b"}
+
+# documents.v1 Core clauses. Every one must be answered by at least one row.
+CORE_CLAUSES = set(range(1, 14))
 
 
 def _uv() -> str:
@@ -69,22 +74,25 @@ def test_bad_repo_fails_named_rules():
     assert report["verdict"] == "FAIL", report
     assert code == 1
     failed = {r["rule"] for r in report["results"] if r["status"] == "FAIL"}
-    assert failed == {"1a", "1b", "1c", "1d", "1e", "2a", "2b",
-                      "3", "5a", "5b", "6"}, failed
+    assert failed == {"2", "3", "4", "5a", "6", "7a", "7b", "8", "9a",
+                      "10a", "11", "12a", "12b", "13"}, failed
 
 
 def test_bad_failures_carry_readable_detail():
     _, report = run_kit(BAD)
     rules = by_rule(report)
-    assert "line 3" in rules["1a"]["detail"]
-    assert "missing section" in rules["1b"]["detail"]
-    assert "outside 50" in rules["1c"]["detail"]
-    assert "outside the H1" in rules["1d"]["detail"]
-    assert "bold" in rules["1e"]["detail"]
-    assert "plan" in rules["2a"]["detail"]
-    assert "Changelog" in rules["2b"]["detail"]
-    assert "missing part" in rules["3"]["detail"]
-    assert "AGENTS.md" in rules["5a"]["detail"]
+    assert "line 3" in rules["3"]["detail"]
+    assert "missing section" in rules["4"]["detail"]
+    assert "outside 50" in rules["2"]["detail"]
+    assert "outside the H1" in rules["6"]["detail"]
+    assert "bold" in rules["5a"]["detail"]
+    assert "plan" in rules["7a"]["detail"]
+    assert "Changelog" in rules["7b"]["detail"]
+    assert "missing part" in rules["8"]["detail"]
+    assert "names no contract" in rules["9a"]["detail"]
+    assert "CONFORMS" in rules["10a"]["detail"]
+    assert "among the teeth" in rules["11"]["detail"]
+    assert "AGENTS.md" in rules["12a"]["detail"]
 
 
 # --------------------------------------------------------------------------- #
@@ -129,10 +137,13 @@ def test_absent_evidence_skips_rather_than_passing(tmp_path=None):
         (empty / "contracts").mkdir()
         _, report = run_kit(empty)
         rules = by_rule(report)
-        assert rules["3"]["status"] == "SKIP", rules["3"]
-        assert "no proposal" in rules["3"]["reason"].lower(), rules["3"]
+        assert rules["8"]["status"] == "SKIP", rules["8"]
+        assert "no proposal" in rules["8"]["reason"].lower(), rules["8"]
+        # Same for the work-item export: absent is SKIP, never a vacuous PASS.
+        assert rules["9a"]["status"] == "SKIP", rules["9a"]
+        assert "work-item export" in rules["9a"]["reason"], rules["9a"]
         # Same discipline for the contract rules when there are no contracts.
-        for rule in ("1a", "1b", "1c", "1d", "1e"):
+        for rule in ("2", "3", "4", "5a", "6"):
             assert rules[rule]["status"] == "SKIP", rules[rule]
             assert rules[rule].get("reason", "").strip(), rules[rule]
 
@@ -152,7 +163,7 @@ def test_template_is_judged_as_the_document_it_produces():
     """A template opens with an HTML comment telling the copier to delete it.
     Judging line 3 of the raw file would be a fabricated finding."""
     _, report = run_kit(GOOD)
-    assert by_rule(report)["6"]["status"] == "PASS", by_rule(report)["6"]
+    assert by_rule(report)["13"]["status"] == "PASS", by_rule(report)["13"]
 
 
 # --------------------------------------------------------------------------- #
@@ -163,11 +174,47 @@ def test_inline_code_is_not_read_as_a_second_status():
     Reading those as a stray status would be a fabricated finding — so this
     repository's own contracts must pass rule 1d."""
     _, report = run_kit(REPO)
-    assert by_rule(report)["1d"]["status"] == "PASS", by_rule(report)["1d"]
+    assert by_rule(report)["6"]["status"] == "PASS", by_rule(report)["6"]
 
 
 # --------------------------------------------------------------------------- #
-# The rule table in the README stays numbered to the contract                 #
+# Every Core clause is answered — by a rule, or by a SKIP with a reason        #
+# --------------------------------------------------------------------------- #
+def _core_clause_numbers_of_the_contract():
+    text = (REPO / "contracts" / "documents.v1.md").read_text(encoding="utf-8")
+    lines, out, inside = text.splitlines(), set(), False
+    for line in lines:
+        if line.startswith("## "):
+            inside = line[3:].strip().lower().startswith("core")
+            continue
+        if inside and re.match(r"^\s*\d+\.\s+", line):
+            out.add(int(line.strip().split(".", 1)[0]))
+    return out
+
+
+def test_every_core_clause_has_a_row():
+    """No clause of documents.v1 may be silently absent from the kit.
+
+    A clause with no row is the failure that produced this kit's three GAP
+    rows: the table used to be numbered to the Conformance-asserts bullets,
+    and Core 10 and Core 11 have no bullet, so they had no row either.
+    """
+    contract_clauses = _core_clause_numbers_of_the_contract()
+    assert contract_clauses == CORE_CLAUSES, (
+        f"documents.v1 Core is no longer clauses {sorted(CORE_CLAUSES)}: "
+        f"{sorted(contract_clauses)}"
+    )
+    _, report = run_kit(GOOD)
+    answered = {r["clause"] for r in report["results"]}
+    missing = CORE_CLAUSES - answered
+    assert not missing, f"Core clause(s) with no row in the kit: {sorted(missing)}"
+    for r in report["results"]:
+        if r["status"] == "SKIP":
+            assert r.get("reason", "").strip(), f"rule {r['rule']} SKIPs with no reason"
+
+
+# --------------------------------------------------------------------------- #
+# The rule table in the README stays numbered to the contract's Core clauses  #
 # --------------------------------------------------------------------------- #
 def test_readme_rule_table_covers_every_emitted_rule():
     readme = (KIT / "README.md").read_text(encoding="utf-8")
@@ -176,6 +223,44 @@ def test_readme_rule_table_covers_every_emitted_rule():
         assert f"| {r['rule']} " in readme, (
             f"rule {r['rule']} is emitted but has no row in the README rule table"
         )
+
+
+def test_readme_rule_table_is_numbered_to_the_core_clauses():
+    """documents.v1 clause 5: "Numbers match the conformance kit's rule table."
+
+    A failing rule must name the clause it breaks, so the table's top-level
+    numbers are exactly the contract's Core clause numbers — no more, no fewer.
+    """
+    readme = (KIT / "README.md").read_text(encoding="utf-8")
+    numbers = {int(m.group(1))
+               for line in readme.splitlines()
+               for m in [re.match(r"^\|\s*(\d+)[a-z]?\s*\|", line.strip())] if m}
+    assert numbers == CORE_CLAUSES, (
+        f"the README rule table is numbered {sorted(numbers)}, not to "
+        f"documents.v1's Core clauses {sorted(CORE_CLAUSES)}"
+    )
+
+
+# --------------------------------------------------------------------------- #
+# The new rules are not false-positive machines                               #
+# --------------------------------------------------------------------------- #
+def test_plain_prose_is_not_read_as_a_machine_state_token():
+    """Rule 10a must stay quiet on this repository's own documents.
+
+    Measured: the vision says "work in progress" (ordinary English) and
+    documents.v1 clause 6 says "kept / broken / in-progress" (the sentence
+    forbidding those words). Flagging either would be a fabricated finding.
+    """
+    _, report = run_kit(REPO)
+    assert by_rule(report)["10a"]["status"] == "PASS", by_rule(report)["10a"]
+
+
+def test_a_filename_in_a_deciding_sentence_is_not_technical_detail():
+    """Rule 11 must stay quiet on documents.v1 clause 8, whose deciding
+    sentence is "**A proposal is `<contract>.vN-candidate.md`**" — there the
+    filename IS the rule, not detail that belongs in a marked section."""
+    _, report = run_kit(REPO)
+    assert by_rule(report)["11"]["status"] == "PASS", by_rule(report)["11"]
 
 
 # --------------------------------------------------------------------------- #
