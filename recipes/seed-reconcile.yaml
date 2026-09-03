@@ -12,11 +12,14 @@
 # Ledger format:  @converge:docs/LEDGER-FORMAT.md
 # Protocol:       @converge:docs/PROTOCOL.md §3.3 (drift + disposition semantics)
 #
-# SCHEDULABLE / UNATTENDED — this loop NEVER prompts the owner. It has zero
-# approval gates and zero owner-facing moments (mechanism-spec §4.2
-# owner_interaction, Finding #4). Any finding that would need an owner decision
-# is filed as a ledger row + tracker item and LEFT there for the next
-# `full-wave` priority-kill gate. Nothing here pages a human.
+# SCHEDULABLE / UNATTENDED — this loop NEVER prompts a human. It has zero
+# approval gates and zero steward-facing moments (mechanism-spec §4.2
+# owner_interaction, Finding #4). A finding that would need a steward decision
+# is filed as a ledger row + tracker item and LEFT there. The manager session
+# reads it off the queue and, only if it genuinely needs the steward, raises it
+# as one of the four calls that reach them — ratify a direction change ·
+# an irreversible action · a check only a person or device can perform ·
+# priority or stop (operation.v1 Core 11). Nothing here pages a human.
 #
 # IDEMPOTENT-ish — designed to run repeatedly (every merge + on schedule):
 #   - ledger rows are UPDATED in place by stable id, never renumbered/duplicated;
@@ -66,6 +69,24 @@
 #
 # CHANGELOG
 # -----------------------------------------------------------------------------
+# v1.3.1 (2026-09-02):
+#   - BUGFIX (docs): The two comments that told a reader where an owner-decision
+#     finding GOES — one in the header, one in the file-drift prompt — both sent
+#     it to the wave-level priority gate of the retired recipe named in v1.3.0
+#     below. That recipe went away the same day, so those were live routing
+#     claims about a destination that no longer exists, not history.
+#     * FIX: both now name the destination that does exist — the ledger row +
+#       tracker item, picked up by the MANAGER SESSION from the queue, which
+#       raises it to the steward only as one of the four calls that reach them
+#       (ratify a direction change · an irreversible action · a check only a
+#       person or device can perform · priority or stop; operation.v1 Core 11).
+#     * ALSO: live prose now says "steward"/"human" where it said "owner",
+#       matching the vocabulary the rest of the bundle was moved to. Dated
+#       changelog entries and the spec field name `owner_interaction` keep the
+#       original word on purpose — they are history and an identifier, not prose.
+#     * NO mechanism change: same steps, same agents, same context, same
+#       outputs. Comments and prompt prose only.
+#
 # v1.3.0 (2026-09-02):
 #   - CHANGE: Read-only intake now runs on the lean base's reader,
 #     `anchors:explorer` (composition.v1 Core 1 + Core 2 — automated steps use
@@ -149,8 +170,8 @@ description: >
   derives/updates a clause-granular conformance ledger, runs the repo's own
   conformance kit, files work-tracker items for every GAP/VIOLATION, records
   bidirectional drift, and emits a reconcile report. Flat, gate-free, and
-  schedulable — it never prompts the owner.
-version: "1.3.0"
+  schedulable — it never prompts the steward.
+version: "1.3.1"
 author: "converge bundle"
 tags: ["converge", "ratchet", "conformance", "ledger", "reconcile", "drift"]
 
@@ -209,9 +230,9 @@ steps:
     timeout: 900
     output: "derived_rows"
     prompt: |
-      SCHEDULED, UNATTENDED reconcile run — you never prompt the owner. Any
-      decision that would need a human is left as a ledger row (and, in the final
-      step, a tracker item), never surfaced as a question.
+      SCHEDULED, UNATTENDED reconcile run — you never prompt a human. Any
+      decision that would need the steward is left as a ledger row (and, in the
+      final step, a tracker item), never surfaced as a question.
 
       Target repo: {{target_repo}}
       Contracts:   {{contracts_glob}}
@@ -274,7 +295,7 @@ steps:
     timeout: 1200
     output: "conformance_results"
     prompt: |
-      SCHEDULED, UNATTENDED reconcile run — no owner prompts.
+      SCHEDULED, UNATTENDED reconcile run — no human prompts.
 
       Target repo: {{target_repo}}
 
@@ -315,10 +336,14 @@ steps:
     timeout: 900
     output: "final_output"
     prompt: |
-      FINAL step of a scheduled, unattended reconcile — no owner prompts, ever.
-      Any finding that needs an owner decision becomes a ledger row + a tracker
-      item and is LEFT there for the next wave's priority-kill gate. You never
-      page a human (mechanism-spec §4.2, Finding #4).
+      FINAL step of a scheduled, unattended reconcile — no human prompts, ever.
+      A finding that needs a steward decision becomes a ledger row + a tracker
+      item and is LEFT there. The manager session reads it off the queue and,
+      only if it genuinely needs the steward, raises it as one of the four calls
+      that reach them: ratify a direction change · an irreversible action · a
+      check only a person or device can perform · priority or stop. Your job
+      here ends at the row and the item — you never page anyone
+      (mechanism-spec §4.2, Finding #4).
 
       Target repo:     {{target_repo}}
       Ledger dir:      {{ledger_dir}}

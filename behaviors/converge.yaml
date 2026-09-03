@@ -102,6 +102,44 @@ agents:
     - converge:negotiator
     - converge:proposal-drafter
 
+modes:
+  # Declares the manager mode (operation.v1's reference implementation) so this
+  # behavior states, in the same place as its agents and skills, that it carries
+  # one. Written exactly the way other published bundles write it (verified
+  # against amplifier-online's behavior): `<bundle-name>:modes/<file-stem>`, so
+  # `converge:modes/converge-manager` names repo-root/modes/converge-manager.md
+  # through the root namespace.
+  #
+  # HONEST SCOPE OF THIS BLOCK (measured 2026-09-02, controlled A/B on the
+  # `--app` path, block present vs. block removed, everything else equal —
+  # `converge-manager` listed in BOTH runs): this block is a DECLARATION, not
+  # the mechanism. Modes reach a session by AUTO-DISCOVERY —
+  # hooks-mode's ModeDiscovery._ensure_bundle_discovery walks every composed
+  # bundle namespace from the mention_resolver and adds `<base_path>/modes` as a
+  # search path when that directory exists (amplifier-bundle-modes,
+  # modules/hooks-mode/amplifier_module_hooks_mode/__init__.py:303-372).
+  # amplifier_foundation never parses a top-level `modes:` key (its only modes
+  # code is validate_modes(), a schema-only scan of `modes/*.md`). Keep the
+  # block for intent and convention; do NOT rely on it to make a mode appear,
+  # and do NOT conclude a mode is wired just because it is listed here.
+  #
+  # WHAT ACTUALLY HIDES THE MODE (same session, measured): a duplicate
+  # `converge` namespace. A stale converge app bundle whose checkout has no
+  # `modes/` directory wins the namespace, `@converge:modes/…` resolves to
+  # nothing, and the mode never lists — with or without this block. Dropping the
+  # stale registrations made it appear immediately. Filed as converge-348.
+  #
+  # NOT restated in bundle.md — deliberately. The root already includes this
+  # behavior (`- bundle: converge:behaviors/converge`), which is exactly how
+  # amplifier-online's root composes its mode: the behavior declares it once and
+  # the root inherits it. Restating it there would double-declare the same mode.
+  #
+  # The mode MACHINERY (tool-mode + hooks-mode) comes from the host: the lean
+  # anchors base ships both (bundles/anchors/bundle.md), so the root path has it;
+  # on the `--app` path the host session supplies it, same as for agents/skills.
+  include:
+    - converge:modes/converge-manager
+
 context:
   include:
     - converge:context/converge-awareness.md
