@@ -155,10 +155,15 @@
 #
 # Usage: invoke FROM the workspace root (cwd IS the workspace). The wave pauses
 # at each of the four gates; approve each with the owner's literal word (item
-# authorizations at priority-kill; the ratifying word at ratify-changes):
+# authorizations at priority-kill; the ratifying word at ratify-changes).
+# `lane_launcher` is REQUIRED for anything to execute: without it, S2 prints the
+# exact commands and fails rather than running lane work in session.
 #   amplifier tool invoke recipes operation=execute \
 #     recipe_path=@converge:recipes/full-wave.yaml \
-#     context='{"tracker_project": "drumbeat-conformance"}'
+#     context='{"tracker_project": "<project>",
+#               "lane_launcher": "<path to the tmux /goal lane launcher>"}'
+# Authorizing zero items at the priority-kill gate needs no launcher: S2 is then
+# a clean no-op and the wave merges/verifies/closes with nothing executed.
 # =============================================================================
 #
 # CHANGELOG
