@@ -100,11 +100,17 @@ RULES = [
      "Converge's own templates produce the anatomy they check for"),
     ("13b", 13, 6, "protocol_authority_checks_documents",
      "Converge's protocol authority checks documents against this anatomy"),
+    ("14", 14, 6, "one_domain_component_per_contract",
+     "One contract is one domain component (right-sized; see docs/RIGHT-SIZING.md)"),
 ]
 
 # Rows no file scan can judge. Pinned by the self-test so a rule may not drift
 # into SKIP to dodge a failure.
 UNFIXTURABLE = {
+    "14": ("whether a contract is ONE domain component is the steward's judgment "
+           "(the split/merge tests in docs/RIGHT-SIZING.md); length alone is "
+           "already judged by rule 2. A file scan cannot tell one component "
+           "from two."),
     "1": ("needs a named human reader and a date; no file scan can stand in for "
           "a person reporting what they had to look up. This covers both halves "
           "of clause 1: that anyone who has never opened a code editor can read "
@@ -1172,6 +1178,7 @@ def run_conformance(root: Path, work_items: Path = None) -> dict:
         check_participant_kit_content(root),
         check_templates_carry_anatomy(root),
         _skip("13b"),
+        _skip("14"),
     ]
     summary = {
         "pass": sum(r["status"] == "PASS" for r in results),
