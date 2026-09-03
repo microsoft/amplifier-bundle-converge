@@ -1,50 +1,58 @@
-# Seam: Composition
+# Composition Contract — v1 (DRAFT)
 
-**Status:** DRAFT
+**Who builds against this:** everyone who installs Converge, by either path, and
+every automated step that expects certain helpers to be present. The most
+technical of the four contracts; each clause ends with what it means for you.
 
----
+## Purpose
 
-## Core
+Converge must sit lightly on a host — fast sessions, no bloat, and never a side
+effect on work that isn't its own — while guaranteeing its automated steps find
+the helpers they need.
 
-1. **Seam-Test Justification** — This surface passes the seam test: two install paths (bundle use converge; --app behavior) and every recipe execution breaks if composition changes silently.
+## Core (the teeth)
 
-2. **Composition Stack** — Converge's root bundle.md composes its session scaffold from the anchors bundle (`git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundles/anchors/bundle.md`): session orchestration, core tools, tool-delegate/tool-skills/tool-recipes, and six thin anchors agents. The foundation ROOT bundle is NOT included anywhere. Frame as CALIBRATED MIDDLE GROUND with measured evidence: foundation over-delivers (~34KB always-on root floor, ~56KB per-agent-spawn tax via common-agent-base chain); bare anchors under-delivers for converge's recipes (no writing/building executors guaranteed composed).
+1. **A lean base, never a heavy one.** Converge assembles its session from the
+   small standard base (the *anchors* bundle in the Amplifier foundation
+   repository): session basics, everyday tools, six lightweight helpers. The full
+   foundation package appears nowhere. *For you:* sessions stay fast and cheap.
+2. **Automated steps use only the lean base's helpers** — a reader for read-only
+   steps, a builder for writing, a git helper for version control. *For you:*
+   no step secretly depends on the heavy package.
+3. **Its own helpers carry a small local rulebook** — stop honestly when a thing
+   cannot be proven; sign commits; cite locations — and borrow nothing else.
+4. **The host requirement is one sentence in the README.** Steps can use only
+   helpers present in the session they run in; Converge needs its own full setup
+   or a host on the same lean base.
+5. **The shared work queue rides on both install paths,** so the contract
+   checker can file and read work anywhere.
+6. **Nothing touches the tools of other work in your session.** A setting that
+   stripped tools from every helper in every session was measured in isolation
+   on 2026-09-02, confirmed with a control, and removed. Converge's helpers keep
+   their limits as stated rules until per-role enforcement exists upstream; the
+   guard on locked contracts remains the enforcement that matters.
+7. **The guard recognizes both proposal names** — `<contract>.vN-candidate.md`
+   and the legacy `CANDIDATE-*.md` — and refuses every other write to a locked
+   contract, by person or agent.
 
-3. **Recipe Agent References** — Recipe executor steps reference anchors agents only: anchors:explorer (read-only steps: seed-reconcile load-contracts; encode intake-decisions; full-wave parse-authorized-items), anchors:builder (writing/implementation: encode draft-vision-contracts, apply-ratified-edits; full-wave execute-items), anchors:git-ops (git steps: encode commit-encoded; full-wave merge-lanes). No recipe references foundation agents.
+## What v1 deliberately does NOT freeze
 
-4. **Converge-Local Agent Preamble** — Converge's four agents carry a converge-local preamble (context/shared/agent-base.md): honest-stopping evidence protocol, git commit footer with Amplifier co-author attribution, file:line citation convention—nothing else. Zero @foundation: mentions remain in composed surfaces (bundle.md, behaviors/, agents/, context/).
+- Enforced per-role tool limits — promoted when upstream #388 lands.
+- Automated steps that bring their own helpers — when the engine supports it.
+- The companion app as its own product — see Surface.
 
-5. **Host Requirement** — Stated plainly in README: recipes resolve only from a composed session (recipe-only agent scoping does not exist in the engine—live-verified twice). Recipes REQUIRE converge's root composition or an anchors-family host on the --app path.
+## Conformance kit asserts
 
-6. **Work-Tracker Behavior** — Include is unchanged (independent of foundation; supplies reconciler's work_* tools on both paths).
+- No reference to the heavy package in anything loaded; no automated step names
+  a heavy-package helper; the lean base is named where Converge assembles; no
+  session-wide tool-stripping setting anywhere.
+- A Converge session reaches a lean-base helper and one of Converge's own.
+- After installing Converge beside other work, a helper in an unrelated session
+  keeps its shell, delegation, and skills tools.
+- The guard denies a write to a locked contract and admits a `*.vN-candidate.md`
+  beside it.
 
----
+## Reserved / open questions (NOT frozen)
 
-## Backlogged
-
-| Item | Promotion Trigger |
-|------|---|
-| Recipe-only agent scoping | Recipe engine ships per-recipe agent registration |
-| Wave-highway integration | full-wave's EXECUTE launching durable parallel lanes via external lane orchestrator with converge lane-briefs |
-
----
-
-## Conformance
-
-**Verification Gates:**
-
-- Grep gates: zero '@foundation:' mentions in bundle.md/behaviors/agents/context; zero 'foundation:' agent references in recipes/*.yaml; bundle.md includes anchors bundle URI
-- Live composition check: `amplifier run --bundle converge` resolves anchors:explorer AND converge:reconciler
-- Encode recipe end-to-end green on a fixture repo
-
----
-
-## Reserved
-
-- The converge:exec-* agent namespace (held in case anchors executors prove insufficient and converge must own executor bodies)
-
----
-
-## Changelog
-
-- v1 drafted 2026-09-01 (provenance: ratified protocol e458d40, full session decision record, negotiator Phase-1 minutes, live probe evidence)
+- A namespace for Converge's own worker helpers, should the lean base's prove
+  insufficient.
