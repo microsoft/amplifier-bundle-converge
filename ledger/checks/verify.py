@@ -23,12 +23,23 @@ It checks, in order:
                could not fail at all (an unquoted glob made `find` die and the
                test read the empty output as proof). A ref without `expect` is
                a command, not an assertion, and is failed here as one
+  rule ids     every `indexed` ref that names a kit rule — `conformance/<kit>/
+               run.py (rule N)` — names a rule that kit's README table actually
+               lists. Added 2026-09-03 by converge-12o after wave 4 renumbered
+               the documents kit to its contract's Core clauses: eleven refs
+               were left naming rules that no longer existed, and six of those
+               named a rule that DID still exist under a DIFFERENT clause. The
+               path-existence check below saw nothing wrong, because run.py was
+               still there. A ref that points confidently at the wrong rule is
+               worse than one that dangles
   subjects     any out-of-repo `subject:` still hashes to its pin
   §6.1 cover   every Core clause of every contract is cited by at least one row
 
 Deliberately NOT checked, because no machine here can: whether a row READS its
 clause correctly (LEDGER-FORMAT §8), and whether an `indexed` test still
-asserts what it claims. Those need the re-review the SYNC row triggers.
+asserts what it claims — the rule-id check above proves the rule EXISTS, never
+that it still asserts this row's clause. Those need the re-review the SYNC row
+triggers.
 """
 
 import hashlib, pathlib, re, subprocess, sys, yaml
@@ -100,6 +111,34 @@ for r in rows[1:]:
     for path in re.findall(r"[\w./-]+\.(?:py|md|yaml)", a["ref"]):
         if not pathlib.Path(path).exists(): missing.append((r["id"], path))
 chk(not missing, f"every indexed ref path exists on disk ({missing or 'all resolve'})")
+
+# indexed refs that name a KIT RULE name a rule that kit's README actually lists.
+# Path existence is not enough: wave 4 renumbered the documents kit to its
+# contract's Core clauses and eleven refs kept naming rules from the old table.
+# run.py still existed, so nothing above noticed. Six of the stale ids were worse
+# than dangling -- they still resolved, to a rule under a DIFFERENT clause.
+print("\nINDEXED RULE IDS \u2014 does each named rule exist in its kit's README table?")
+RULE_REF = re.compile(r"conformance/(\w+)/run\.py \(rules? ([^)]+)\)")
+tables = {}
+def kit_rules(kit):
+    if kit not in tables:
+        p = pathlib.Path(f"conformance/{kit}/README.md")
+        tables[kit] = set(re.findall(r"(?m)^\|\s*([\w.]+)\s*\|", p.read_text())) if p.exists() else set()
+    return tables[kit]
+n_rule_refs = 0
+for r in rows[1:]:
+    a = r["assertion"]
+    if a.get("kind") != "indexed": continue
+    for kit, idlist in RULE_REF.findall(a["ref"]):
+        named = [s.strip() for s in idlist.split(",") if s.strip()]
+        have = kit_rules(kit)
+        absent = [i for i in named if i not in have]
+        n_rule_refs += len(named)
+        print(f"  [{'OK  ' if not absent else 'FAIL'}] {r['id']:8s} {kit:12s} rule(s) {', '.join(named)}"
+              + (f"  NOT IN {kit}/README.md: {absent}" if absent else ""))
+        if absent: fail.append(f"{r['id']} names {kit} rule(s) {absent}, absent from conformance/{kit}/README.md")
+chk(not any("names" in f and "absent from" in f for f in fail),
+    f"{n_rule_refs} named kit rule ids, each present in its kit's README rule table")
 
 # proves present wherever probe truth != disposition truth (GAP row w/ passing probe)
 gap_pass = [r for r in rows[1:] if r["disposition"]=="GAP" and r["assertion"].get("kind")=="probe"]

@@ -227,6 +227,67 @@
 # The four rows keep their stale expectations on purpose until then; a red row
 # with a live tracker ref is honest, a bumped expectation nobody re-derived is
 # not.
+#   THAT IS NOW DONE (2026-09-03, converge-12o) — see THE FOURTH RECONCILE below.
+#
+# THE FOURTH RECONCILE (2026-09-03 — converge-12o, the four red rows)
+# ------------------------------------------------------------------
+# The four rows the third reconcile left red were re-derived against the rules
+# that now answer them, each from a run of the kit or the suite, not from the
+# tracker item's summary of what the run would say. All four moved, and all four
+# moved the same way — TOWARD spec — which is exactly why each had to be re-read
+# rather than left to go quietly green.
+#
+#   CVG-052  Core 10   GAP -> CONFORMS      rule 10a scans all three vocabularies
+#                                           and PASSes on 5 documents
+#   CVG-053  Core 11   GAP -> CONFORMS      rule 11a checks the document half;
+#                                           the app half is asserted where 11b
+#                                           says it is (CVG-037/CVG-066)
+#   CVG-057  Core 8    GAP -> CONFORMS      words.py holds all eight of the
+#                                           clause's words and a test walks
+#                                           every page refusing anything else
+#   CVG-066  bullet 5  GAP -> CONFORMS      the SHIPPED surface kit's rule 5 now
+#                                           runs on every page the app renders
+#
+# ONE ROW WAS SPLIT: CVG-068 takes clause 10's three vocabulary lists as
+# NOT-ASSERTABLE, because rule 10b is a published, measured refusal and letting
+# CVG-052's green cover it would be the "one green for a whole clause" this file
+# has refused twice already. CVG-052's quote narrowed to the bold lead to keep
+# the two disjoint.
+#
+# EVERY PROBE ON THOSE ROWS CHANGED SHAPE, and the reason generalises. Two of
+# them (CVG-052, CVG-053) pinned the kit's ENTIRE emitted rule-id list, so they
+# went red when any rule was added anywhere — they could not tell "the rule that
+# answers me arrived" from "an unrelated rule arrived". One (CVG-057) counted
+# how many of eight words appeared LITERALLY in tests/*.py, and rose from 1 to 2
+# because a test happened to mention one — a movement that says nothing about
+# whether the app speaks the vocabulary. One (CVG-066) asserted that no file
+# under tests/ so much as mentioned "conformance/surface", and flipped when a
+# string appeared. Each now pins the verdict of the specific rule or test that
+# answers its clause. All five probes were negative-controlled in a scratch copy
+# of this tree: a machine state word added to the vision flips CVG-052 to
+# MACHINE-STATE-WORD-SCAN-FAIL; a fenced block among the teeth flips CVG-053;
+# dropping one word from words.CONTRACT_STATES flips CVG-057 to 7-OF-8 and
+# deleting the walk flips PAGE-WALK-ASSERTED to 0; removing the wiring test
+# flips CVG-066; patching rule 10b's reason flips CVG-068.
+#
+# THE STALE `indexed` REFS ARE FIXED, AND THE CLASS IS NOW A TRIPWIRE. Eleven
+# refs in the documents section named rules from the pre-wave-4 table. Six of
+# them were worse than dangling: `(rule 2b)`, `(rule 3)`, `(rule 4)`,
+# `(rules 5a, 5b)` and `(rule 6)` all still RESOLVE, to rules under a different
+# Core clause than the row asserting them. Nothing caught it, because the only
+# check on an `indexed` ref was that its FILE existed, and run.py had not moved.
+# `ledger/checks/verify.py` now cross-checks every named rule id against that
+# kit's README rule table and prints the result — 21 ids, all present. The notes
+# on those eleven rows were re-run at their real ids in the same pass, which
+# moved two recorded numbers that had drifted with the kit: CVG-050's proposal
+# count (1 -> 2) and CVG-055's whole-repo tally (10 pass / 4 skip -> 17 / 9).
+#
+# WHAT THIS LANE DID NOT DO. CVG-051's two halves no longer share a
+# disposition: rule 9a SKIPs for a missing export (fixable — plain GAP) while
+# rule 9b is a measured refusal of the kind that made CVG-063 NOT-ASSERTABLE.
+# That is a split, and a split is a re-derivation this lane was not briefed for.
+# Filed as converge-njn rather than guessed at, exactly as converge-jc9 filed
+# these four.
 #
 # ONE THING THAT WAS FIXED IN PASSING, because it is in ledger/ and it was
 # silently eating this file's own tripwire: `ledger/checks/verify.py` globbed
@@ -240,11 +301,12 @@
 #
 # ROW COUNTS BY CONTRACT (full tally at the foot of this file)
 #   composition.v1   9 rows      operation.v1   15 rows
-#   surface.v1      13 rows      documents.v1   25 rows
-#   + CVG-000 SYNC   1                                     = 63 rows total
+#   surface.v1      13 rows      documents.v1   26 rows
+#   + CVG-000 SYNC   1                                     = 64 rows total
 #
 # Ids are stable forever, never renumbered, never reused. Rows added by the
-# cross-check revision take fresh ids (CVG-009, CVG-056..CVG-065) rather than
+# cross-check revision and the reconciles after it take fresh ids (CVG-009,
+# CVG-056..CVG-068) rather than
 # renumbering their neighbours, which is why the id blocks are not contiguous.
 #
 # No row exists that a contract clause (or a sentence of a contract's own
@@ -1145,35 +1207,56 @@
     the app's own test for this clause passes. So the VIOLATION did not get FIXED
     — the SUBJECT changed underneath it. The unfixed half is now CVG-066, and
     converge-y7s is still open and held against the app's own surface vocabulary.
+    THAT UNFIXED HALF IS NOW FIXED, 2026-09-03 (converge-12o): CVG-066 moved
+    GAP → CONFORMS when tests/test_plain_words_on_the_surface.py wired the
+    shipped kit's rule 5 onto every page the app renders. This row's own subject
+    — the pinned mockup — is unchanged and still FAILs rule 5 on two terms.
     The protocol-authority ruling that permitted VIOLATION against a DRAFT clause
     (draft-vs-locked governs the remedy, not the observation) stands on the record
     for the next time one is needed.
 
 - id: CVG-066
-  title: no scan of the shipped app's own words for internal vocabulary
+  title: the shipped app's own words, scanned for internal vocabulary by the kit itself
   contract:
     file: contracts/surface.v1.md
     clause: "Conformance kit asserts, bullet 5"
     quote: "No internal vocabulary outside Details folds."
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
-    kind: absence
-    ref: 'test -z "$(grep -rl "conformance/surface" tests/ 2>/dev/null)" && echo NO-VOCABULARY-SCAN-AGAINST-THE-APP || echo VOCABULARY-SCAN-WIRED'
+    kind: probe
+    ref: 'if uv run --extra web --with pytest --with httpx pytest "tests/test_plain_words_on_the_surface.py::test_the_shipped_kit_reports_rule_5_pass_on_every_page" -q >/dev/null 2>&1; then echo SURFACE-RULE-5-PASSES-ON-EVERY-APP-PAGE; else echo SURFACE-RULE-5-NOT-ASSERTED-AGAINST-THE-APP; fi'
     expect:
       exit: 0
-      stdout_contains: "NO-VOCABULARY-SCAN-AGAINST-THE-APP"
+      stdout_contains: "SURFACE-RULE-5-PASSES-ON-EVERY-APP-PAGE"
+  proves: >
+    That the SHIPPED kit — `conformance/surface/run.py`, imported from where it
+    lives and not reimplemented — reports rule 5 PASS on the HTML of every page
+    the app declares, rendered against a project deliberately written in the
+    machinery's own words. It is the kit's verdict, not a test's opinion of the
+    kit. NOT that the pinned mockup passes: it still does not (CVG-037).
   notes: >
-    RAN 2026-09-02 → NO-VOCABULARY-SCAN-AGAINST-THE-APP. The surface kit's rule 5
-    is the check for this bullet and it reads an HTML file or a directory holding
-    index.html; the shipped app is server-rendered
-    (test_pages_are_server_rendered_with_no_script_at_all) and nothing wires the
-    two together. So the one rule that finds real defects of this kind does not
-    run against the thing that ships. Measured against the pinned mockup it still
-    FAILs on two terms (see CVG-037), and converge-y7s is open and held on exactly
-    this for the app.
-    ADDED THIS SESSION, when the app's arrival turned CVG-037 from a violation
-    into a conformance — leaving the violation's actual subject unwatched.
-  work: converge-fmz
+    RAN 2026-09-03 → SURFACE-RULE-5-PASSES-ON-EVERY-APP-PAGE. Behind it:
+    `pytest tests/test_plain_words_on_the_surface.py` → 9 passed, of which three
+    are the ones that make this row mean something —
+    test_the_shipped_kit_reports_rule_5_pass_on_every_page (the kit's own
+    verdict), test_the_walk_catches_a_real_leak (the walk can fail), and
+    test_the_apps_own_copy_never_uses_an_internal_term (the "project's own
+    words" exemption cannot be used to launder the app's copy). Whole suite the
+    same day: 125 passed.
+    RE-DERIVED FROM A LIVE RUN by converge-12o; it WAS GAP, work converge-fmz.
+    This row was created hours earlier to hold the half CVG-037 stopped
+    watching: the surface kit's rule 5 read an HTML file or a directory holding
+    index.html, the shipped app is server-rendered, and nothing wired the two
+    together. tests/test_plain_words_on_the_surface.py is that wiring — it
+    renders every page to disk and hands each one to the shipped kit.
+    THE ABSENCE PROBE IS GONE, AND ITS GOING RED IS WHY THIS ROW WAS RE-READ.
+    It asserted that nothing under tests/ so much as mentioned
+    "conformance/surface"; the new test file mentions it, so the probe flipped to
+    VOCABULARY-SCAN-WIRED. That flip proved only that a string had appeared —
+    an absence probe cannot tell wiring from a comment — so it was replaced with
+    one that runs the wiring and reports the kit's verdict.
+    RETITLED in the same pass: a row named "no scan of …" cannot honestly carry
+    CONFORMS. The id is unchanged, as ids always are.
 
 - id: CVG-038
   title: the whole operation in view
@@ -1248,35 +1331,52 @@
     quote: |
       *Kept · Not yet · Broken · Pinned open · Can't check* for contracts;
       *Working · Quiet · Silent — may have died* for lanes.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'n=$(grep -rho "Kept\|Not yet\|Broken\|Pinned open\|Can.t check\|Quiet\|may have died" $(ls tests/*.py | grep -v test_install_check) | sort -u | wc -l); echo "STATE-WORDS-ASSERTED=$n-OF-8"'
+    ref: 'python3 -c "import sys,pathlib;sys.path.insert(0,\"src\");from amplifier_converge import words;need=[\"Kept\",\"Not yet\",\"Broken\",\"Pinned open\",\"Can''t check\",\"Working\",\"Quiet\",\"Silent — may have died\"];have=set(words.CONTRACT_STATES)|set(words.LANE_STATES);t=pathlib.Path(\"tests/test_plain_words_on_the_surface.py\");w=t.read_text().count(\"def test_every_state_word_shown_is_one_of_the_plain_words\") if t.exists() else 0;print(\"SURFACE-STATE-VOCABULARY=%d-OF-8 PAGE-WALK-ASSERTED=%d\" % (sum(x in have for x in need), w))"'
     expect:
       exit: 0
-      stdout_contains: "STATE-WORDS-ASSERTED=1-OF-8"
+      stdout_contains: "SURFACE-STATE-VOCABULARY=8-OF-8 PAGE-WALK-ASSERTED=1"
+  proves: >
+    Two things together, which is why the probe prints two numbers. (a) That all
+    eight words this clause names are the app's declared vocabulary for those two
+    kinds of thing — `words.CONTRACT_STATES` and `words.LANE_STATES`, compared
+    against the eight literals from the quote above, so renaming or dropping one
+    flips this row. (b) That a test still walks every page and refuses any state
+    it finds that is not one of those words. NOT that each of the eight is
+    reachable on some page: nothing asserts that a lane in this repository ever
+    reaches "Silent — may have died".
   notes: >
-    RAN 2026-09-02 → STATE-WORDS-ASSERTED=1-OF-8. One of the eight required words
-    appears in an assertion anywhere in the app's own tests
-    (tests/test_two_places_and_the_strip.py:72, `assert "Not yet" in html`).
-    tests/test_install_check.py is excluded from the scan on purpose: it contains
-    the word "Broken" as a fixture's name, not as a state word the app speaks, and
-    counting it would inflate this row by one — a false positive the count would
-    otherwise carry silently. The
-    contract requires the app to speak both vocabularies — five words for
-    contracts, three for lanes. The count is the pin: it flips in either direction,
-    so adding assertions moves this row and so does losing the one that exists.
-    Its sibling — internal words that must be ABSENT — is CVG-066; this row is the
-    required words that must be PRESENT.
-  work: converge-fmz
+    RAN 2026-09-03 → SURFACE-STATE-VOCABULARY=8-OF-8 PAGE-WALK-ASSERTED=1, and
+    the test suite behind it: `pytest tests/test_plain_words_on_the_surface.py`
+    → 9 passed, including test_every_state_word_shown_is_one_of_the_plain_words
+    and test_one_map_turns_every_internal_state_into_a_surface_word. Whole suite
+    the same day: 125 passed.
+    RE-DERIVED FROM A LIVE RUN by converge-12o; it WAS GAP, work converge-fmz, at
+    STATE-WORDS-ASSERTED=1-OF-8. Between then and now `src/amplifier_converge/words.py`
+    landed: one map, holding exactly these eight words plus the document and gate
+    words, with every internal token translated through it.
+    THE OLD PROBE WAS MEASURING THE WRONG THING, and its going red is what
+    exposed that. It counted how many of the eight words appeared LITERALLY
+    anywhere in tests/*.py, which rose from 1 to 2 when a test happened to
+    mention "Can't check" — a movement that says nothing about whether the app
+    speaks the vocabulary. The real assertion is a closure property (every state
+    shown comes from the map) plus the map's own contents, and the probe now
+    pins both. The old exclusion of tests/test_install_check.py, needed only to
+    stop a fixture named "Broken" inflating a literal word count, is gone with
+    the count that needed it.
+    Its sibling — internal words that must be ABSENT — is CVG-066.
 
 # ─────────────────────────────────────────────────────────────────────────────
-# documents.v1 — 24 rows for 13 clauses.  Eleven clauses are split because their
-# halves carry different dispositions; each half quotes its own disjoint sentence.
+# documents.v1 — 26 rows for 13 clauses.  Nine clauses carry more than one row,
+# because their halves carry different dispositions; each half quotes its own
+# disjoint sentence.
 # This is the contract this repo most nearly keeps: the documents kit reports
-# PASS (10 pass / 0 fail / 4 skip) against this tree — but six of those PASSes
-# prove less than their clause says, and the cross-check split each one rather
-# than let a green stand for a whole clause.
+# PASS (17 pass / 0 fail / 9 skip against this tree, 2026-09-03) — but a PASS
+# can still prove less than its clause says, and every time one has, the row was
+# split rather than let a green stand for a whole clause. The tally moves with
+# the kit: it read 10 pass / 4 skip before wave 4.
 # ─────────────────────────────────────────────────────────────────────────────
 
 - id: CVG-040
@@ -1349,12 +1449,13 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/documents/run.py (rule 1c)
+    ref: conformance/documents/run.py (rule 2)
   proves: >
     That the four files in contracts/ are 50–100 lines. Not that a vision fits two
     screens or a brief is a few sentences — those are CVG-059.
   notes: >
-    RAN 2026-09-02 → rule 1c PASS, "all 4 contract(s) are 50–100 lines".
+    RAN 2026-09-03 (re-run by converge-12o)
+    → rule 2 PASS, "all 4 contract(s) are 50–100 lines".
     Corroborated: `wc -l contracts/*.md` → composition 58, documents 79,
     operation 91, surface 75.
 
@@ -1428,9 +1529,10 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/documents/run.py (rule 1a)
+    ref: conformance/documents/run.py (rule 3)
   notes: >
-    RAN 2026-09-02 → rule 1a PASS, "all 4 contract(s) name who builds against
+    RAN 2026-09-03 (re-run by converge-12o)
+    → rule 3 PASS, "all 4 contract(s) name who builds against
     them on line 3". Corroborated: `sed -n '3p' contracts/*.md` → every file's
     line 3 begins `**Who builds against this:**`.
 
@@ -1446,9 +1548,10 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/documents/run.py (rule 1b)
+    ref: conformance/documents/run.py (rule 4)
   notes: >
-    RAN 2026-09-02 → rule 1b PASS, "all 4 contract(s) carry the required sections
+    RAN 2026-09-03 (re-run by converge-12o)
+    → rule 4 PASS, "all 4 contract(s) carry the required sections
     in order". Corroborated by `grep -n '^## ' contracts/*.md`.
     QUOTE NARROWED BY THE CROSS-CHECK: this row and CVG-044 originally quoted the
     same sentence, so one clause carried two dispositions from overlapping text.
@@ -1494,12 +1597,13 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/documents/run.py (rule 1e)
+    ref: conformance/documents/run.py (rule 5a)
   proves: >
     That every Core clause leads in bold. Not the "one to three plain lines"
     limit (CVG-060) and not the numbering sentence (CVG-046).
   notes: >
-    RAN 2026-09-02 → rule 1e PASS, "all 4 contract(s) lead every Core clause in
+    RAN 2026-09-03 (re-run by converge-12o)
+    → rule 5a PASS, "all 4 contract(s) lead every Core clause in
     bold". QUOTE NARROWED BY THE CROSS-CHECK, which found this CONFORMS was
     swallowing two unproven halves.
 
@@ -1567,7 +1671,7 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/documents/run.py (rule 1d)
+    ref: conformance/documents/run.py (rule 6)
   proves: >
     That the four files in contracts/ keep status in the H1. This rule never
     reads a vision; the vision half of clause 6 is asserted separately, by
@@ -1577,7 +1681,8 @@
     rule 6b. Nothing about THIS row's claim changed — only the sentence that
     described its neighbour.
   notes: >
-    RAN 2026-09-02 → rule 1d PASS, "all 4 contract(s) keep status in the H1
+    RAN 2026-09-03 (re-run by converge-12o)
+    → rule 6 PASS, "all 4 contract(s) keep status in the H1
     alone". A naive `grep -cE '(DRAFT|FROZEN)'` on documents.v1.md past line 1
     returns 2 — both inside backticks in Core 6 itself, quoting the forms as
     examples. The kit refuses that false finding on purpose (its resolution notes
@@ -1622,12 +1727,13 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/documents/run.py (rule 2a)
+    ref: conformance/documents/run.py (rule 7a)
   proves: >
-    That docs/VISION.md carries no roadmap language — the mechanical half. Not
+    That docs/VISION.md carries no roadmap language — the mechanical half (kit rule 7a). Not
     that it reads in the present tense throughout (CVG-049).
   notes: >
-    RAN 2026-09-02 → rule 2a PASS, "docs/VISION.md carries no roadmap language —
+    RAN 2026-09-03 (re-run by converge-12o)
+    → rule 7a PASS, "docs/VISION.md carries no roadmap language —
     written as though already true".
     QUOTE NARROWED BY THE CROSS-CHECK: this row's quote used to contain CVG-049's
     entirely, so the same six words were simultaneously CONFORMS and
@@ -1659,16 +1765,20 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/documents/run.py (rule 2b)
+    ref: conformance/documents/run.py (rule 7b)
   proves: >
     That at least one dated entry exists. NOT that entries carry evidence — this
     rule never inspects entry content. That is CVG-063, which wave 4's rule 7d
     now answers with a measured refusal.
-    RULE NUMBER RESTATED 2026-09-02 by converge-jc9: wave 4 renumbered this kit
-    to the Core clauses, so the rule named here is 7b, not the 2b this line used
-    to say — and 2b now belongs to a different rule entirely.
+    RULE NUMBER CORRECTED 2026-09-03 by converge-12o: wave 4 renumbered this kit
+    to the Core clauses. converge-jc9 restated this sentence but left the
+    assertion ref itself reading `(rule 2b)`; 2b now names
+    `vision_fits_two_screens` under Core 2 — a different clause — so the stale
+    ref pointed at a live rule that answers a different question. The ref now
+    reads `(rule 7b)` and was re-run.
   notes: >
-    RAN 2026-09-02 → rule 2b PASS, "docs/VISION.md carries 1 dated changelog
+    RAN 2026-09-03 (re-run by converge-12o)
+    → rule 7b PASS, "docs/VISION.md carries 1 dated changelog
     entry/entries (most recent 2026-09-02)".
     SPLIT OUT BY THE CROSS-CHECK from a CONFORMS that also claimed the evidence half.
 
@@ -1719,11 +1829,16 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/documents/run.py (rule 3)
+    ref: conformance/documents/run.py (rule 8)
   notes: >
-    RAN 2026-09-02 → rule 3 PASS: "all 1 proposal(s) carry the three parts in
-    order". The subject is docs/PROTOCOL.v3-candidate.md (commit f5d63c3,
-    converge-e8u).
+    RAN 2026-09-03 (re-run by converge-12o)
+    → rule 8 PASS: "all 2 proposal(s) carry the three parts in
+    order". The subjects are docs/PROTOCOL.v3-candidate.md (commit f5d63c3,
+    converge-e8u) and contracts/documents.v2-candidate.md, which wave 4 added.
+    RULE NUMBER CORRECTED 2026-09-03 by converge-12o: the ref read `(rule 3)`,
+    which after wave 4's renumber names `contract_line3_names_who` under Core 3.
+    Re-run at its real id, and the proposal count re-read with it — it was 1 at
+    the time this note was first written and is 2 today.
     THE VACUOUS-SUBJECT STATE RESOLVED ITSELF WITHIN HOURS, AND THAT IS THE
     INTERESTING PART. At seed this row was OPEN-PINNED with a disclosed borrowing:
     PROTOCOL.md §3.3 has no disposition for "a sound, discriminating check exists
@@ -1751,13 +1866,33 @@
   disposition: GAP
   assertion:
     kind: indexed
-    ref: conformance/documents/run.py (rule 4)
+    ref: conformance/documents/run.py (rules 9a, 9b)
   notes: >
-    RAN 2026-09-02 → rule 4 SKIP: "work items live in the work-tracker queue, not
-    in the repository; this kit reads files". GAP rather than NOT-ASSERTABLE: a
-    machine check is entirely possible here — it just has to read the queue
-    instead of the tree. No such check exists on disk today, so nothing stops an
-    item being filed without naming its contract.
+    RAN 2026-09-03 (re-run by converge-12o)
+    → rules 9a and 9b, BOTH SKIP, and the reason changed under
+    this row without the disposition changing. 9a: "no work-item export at
+    docs/work-items.json and none named with --work-items — work items live in
+    the work queue". 9b: "measured against this repository's own queue: the
+    literal test — a blockquote or a quoted span — passes 7 of 24".
+    RE-DERIVED 2026-09-03 by converge-12o, and it STAYS GAP for a re-derived
+    reason. The seed said "no such check exists on disk today"; wave 4 built one.
+    Rule 9a reads a work-queue export and asserts both halves the clause names —
+    that an item names an existing contract, and that it defines done in plain
+    words. It SKIPs here only because this repository exports no queue, which is
+    a fixable absence, not a refusal: supply `docs/work-items.json` and the check
+    runs. That is GAP in its plainest sense — nothing asserts the clause against
+    this tree today.
+    ONE HALF OF THIS ROW IS NO LONGER GAP-SHAPED, AND THIS LANE DID NOT SPLIT IT.
+    Rule 9b ("quotes the feedback or gap it came from") is a MEASURED refusal of
+    exactly the kind that made CVG-063 NOT-ASSERTABLE: the literal test was
+    built, run against 24 real items, and retired at 7/24 because most of the 17
+    it failed did point at their origin. A row whose two halves carry different
+    dispositions is one this ledger splits (CVG-059 → CVG-067). Splitting it is
+    a re-derivation converge-12o was not briefed for and did not guess at; filed
+    as discovered work instead, at converge-njn, with both rules' verdicts quoted
+    in it.
+    RULE NUMBER CORRECTED in the same pass: the ref read `(rule 4)`, which after
+    wave 4's renumber names `contract_section_order` under Core 4.
   work: converge-8om
 
 - id: CVG-052
@@ -1765,30 +1900,79 @@
   contract:
     file: contracts/documents.v1.md
     clause: "Core 10"
-    quote: |
-      **Plain state words everywhere.** Contracts: *Kept · Not yet · Broken ·
-      Pinned open · Can't check*. Work: *Truly ready · Waiting on you · Working ·
-      Stuck · Done*. Lanes: *Working · Quiet · Silent — may have died*.
-  disposition: GAP
+    quote: "**Plain state words everywhere.**"
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;print(\"DOCUMENTS-RULE-IDS \"+\",\".join(sorted(r[\"id\"] for r in json.load(sys.stdin)[\"results\"])))"'
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"plain_state_words\"][0];print(\"MACHINE-STATE-WORD-SCAN-\"+r[\"status\"])"'
     expect:
       exit: 0
-      stdout_contains: "DOCUMENTS-RULE-IDS contract_clauses_bold_led,contract_length,contract_line3_names_who,contract_section_order,contract_status_only_in_h1,non_engineer_reader_recorded,participant_kit_present,proposal_has_three_parts,shipped_templates_carry_the_anatomy,vision_dated_changelog,vision_not_written_as_a_plan,vision_present_tense_reading,work_item_names_a_contract,workspace_template_complete"
+      stdout_contains: "MACHINE-STATE-WORD-SCAN-PASS"
+  proves: >
+    That no machine state token stands as a state word in the prose of the five
+    documents rule 10a reads, across all three vocabularies clause 10 names —
+    contracts (CONFORMS, GAP, VIOLATION, …), work (READY, BLOCKED, WIP, …) and
+    lanes (RUNNING, IDLE, STALE, DEAD). NOT that every state word those documents
+    DO use comes from the plain lists: that is the whole-vocabulary reading, and
+    it is CVG-068.
   notes: >
-    RAN 2026-09-02 → the 14 rule ids above, none of which scans documents for the
-    three state vocabularies. The technique is proven elsewhere — the surface
-    kit's rule 5 does exactly this kind of vocabulary scan and finds real defects
-    (CVG-037). Nothing prevents a document here drifting into "in progress" or
-    "blocked" tomorrow.
-    FIXED BY THE CROSS-CHECK: the seed's ref grepped the kit README's PROSE for
-    the phrase "state word", which flips on any unrelated wording edit and stays
-    green if a rule is added under a different name. This ref pins the kit's
-    EMITTED RULE IDS, so adding any rule flips the row — which is the event that
-    should flip it. Shared with CVG-053, deliberately: one list, one place to
-    update, and both rows notice the same change.
-  work: converge-8om
+    RAN 2026-09-03 → rule 10a (`plain_state_words`) PASS, "all 5 document(s) keep
+    their state words plain".
+    RE-DERIVED FROM A LIVE KIT RUN by converge-12o (work item converge-12o); it
+    WAS GAP, work converge-8om. The gap this row recorded was "none of [the kit's
+    rules] scans documents for the three state vocabularies". Wave 4 built exactly
+    that scan and it passes, so the gap is closed. The row's probe went red on the
+    way — drift TOWARD spec, which LEDGER-FORMAT §3 counts as drift all the same,
+    which is why this is a re-derivation with the run printed and not a bumped
+    expectation.
+    THE PROBE ALSO CHANGED SHAPE, deliberately. It used to pin the kit's whole
+    emitted rule-id list, so it went red whenever ANY rule was added anywhere in
+    the kit — it could not tell "the rule that answers this clause arrived" from
+    "an unrelated rule arrived", and the two rows sharing that list both went red
+    for a reason neither of them was about. It now pins rule 10a's own verdict, so
+    it flips on the events that should flip it: that rule failing, disappearing,
+    or turning SKIP.
+    QUOTE NARROWED in the same pass, for the reason the cross-check narrowed
+    CVG-048: this row's quote contained CVG-068's entirely, so the same three
+    vocabulary lists would have been CONFORMS and NOT-ASSERTABLE at once.
+
+- id: CVG-068
+  title: whether every state word a document uses comes from the plain vocabularies — the whole-vocabulary reading
+  contract:
+    file: contracts/documents.v1.md
+    clause: "Core 10"
+    quote: |
+      Contracts: *Kept · Not yet · Broken ·
+      Pinned open · Can't check*. Work: *Truly ready · Waiting on you · Working ·
+      Stuck · Done*. Lanes: *Working · Quiet · Silent — may have died*.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: probe
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"plain_state_words_reading\"][0];print(\"WHOLE-VOCABULARY-READING-STILL-NEEDS-A-READER\" if r[\"status\"]==\"SKIP\" and \"landed on legitimate prose\" in r[\"reason\"] else \"WHOLE-VOCABULARY-READING-NOW-MECHANICAL\")"'
+    expect:
+      exit: 0
+      stdout_contains: "WHOLE-VOCABULARY-READING-STILL-NEEDS-A-READER"
+  proves: >
+    Only that rule 10b still declines, and still declines for the measured reason.
+    It proves nothing about whether this repository's documents actually speak the
+    words these three lists name.
+  justification: >
+    RAN 2026-09-03: rule 10b (`plain_state_words_reading`) reports SKIP and shows
+    its working — both wider mechanical signals were built, run against this
+    repository, and retired because both landed on legitimate prose: the vision's
+    "work in progress" is ordinary English, and documents.v1 clause 6's own
+    "kept / broken / in-progress" is the sentence forbidding those words, not a
+    use of them. A rule built on either would be a false-positive machine. The
+    mechanical half IS asserted (rule 10a, CVG-052); what remains is a reading,
+    named as one rather than smuggled in under its neighbour's green.
+  notes: >
+    ADDED 2026-09-03 by converge-12o, splitting CVG-052 rather than letting one
+    green stand for a whole clause — the same treatment the cross-check gave
+    CVG-048/CVG-049 and converge-jc9 gave CVG-059/CVG-067.
+    THE HONEST COST, the same one CVG-063 names: nothing here can go red on a
+    document that quietly adopts a state word from outside these lists, as long
+    as it is not one of the machine tokens rule 10a knows. NOT-ASSERTABLE says
+    that out loud instead of hiding it behind CVG-052's pass.
 
 - id: CVG-053
   title: technical detail is folded, never in the deciding sentence
@@ -1798,20 +1982,36 @@
     quote: |
       **Technical detail is folded, never in the deciding sentence** — behind a
       Details fold in the app, in a marked section in a document.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;print(\"DOCUMENTS-RULE-IDS \"+\",\".join(sorted(r[\"id\"] for r in json.load(sys.stdin)[\"results\"])))"'
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"technical_detail_is_folded\"][0];print(\"TECHNICAL-DETAIL-IN-DOCUMENTS-\"+r[\"status\"])"'
     expect:
       exit: 0
-      stdout_contains: "DOCUMENTS-RULE-IDS contract_clauses_bold_led,contract_length,contract_line3_names_who,contract_section_order,contract_status_only_in_h1,non_engineer_reader_recorded,participant_kit_present,proposal_has_three_parts,shipped_templates_carry_the_anatomy,vision_dated_changelog,vision_not_written_as_a_plan,vision_present_tense_reading,work_item_names_a_contract,workspace_template_complete"
+      stdout_contains: "TECHNICAL-DETAIL-IN-DOCUMENTS-PASS"
+  proves: >
+    Directly: the DOCUMENT half — that no fenced code block sits in a contract's
+    Purpose or Core sections, the ones carrying the deciding sentences. The APP
+    half of the same quote is not proved by this probe and is not claimed by it:
+    rule 11b SKIPs here on purpose ("a claim about a file this kit never opened")
+    and names conformance/surface rule 5 as the place that does assert it. That
+    place is rowed under surface.v1 at CVG-037 and CVG-066, and CVG-066 is what
+    moved it from the pinned mockup onto the shipped app in this same pass.
   notes: >
-    RAN 2026-09-02 → the same 14 rule ids, none of which asserts that a document's
-    technical detail sits in its marked section rather than in the sentence a
-    reader decides on. The app half of the same clause IS asserted (surface kit
-    rule 5, CVG-037); the document half is not.
-    FIXED BY THE CROSS-CHECK, same reason as CVG-052.
-  work: converge-8om
+    RAN 2026-09-03 → rule 11a (`technical_detail_is_folded`) PASS, "all 4
+    contract(s) keep technical detail out of the teeth". The app half, run the
+    same day:
+    `pytest tests/test_plain_words_on_the_surface.py::test_the_shipped_kit_reports_rule_5_pass_on_every_page`
+    → PASSED, which is the surface kit's own rule 5 reporting PASS on every page
+    the app renders (see CVG-066).
+    RE-DERIVED FROM A LIVE KIT RUN by converge-12o; it WAS GAP, work
+    converge-8om, on the reading that "the document half is not [asserted]".
+    Wave 4 split the old rule 11 into 11a (documents, mechanical) and 11b (the
+    app, delegated), and 11a is the document check this row said did not exist.
+    Both halves of the clause now have evidence, in the two places the kits
+    themselves nominate.
+    PROBE RESHAPED for the reason given on CVG-052: the shared rule-id list could
+    not tell which rule had arrived, so it pinned rule 11a's own verdict instead.
 
 - id: CVG-054
   title: every converged repository carries the participant kit
@@ -1824,14 +2024,19 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/documents/run.py (rules 5a, 5b)
+    ref: conformance/documents/run.py (rules 12a, 12b)
   proves: >
     That the four participant-kit files and five workspace-template files EXIST.
     Not that any of them contains what the clause requires of it — that is CVG-064.
   notes: >
-    RAN 2026-09-02 → rule 5a PASS ("all 4 participant-kit file(s) present" —
-    docs/CONTRACTS-README.md, AGENTS.md, PINS.md, .githooks/pre-push) and rule 5b
-    PASS ("all 5 workspace-template file(s) present").
+    RAN 2026-09-03 (re-run by converge-12o)
+    → rule 12a PASS ("all 4 participant-kit file(s) present" —
+    docs/CONTRACTS-README.md, AGENTS.md, PINS.md, .githooks/pre-push) and rule
+    12b PASS ("all 5 workspace-template file(s) present").
+    RULE NUMBERS CORRECTED 2026-09-03 by converge-12o: the ref read
+    `(rules 5a, 5b)`, which after wave 4's renumber name two Core 5 rules about
+    bold leads and clause numbering — a different clause entirely. Re-run at
+    12a/12b, whose details are the two quoted above.
     CLAIM NARROWED BY THE CROSS-CHECK: this row used to assert "Presence is what
     this clause asks for", which the clause text does not support.
 
@@ -1888,18 +2093,25 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/documents/run.py (rule 6) + the whole-repo run
+    ref: conformance/documents/run.py (rule 13a) + the whole-repo run
   proves: >
     That the shipped templates carry the anatomy, and that this repository passes
     its own documents kit. NOT that the protocol authority checks documents
     against it — that is CVG-065.
   notes: >
-    RAN 2026-09-02, both halves. (a) rule 6 PASS — "all 2 shipped template(s)
+    RAN 2026-09-03 (re-run by converge-12o), both halves.
+    (a) rule 13a PASS — "all 2 shipped template(s)
     carry the anatomy they check for", so the templates the drafter writes from
     obey the anatomy the kit enforces. (b) `uv run conformance/documents/run.py .`
-    → VERDICT PASS (10 pass / 0 fail / 4 skip): this repository passes its own
-    kit. All four SKIPs are recorded as their own rows (CVG-040, CVG-049,
-    CVG-050, CVG-051) — a SKIP is never a quiet pass.
+    → VERDICT PASS (17 pass / 0 fail / 9 skip): this repository passes its own
+    kit. All nine SKIPs are recorded as rows — a SKIP is never a quiet pass:
+    rule 1 → CVG-040 and CVG-058, 5b → CVG-046, 7c → CVG-049, 7d → CVG-063,
+    9a and 9b → CVG-051, 10b → CVG-068, 11b → named in CVG-053's `proves` and
+    asserted under surface.v1 at CVG-037/CVG-066, 13b → CVG-065.
+    RULE NUMBER CORRECTED 2026-09-03 by converge-12o: the ref read `(rule 6)`,
+    which after wave 4's renumber names `contract_status_only_in_h1` under Core
+    6. Re-run at 13a. The run's own tally moved with the kit — it was
+    10 pass / 4 skip when this note was written and is 17 pass / 9 skip today.
     QUOTE NARROWED BY THE CROSS-CHECK, which found the clause's middle promise had
     no evidence and no mention.
 
