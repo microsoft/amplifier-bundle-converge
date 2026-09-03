@@ -1,13 +1,52 @@
-# Converge
+# Amplifier Converge
 
-**Vision-first, contract-driven development.**
+**You define what must be true. It builds toward it — with you, over time.**
 
-The owner and the orchestrator negotiate at the **contract** level. Work is
-**derived from the gap** between repo reality and the ratified contracts —
-never invented. A standing conformance ledger (the **ratchet**) prevents
-silent backsliding: drift in either direction files a row. The owner's
-attention is spent only at the contract layer; everything below it that
-reaches the owner is a protocol defect.
+Converge is a way of working above the level of tasks and code. You write down
+where a project is going and what must be true of it; the work of getting there
+is planned, run, and checked for you, and comes back to you only where a person
+is irreplaceable.
+
+## The three roles
+
+- **You — the intent steward.** You set the direction and make the decisions
+  only a person can make: ratify a change to the direction, make an irreversible
+  choice, check what only a person or a device can check, set priority or stop.
+  Anything else that reaches you is a defect.
+- **The manager session** — one long-running AI session that runs a project's
+  work on your behalf, for days or weeks. It owns the queue, plans the order,
+  briefs and launches worker sessions, notices silence, verifies by its own
+  re-run check rather than by a worker's account, and writes you a brief in
+  plain sentences for your return.
+- **Worker sessions** — many short-lived AI sessions, each taking one bounded
+  piece of work in its own copy of the code and returning with proof. Each piece
+  ends one of three ways: done with proof; stuck, with the cause; needs your
+  judgment.
+
+You write the direction in two documents. A **vision** — the project as it will
+be when it is right, written as though already true. And **contracts** — the
+specific promises the project must keep, each short enough to read in a minute
+and precise enough to check against reality. Both are written for people.
+
+A document begins as a draft and becomes **locked** when it says what it means,
+carries a real example of right and wrong, can be checked against reality, and
+you have read it and agreed. A locked document changes only by written
+**proposal** backed by evidence — a cost actually paid or a failure actually
+caught. Preference is not evidence. Nobody edits a locked document in place; the
+guard refuses.
+
+## The two halves
+
+**Direction** — the vision and the contracts as one experience: what changed
+since you last read, whether each contract is kept, your questions on any
+paragraph, every proposal awaiting your word.
+
+**Operation** — the manager session at work: your return brief, the plan, what
+is running against what waits on you, lanes running against lanes intended,
+evidence you can inspect, your limits, a place to drop feedback.
+
+Both halves are the project's own truth, read from the repository. The app holds
+no data of its own.
 
 ## Install
 
@@ -17,24 +56,24 @@ reaches the owner is a protocol defect.
 amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml --app
 ```
 
-This composes converge's **capability layer** onto whatever bundle is already
+This composes Converge's **capability layer** onto whatever bundle is already
 active: the four agents (`protocol-authority`, `reconciler`, `negotiator`,
-`amendment-drafter`), the five procedure skills, the `hooks-candidate-guard`
-hook (structural PROTOCOL.md §5 enforcement, on by default), the thin awareness
-context, and — via a behavior-includes-behavior include — the `amplifier-work-tracker`
-behavior that gives `reconciler` its `work_*` filing tools. Use this to add
-converge to an existing workspace or session.
+`proposal-drafter`), the five procedure skills, the `hooks-candidate-guard` hook
+(the guard that refuses edits to locked documents, on by default), the thin
+awareness context, and — via a behavior-includes-behavior include — the
+`amplifier-work-tracker` behavior that gives `reconciler` its `work_*` filing
+tools. Use this to add Converge to an existing workspace or session.
 
-**Full-workspace path — converge as the primary bundle:**
+**Full-workspace path — Converge as the primary bundle:**
 
 ```
 amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main
 amplifier bundle use converge
 ```
 
-This composes the **root** `bundle.md`, which assembles on the lean **anchors**
-base and pulls in `amplifier-work-tracker` **and** the same behavior. Use this
-to run the `seed-reconcile` recipe end-to-end against a target repo.
+This composes the root `bundle.md`, which assembles on the lean **anchors** base
+and pulls in `amplifier-work-tracker` **and** the same behavior. Use this to run
+the `seed-reconcile` recipe end-to-end against a target repo.
 
 > **Host requirement.** A recipe resolves its helpers only from the session it
 > runs in, so running Converge's recipe needs either Converge's own
@@ -47,69 +86,108 @@ to run the `seed-reconcile` recipe end-to-end against a target repo.
 | 4 agents · 5 skills · guard hook · awareness | ✅ | ✅ |
 | Session base + everyday tools | supplied by whatever bundle is already active | ✅ the lean `anchors` base, pulled in by `bundle.md` |
 | `seed-reconcile` recipe runnable | only if the host is on the `anchors` base (the recipe's read-only intake step is `anchors:explorer`) | ✅ |
-| `work-tracker` present (reconciler's `work_*` filing) | ✅ the behavior includes the work-tracker **behavior** (behavior-includes-behavior), so `reconciler` gets `work_*` filing on this path too | ✅ pulled in by `bundle.md` |
+| `work-tracker` present (reconciler's `work_*` filing) | ✅ the behavior includes the work-tracker **behavior**, so `reconciler` gets `work_*` filing on this path too | ✅ pulled in by `bundle.md` |
 | Agents' "no delegate / no skills / no shell" rules | behavioral — agent body instructions + explicit `tools:` blocks (per-role structural spawn policy is an upstream feature request) | behavioral (same) |
 
 Both paths give the four agents, five skills, guard hook, awareness context, and
 work-tracker filing. The root path additionally supplies the base — so for
 end-to-end recipe runs against a target repo, prefer `bundle use converge`. For
-lightweight composition of the knowledge and enforcement layer onto a session
-that already has its own base, the `--app` behavior is the quick path. Neither
-path imposes any session-wide `spawn:` policy: a live probe (2026-09-02) showed
-a composed `spawn.exclude_tools` strips tools from **every** spawned sub-agent
-in every session — unacceptable collateral for a composable bundle, so it is
-deliberately absent everywhere.
+lightweight composition onto a session that already has its own base, the
+`--app` behavior is the quick path. Neither path imposes any session-wide
+`spawn:` policy: a live probe (2026-09-02) showed a composed `spawn.exclude_tools`
+strips tools from **every** spawned sub-agent in every session — unacceptable
+collateral for a composable bundle, so it is deliberately absent everywhere.
 
-## Status
+## What ships
 
-**The agent roster is complete.** This bundle ships:
+- `agents/protocol-authority.md` — the carrier of the ratified rules. Ask it any
+  interpretive question ("does this conform? am I allowed?").
+- `agents/reconciler.md` — the **ratchet**: it derives the conformance ledger
+  from a repo's locked contracts, re-checks it after every change, catches drift
+  in both directions, and files what it finds. The one agent that writes; it
+  never interrupts you synchronously.
+- `agents/negotiator.md` — turns investigation evidence into decision-level
+  minutes: options, a recommendation, and the one decision you must make.
+  Read-only; returns needs rather than re-routing.
+- `agents/proposal-drafter.md` — authors a proposal beside a locked document
+  (the target line · the exact change · real evidence · what does **not** change ·
+  the place for your word) and **stops**. Never edits the locked file, never
+  ratifies.
+- `skills/` — five procedures: `seam-test` (does this warrant a contract?),
+  `proposing-a-change` (how to write a proposal), `freeze-bar` (the four
+  conditions for locking a document — PROTOCOL.md §5 calls this the Freeze Bar),
+  `ledger-disposition` (the contract-check vocabulary and row shape),
+  `lane-brief` (briefing a worker session honestly).
+- `modules/hooks-candidate-guard/` — the guard. A `tool:pre` hook, on by default,
+  that structurally denies a direct write, edit, patch, or shell-laundered write
+  to a locked contract or `VISION.md`. Changes land only via a ratified proposal
+  sibling. See that module's README for the proposal filenames it recognizes and
+  its documented non-coverage.
+- `recipes/seed-reconcile.yaml` — the one recipe: derive and refresh the ledger
+  from a target repo's contracts, detect drift in both directions, file what it
+  finds. Its steps use only the lean base's helpers plus Converge's own
+  `reconciler` for every write.
+- `modes/converge-manager.md` — the manager-session mode: the operating loop,
+  keyed clause by clause to `contracts/operation.v1.md`. Where the mode and a
+  clause disagree, the clause wins.
+- `src/amplifier_converge/` — the companion web page (the two halves). Run it
+  beside a project with `amplifier-converge web --repo .`; it listens on
+  loopback by default, on purpose.
 
-- `context/converge-awareness.md` — a thin pointer wired into the root session
-- `agents/protocol-authority.md` — THE carrier of the ratified protocol
-- `agents/reconciler.md` — the ratchet: SEED + standing RECONCILE
-- `agents/negotiator.md` — Phase 1 NEGOTIATE: turns investigation evidence into
-  decision-level minutes for the owner (options + recommendation + the one
-  decision to make); returns needs rather than re-routing; read-only.
-- `agents/amendment-drafter.md` — authors a proposal beside a locked contract
-  (exact diff · real-evidence bar · "what does NOT change" · ratification ask ·
-  the `target:` field the guard escape hatch consumes) and **stops**; never
-  edits the locked file, never self-ratifies, returns needs.
-- `skills/` — five procedure skills (seam test, proposal authoring, Freeze Bar
-  checklist, ledger dispositions, lane-brief discipline)
-- `modules/hooks-candidate-guard/` — the ratchet's teeth: a `tool:pre` hook,
-  wired on by default via `behaviors/converge.yaml`'s `hooks:` block, that
-  structurally enforces PROTOCOL.md §5 (no direct write to a locked
-  contract or `VISION.md`; amendments land only via a ratified proposal
-  sibling). See that module's own README for the proposal filenames it
-  recognizes, the full contract, and documented non-coverage.
+## The participant kit
 
-- `recipes/` — one recipe, `@converge:recipes/seed-reconcile.yaml` (SEED +
-  standing RECONCILE): it derives and refreshes the ledger from a target repo's
-  contracts, detects bidirectional drift, and files GAP/VIOLATION tracker items.
-  Its steps use only the lean base's helpers (`anchors:explorer` for read-only
-  intake) plus Converge's own `reconciler` for every write. Spec of record:
-  `docs/design/mechanism-spec.md` §4.2. Two earlier recipes, `encode` and
-  `full-wave`, were retired on 2026-09-02 — the ENCODE phase name stays, the
-  recipe does not.
+The through-line has to reach a colleague who never installs this bundle, and a
+coding agent that is not an Amplifier session. Every converged repository
+therefore carries four files, and this repository carries its own:
 
-The orchestration mode is deferred by decision (pure delegation + recipe gates +
-hook instead).
+| File | What it is for |
+|---|---|
+| [`docs/CONTRACTS-README.md`](docs/CONTRACTS-README.md) | The contract anatomy, the index of contracts, when a document locks, and how to propose a change. Start a colleague here. |
+| [`AGENTS.md`](AGENTS.md) | The addendum every coding agent reads: converge toward the vision, never edit a locked contract, propose instead, where the ledger is, how to run the conformance kit. |
+| [`PINS.md`](PINS.md) | Hard facts every worker session reads first. |
+| [`.githooks/pre-push`](.githooks/pre-push) | A pre-push scan that refuses edits to locked contracts, so the rule holds even without the bundle. |
 
-## The authoritative spec
+Templates for a project adopting the method live in
+[`docs/workspace-template/`](docs/workspace-template/).
 
-- **`docs/PROTOCOL.md`** — the ratified protocol (v2). The source of truth.
-- **`docs/LEDGER-FORMAT.md`** — the starter conformance-ledger format (a DRAFT
-  convention with a named promotion trigger; not a contract).
+## Where everything lives
 
-Everything in this bundle quotes or points to those docs rather than
-restating them. Read `docs/PROTOCOL.md` first.
+| | Where |
+|---|---|
+| The ratified rules (source of truth) | [`docs/PROTOCOL.md`](docs/PROTOCOL.md) |
+| The vision | [`docs/VISION.md`](docs/VISION.md) |
+| The four contracts | [`contracts/`](contracts/) — indexed in [`docs/CONTRACTS-README.md`](docs/CONTRACTS-README.md) |
+| The announcement — what Converge is for | [`docs/ANNOUNCEMENT.md`](docs/ANNOUNCEMENT.md) |
+| Worked examples, one per contract | [`docs/examples/`](docs/examples/) |
+| This repository's own contract check | [`ledger/rows.yaml`](ledger/rows.yaml), with runnable checks in [`ledger/checks/`](ledger/checks/) |
+| The conformance kits the ledger runs | [`conformance/`](conformance/) |
+| The deck — a six-minute walk-through | [`docs/presentation/amplifier-converge.html`](docs/presentation/amplifier-converge.html) |
+| The explainer — the sit-down companion, about twelve minutes | [`docs/presentation/explainer/index.html`](docs/presentation/explainer/index.html) |
+| The app (the two halves) | [`src/amplifier_converge/`](src/amplifier_converge/) |
+| Design records — dated snapshots, not current law | [`docs/design/`](docs/design/) |
+| The starter ledger format (a draft convention, not a contract) | [`docs/LEDGER-FORMAT.md`](docs/LEDGER-FORMAT.md) |
+
+The deck and the explainer are self-contained HTML — no server, no build. Open
+either file directly.
+
+## Reading order
+
+[`docs/PROTOCOL.md`](docs/PROTOCOL.md) → this README →
+[`docs/ANNOUNCEMENT.md`](docs/ANNOUNCEMENT.md) →
+[`docs/design/mechanism-spec.md`](docs/design/mechanism-spec.md) → the
+presentation.
+
+The rules and the contracts stay always-true. Design records carry a dated
+snapshot banner and are read as history, not as current law.
 
 ## What it does not do
 
-This bundle is stateless know-how. It does **not** own the tracker, does
-**not** ratify anything (only the owner does, in literal words), and does
-**not** store any repo's VISION.md, contracts, or ledger — those live in each
-target repo.
+This bundle is stateless know-how. It does **not** own any project's vision,
+contracts, work, or results; it does **not** ratify anything — that word is
+yours, in so many words; and it does **not** store any repo's documents or
+ledger. Those live in each target repo. It does not become another issue
+tracker, monitoring console, notification stream, or code-review tool, and it
+does not alter the tools of other work in your session.
 
 ## Contributing
 

@@ -1,5 +1,5 @@
 ---
-name: candidate-amendment
+name: proposing-a-change
 description: >
   How to propose a change to a locked vision or contract — a sibling proposal
   file named <contract>.vN-candidate.md, never a direct edit. Load this for

@@ -10,7 +10,12 @@
 > (composition.v1 §1–4). Where a section below names a helper from the heavy
 > package, read the lean base's equivalent: `anchors:explorer` for read-only
 > work, `anchors:builder` for writes, `anchors:git-ops` for version control.
-> Sections not corrected by this banner still read as written.
+> **(3)** The agent named `amendment-drafter` below now ships as
+> **`proposal-drafter`**, and the skill named `candidate-amendment` as
+> **`proposing-a-change`**. Sections not corrected by this banner still read as
+> written; this is a record of what was intended, not current law. The rules are
+> `docs/PROTOCOL.md`, the promises are `contracts/`, and what actually ships is
+> `README.md` — where they and this document disagree, they win.
 
 **Status:** DRAFT — a design-time snapshot; see the banner above.
 **Purpose of this document:** describe the WHOLE intended `converge` bundle as

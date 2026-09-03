@@ -4,7 +4,7 @@ bundle:
   description: >-
     Vision-first, contract-driven development — the composable capability
     package. Adds converge's four agents (protocol-authority, reconciler,
-    negotiator, amendment-drafter), its five procedure skills (via tool-skills),
+    negotiator, proposal-drafter), its five procedure skills (via tool-skills),
     the hooks-candidate-guard tool:pre hook (structural PROTOCOL.md §5
     enforcement, on by default), and the thin always-on awareness context. THE
     install path:
@@ -100,7 +100,7 @@ agents:
     - converge:reconciler
     - converge:protocol-authority
     - converge:negotiator
-    - converge:amendment-drafter
+    - converge:proposal-drafter
 
 context:
   include:
