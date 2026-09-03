@@ -65,7 +65,16 @@ to dodge a failure. Rule 3 SKIPs *conditionally*, when a target carries no
 proposals at all, and the self-test asserts that specifically: an absent
 document must SKIP, never vacuously PASS.
 
-### Two places the kit deliberately does not fabricate a finding
+### Test data is not a document
+
+Discovery skips anything under a `fixtures/` directory (and `.git`, `.venv`,
+`node_modules`, and friends). A conformance fixture is a deliberately-broken
+artifact — the surface and composition kits each ship one, and so does this
+kit. Reporting `sample-bad`'s intentionally-malformed proposal as a violation
+of *this repository* would be a fabricated finding, and would mean every kit's
+own negative fixture failed the repository that ships it.
+
+### Three places the kit deliberately does not fabricate a finding
 
 - **A template's own instructions.** A template opens with an HTML comment
   telling the copier to delete it. Reading line 3 of the raw file would report

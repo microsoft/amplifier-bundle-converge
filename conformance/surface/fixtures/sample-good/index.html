@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sample Desk — a conforming companion page</title>
+<style>
+  .screen { display: none }
+  .screen.is-active { display: block }
+  .doc.show-diff ins { background: #eee }
+  .doc.show-diff del { text-decoration: line-through }
+  @media (max-width: 390px) { .rail { display: none } }
+  @media (min-width: 1280px) { .rail { display: block } }
+</style>
+</head>
+<body>
+
+<!-- Two places, and the controls that switch between them. -->
+<nav class="rail">
+  <button class="navbtn" data-goto="needs" aria-current="page">Needs you</button>
+  <button class="navbtn" data-goto="direction" aria-current="false">Direction</button>
+  <button class="navbtn" data-goto="lanes" aria-current="false">Lanes</button>
+</nav>
+
+<!-- ---------- place 1: needs you ---------- -->
+<section class="screen is-active" id="needs">
+  <h1>Needs you <span id="needCount" data-count="2">2</span></h1>
+
+  <article class="card">
+    <h3 class="what">Only 3 of 10 lanes are running.</h3>
+    <p>We recommend filling all 10 from the 12 things ready to start.</p>
+    <span class="stamp"></span>
+    <button class="word" data-answer="Fill to 10" data-stamp="Filled" data-effect="fill">Fill to 10</button>
+    <button class="word" data-answer="Keep at 3" data-stamp="Kept">Keep at 3</button>
+    <button class="word" data-answer="Later">Later</button>
+    <details class="tech">
+      <summary>Details</summary>
+      <div class="tech-body">ledger: 12 items ready; the reconcile recipe last ran 9m ago; bundle 0.1.0</div>
+    </details>
+  </article>
+
+  <article class="card">
+    <h3 class="what">Three documents point at something being retired.</h3>
+    <p>We recommend updating all three in one pass.</p>
+    <span class="stamp"></span>
+    <button class="word" data-answer="Ratified">Ratified</button>
+    <button class="word" data-answer="Declined">Declined</button>
+  </article>
+
+  <h2>Filed today</h2>
+  <ul id="filedList"><li class="none">Nothing yet.</li></ul>
+</section>
+
+<!-- ---------- place 2: direction ---------- -->
+<section class="screen" id="direction">
+  <p>15 sentences were added and 2 removed since you last read this.</p>
+  <button id="diffBtn" aria-pressed="false">Show what changed</button>
+
+  <article class="doc" id="visionDoc">
+    <h2>Vision</h2>
+    <p><del>The operator watches the run and steps in when it looks wrong.</del>
+       <ins>Nobody watches the run. Watching is the machine's job.</ins></p>
+    <p><ins>Every decision arrives worked out: what it is, why now, what we
+       recommend, and the word to answer with.</ins></p>
+  </article>
+
+  <div class="actionbar">
+    <button data-answer="Ratified" data-doc-action>Ratified</button>
+    <button id="freezeBtn" aria-expanded="false" aria-controls="readiness">Lock as v1…</button>
+    <div class="readiness" id="readiness" hidden>
+      <h5>Ready to lock when all four are green</h5>
+      <ul>
+        <li>Every section has been read by you</li>
+        <li>No open questions in the margin</li>
+        <li>The promises underneath it all have owners</li>
+        <li class="amber">One promise is broken — a lane went quiet for 51 minutes</li>
+      </ul>
+      <p><button class="btn" disabled>Lock as v1</button></p>
+    </div>
+  </div>
+</section>
+
+<!-- ---------- place 3: lanes ---------- -->
+<section class="screen" id="lanes">
+  <div id="gauge" aria-label="Three of ten lanes running">
+    <i class="on"></i><i class="on"></i><i class="on"></i>
+    <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+  </div>
+  <p id="gaugeLabel">3 of 10 lanes running</p>
+  <p id="gaugeSub">7 idle · 12 things ready to start</p>
+  <button id="fillBtn">Fill to 10</button>
+  <label>Keep going until
+    <select id="targetSel"><option>10</option><option>5</option></select>
+  </label>
+
+  <div class="lane">
+    <p class="title">Write the first-run walkthrough</p>
+    <div class="drill">
+      <div class="signal">
+        <button data-signal="sooner" aria-pressed="false">Sooner</button>
+        <button data-signal="later" aria-pressed="false">Later</button>
+      </div>
+      <p data-said></p>
+    </div>
+  </div>
+
+  <h2>Say something to the manager</h2>
+  <textarea id="dropBox" aria-label="Drop feedback"></textarea>
+  <button id="sendDrop">Send</button>
+  <button id="tellAllBtn" aria-expanded="false">Tell all managers</button>
+</section>
+
+<script>
+(function(){
+  "use strict";
+  var $  = function(s,r){ return (r||document).querySelector(s); };
+  var $$ = function(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); };
+
+  /* ---- places switch ------------------------------------- */
+  var screens = $$('.screen');
+  function show(id){
+    if(!document.getElementById(id)) return;
+    screens.forEach(function(s){ s.classList.toggle('is-active', s.id === id); });
+    $$('.navbtn').forEach(function(b){
+      b.setAttribute('aria-current', b.getAttribute('data-goto') === id ? 'page' : 'false');
+    });
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-goto]');
+    if(b){ show(b.getAttribute('data-goto')); }
+  });
+
+  /* ---- answering: mark the card, shorten the strip, file it --- */
+  var needCount = $('#needCount'), filedList = $('#filedList');
+  function fileIt(word, what){
+    var none = filedList.querySelector('.none');
+    if(none) none.remove();
+    var li = document.createElement('li');
+    li.innerHTML = '<b>' + word + '</b> — ' + what;
+    filedList.prepend(li);
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-answer]');
+    if(!b) return;
+    var word = b.getAttribute('data-answer');
+    var card = b.closest('.card');
+    if(card && !card.classList.contains('is-answered')){
+      card.classList.add('is-answered');
+      $$('.word', card).forEach(function(w){ w.disabled = true; });
+      var what = card.querySelector('.what');
+      fileIt(word, what ? what.textContent.trim() : 'a decision');
+      var n = Math.max(0, parseInt(needCount.textContent,10) - 1);
+      needCount.textContent = n;
+    }
+    if(b.getAttribute('data-effect') === 'fill') fillLanes();
+  });
+
+  /* ---- fill propagates to the gauge and the board --------- */
+  var filled = false;
+  function fillLanes(){
+    if(filled) return;
+    filled = true;
+    $$('#gauge i').forEach(function(slot){ slot.className = 'on'; });
+    var g = $('#gauge'); if(g) g.setAttribute('aria-label','Ten of ten lanes running');
+    var lbl = $('#gaugeLabel'); if(lbl) lbl.textContent = '10 of 10 lanes running';
+    var sub = $('#gaugeSub');   if(sub) sub.textContent = 'none idle · 9 things ready to start';
+    var fb  = $('#fillBtn');    if(fb){ fb.disabled = true; fb.textContent = 'All 10 running'; }
+  }
+  var fillBtn = $('#fillBtn');
+  if(fillBtn) fillBtn.addEventListener('click', fillLanes);
+
+  /* ---- what changed since you last read this -------------- */
+  var diffBtn = $('#diffBtn'), visionDoc = $('#visionDoc');
+  if(diffBtn){
+    diffBtn.addEventListener('click', function(){
+      var on = visionDoc.classList.toggle('show-diff');
+      diffBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      diffBtn.textContent = on ? 'Hide what changed' : 'Show what changed';
+    });
+  }
+
+  /* ---- the lock control states its conditions ------------- */
+  var freezeBtn = $('#freezeBtn'), readiness = $('#readiness');
+  if(freezeBtn){
+    freezeBtn.addEventListener('click', function(){
+      var open = readiness.hidden;
+      readiness.hidden = !open;
+      freezeBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+
+  /* ---- signal priority, and the feedback drop ------------- */
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-signal]');
+    if(!b) return;
+    $$('[data-signal]', b.closest('.signal')).forEach(function(o){
+      o.setAttribute('aria-pressed','false');
+    });
+    b.setAttribute('aria-pressed','true');
+  });
+  var sendDrop = $('#sendDrop');
+  if(sendDrop) sendDrop.addEventListener('click', function(){ $('#dropBox').value = ''; });
+})();
+</script>
+</body>
+</html>

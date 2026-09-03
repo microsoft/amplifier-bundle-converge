@@ -190,10 +190,26 @@ def vision_file(root: Path):
     return None
 
 
+# Directories that hold TEST DATA or machinery, not this repository's own
+# documents. A conformance fixture is a deliberately-broken artifact; reporting
+# one as a real violation would be a fabricated finding — and would make every
+# kit's own sample-bad fail the repository that ships it.
+EXCLUDED_DIRS = {"fixtures", ".git", ".venv", "node_modules", "__pycache__",
+                 "site-packages", "dist", "build"}
+
+
+def _excluded(root: Path, p: Path) -> bool:
+    try:
+        parts = p.relative_to(root).parts
+    except ValueError:
+        return False
+    return any(part in EXCLUDED_DIRS for part in parts)
+
+
 def proposal_files(root: Path):
     out = []
     for p in root.rglob("*-candidate.md"):
-        if p.is_file() and PROPOSAL_GLOB_RE.match(p.name):
+        if p.is_file() and PROPOSAL_GLOB_RE.match(p.name) and not _excluded(root, p):
             out.append(p)
     return sorted(out)
 

@@ -1,0 +1,2 @@
+# pytest writes this next to conformance/pytest.ini; it is not a kit artifact.
+.pytest_cache/
