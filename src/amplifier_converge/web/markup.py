@@ -35,6 +35,17 @@ def esc(text: object) -> str:
     return html.escape(str(text), quote=True)
 
 
+def state(word: str, cls: str = "chip") -> str:
+    """One of the plain state words, spelled on the page as the map spells it.
+
+    The words are a closed set with no markup in them, so the apostrophe in
+    “Can't check” stays an apostrophe rather than becoming an escape sequence.
+    Several checks — this project's own, and the one the contract ships — read
+    the page's source for the word between the tags, and must find the word.
+    """
+    return f'<span class="{cls}">{html.escape(word, quote=False)}</span>'
+
+
 def quoted(text: object) -> str:
     """Words borrowed from the project, marked as borrowed."""
     return f'<span class="{QUOTED}">{esc(text)}</span>'

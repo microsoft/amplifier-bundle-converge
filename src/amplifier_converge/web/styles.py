@@ -138,6 +138,11 @@ img{max-width:100%;height:auto}
   background:var(--paper-deep);border:1px solid var(--rule);border-radius:999px;padding:2px 9px;
 }
 .chip.locked{background:var(--accent-soft);color:var(--accent-ink);border-color:#D8CFF4}
+/* whether the promise is being kept — a second signal, beside the first */
+.chip.kept{color:var(--moss);border-color:#C7D3C2}
+.chip.broken{color:var(--brick);border-color:#E0C3B9}
+.chip.open{color:var(--amber);border-color:#DFD0AC}
+.chip.unsure{color:var(--ink-3);border-style:dashed}
 
 /* ---- documents ---- */
 .doc{max-width:68ch}
