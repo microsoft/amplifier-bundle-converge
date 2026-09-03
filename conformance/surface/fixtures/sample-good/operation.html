@@ -1,0 +1,203 @@
+<!doctype html>
+<!--
+  Operation, conforming (surface.v1 Core 9, kit rules 1c and 9).
+
+  Rule 9 asks for eight things on one page: the gauge with its fill control,
+  truly ready against waiting on you, the plan in order with reasons, each
+  lane's state and evidence with a fold to drill into, your limits, the
+  feedback drop, every manager session with "tell all" — and no control here
+  that stops anything. Stopping is a decision; it arrives on the short list
+  with its reasons, never as a button on the board.
+
+  Rule 1c checks the gauge against the fill control: 2 of 3 running is short by
+  one, so the control must be here. Were all three running, offering to fill
+  them would be the failure.
+
+  The Details fold at the end is where rules 3b and 4 read the surface's own
+  statement of what each write is and where it lands.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Operation — Converge</title>
+</head>
+<body>
+<div class="shell">
+  <header class="rail">
+    <div class="brand"><span class="wordmark">Converge</span><span class="project">kettle</span></div>
+    <nav class="places" aria-label="Places">
+      <a class="place" href="/">Needs your word <span class="count">2</span></a>
+      <a class="place" href="/direction">Direction</a>
+      <a class="place is-on" href="/operation">Operation</a>
+    </nav>
+  </header>
+  <main id="main">
+    <div class="section"><h2>Operation</h2>
+    <p>The manager session at work, and what it needs from you.</p></div>
+
+    <article class="card" id="lanes">
+      <span class="lbl">Lanes</span>
+      <div class="gauge"><span class="big">2 of 3 running</span></div>
+      <div class="pips"><span class="pip on"></span><span class="pip on"></span><span class="pip"></span></div>
+      <p class="muted">4 pieces of work need nothing from you.</p>
+      <form method="post" action="/do/steer" class="words">
+        <input type="hidden" name="ask" value="fill the lanes">
+        <input type="hidden" name="back" value="/operation">
+        <button class="word is-primary" type="submit">Fill the lanes</button>
+      </form>
+    </article>
+
+    <div class="rows two">
+      <article class="card">
+        <span class="lbl">Truly ready — needs nothing from you</span>
+        <p class="gauge"><span class="big">4</span></p>
+        <p class="why"><span class="doc quote">Give the kettle a second thermostat</span></p>
+      </article>
+      <article class="card">
+        <span class="lbl">Waiting on you</span>
+        <p class="gauge"><span class="big">2</span></p>
+        <p class="why"><span class="doc quote">Lock the halves promise</span></p>
+      </article>
+    </div>
+
+    <article class="card">
+      <span class="lbl">What is planned next, and why</span>
+      <p class="muted">The strategy is to keep as much moving without you as possible. Anything
+      parked on your word is set aside; it never holds up the rest.</p>
+      <div class="step">
+        <span class="n">1</span>
+        <div class="body">
+          <p><strong><span class="doc quote">Give the kettle a second thermostat</span></strong></p>
+          <p class="why">It is the last thing between the safety promise and being kept.</p>
+          <form method="post" action="/do/signal-priority" class="words">
+            <input type="hidden" name="item_id" value="kettle-1">
+            <input type="hidden" name="back" value="/operation">
+            <button class="word" type="submit" name="direction" value="sooner">sooner</button>
+            <button class="word" type="submit" name="direction" value="later">later</button>
+          </form>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">2</span>
+        <div class="body">
+          <p><strong><span class="doc quote">Write down what a boil means</span></strong></p>
+          <p class="why">Two sessions read it two ways last week, and both were reasonable.</p>
+          <form method="post" action="/do/signal-priority" class="words">
+            <input type="hidden" name="item_id" value="kettle-2">
+            <input type="hidden" name="back" value="/operation">
+            <button class="word" type="submit" name="direction" value="sooner">sooner</button>
+            <button class="word" type="submit" name="direction" value="later">later</button>
+          </form>
+        </div>
+      </div>
+    </article>
+
+    <div class="section"><h2>The lanes, one by one</h2>
+    <p>State in words, and the evidence behind it. Nothing here is a worker session's account of
+    itself.</p></div>
+
+    <article class="card" id="lane-thermostat">
+      <div class="step"><div class="body">
+        <h3><span class="doc quote">thermostat</span></h3>
+        <p class="muted"><span class="mark good">Working</span></p>
+        <p class="why"><span class="doc quote">two tests added, one still red</span></p>
+        <div class="evidence">
+          <span class="badge">last wrote: <span class="doc quote">4 minutes ago</span></span>
+          <span class="badge">commits: <span class="doc quote">3</span></span>
+        </div>
+      </div></div>
+      <details><summary>Details</summary><div class="inner">
+        <p>branch lane/thermostat</p>
+        <p>worktree /tmp/lanes/thermostat</p>
+      </div></details>
+    </article>
+
+    <article class="card" id="lane-boil">
+      <div class="step"><div class="body">
+        <h3><span class="doc quote">boil</span></h3>
+        <p class="muted"><span class="mark warn">Quiet 14m</span></p>
+        <p class="why"><span class="doc quote">waiting on a review</span></p>
+        <div class="evidence">
+          <span class="badge">last wrote: <span class="doc quote">14 minutes ago</span></span>
+        </div>
+      </div></div>
+      <details><summary>Details</summary><div class="inner">
+        <p>branch lane/boil</p>
+        <p>worktree /tmp/lanes/boil</p>
+      </div></details>
+    </article>
+
+    <article class="card" id="limits">
+      <span class="lbl">Your limits</span>
+      <form method="post" action="/do/steer">
+        <input type="hidden" name="back" value="/operation">
+        <div class="field"><label for="objective">Today's objective</label>
+          <input type="text" id="objective" name="objective" value="Get the safety promise kept."></div>
+        <div class="field"><label for="budget">Budget</label>
+          <select id="budget" name="budget">
+            <option value="until done" selected>until done</option>
+            <option value="until a time">until a time</option>
+            <option value="until a spend">until a spend</option>
+          </select></div>
+        <div class="field"><label for="lane_width">How many lanes to run</label>
+          <input type="text" id="lane_width" name="lane_width" value="3"></div>
+        <div class="words"><button class="word is-primary" type="submit">Set them</button></div>
+      </form>
+      <p class="gate-note">Stopping something is never a button here. A stop is a decision, and it
+      arrives on the short list with its reasons.</p>
+    </article>
+
+    <article class="card" id="feedback">
+      <span class="lbl">Drop feedback</span>
+      <p class="muted">Just say what you saw. The manager session works out whether it is a bug, a
+      change of plan, or a decision for you.</p>
+      <form method="post" action="/do/drop-feedback" enctype="multipart/form-data">
+        <input type="hidden" name="back" value="/operation">
+        <div class="field"><label for="fb">What you saw</label>
+          <textarea id="fb" name="text"></textarea></div>
+        <div class="field"><label for="fbi">A picture, if you have one</label>
+          <input type="file" id="fbi" name="picture" accept="image/*"></div>
+        <div class="words"><button class="word is-primary" type="submit">Drop it</button></div>
+      </form>
+    </article>
+
+    <article class="card" id="managers">
+      <span class="lbl">Every manager session you run</span>
+      <p class="why"><strong><span class="doc quote">kettle</span></strong> — this one: 4 truly
+      ready, 2 being worked, 1 finished today.</p>
+      <form method="post" action="/do/drop-feedback">
+        <input type="hidden" name="looking_at" value="Sent to every manager session.">
+        <input type="hidden" name="back" value="/operation">
+        <div class="field"><label for="tellall">Tell them all one thing</label>
+          <input type="text" id="tellall" name="text"></div>
+        <div class="words"><button class="word" type="submit">Tell all</button></div>
+      </form>
+    </article>
+
+    <article class="card">
+      <span class="lbl">The four things you can do here</span>
+      <div>
+        <p class="why"><strong>Answer with a word</strong></p>
+        <p class="why"><strong>Raise or lower a priority</strong></p>
+        <p class="why"><strong>Drop feedback</strong></p>
+        <p class="why"><strong>Steer</strong></p>
+      </div>
+      <p class="gate-note">Everything else on this page is read. Whichever of the four you use, the
+      manager session can do the same thing the same way.</p>
+      <details>
+        <summary>Details</summary>
+        <div class="inner">
+          <p>answer-with-a-word → the dated ratification record, docs/workflow/owner-ratifications-&lt;date&gt;.md — manager operation record-ratification</p>
+          <p>signal-priority → the work queue, against the item itself — manager operation work-tracker edit --description</p>
+          <p>drop-feedback → the project, at .converge/feedback/ — manager operation read-feedback-drop</p>
+          <p>steer → the project, at .converge/constraints.yaml — manager operation apply-constraints</p>
+        </div>
+      </details>
+    </article>
+
+    <p class="foot">This page keeps nothing of its own.</p>
+  </main>
+</div>
+</body>
+</html>

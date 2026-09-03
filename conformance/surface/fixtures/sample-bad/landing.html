@@ -1,0 +1,56 @@
+<!doctype html>
+<!--
+  A short list that is markup with nothing behind it.
+
+  Broken here:
+  * rule 1a — a place points at /nowhere, which the app never serves.
+  * rule 1b — the heading and the badge both say four, and there are two cards;
+    and one of the two offers no way to answer it at all.
+  * rule 5  — the card copy talks about the ledger and a GAP row, in the app's
+    own words, outside any Details fold.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Needs your word — Converge</title>
+</head>
+<body>
+<div class="shell">
+  <header class="rail">
+    <nav class="places" aria-label="Places">
+      <a class="place is-on" href="/">Needs your word <span class="count">4</span></a>
+      <a class="place" href="/direction">Direction</a>
+      <a class="place" href="/operation">Operation</a>
+      <a class="place" href="/nowhere">Reports</a>
+    </nav>
+  </header>
+  <main id="main">
+    <div class="section">
+      <h2>4 things need your word</h2>
+      <p>Answer them when you can.</p>
+    </div>
+
+    <article class="card decision">
+      <h3>Reconcile the ledger against the halves promise</h3>
+      <p class="why">A GAP row has been open for nine days and the orchestrator keeps re-filing it.</p>
+      <p class="rec"><span class="lbl">We suggest</span><br>Ratify the disposition as written.</p>
+      <ul class="tradeoffs"><li>It is the cheapest path.</li></ul>
+      <form class="words" method="post" action="/do/answer-with-a-word">
+        <input type="hidden" name="subject" value="Reconcile the ledger">
+        <button class="word is-primary" type="submit" name="word" value="ratified">ratified</button>
+      </form>
+    </article>
+
+    <article class="card decision">
+      <h3>Two lanes are idle</h3>
+      <p class="why">Two of the five lanes you asked for are carrying work.</p>
+      <p class="rec"><span class="lbl">We suggest</span><br>Fill them.</p>
+      <ul class="tradeoffs"><li>Filling them starts work you agreed to.</li></ul>
+    </article>
+
+    <p class="foot">This page keeps nothing of its own.</p>
+  </main>
+</div>
+</body>
+</html>

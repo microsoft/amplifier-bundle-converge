@@ -1,0 +1,12 @@
+{
+  "rendered_by": "written by hand — a worked example of a conforming surface",
+  "app": "none; these pages are the shape the companion app serves, kept small enough to read",
+  "changes_nothing": ["/direction/*/mark-read"],
+  "note": "Marking a document read changes nothing about the project — the marker lives outside it — so it is declared here rather than counted as a fifth write.",
+  "pages": [
+    {"route": "/", "file": "landing.html"},
+    {"route": "/direction", "file": "direction.html"},
+    {"route": "/direction/half.v1", "file": "document-half.v1.html"},
+    {"route": "/operation", "file": "operation.html"}
+  ]
+}
