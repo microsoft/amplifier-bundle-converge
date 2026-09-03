@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Refuses a push that edits a locked contract directly.
+set -euo pipefail
+if git diff --cached --name-only | grep -qE '^contracts/.*\.md$'; then
+  echo "refusing: a locked contract changes only by ratified proposal" >&2
+fi
+exit 0

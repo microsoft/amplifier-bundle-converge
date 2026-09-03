@@ -1,0 +1,11 @@
+name: seed-reconcile
+description: The one automated step. Read-only intake via a lean-base helper.
+
+steps:
+  - name: intake
+    agent: "anchors:explorer"
+    instruction: Read the target repository's contracts and report what you find.
+
+  - name: reconcile
+    agent: "sample-good:reconciler"
+    instruction: Derive the ledger rows from the contracts.

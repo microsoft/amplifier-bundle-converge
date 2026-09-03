@@ -1,0 +1,901 @@
+{
+ "words": [
+  {
+   "n": 1,
+   "id": "s1",
+   "words": 2,
+   "head": "You define what must be true. It builds toward it \u2014 with you",
+   "text": "Amplifier Converge"
+  },
+  {
+   "n": 2,
+   "id": "s2",
+   "words": 19,
+   "head": "One person now builds what took a team.",
+   "text": "Why now AI does more every month. Old coordination cannot keep pace. Short version one human a team\u2019s output"
+  },
+  {
+   "n": 3,
+   "id": "s3",
+   "words": 19,
+   "head": "Two AI roles you have not met.",
+   "text": "The idea One runs for weeks. Many take one piece. You are neither. manager session worker sessions intent steward"
+  },
+  {
+   "n": 4,
+   "id": "s4",
+   "words": 19,
+   "head": "You write two things, both in plain words.",
+   "text": "The words Read in a minute. Vision the project when it is right Contracts promises precise enough to check"
+  },
+  {
+   "n": 5,
+   "id": "s5",
+   "words": 19,
+   "head": "The direction is grown, not declared.",
+   "text": "How it matures draft locked 1says what it means 2shows right and wrong 3can be checked 4you have agreed"
+  },
+  {
+   "n": 6,
+   "id": "s6",
+   "words": 17,
+   "head": "One text, two audiences.",
+   "text": "The through-line Human agreement becomes AI guardrail. a teammate\u2019sproposal the managersession\u2019s identical your word every session obeys"
+  },
+  {
+   "n": 7,
+   "id": "s7",
+   "words": 18,
+   "head": "Your attention, spent only where you are irreplaceable.",
+   "text": "Your part Anything else is a defect. define the direction confirm the decisions taste and judgment critical thinking"
+  },
+  {
+   "n": 8,
+   "id": "s8",
+   "words": 17,
+   "head": "Four calls only you can make.",
+   "text": "The four calls Ratifya change of direction Committo something irreversible Checkwhat only a person can Prioritiseor stop"
+  },
+  {
+   "n": 9,
+   "id": "s9",
+   "words": 19,
+   "head": "The manager session runs the whole operation.",
+   "text": "The operation 1derives work from the gap 2shows you the plan 3launches lanes 4judges by evidence 5writes your brief"
+  },
+  {
+   "n": 10,
+   "id": "s10",
+   "words": 16,
+   "head": "Waiting on you is never the bottleneck.",
+   "text": "Its governing strategy Everything that can proceed without you, does. 8 running 2 waiting on you"
+  },
+  {
+   "n": 11,
+   "id": "s11",
+   "words": 12,
+   "head": "Every piece of work ends one of three ways.",
+   "text": "Three exits done, with proof stuck, with the cause needs your judgment"
+  },
+  {
+   "n": 12,
+   "id": "s12",
+   "words": 17,
+   "head": "Two places, on laptop or phone.",
+   "text": "The app At most five things ever ask for your word. place one Direction place two Operation"
+  },
+  {
+   "n": 13,
+   "id": "s13",
+   "words": 18,
+   "head": "You can do exactly four things.",
+   "text": "Four writes The app keeps no data. answer with a word raise or lower priority drop feedback steer"
+  },
+  {
+   "n": 14,
+   "id": "s14",
+   "words": 19,
+   "head": "What this is not.",
+   "text": "Boundaries And not autonomy for its own sake. \u00d7an issue tracker \u00d7a dashboard \u00d7notifications \u00d7a code-review tool \u00d7one-shot magic"
+  },
+  {
+   "n": 15,
+   "id": "s15",
+   "words": 19,
+   "head": "Proven pieces, composed \u2014 not rebuilt.",
+   "text": "Dependencies One install verified, or it says what\u2019s missing. shared work queue parallel lanes worktrees, multiplexer a lean base"
+  },
+  {
+   "n": 16,
+   "id": "s16",
+   "words": 15,
+   "head": "A day with it.",
+   "text": "In practice 1morning: read the brief 2midday: one decision 3afternoon: it runs 4evening: seen working"
+  },
+  {
+   "n": 17,
+   "id": "s17",
+   "words": 14,
+   "head": "One line, onto the Amplifier CLI you already have.",
+   "text": "Getting started Settle the vision first. Then the contracts. amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml --app"
+  },
+  {
+   "n": 18,
+   "id": "s18",
+   "words": 19,
+   "head": "The return brief.",
+   "text": "Recap You set direction and decide. A manager session runs it. Workers return with proof. Locked words bind everyone."
+  }
+ ],
+ "max_words": 19,
+ "slide_count": 18,
+ "visuals": [
+  {
+   "n": "s1",
+   "img": 1,
+   "svg": 0,
+   "composed": 0,
+   "altless": 0
+  },
+  {
+   "n": "s2",
+   "img": 0,
+   "svg": 1,
+   "composed": 0,
+   "altless": 0
+  },
+  {
+   "n": "s3",
+   "img": 1,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "n": "s4",
+   "img": 0,
+   "svg": 1,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "n": "s5",
+   "img": 1,
+   "svg": 0,
+   "composed": 2,
+   "altless": 0
+  },
+  {
+   "n": "s6",
+   "img": 0,
+   "svg": 1,
+   "composed": 0,
+   "altless": 0
+  },
+  {
+   "n": "s7",
+   "img": 0,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "n": "s8",
+   "img": 0,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "n": "s9",
+   "img": 1,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "n": "s10",
+   "img": 0,
+   "svg": 1,
+   "composed": 0,
+   "altless": 0
+  },
+  {
+   "n": "s11",
+   "img": 0,
+   "svg": 3,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "n": "s12",
+   "img": 0,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "n": "s13",
+   "img": 0,
+   "svg": 1,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "n": "s14",
+   "img": 0,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "n": "s15",
+   "img": 0,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "n": "s16",
+   "img": 1,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "n": "s17",
+   "img": 0,
+   "svg": 1,
+   "composed": 1,
+   "altless": 0
+  },
+  {
+   "n": "s18",
+   "img": 0,
+   "svg": 0,
+   "composed": 1,
+   "altless": 0
+  }
+ ],
+ "behaviour": {
+  "end": {
+   "index": 18,
+   "total": 18,
+   "tldr": false,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "home": {
+   "index": 1,
+   "total": 18,
+   "tldr": false,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "right_twice": {
+   "index": 3,
+   "total": 18,
+   "tldr": false,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "left_once": {
+   "index": 2,
+   "total": 18,
+   "tldr": false,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "tldr_on": {
+   "index": 3,
+   "total": 18,
+   "tldr": true,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "tldr_next": {
+   "index": 4,
+   "total": 18,
+   "tldr": true,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "tldr_end": {
+   "index": 18,
+   "total": 18,
+   "tldr": true,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "tldr_off": {
+   "index": 18,
+   "total": 18,
+   "tldr": false,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "notes_on": {
+   "index": 18,
+   "total": 18,
+   "tldr": false,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": true
+  },
+  "notes_visible": "block",
+  "notes_count": 18,
+  "notes_off": {
+   "index": 18,
+   "total": 18,
+   "tldr": false,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "click_right": {
+   "index": 2,
+   "total": 18,
+   "tldr": false,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "click_left": {
+   "index": 1,
+   "total": 18,
+   "tldr": false,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "tldr_button_from_slide2": {
+   "index": 3,
+   "total": 18,
+   "tldr": true,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "tldr_button_off": {
+   "index": 3,
+   "total": 18,
+   "tldr": false,
+   "tldrTrack": [
+    3,
+    4,
+    6,
+    9,
+    12,
+    18
+   ],
+   "notes": false
+  },
+  "progress_after": "11.7647%"
+ },
+ "layout_1280x720": [
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1280,
+   "rightMostEl": "cover__art",
+   "slide": 1,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split",
+   "slide": 2,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split wide-art",
+   "slide": 3,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split",
+   "slide": 4,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split",
+   "slide": 5,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split wide-art",
+   "slide": 6,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split",
+   "slide": 7,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in",
+   "slide": 8,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split wide-art",
+   "slide": 9,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split",
+   "slide": 10,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in",
+   "slide": 11,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split wide-art",
+   "slide": 12,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split",
+   "slide": 13,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split",
+   "slide": 14,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split",
+   "slide": 15,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in split wide-art",
+   "slide": 16,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1601,
+   "rightMostEl": "CODE",
+   "slide": 17,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 1280,
+   "docClientW": 1280,
+   "bodyScrollW": 1280,
+   "innerScrollH": 628,
+   "innerClientH": 628,
+   "rightMost": 1239,
+   "rightMostEl": "slide__in",
+   "slide": 18,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  }
+ ],
+ "console_1280x720": [],
+ "layout_390x844": [
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 390,
+   "rightMostEl": "cover__art",
+   "slide": 1,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split",
+   "slide": 2,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split wide-art",
+   "slide": 3,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split",
+   "slide": 4,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split",
+   "slide": 5,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split wide-art",
+   "slide": 6,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split",
+   "slide": 7,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in",
+   "slide": 8,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split wide-art",
+   "slide": 9,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split",
+   "slide": 10,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in",
+   "slide": 11,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split wide-art",
+   "slide": 12,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split",
+   "slide": 13,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split",
+   "slide": 14,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split",
+   "slide": 15,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in split wide-art",
+   "slide": 16,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 812,
+   "rightMostEl": "CODE",
+   "slide": 17,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  },
+  {
+   "docScrollW": 390,
+   "docClientW": 390,
+   "bodyScrollW": 390,
+   "innerScrollH": 754,
+   "innerClientH": 754,
+   "rightMost": 372,
+   "rightMostEl": "slide__in",
+   "slide": 18,
+   "h_overflow": false,
+   "v_scroll_needed": false
+  }
+ ],
+ "console_390x844": [],
+ "console_main": [],
+ "problems": []
+}

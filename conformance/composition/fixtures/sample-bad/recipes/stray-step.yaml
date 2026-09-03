@@ -1,0 +1,9 @@
+name: stray-step
+description: >
+  VIOLATES 1e: an automated step file that bundle.md names nowhere. Nobody
+  reviewed it, and rule 1b only scans it by accident.
+
+steps:
+  - name: do-something
+    agent: "anchors:builder"
+    instruction: Write whatever seems right.
