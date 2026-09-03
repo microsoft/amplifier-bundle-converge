@@ -59,7 +59,18 @@ hooks:
   # kept BYTE-IDENTICAL to it. They drifted apart once — the module learned the
   # versioned proposal name and the H1 locked marker while this file did not —
   # and that drift is why converge-diw / -9vw / -ksg were each filed separately.
-  # modules/hooks-candidate-guard/tests/test_guard.py asserts the two agree.
+  # modules/hooks-candidate-guard/tests/test_guard.py asserts the two agree --
+  # on frozen_marker_regex, always_allow_globs, candidate_glob AND guarded_globs.
+  #
+  # Two of those values moved on 2026-09-03 (converge-dwi), in BOTH places at
+  # once:
+  #   - frozen_marker_regex: the H1 branch now reads `(RATIFIED` as well as
+  #     `(FROZEN`. The body branch already accepted `**Status:** RATIFIED`, so
+  #     the same status word read as LOCKED in the body and UNLOCKED in the H1
+  #     — while contracts/documents.v1 clause 6 mandates the H1 form.
+  #   - guarded_globs: `docs/PROTOCOL.md` / `PROTOCOL.md` join VISION. Without
+  #     it the live instance — docs/PROTOCOL.md, whose H1 reads
+  #     `... Protocol v3 (RATIFIED 2026-09-03)` — was not guarded at all.
   #
   # Module source is RELATIVE TO THIS FILE'S DIRECTORY (behaviors/), verified
   # against foundation's FileSource + the work-tracker behavior's own comment:
@@ -70,9 +81,9 @@ hooks:
     source: ../modules/hooks-candidate-guard
     config:
       enabled: true
-      guarded_globs: ["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md"]
+      guarded_globs: ["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md", "docs/PROTOCOL.md", "PROTOCOL.md"]
       require_frozen_marker: true
-      frozen_marker_regex: '(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN|^#.*\(FROZEN\b'
+      frozen_marker_regex: '(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN|^#.*\((?:FROZEN|RATIFIED)\b'
       always_allow_globs: ["**/CANDIDATE-*.md", "**/*.v[0-9]*-candidate.md"]
       intercept_tools: ["write_file", "edit_file", "apply_patch"]
       tool_name_aliases: ["Write", "Edit", "MultiEdit"]

@@ -64,12 +64,21 @@ class GuardConfig:
     enabled: bool = True
 
     # §2.5 guarded-path determination
+    # `docs/PROTOCOL.md` / `PROTOCOL.md` sit here beside VISION for the same
+    # reason (converge-dwi): the protocol is a ratified document that changes
+    # by proposal, and it carries its status in the H1 exactly as a contract
+    # does. Both spellings are listed for the same reason both VISION
+    # spellings are -- a repo may keep either at its root or under docs/.
+    # A file only becomes guarded when its content actually carries a locked
+    # marker, so listing a path that is still DRAFT costs nothing.
     guarded_globs: list[str] = field(
         default_factory=lambda: [
             "contracts/*.md",
             "contracts/**/*.md",
             "docs/VISION.md",
             "VISION.md",
+            "docs/PROTOCOL.md",
+            "PROTOCOL.md",
         ]
     )
     require_frozen_marker: bool = True
@@ -78,11 +87,22 @@ class GuardConfig:
     # one, change the other, or a repo on module defaults and a repo on the
     # shipped config disagree about what "locked" means.
     #
-    #   ^#.*\(FROZEN\b        the RATIFIED anatomy: contracts/documents.v1
+    #   ^#.*\((?:FROZEN|RATIFIED)\b
+    #                         the ratified anatomy: contracts/documents.v1
     #                         clause 6 -- "status lives in the H1 parenthetical
     #                         and nowhere else", e.g.
     #                         `# Documents Contract - v1 (FROZEN 2026-09-02)`.
-    #                         This is the form .githooks/pre-push also checks.
+    #                         `(FROZEN` is the form .githooks/pre-push checks.
+    #                         `(RATIFIED` is admitted for the same reason the
+    #                         BODY branch below already admits
+    #                         `**Status:** RATIFIED` (converge-dwi): the two
+    #                         branches disagreeing about one word meant the
+    #                         SAME status word read as LOCKED in the body and
+    #                         UNLOCKED in the H1 -- and moving status into the
+    #                         H1 is exactly what clause 6 mandates.
+    #                         docs/PROTOCOL.md is the live instance: its H1
+    #                         reads `... Protocol v3 (RATIFIED 2026-09-03)`
+    #                         and it carries no body status line at all.
     #   **Status:** ...       legacy body marker, still honored so a repo that
     #   status: FROZEN        locked a contract under the older convention does
     #                         not silently become writable on upgrade.
@@ -92,7 +112,8 @@ class GuardConfig:
     # silently. Proposal files that quote a locked H1 are unaffected --
     # always_allow_globs is checked first (decision order step 5).
     frozen_marker_regex: str = (
-        r"(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN|^#.*\(FROZEN\b"
+        r"(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN"
+        r"|^#.*\((?:FROZEN|RATIFIED)\b"
     )
     always_allow_globs: list[str] = field(default_factory=lambda: list(PROPOSAL_GLOBS))
 
