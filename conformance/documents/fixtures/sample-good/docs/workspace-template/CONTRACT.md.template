@@ -1,0 +1,29 @@
+<!--
+  CONTRACT.md.template — the shape every contract follows. Copy to
+  contracts/<name>.v1.md, replace every <placeholder>, delete this comment.
+-->
+
+# <Name> Contract — v1 (DRAFT)
+
+**Who builds against this:** <two to six lines naming the people and the systems
+that would be surprised by a silent change to this text.>
+
+## Purpose
+
+<Two to four plain lines: what breaks without this contract.>
+
+## Core (the teeth)
+
+1. **<The rule, as a fact, in bold.>** <One to three plain lines of why.>
+
+## What v1 deliberately does NOT freeze
+
+- <What is left open, and the trigger that would promote it.>
+
+## Conformance kit asserts
+
+- <One bullet per checkable promise, in clause order.>
+
+## Reserved / open questions (NOT frozen)
+
+- <Anything genuinely undecided.>

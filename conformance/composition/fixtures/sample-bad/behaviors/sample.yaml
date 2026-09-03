@@ -1,0 +1,32 @@
+bundle:
+  name: sample-bad-behavior
+  version: 0.1.0
+  description: >
+    The capability payload, misconfigured on purpose.
+
+hooks:
+  - module: hooks-candidate-guard
+    source: ../modules/hooks-candidate-guard
+    config:
+      enabled: true
+      guarded_globs: ["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md"]
+      require_frozen_marker: true
+      # VIOLATES 4b: recognizes only an explicit `**Status:**` field. A contract
+      # whose status lives in the H1 parenthetical — the form documents.v1
+      # Core 6 fixes — is never seen as locked, so the guard lets writes through.
+      frozen_marker_regex: '(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN'
+      # VIOLATES 4a: admits only the legacy CANDIDATE-*.md name. A proposal
+      # written as `<contract>.vN-candidate.md` is denied.
+      always_allow_globs: ["**/CANDIDATE-*.md"]
+      intercept_tools: ["write_file", "edit_file", "apply_patch"]
+      path_fields: ["file_path", "path"]
+      scan_bash: true
+      escape_mode: "ratified_candidate"
+      candidate_glob: ["**/CANDIDATE-*.md"]
+      ratified_stamp_regex: '(?im)^ratified(?:\s+as\s+edited)?\b.*\bby\s+owner\b'
+      candidate_target_field: "target"
+      fail_closed_on_error: true
+
+context:
+  include:
+    - sample-bad:context/awareness.md
