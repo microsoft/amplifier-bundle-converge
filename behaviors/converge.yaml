@@ -9,10 +9,11 @@ bundle:
     enforcement, on by default), and the thin always-on awareness context. THE
     install path:
       amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml --app
-    Composes onto whatever bundle is already active (which must already provide
-    foundation). Includes the work-tracker BEHAVIOR (so converge:reconciler gets
-    its work_* filing tools on BOTH install paths); does NOT include foundation
-    itself — see bundle.md and README.md "Install".
+    Composes onto whatever bundle is already active. That host supplies the
+    session base and the everyday tools; Converge's own recipe needs a host on
+    the lean anchors base (see README.md "Install"). Includes the work-tracker
+    BEHAVIOR (so converge:reconciler gets its work_* filing tools on BOTH
+    install paths); brings no base bundle of its own.
 
 includes:
   # The work-tracker BEHAVIOR (not a root bundle) supplies converge:reconciler's
@@ -34,9 +35,9 @@ includes:
 
 tools:
   # Register converge's five skills with tool-skills so load_skill() finds them
-  # in a composed session. Foundation ships the tool-skills MODULE (so load_skill
-  # exists) but points config.skills only at foundation's own skills dir — without
-  # this block converge's skills are DISCOVERABLE but not COMPOSED (the same
+  # in a composed session. A host base ships the tool-skills MODULE (so load_skill
+  # exists) but points config.skills only at its own skills dirs — without this
+  # block converge's skills are DISCOVERABLE but not COMPOSED (the same
   # discovery != composition trap as agents). A top-level `skills:` key is
   # silently ignored; this tool-skills config.skills list is the sanctioned wiring.
   - module: tool-skills
@@ -102,9 +103,9 @@ context:
 # behavior's top-level `spawn:` DOES merge into the session mount plan via
 # `--app`, and `spawn.exclude_tools` then strips the listed tools from EVERY
 # spawned sub-agent in EVERY session — not just converge's agents (measured:
-# foundation:explorer in a plain foundation session lost bash/delegate/
-# load_skill; functional proof BASH_ABSENT; removal control restored a
-# byte-identical baseline). That is unacceptable collateral for a composable
+# an unrelated session's own read-only helper lost bash/delegate/load_skill;
+# functional proof BASH_ABSENT; removal control restored a byte-identical
+# baseline). That is unacceptable collateral for a composable
 # behavior, so the block was removed everywhere. The agents' "no delegate /
 # no skills / no shell" rules are BEHAVIORAL (agent body instructions +
 # explicit tools: blocks); the candidate-guard hook remains the structural

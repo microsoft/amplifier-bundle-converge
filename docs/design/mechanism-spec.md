@@ -1,6 +1,18 @@
 # Converge — Mechanism Spec (full bundle)
 
-**Status:** DRAFT — input for `@foundation:recipes/spec-to-behavioral-model.yaml`.
+> **Snapshot — 2026-09-02.** This document is a design-time snapshot; the
+> shipped bundle has moved past it in two ways. **(1)** The `encode` (§4.1) and
+> `full-wave` (§4.3) recipes were **retired** — they are not shipped and are
+> not planned. The **ENCODE phase name stays** (it is a protocol phase, and
+> §4.1 remains as the record of what that phase does); only the recipes are
+> gone. `seed-reconcile` (§4.2) is the bundle's one recipe. **(2)** Converge
+> assembles on the lean **anchors** base, not the full foundation package
+> (composition.v1 §1–4). Where a section below names a helper from the heavy
+> package, read the lean base's equivalent: `anchors:explorer` for read-only
+> work, `anchors:builder` for writes, `anchors:git-ops` for version control.
+> Sections not corrected by this banner still read as written.
+
+**Status:** DRAFT — a design-time snapshot; see the banner above.
 **Purpose of this document:** describe the WHOLE intended `converge` bundle as
 a set of Amplifier mechanisms, so a behavioral model can be generated and the
 PLANNED behavior-heavy parts verified *before* they are built.
@@ -52,9 +64,11 @@ graph stays one level deep and the router stays single.
   Direction changes land in the contract FIRST. The owner's attention is spent
   only at the contract layer (§6).
 - **dependencies:**
-  - `git+https://github.com/microsoft/amplifier-foundation@main` (bundle
-    dependency; provides `explorer`, `git-ops`, `file-ops`, recipes runtime,
-    common bases).
+  - `git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundles/anchors/bundle.md`
+    (bundle dependency — the **lean anchors base**; provides the session block,
+    the everyday tool roster, the recipes runtime, and six thin helpers
+    including `explorer`, `builder`, and `git-ops`). The full foundation
+    package is **not** a dependency (composition.v1 Core 1).
   - `work-tracker` (runtime tool, **reused, not owned** — see §C).
 - **installation_paths:** `amplifier-bundle-converge/` (bundle root; the
   ratified spec and ledger convention live under `docs/`).
@@ -122,7 +136,9 @@ graph stays one level deep and the router stays single.
     `ledger-disposition` skill / `reconciler` own the ledger detail.
 - **tool_requirements:** read_file, grep (read-only; reasons over carried docs)
 - **context_loading:** `@converge:docs/PROTOCOL.md`,
-  `@converge:docs/LEDGER-FORMAT.md`, `@foundation:context/shared/common-agent-base.md`
+  `@converge:docs/LEDGER-FORMAT.md`, `@converge:context/shared/agent-base.md`
+  (Converge's own small rulebook — honest stopping, commit footer, `file:line`
+  citation; composition.v1 Core 3, borrowed from nowhere)
 - **exit_conditions:** cited answer delivered; no repo mutation.
 
 ### 2.2 negotiator — **PLANNED**
@@ -348,9 +364,12 @@ current session via `load_skill`. None fork; none delegate. Each answers
 
 ---
 
-## 4. Recipes — **all PLANNED (not built)**
+## 4. Recipes
 
-### 4.1 encode — **PLANNED**
+**One recipe ships: `seed-reconcile` (§4.2).** The other two sections below are
+kept as the design record of the phases they describe, not as work to build.
+
+### 4.1 encode — **RETIRED 2026-09-02 (recipe not shipped; the ENCODE phase stays)**
 
 - **name:** encode
 - **purpose:** PLANNED. Phase 2 ENCODE (§4). Take the owner's **already-ratified**
@@ -430,10 +449,10 @@ current session via `load_skill`. None fork; none delegate. Each answers
   by sequencing — implementation lanes (EXECUTE) run only after encode has
   committed. Relates to D5.
 
-### 4.2 seed-reconcile — **PLANNED**
+### 4.2 seed-reconcile — **SHIPPED (the bundle's one recipe)**
 
 - **name:** seed-reconcile
-- **purpose:** PLANNED. SEED (first ledger population) and standing RECONCILE
+- **purpose:** SEED (first ledger population) and standing RECONCILE
   (§4) — **schedulable and run on every merge.** Derive/refresh ledger rows
   from contracts vs repo reality; detect bidirectional drift. Mechanized on
   purpose: "anything that depends on someone remembering to run it will
@@ -459,7 +478,7 @@ current session via `load_skill`. None fork; none delegate. Each answers
 - **steps:**
   | id | agent | consumes | produces |
   |---|---|---|---|
-  | load-contracts | foundation:explorer | `target_repo`, `contracts_glob` | contract inventory + tree evidence |
+  | load-contracts | anchors:explorer | `target_repo`, `contracts_glob` | contract inventory + tree evidence |
   | derive-rows | converge:reconciler | contract inventory, existing `ledger_dir` | ledger rows with dispositions (SYNC row incl.) |
   | run-conformance | converge:reconciler | ledger rows, target repo kit | check results (invokes repo kit via `bash`) |
   | file-drift | converge:reconciler | check results, `tracker_project` | filed rows + tracker items (GAP/VIOLATION) + bidirectional drift rows + reconcile report |
@@ -475,7 +494,7 @@ current session via `load_skill`. None fork; none delegate. Each answers
   attention budget (decisions are deferred to the next wave, never surfaced
   synchronously).
 
-### 4.3 full-wave — **PLANNED**
+### 4.3 full-wave — **RETIRED 2026-09-02 (recipe not shipped)**
 
 - **name:** full-wave
 - **purpose:** PLANNED. The owner-gated wave — SEED/RECONCILE → QUEUE → EXECUTE
@@ -692,9 +711,10 @@ model. The behavioral model should show the bundle **declining** each of these.
 5. **Does not manufacture contracts for seamless repos.** A repo with no seam
    does not get a contract (§3.2, §7; enforced via `seam-test` and encoded on
    `negotiator`).
-6. **Reuses foundation, does not rebuild it.** Phase 0 INVESTIGATE uses
-   `foundation:explorer`; merges use `foundation:git-ops`; encode writes use
-   `foundation:file-ops`. No bespoke explorer/git/file agents.
+6. **Reuses the lean base's helpers, does not rebuild them.** Read-only work
+   uses `anchors:explorer`; writes use `anchors:builder`; version control uses
+   `anchors:git-ops`. No bespoke explorer/git/file agents, and no dependency on
+   the heavy package (composition.v1 Core 1–2).
 
 ---
 

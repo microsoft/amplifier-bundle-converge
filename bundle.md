@@ -3,30 +3,25 @@ bundle:
   name: converge
   version: 0.1.0
   description: >
-    Vision-first, contract-driven development. The owner and the orchestrator
-    negotiate at the contract level; work is derived from the gap between repo
-    reality and the contracts, never invented; a standing conformance ledger
-    (the "ratchet") prevents silent backsliding. Build increment 1: the
-    knowledge layer (awareness pointer, protocol-authority agent, five procedure
-    skills) plus the **reconciler** agent — the ratchet that derives ledger rows
-    and detects bidirectional drift. Build increment 2: the
-    **hooks-candidate-guard** hook — structural enforcement of PROTOCOL.md §5
-    (no direct write to a FROZEN contract or VISION.md; amendments land only
-    via a ratified CANDIDATE-<topic>.md). Build increment 3: the
-    **negotiator** agent — Phase 1 NEGOTIATE, turning investigation evidence
-    into decision-level minutes for the owner (returns needs, never re-routes;
-    read-only). Build increment 4 (final): the **amendment-drafter** agent —
-    authors CANDIDATE-<topic>.md proposals and stops (the guard escape hatch's
-    upstream author) — completing the four-agent roster. All three phase-loop
-    recipes (encode, seed-reconcile, full-wave) SHIP in recipes/ and are
-    live-verified (spec of record: docs/design/mechanism-spec.md §4). The
-    orchestration mode is DEFERRED by decision (pure delegation +
-    recipe gates + hook instead).
+    Vision-first, contract-driven development. The intent steward and the
+    manager session negotiate at the contract level; work is derived from the
+    gap between repo reality and the contracts, never invented; a standing
+    conformance ledger (the "ratchet") prevents silent backsliding. Ships four
+    agents (protocol-authority, reconciler, negotiator, amendment-drafter),
+    five procedure skills, the hooks-candidate-guard hook (structural
+    enforcement of PROTOCOL.md §5), the thin awareness context, and one
+    recipe — seed-reconcile, the ratchet loop. Assembles on the lean anchors
+    base; the full foundation package appears nowhere.
 
 includes:
-  - bundle: git+https://github.com/microsoft/amplifier-foundation@main
+  # The LEAN BASE (composition.v1 Core 1). `anchors` carries the session block,
+  # the everyday tool roster, delegate/skills/recipes, and six thin agents
+  # (explorer, builder, git-ops, architect, debugger, researcher). Converge's
+  # recipe steps use only these. The heavy full-foundation package is NOT
+  # included: sessions stay fast and cheap.
+  - bundle: git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundles/anchors/bundle.md
   # Work-tracker BEHAVIOR — supplies converge:reconciler's work_list/work_add/
-  # work_file tools (foundation does NOT provide these). behaviors/converge.yaml
+  # work_file tools (the lean base does NOT provide these). behaviors/converge.yaml
   # ALSO includes this same behavior (behavior-includes-behavior, the standard
   # pattern) so tracker filing works on the --app path too; declaring it here as
   # well keeps the root path self-contained and lets composition dedupe the two
@@ -40,16 +35,16 @@ includes:
   # resolves to this repo's checkout root (bundle.md is the root, name: converge).
   - bundle: converge:behaviors/converge
 
-# NO top-level `spawn:` block — deliberately (DTU-verified 2026-09-02).
-# A composed bundle's `spawn.exclude_tools` applies to EVERY spawned sub-agent in
-# EVERY session it composes into — including via `--app` (live probe: a plain
-# foundation session's foundation:explorer lost bash/delegate/load_skill; the
-# removal control restored a byte-identical baseline). That blast radius is
-# unacceptable for a composable surface. The agents' "no delegate / no skills /
-# no shell" rules are BEHAVIORAL (their body instructions + explicit tools:
-# blocks); the candidate-guard hook remains the structural enforcement that
-# matters. Do NOT reintroduce a session-wide spawn policy here — per-agent spawn
-# tool policy is an upstream feature request.
+# NO top-level `spawn:` block — deliberately (composition.v1 Core 6, measured
+# 2026-09-02). A composed bundle's `spawn.exclude_tools` applies to EVERY spawned
+# sub-agent in EVERY session it composes into — including via `--app` (live probe:
+# an unrelated session's own helper lost bash/delegate/load_skill; the removal
+# control restored a byte-identical baseline). That blast radius is unacceptable
+# for a composable surface. The agents' "no delegate / no skills / no shell" rules
+# are BEHAVIORAL (their body instructions + explicit tools: blocks); the
+# candidate-guard hook remains the structural enforcement that matters. Do NOT
+# reintroduce a session-wide spawn policy here — per-role spawn tool policy is an
+# upstream feature request.
 ---
 
 # Converge
@@ -58,9 +53,9 @@ Vision-first, contract-driven development for Amplifier.
 
 Direction changes land in the contract FIRST. Work is derived, never invented:
 the gap between repo reality and the ratified contracts becomes tracker items;
-autonomous lanes close them; a standing conformance audit — the **ratchet**
-(the ledger + reconcile enforcement layer) — keeps the gap ledger honest
-between waves and refuses silent drift in either direction.
+autonomous worker sessions close them; a standing conformance audit — the
+**ratchet** (the ledger + reconcile enforcement layer) — keeps the gap ledger
+honest between waves and refuses silent drift in either direction.
 
 > The capability payload (agents, skills, hook, awareness context) lives in
 > `behaviors/converge.yaml`, which this bundle includes and which is also THE
@@ -76,32 +71,33 @@ between waves and refuses silent drift in either direction.
   the owner attention budget. It holds the full `docs/PROTOCOL.md` so the root
   session doesn't have to.
 - **`converge:reconciler`** — the **ratchet**. SEED and standing RECONCILE:
-  derives clause-granular ledger rows from a repo's frozen contracts, runs the
+  derives clause-granular ledger rows from a repo's locked contracts, runs the
   repo's own conformance kit, detects bidirectional drift, and files
   GAP/VIOLATION rows with tracker refs. The one mutating agent; never
   synchronously interrupts the owner. Carries `docs/LEDGER-FORMAT.md`.
+- **`converge:negotiator`** — Phase 1 NEGOTIATE. Turns investigation evidence
+  into decision-level minutes: options, a recommendation, and the one decision
+  the owner must make. Returns needs; never re-routes; read-only.
+- **`converge:amendment-drafter`** — authors a proposal beside a locked contract
+  and stops. Never edits the locked file, never self-ratifies.
 - **Skills** (load on demand for a *procedural* "how do I…" ask):
   - `seam-test` — is this a seam? does it warrant a contract?
-  - `candidate-amendment` — how to author a `CANDIDATE-<topic>.md` proposal
-  - `freeze-bar` — the four-condition DRAFT → FROZEN checklist
+  - `candidate-amendment` — how to author a proposal beside a locked contract
+  - `freeze-bar` — the four-condition DRAFT → locked checklist
   - `ledger-disposition` — the ledger disposition vocabulary + row schema
   - `lane-brief` — honesty gate, file-ownership split, provenance discipline
 - **`hooks-candidate-guard`** — the ratchet's teeth. A `tool:pre` hook, on by
   default, that structurally denies a direct write/edit/patch (or a bash
-  write-laundering attempt) targeting a FROZEN contract file or `VISION.md`.
-  Amendments land only via a ratified `CANDIDATE-<topic>.md` sibling. See
+  write-laundering attempt) targeting a locked contract file or `VISION.md`.
+  Amendments land only via a ratified proposal sibling. See
   `modules/hooks-candidate-guard/README.md` for the full contract, the
   config surface, and documented non-coverage.
-- **Recipes** (the phase loop — ship in `recipes/`, live-verified; spec of
-  record `docs/design/mechanism-spec.md` §4):
-  - `@converge:recipes/seed-reconcile.yaml` — SEED + standing RECONCILE:
-    derive/refresh the ledger from a target repo's contracts, detect
-    bidirectional drift, file GAP/VIOLATION tracker items (§4.2).
-  - `@converge:recipes/encode.yaml` — Phase 2 ENCODE: draft `VISION.md` +
-    per-seam contracts as DRAFT, owner-gated ratify, then commit (§4.1).
-  - `@converge:recipes/full-wave.yaml` — the owner-gated wave
-    SEED→QUEUE→EXECUTE→MERGE→VERIFY→CLOSE with the four §6 attention gates
-    (§4.3, post-stage gate semantics).
+- **Recipe** — one, `@converge:recipes/seed-reconcile.yaml`: SEED + standing
+  RECONCILE. Derives/refreshes the ledger from a target repo's contracts,
+  detects bidirectional drift, files GAP/VIOLATION tracker items. Spec of
+  record: `docs/design/mechanism-spec.md` §4.2. Its steps use only the lean
+  base's helpers (`anchors:explorer` for read-only intake) and Converge's own
+  `reconciler` for every write.
 
 ## The authoritative spec
 
@@ -112,8 +108,7 @@ to them rather than restating them.
 
 ## Status
 
-**Live**: 4 agents (protocol-authority, reconciler, negotiator, amendment-drafter), 5 skills, candidate-guard hook, 3 recipes — all live-verified. Eval harness 6/6.
+**Live**: 4 agents (protocol-authority, reconciler, negotiator,
+amendment-drafter), 5 skills, candidate-guard hook, 1 recipe (seed-reconcile).
 
 See `README.md` for build history. Spec of record: `docs/design/mechanism-spec.md`.
-
-@foundation:context/shared/common-system-base.md

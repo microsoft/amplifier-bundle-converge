@@ -30,7 +30,9 @@
 # requires explicit user/environment configuration.
 #
 # Requirements:
-#   - foundation bundle (provides `foundation:explorer`, recipes runtime)
+#   - the lean anchors base (provides `anchors:explorer`, recipes runtime).
+#     A recipe can only reach helpers present in the session it runs in, so run
+#     this from a Converge session or a host on the same lean base.
 #   - converge bundle  (provides `converge:reconciler` — the one mutating agent,
 #     carries LEDGER-FORMAT.md; has read/glob/grep/bash/write_file/git + the
 #     work-tracker tools it files GAP/VIOLATION items with)
@@ -64,6 +66,19 @@
 #
 # CHANGELOG
 # -----------------------------------------------------------------------------
+# v1.3.0 (2026-09-02):
+#   - CHANGE: Read-only intake now runs on the lean base's reader,
+#     `anchors:explorer` (composition.v1 Core 1 + Core 2 — automated steps use
+#     only the lean base's helpers). No step names a helper from the heavy
+#     package any more. Every write in this recipe still belongs to
+#     `converge:reconciler`; `anchors:builder` is the lean base's writer and is
+#     the only other helper this recipe may ever reach for.
+#     * DRIVER: composition.v1 §1–4. Sessions assemble on the small standard
+#       base; the full foundation package appears nowhere.
+#   - CHANGE: This is now the bundle's ONLY recipe. The former `encode` and
+#     `full-wave` recipes were retired on 2026-09-02 (the ENCODE phase name
+#     stays; the recipe does not).
+#
 # v1.2.0 (2026-08-30):
 #   - NEW: Within-cwd workspace invariant (owner-ratified design decision).
 #     * DRIVER: Full live run — the recipe is invoked FROM the ephemeral
@@ -120,9 +135,9 @@
 # v1.0.0 (2026-08-29):
 #   - NEW FEATURE: Initial seed-reconcile recipe (Converge increment 1).
 #     * Flat, gate-free, unattended reconcile loop per mechanism-spec §4.2.
-#     * 4 sequential steps: load-contracts (foundation:explorer) → derive-rows,
-#       run-conformance, file-drift (all converge:reconciler), with context
-#       accumulated forward via step outputs.
+#     * 4 sequential steps: load-contracts (a read-only intake helper) →
+#       derive-rows, run-conformance, file-drift (all converge:reconciler),
+#       with context accumulated forward via step outputs.
 #     * Encodes the anti-scope guards: derive-never-invent, run-the-repo's-own-
 #       kit, self-report-is-never-proof, file-don't-interrupt, bidirectional
 #       drift, idempotent re-runs.
@@ -135,7 +150,7 @@ description: >
   conformance kit, files work-tracker items for every GAP/VIOLATION, records
   bidirectional drift, and emits a reconcile report. Flat, gate-free, and
   schedulable — it never prompts the owner.
-version: "1.2.0"
+version: "1.3.0"
 author: "converge bundle"
 tags: ["converge", "ratchet", "conformance", "ledger", "reconcile", "drift"]
 
@@ -153,7 +168,7 @@ steps:
   # 1. load-contracts — read-only intake (no mutation)
   # ---------------------------------------------------------------------------
   - id: "load-contracts"
-    agent: "foundation:explorer"
+    agent: "anchors:explorer"
     timeout: 600
     output: "contract_inventory"
     prompt: |
