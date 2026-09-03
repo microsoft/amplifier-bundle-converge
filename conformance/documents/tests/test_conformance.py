@@ -32,7 +32,7 @@ BAD = KIT / "fixtures" / "sample-bad"
 EXPECTED_SKIPS = {"1", "5b", "7c", "7d", "9b", "10b", "11b", "13b"}
 
 # documents.v1 Core clauses. Every one must be answered by at least one row.
-CORE_CLAUSES = set(range(1, 14))
+CORE_CLAUSES = set(range(1, 15set
 
 
 def _uv() -> str:
