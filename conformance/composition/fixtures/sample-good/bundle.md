@@ -11,6 +11,10 @@ bundle:
 includes:
   # The LEAN BASE (composition.v1 Core 1).
   - bundle: git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundles/anchors/bundle.md
+  # The shared work queue on the ROOT install path (composition.v1 Core 5).
+  # behaviors/sample.yaml includes the same behavior, so the queue rides on the
+  # `--app` path too; rule 5 requires both.
+  - bundle: git+https://github.com/microsoft/amplifier-work-tracker@main#subdirectory=behaviors/work-tracker.yaml
   - bundle: sample-good:behaviors/sample
 
 # NO top-level `spawn:` block — deliberately (composition.v1 Core 6). A

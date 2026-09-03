@@ -17,6 +17,7 @@ Runnable two ways (the assertions are identical):
 """
 
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -24,14 +25,16 @@ from pathlib import Path
 
 KIT = Path(__file__).resolve().parent.parent  # conformance/surface/
 RUN = KIT / "run.py"
+CONTRACT = KIT.parent.parent / "contracts" / "surface.v1.md"
 GOOD = KIT / "fixtures" / "sample-good"
 BAD = KIT / "fixtures" / "sample-bad"
 
 #: The one row a static read of served pages cannot settle.
-EXPECTED_SKIPS = {"2"}
+EXPECTED_SKIPS = {"10"}
 
 #: Every rule the kit emits, and the failure sample-bad is built to produce.
-EXPECTED_FAILURES = {"1a", "1b", "1c", "1d", "1e", "3a", "3b", "4", "5", "8a", "8b", "9"}
+EXPECTED_FAILURES = {"1a", "1b", "2", "3a", "3b", "4", "5", "6", "7",
+                     "8a", "8b", "8c", "9a", "9b"}
 
 #: The stale reason converge-e59 was filed about. The app ships in
 #: src/amplifier_converge/, so no SKIP may say this ever again.
@@ -86,7 +89,8 @@ def test_good_pages_are_read_as_a_page_set():
     """The kit judges the app across the pages it serves, not one file."""
     _, report = run_kit(GOOD)
     routes = [p["route"] for p in report["pages"]]
-    assert routes == ["/", "/direction", "/direction/half.v1", "/operation"], routes
+    assert routes == ["/", "/direction", "/direction/half.v1", "/operation",
+                      "/direction/half.v2-candidate"], routes
     assert report["target_kind"] == "rendered pages", report["target_kind"]
 
 
@@ -106,16 +110,18 @@ def test_bad_failures_carry_readable_detail():
     rules = by_rule(report)
     assert "/nowhere" in rules["1a"]["detail"], rules["1a"]
     assert "card(s) are on the list" in rules["1b"]["detail"], rules["1b"]
-    assert "no way to fill" in rules["1c"]["detail"], rules["1c"]
-    assert "not four" in rules["1d"]["detail"], rules["1d"]
-    assert "taken away" in rules["1e"]["detail"], rules["1e"]
+    assert "not the ratification record" in rules["2"]["detail"], rules["2"]
     assert "/do/close-lane" in rules["3a"]["detail"], rules["3a"]
     assert "never maps to an operation" in rules["3b"]["detail"], rules["3b"]
-    assert "not the ratification record" in rules["4"]["detail"], rules["4"]
-    assert "ledger" in rules["5"]["detail"], rules["5"]
+    assert "keeps no data of its own" in rules["4"]["detail"], rules["4"]
+    assert "what does not change" in rules["5"]["detail"], rules["5"]
+    assert "taken away" in rules["6"]["detail"], rules["6"]
+    assert "not four" in rules["7"]["detail"], rules["7"]
     assert "held" in rules["8a"]["detail"], rules["8a"]
     assert "Kept" in rules["8b"]["detail"], rules["8b"]
-    assert "Stop this lane" in json.dumps(rules["9"]), rules["9"]
+    assert "ledger" in rules["8c"]["detail"], rules["8c"]
+    assert "no way to fill" in rules["9a"]["detail"], rules["9a"]
+    assert "Stop this lane" in json.dumps(rules["9b"]), rules["9b"]
 
 
 # --------------------------------------------------------------------------- #
@@ -137,18 +143,20 @@ def test_every_rule_has_a_negative_fixture():
 def test_the_three_clause_halves_are_covered_by_a_rule_each():
     """converge-fmz named three halves of surface.v1 with no check at all.
 
-    Core 9 is rule 9, Core 8's first half is rules 8a and 8b, and Core 8's
-    second half is rule 5 — which now reads the app's own rendered words
-    because the kit's target is the app.
+    Core 9 is rules 9a and 9b, Core 8's first half is rules 8a and 8b, and
+    Core 8's second half is rule 8c — which now reads the app's own rendered
+    words because the kit's target is the app. (The ids moved on 2026-09-03
+    when the kit was renumbered to the contract's Core clauses; the rows and
+    what they assert did not.)
     """
     _, report = run_kit(GOOD)
     rules = by_rule(report)
-    for rule in ("9", "8a", "8b", "5"):
+    for rule in ("9b", "8a", "8b", "8c"):
         assert rule in rules, f"rule {rule} is not emitted at all"
         assert rules[rule]["status"] == "PASS", rules[rule]
-    assert rules["9"]["clause"] == "Core 9", rules["9"]
-    assert rules["8a"]["clause"] == "Core 8a", rules["8a"]
-    assert len(rules["9"]["in_view"]) == 8, rules["9"]["in_view"]
+    assert rules["9b"]["clause"] == 9, rules["9b"]
+    assert rules["8a"]["clause"] == 8, rules["8a"]
+    assert len(rules["9b"]["in_view"]) == 8, rules["9b"]["in_view"]
 
 
 def test_skips_are_exactly_the_declared_set_and_name_the_work():
@@ -249,14 +257,15 @@ def test_the_lock_control_must_agree_with_its_own_conditions_both_ways():
             + gate + "</main></body></html>")
     directory = _page_set({"/direction/x": page})
     _, report = run_kit(directory)
-    row = by_rule(report)["1d"]
+    row = by_rule(report)["7"]
     assert row["status"] == "FAIL", row
     assert "still off" in row["detail"], row
 
 
 def test_the_kit_can_be_imported_and_handed_one_page():
     """`tests/test_plain_words_on_the_surface.py` holds this kit and asks it for
-    rule 5's verdict on each page the app serves, one page at a time:
+    the vocabulary rule's verdict on each page the app serves, one page at a
+    time (rule 8c since the 2026-09-03 renumbering; rule 5 before it):
 
         report = kit.run_conformance(target_path)
 
@@ -272,7 +281,7 @@ def test_the_kit_can_be_imported_and_handed_one_page():
     page = GOOD / "operation.html"
     report = kit.run_conformance(page)
     assert report["target"] == str(page)
-    assert by_rule(report)["5"]["status"] == "PASS", by_rule(report)["5"]
+    assert by_rule(report)["8c"]["status"] == "PASS", by_rule(report)["8c"]
 
 
 # --------------------------------------------------------------------------- #
@@ -281,7 +290,7 @@ def test_the_kit_can_be_imported_and_handed_one_page():
 def _one_page(html):
     directory = _page_set({"/": html})
     _, report = run_kit(directory)
-    return by_rule(report)["5"]
+    return by_rule(report)["8c"]
 
 
 def test_a_project_name_is_not_read_as_jargon():
@@ -319,12 +328,59 @@ def test_words_quoted_from_the_project_are_out_of_scope_for_rule_5():
     assert row["status"] == "PASS", row
 
 
-def test_technical_detail_behind_a_fold_is_out_of_scope_for_rule_5():
+def test_technical_detail_behind_a_fold_is_out_of_scope_for_the_vocabulary_rule():
     """That is precisely where the contract says technical detail belongs."""
     row = _one_page("<!doctype html><html><body><details><summary>Details</summary>"
                     "<p>branch lane/w5, worktree /tmp/lanes/w5, YAML at .converge/</p>"
                     "</details></body></html>")
     assert row["status"] == "PASS", row
+
+
+# --------------------------------------------------------------------------- #
+# The Core-clause anchor, and what it buys                                    #
+# --------------------------------------------------------------------------- #
+def core_clause_numbers():
+    """Every numbered clause under '## Core (the teeth)' in the contract."""
+    body = CONTRACT.read_text(encoding="utf-8").split("## Core (the teeth)")[1]
+    body = body.split("\n## ")[0]
+    return {int(m.group(1)) for m in re.finditer(r"(?m)^(\d+)\.\s", body)}
+
+
+def test_every_rule_id_is_a_core_clause_number():
+    """A rule id is <clause>[letter], and <clause> is a Core clause that exists.
+
+    The anchor the steward ratified on 2026-09-03: a failing rule names the
+    clause it breaks. An id pointing at a clause the contract does not have
+    would send a reader looking for a promise that is not there.
+    """
+    clauses = core_clause_numbers()
+    _, report = run_kit(GOOD)
+    for r in report["results"]:
+        m = re.fullmatch(r"(\d+)([a-z])?", r["rule"])
+        assert m, f"rule id {r['rule']!r} is not <clause>[letter]"
+        assert int(m.group(1)) in clauses, (
+            f"rule {r['rule']} names Core clause {m.group(1)}, which "
+            f"{CONTRACT.name} does not have (it has {sorted(clauses)})"
+        )
+        assert r["clause"] == int(m.group(1)), (
+            f"rule {r['rule']} reports clause {r['clause']}, which its id contradicts"
+        )
+
+
+def test_every_core_clause_has_a_row():
+    """Every Core clause of the contract is judged by at least one rule.
+
+    This is what the Core-clause anchor buys and the bullet anchor could not:
+    under the bullets there was no row to be missing, so Core 4 and Core 5 went
+    unchecked invisibly. A clause added to the contract later fails here.
+    """
+    _, report = run_kit(GOOD)
+    covered = {r["clause"] for r in report["results"]}
+    missing = sorted(core_clause_numbers() - covered)
+    assert not missing, (
+        f"Core clause(s) {missing} of {CONTRACT.name} have no rule row — "
+        f"the kit judges {sorted(covered)}"
+    )
 
 
 # --------------------------------------------------------------------------- #

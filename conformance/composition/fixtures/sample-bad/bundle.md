@@ -11,6 +11,9 @@ includes:
   # VIOLATES 1c: the heavy full-foundation package instead of the lean anchors
   # base. No anchors URI appears anywhere in these includes.
   - bundle: git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundle.md
+  # The shared work queue, on the ROOT path only. behaviors/sample.yaml does NOT
+  # include it — see VIOLATES 5 in README.md.
+  - bundle: git+https://github.com/microsoft/amplifier-work-tracker@main#subdirectory=behaviors/work-tracker.yaml
   - bundle: sample-bad:behaviors/sample
 
 # VIOLATES 1d: a session-wide spawn policy. This strips the named tools from

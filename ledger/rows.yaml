@@ -419,14 +419,20 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/composition/run.py (rules 1a, 1b, 1c)
+    ref: conformance/composition/run.py (rules 1a, 1b)
   notes: >
-    RAN 2026-09-02 `uv run conformance/composition/run.py .` → VERDICT PASS
-    (7 pass / 0 fail / 2 skip). Rule 1a: no '@foundation:' reference across 6
-    loaded files. Rule 1b: no 'foundation:' helper named in the 1 automated step
-    file. Rule 1c: lean base named in bundle.md includes —
-    `...amplifier-foundation@main#subdirectory=bundles/anchors/bundle.md`. The
-    kit's sample-bad fixture fails all three, so the rules discriminate.
+    RAN 2026-09-03 `uv run conformance/composition/run.py .` → VERDICT PASS
+    (10 pass / 0 fail / 2 skip). Rule 1a: "no '@foundation:' reference across 6
+    loaded file(s)". Rule 1b: "lean base named in bundle.md includes:
+    git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundles/anchors/bundle.md".
+    The kit's sample-bad fixture fails both, so the rules discriminate.
+    RULE IDS RE-POINTED 2026-09-03 by converge-hng, and the row RE-RUN at the new
+    ids rather than relabelled. The ref read `(rules 1a, 1b, 1c)` from the table
+    in force on 2026-09-02, where 1b was "no heavy helper in a step" — now 2a,
+    and Core 2's business, rowed at CVG-002 — and 1c was "lean base named", now
+    1b. So `1c` dangled and `1b` STILL RESOLVED, to a rule under a different
+    clause: the case conformance/README.md calls worse than dangling. Core 1's
+    two rules today are 1a and 1b, and that is what this row now names.
 
 - id: CVG-002
   title: automated steps use only the lean base's helpers
@@ -439,16 +445,21 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/composition/run.py (rules 1b, 1e)
+    ref: conformance/composition/run.py (rules 2a, 2b)
   notes: >
-    RAN 2026-09-02: rule 1b PASS (no heavy-package helper named in any
-    recipes/**), rule 1e PASS (all 1 automated step file declared in bundle.md —
-    an undeclared step is one rule 1b scans only by accident).
+    RAN 2026-09-03: rule 2a PASS ("no 'foundation:' helper named across 1
+    automated step file(s)"), rule 2b PASS ("all 1 automated step file(s) are
+    declared in bundle.md" — an undeclared step is one rule 2a scans only by
+    accident).
+    RULE IDS RE-POINTED 2026-09-03 by converge-hng, and the row RE-RUN at the new
+    ids. The ref read `(rules 1b, 1e)` — the same two checks under the table in
+    force on 2026-09-02. `1e` dangled after the renumbering; `1b` still resolved,
+    to Core 1's lean-base rule, which this row does not assert and CVG-001 does.
     THE READING THIS ROW DEPENDS ON, STATED: the recipe uses `converge:reconciler`
     for every write (recipes/seed-reconcile.yaml:208,273,314), NOT the lean base's
     builder. Read literally against the clause's list of three helpers, that is a
     contradiction. Read against the clause's own *For you:* line — "no step
-    secretly depends on the heavy package" — it conforms, and rule 1b
+    secretly depends on the heavy package" — it conforms, and rule 2a
     operationalizes exactly that purpose. This row takes the second reading;
     Converge's own agents are governed by Core 3 (CVG-003), not by this clause.
     Flagged by the cross-check as one reading away from wrong.
@@ -540,19 +551,28 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/composition/run.py (rule 1d)
+    ref: conformance/composition/run.py (rules 6a, 6b)
   proves: >
     That no top-level `spawn:` key exists in the composed files — the static
     absence. Not that a neighbouring session keeps its tools when Converge is
     installed beside it; that is CVG-009.
   notes: >
-    RAN 2026-09-02: rule 1d PASS — "no top-level 'spawn:' key in 2 composed
-    file(s)" (bundle.md frontmatter, behaviors/converge.yaml). That absence IS
+    RAN 2026-09-03: rule 6a PASS — "no top-level 'spawn:' key in 2 composed
+    file(s)" (bundle.md frontmatter, behaviors/converge.yaml). Rule 6b is the
+    same clause judged live and SKIPs with its reason — "needs two live Amplifier
+    sessions (Converge plus unrelated work) side by side". A SKIP is never a soft
+    pass: it is named here because it is Core 6's other row, not because it
+    proves anything. The teeth under this row are 6a's, and the live half stays
+    CVG-009's, exactly as `proves` above says. That absence IS
     the clause's teeth: the setting the clause says was "measured in isolation on
     2026-09-02, confirmed with a control, and removed" is a top-level
     `spawn.exclude_tools`, which strips the named tools from every spawned helper
     in EVERY session composing the bundle. The kit's sample-bad fixture carries
     one and fails, so the rule discriminates.
+    RULE IDS RE-POINTED 2026-09-03 by converge-hng, and the row RE-RUN at the new
+    ids. The ref read `(rule 1d)`, which after the renumbering names nothing at
+    all in the composition table — a dangling ref the path-existence check could
+    not see, because run.py was still there. Core 6's rows today are 6a and 6b.
 
 - id: CVG-007
   title: the guard admits both proposal names and refuses every other write
@@ -566,17 +586,25 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: modules/hooks-candidate-guard/tests/test_guard.py (test_w1_* — 64 tests) + conformance/composition/run.py (rules 4a, 4b)
+    ref: modules/hooks-candidate-guard/tests/test_guard.py (test_w1_* — 36 of 82 tests in the file) + conformance/composition/run.py (rules 7a, 7b)
   notes: >
-    RAN 2026-09-02, both halves. (a) `uv run --extra dev pytest -q tests/` in
-    modules/hooks-candidate-guard → 64 passed, including
+    RAN 2026-09-03, both halves. (a) `uv run --extra dev pytest -q tests/` in
+    modules/hooks-candidate-guard → 82 passed, including
     test_w1_every_sanctioned_proposal_name_is_admitted,
     test_w1_near_miss_names_do_not_bypass_the_guard,
     test_w1_locked_contract_write_denied_on_both_tool_paths,
     test_w1_bash_laundering_into_locked_contract_still_denied. (b) composition
-    kit rule 4a PASS (both proposal names admitted by every guard glob list, 4
-    checks) and rule 4b PASS (frozen_marker_regex matches the H1-parenthetical
-    form `# Composition Contract — v1 (FROZEN 2026-09-02)`).
+    kit rule 7a PASS ("both proposal names admitted by every guard glob list
+    (4 checks)") and rule 7b PASS ("locked-marker test recognizes the
+    H1-parenthetical form (1 guard config(s))") — the form
+    `# Composition Contract — v1 (FROZEN 2026-09-02)`.
+    RULE IDS RE-POINTED 2026-09-03 by converge-hng, and the row RE-RUN at the new
+    ids. The kit half read `(rules 4a, 4b)` from the table in force on
+    2026-09-02; both dangled after the renumbering, and Core 7's rows are now 7a
+    and 7b. THE TEST COUNT WAS ALSO STALE and is corrected in the same pass: the
+    ref said "64 tests", the count of the whole file when it was written; the
+    file collects 82 today, 36 of them test_w1_*. A count nobody re-measures is a
+    claim, so it now says which population it counts.
     BIDIRECTIONAL DRIFT, RECORDED: three tracker items still OPEN assert this
     clause is broken — converge-9vw and converge-ksg ("guard does not recognise
     <contract>.vN-candidate.md") and converge-diw ("guard reads a different
@@ -1210,8 +1238,9 @@
     kind: indexed
     ref: tests/test_two_places_and_the_strip.py (test_the_lock_control_is_off_until_all_four_are_green)
   notes: >
-    RAN 2026-09-02 → 116 passed. The same promise the surface kit's rule 1d checks
-    structurally, now checked against the running app.
+    RAN 2026-09-02 → 116 passed. The same promise the surface kit's lock-gate
+    rule checks structurally — numbered 1d that day, 7 since the 2026-09-03
+    renumbering — now checked against the running app.
     FLIPPED FROM GAP THIS SESSION.
 
 - id: CVG-037
@@ -1268,21 +1297,21 @@
   disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'if uv run --extra web --with pytest --with httpx pytest "tests/test_plain_words_on_the_surface.py::test_the_shipped_kit_reports_rule_5_pass_on_every_page" -q >/dev/null 2>&1; then echo SURFACE-RULE-5-PASSES-ON-EVERY-APP-PAGE; else echo SURFACE-RULE-5-NOT-ASSERTED-AGAINST-THE-APP; fi'
+    ref: 'if uv run --extra web --with pytest --with httpx pytest "tests/test_plain_words_on_the_surface.py::test_the_shipped_kit_reports_rule_8c_pass_on_every_page" -q >/dev/null 2>&1; then echo SURFACE-RULE-8C-PASSES-ON-EVERY-APP-PAGE; else echo SURFACE-RULE-8C-NOT-ASSERTED-AGAINST-THE-APP; fi'
     expect:
       exit: 0
-      stdout_contains: "SURFACE-RULE-5-PASSES-ON-EVERY-APP-PAGE"
+      stdout_contains: "SURFACE-RULE-8C-PASSES-ON-EVERY-APP-PAGE"
   proves: >
     That the SHIPPED kit — `conformance/surface/run.py`, imported from where it
-    lives and not reimplemented — reports rule 5 PASS on the HTML of every page
+    lives and not reimplemented — reports rule 8c PASS on the HTML of every page
     the app declares, rendered against a project deliberately written in the
     machinery's own words. It is the kit's verdict, not a test's opinion of the
     kit. NOT that the pinned mockup passes: it still does not (CVG-037).
   notes: >
-    RAN 2026-09-03 → SURFACE-RULE-5-PASSES-ON-EVERY-APP-PAGE. Behind it:
+    RAN 2026-09-03 → SURFACE-RULE-8C-PASSES-ON-EVERY-APP-PAGE. Behind it:
     `pytest tests/test_plain_words_on_the_surface.py` → 9 passed, of which three
     are the ones that make this row mean something —
-    test_the_shipped_kit_reports_rule_5_pass_on_every_page (the kit's own
+    test_the_shipped_kit_reports_rule_8c_pass_on_every_page (the kit's own
     verdict), test_the_walk_catches_a_real_leak (the walk can fail), and
     test_the_apps_own_copy_never_uses_an_internal_term (the "project's own
     words" exemption cannot be used to launder the app's copy). Whole suite the
@@ -1301,6 +1330,18 @@
     one that runs the wiring and reports the kit's verdict.
     RETITLED in the same pass: a row named "no scan of …" cannot honestly carry
     CONFORMS. The id is unchanged, as ids always are.
+    RE-POINTED 2026-09-03 by converge-uli. This probe selects the kit rule by id
+    and names the app test by its function name, and BOTH moved when the steward
+    anchored kit rule ids to their contract's Core clauses (call 2,
+    docs/workflow/owner-ratifications-2026-09-03.md): the vocabulary row went
+    from 5 to 8c, and `5` now judges Core 5 (proposals), where it SKIPs on a page
+    with no proposal on it. Left alone, this probe kept reporting
+    NOT-ASSERTED-AGAINST-THE-APP while the app was in fact clean — a red row for
+    a renumbering. It now runs
+    test_the_shipped_kit_reports_rule_8c_pass_on_every_page and reports
+    SURFACE-RULE-8C-*. Every "rule 5" ABOVE this line is a dated record of a run
+    made under the earlier table; the row those lines name is the one numbered
+    8c today.
 
 - id: CVG-038
   title: the whole operation in view
@@ -2120,16 +2161,22 @@
     Purpose or Core sections, the ones carrying the deciding sentences. The APP
     half of the same quote is not proved by this probe and is not claimed by it:
     rule 11b SKIPs here on purpose ("a claim about a file this kit never opened")
-    and names conformance/surface rule 5 as the place that does assert it. That
-    place is rowed under surface.v1 at CVG-037 and CVG-066, and CVG-066 is what
-    moved it from the pinned mockup onto the shipped app in this same pass.
+    and names conformance/surface's vocabulary rule as the place that does assert
+    it. That place is rowed under surface.v1 at CVG-037 and CVG-066, and CVG-066
+    is what moved it from the pinned mockup onto the shipped app in this same
+    pass. READ THE ID IN THAT SKIP REASON WITH CARE: as shipped today
+    (conformance/documents/run.py:156) it still says "rule 5", the number that
+    row carried before the 2026-09-03 renumbering; the rule it means is 8c, and
+    `5` now judges surface.v1 Core 5. That stale id is inside conformance/, which
+    this row's holder does not own — filed as converge-tdy.
   notes: >
     RAN 2026-09-03 → rule 11a (`technical_detail_is_folded`) PASS, "all 4
     contract(s) keep technical detail out of the teeth". The app half, run the
     same day:
-    `pytest tests/test_plain_words_on_the_surface.py::test_the_shipped_kit_reports_rule_5_pass_on_every_page`
-    → PASSED, which is the surface kit's own rule 5 reporting PASS on every page
-    the app renders (see CVG-066).
+    `pytest tests/test_plain_words_on_the_surface.py::test_the_shipped_kit_reports_rule_8c_pass_on_every_page`
+    → PASSED, which is the surface kit's own rule 8c reporting PASS on every page
+    the app renders (see CVG-066). Test name and rule id re-pointed 2026-09-03 by
+    converge-uli; the run above is at the new id.
     RE-DERIVED FROM A LIVE KIT RUN by converge-12o; it WAS GAP, work
     converge-8om, on the reading that "the document half is not [asserted]".
     Wave 4 split the old rule 11 into 11a (documents, mechanical) and 11b (the

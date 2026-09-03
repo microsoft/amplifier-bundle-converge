@@ -45,6 +45,7 @@ __all__ = [
     "CandidateGuardHooks",
     "GuardConfig",
     "evaluate_tool_pre",
+    "is_validation_mock",
     "mount",
     "wrap_mounted_tools",
 ]
@@ -131,6 +132,27 @@ def _guarded_tool_names(config: GuardConfig) -> set[str]:
     if config.scan_bash:
         names.add(config.bash_tool_name)
     return names
+
+
+def is_validation_mock(coordinator: Any) -> bool:
+    """True when ``coordinator`` is core's tool-less validation stand-in.
+
+    ``mount()`` is called TWICE per session, not once. Before the real mount,
+    ``amplifier_core/validation/hook.py::_check_protocol_compliance``
+    trial-mounts every hook module against a bare
+    ``amplifier_core.testing.MockCoordinator()`` whose ``get("tools")``
+    returns ``{}`` and always will. Warning "no mounted tools visible" on that
+    call is a false positive: it tells the user a safety property is OFF at
+    the exact moment nothing real is mounted at all (converge-drz). The real
+    mount, microseconds later, wraps the tools as designed.
+
+    Detection is by type identity, not by duck-typing an empty tool dict --
+    "no tools" is precisely the condition the warning exists to report, so
+    inferring the mock from it would silence the genuine case too.
+    """
+    cls = type(coordinator)
+    module = getattr(cls, "__module__", "") or ""
+    return cls.__name__ == "MockCoordinator" and module.startswith("amplifier_core")
 
 
 def wrap_mounted_tools(
@@ -250,7 +272,13 @@ async def mount(coordinator: Any, config: dict[str, Any] | None = None) -> Any:
         mounted_tools = coordinator.get("tools")
     except Exception:  # noqa: BLE001 -- capability lookup is best-effort
         mounted_tools = None
-    if guard_config.wrap_tool_execute and not mounted_tools:
+    # ... except under core's validation trial-mount, where the coordinator is
+    # a tool-less MockCoordinator by construction. Warning there said a safety
+    # property was off on EVERY launch while the real mount was guarding
+    # exactly as designed -- and a guard whose own diagnostic is a known false
+    # positive trains its reader to ignore it (converge-drz).
+    validation_mock = is_validation_mock(coordinator)
+    if guard_config.wrap_tool_execute and not mounted_tools and not validation_mock:
         logger.warning(
             "candidate-guard: no mounted tools visible at mount time -- the "
             "tool:pre path is still guarded, but direct dispatch "

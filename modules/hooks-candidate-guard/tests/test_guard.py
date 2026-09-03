@@ -7,6 +7,8 @@ All tests call the pure functions in ``guard.py`` directly with mock
 
 from __future__ import annotations
 
+import logging
+import re
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
@@ -1208,3 +1210,302 @@ async def test_w3d_mount_wraps_the_mounted_tools_and_cleanup_restores_them(
     # Restored means restored: the same write now reaches the tool.
     assert await tool.execute({"file_path": "contracts/x.v1.md", "content": "x"})
     assert len(tool.calls) == 1
+
+
+# ---------------------------------------------------------------------------
+# W4 -- the validation trial-mount, and the RATIFIED H1 marker
+#
+# Two reports, two independent causes, both of them silent-in-the-wrong-
+# direction:
+#
+#   converge-drz  mount() is called TWICE. Core's HookValidator trial-mounts
+#                 every hook module against a tool-less MockCoordinator before
+#                 the real mount, so the "no mounted tools visible" warning
+#                 fired on EVERY launch -- telling the user a safety property
+#                 was OFF while the real mount was guarding as designed.
+#   converge-dwi  the frozen-marker regex accepted `**Status:** RATIFIED` in
+#                 the body but only `(FROZEN` in the H1, so the SAME status
+#                 word read as locked in one place and unlocked in the other
+#                 -- and the H1 is the form contracts/documents.v1 clause 6
+#                 mandates. docs/PROTOCOL.md is the live instance.
+#
+# W4a covers the trial-mount; W4b the marker; W4c the glob coverage.
+# ---------------------------------------------------------------------------
+
+H1_RATIFIED = "# Probe Contract — v3 (RATIFIED 2026-09-03)\n\n"
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _quiet_coordinator(tools: dict | None) -> MagicMock:
+    """A NON-mock-typed coordinator exposing ``tools`` -- the real-mount shape."""
+    coordinator = MagicMock()
+    coordinator.hooks.register = MagicMock(return_value=MagicMock())
+    coordinator.hooks.emit = AsyncMock()
+    coordinator.get = MagicMock(side_effect=lambda key: tools if key == "tools" else None)
+    coordinator.get_capability = MagicMock(return_value=None)
+    return coordinator
+
+
+def _warnings(caplog) -> list[str]:
+    return [r.getMessage() for r in caplog.records if r.levelno >= logging.WARNING]
+
+
+def _tools_wrapped(caplog) -> int:
+    """Read the count out of mount()'s own INFO line -- the same string a
+    `-v` run shows the user, not a private attribute invented for the test."""
+    for record in caplog.records:
+        m = re.search(r"tools_wrapped=(\d+)", record.getMessage())
+        if m:
+            return int(m.group(1))
+    raise AssertionError("mount() logged no tools_wrapped= line")
+
+
+# --- W4a: no false-positive warning under the validation mock (converge-drz) -
+
+
+async def test_w4a_mount_against_the_validation_mock_logs_no_warning(caplog) -> None:
+    """The exact call core makes: `mount_fn(MockCoordinator(), config)`.
+
+    Falsified by any WARNING record. The real MockCoordinator is used, not a
+    stand-in -- the whole defect was a wrong assumption about what core does.
+    """
+    from amplifier_core.testing import MockCoordinator
+
+    caplog.set_level(logging.DEBUG, logger="amplifier_module_hooks_candidate_guard")
+    coordinator = MockCoordinator()
+
+    cleanup = await mount(coordinator, {})
+
+    assert _warnings(caplog) == []
+    assert _tools_wrapped(caplog) == 0  # honest: the mock really has no tools
+    cleanup()
+
+
+async def test_w4a_a_real_coordinator_with_no_tools_still_warns(caplog) -> None:
+    """Removal control. The fix must silence the FALSE positive only.
+
+    A coordinator that is not the validation mock and genuinely exposes no
+    tools is the case the warning exists for; if this went quiet too, the fix
+    would have deleted the diagnostic rather than corrected it.
+    """
+    caplog.set_level(logging.DEBUG, logger="amplifier_module_hooks_candidate_guard")
+
+    cleanup = await mount(_quiet_coordinator({}), {})
+
+    assert any("no mounted tools visible" in w for w in _warnings(caplog))
+    cleanup()
+
+
+def test_w4a_the_mock_is_recognised_by_type_not_by_an_empty_tool_dict() -> None:
+    """`is_validation_mock` must not infer the mock from "no tools".
+
+    "No tools" is precisely the condition the warning reports, so inferring
+    the mock from it would silence the genuine case (the test above) too.
+    """
+    from amplifier_core.testing import MockCoordinator
+    from amplifier_module_hooks_candidate_guard import is_validation_mock
+
+    assert is_validation_mock(MockCoordinator()) is True
+    assert is_validation_mock(_quiet_coordinator({})) is False
+    assert is_validation_mock(object()) is False
+
+
+async def test_w4a_mount_wraps_every_registered_tool(caplog) -> None:
+    """`tools_wrapped == N` for a coordinator carrying N tools.
+
+    The four are the four the reporter measured on the real mount
+    (`tools_wrapped=4`: apply_patch, bash, edit_file, write_file). Falsified
+    by any other count -- including by a fix that suppressed the warning by
+    skipping the wrap.
+    """
+    caplog.set_level(logging.DEBUG, logger="amplifier_module_hooks_candidate_guard")
+    tools = {
+        name: _FakeTool()
+        for name in ("write_file", "edit_file", "apply_patch", "bash")
+    }
+
+    cleanup = await mount(_quiet_coordinator(tools), {})
+
+    assert _tools_wrapped(caplog) == len(tools)
+    assert _warnings(caplog) == []
+    for tool in tools.values():
+        assert getattr(tool.execute, "__converge_candidate_guard_wrapped__", False)
+    cleanup()
+
+
+# --- W4b: `(RATIFIED <date>)` in the H1 is a lock (converge-dwi) -------------
+
+
+@pytest.mark.parametrize(
+    ("tool_name", "tool_input"),
+    [
+        ("write_file", {"file_path": "docs/PROTOCOL.md", "content": "hijacked"}),
+        (
+            "edit_file",
+            {
+                "file_path": "docs/PROTOCOL.md",
+                "old_string": "the ratified clause",
+                "new_string": "a different clause",
+            },
+        ),
+    ],
+    ids=["write_file", "edit_file"],
+)
+def test_w4b_h1_ratified_document_is_locked(
+    tmp_path: Path, tool_name: str, tool_input: dict
+) -> None:
+    """The live shape of docs/PROTOCOL.md: `(RATIFIED <date>)` in the H1 and
+    no `**Status:**` line anywhere. Before this fix the guard saw no marker
+    at all and allowed the write."""
+    _write(tmp_path, "docs/PROTOCOL.md", H1_RATIFIED + "the ratified clause\n")
+
+    decision = evaluate_tool_pre(tool_name, tool_input, _config(), str(tmp_path))
+
+    assert decision.result.action == "deny"
+
+
+def test_w4b_sibling_proposal_beside_a_ratified_document_is_allowed(
+    tmp_path: Path,
+) -> None:
+    """A locked document must still be amendable by proposal -- otherwise the
+    guard is a wall, not a ratchet. The proposal is seeded already carrying
+    the locked H1 (a proposal quotes the document it amends, status line
+    included), which is the case that actually discriminates."""
+    _write(tmp_path, "docs/PROTOCOL.md", H1_RATIFIED + "the ratified clause\n")
+    _write(tmp_path, "docs/PROTOCOL.v4-candidate.md", H1_RATIFIED + "quoting\n")
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {
+            "file_path": "docs/PROTOCOL.v4-candidate.md",
+            "content": "target: docs/PROTOCOL.md\n",
+        },
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+
+
+def test_w4b_a_ratified_proposal_unlocks_a_ratified_document(tmp_path: Path) -> None:
+    """End of the round trip: proposal written, owner stamps it, edit lands."""
+    _write(tmp_path, "docs/PROTOCOL.md", H1_RATIFIED + "the ratified clause\n")
+    _write(
+        tmp_path,
+        "docs/PROTOCOL.v4-candidate.md",
+        "target: docs/PROTOCOL.md\n\n" + RATIFIED_STAMP,
+    )
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "docs/PROTOCOL.md", "content": "the amended clause"},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+    assert [name for name, _ in decision.events] == ["converge:guard_allowed_ratified"]
+
+
+@pytest.mark.parametrize(
+    ("content", "expected"),
+    [
+        ("# Probe — v1 (FROZEN 2026-09-02)\n\ntext\n", "deny"),
+        ("# Probe — v3 (RATIFIED 2026-09-03)\n\ntext\n", "deny"),
+        ("# Probe\n\n**Status:** FROZEN\n\ntext\n", "deny"),
+        ("# Probe\n\n**Status:** RATIFIED\n\ntext\n", "deny"),
+        ("# Probe\n\nstatus: FROZEN\n\ntext\n", "deny"),
+        ("# Probe — v1 (DRAFT)\n\ntext\n", "continue"),
+    ],
+    ids=[
+        "h1-frozen",
+        "h1-ratified",
+        "body-status-frozen",
+        "body-status-ratified",
+        "front-matter",
+        "h1-draft",
+    ],
+)
+def test_w4b_every_marker_form_keeps_its_verdict(
+    tmp_path: Path, content: str, expected: str
+) -> None:
+    """Teaching the H1 branch RATIFIED must not un-teach it anything else.
+
+    All six forms in one table: the two H1 words lock, all three legacy body
+    markers still lock, and `(DRAFT)` still does not. A regression in any row
+    fails open or freezes authoring.
+    """
+    _write(tmp_path, "contracts/x.v1.md", content)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "new"},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == expected
+
+
+def test_w4b_bash_laundering_into_a_ratified_document_is_denied(
+    tmp_path: Path,
+) -> None:
+    _write(tmp_path, "docs/PROTOCOL.md", H1_RATIFIED + "the ratified clause\n")
+
+    decision = evaluate_tool_pre(
+        "bash",
+        {"command": "echo hijacked > docs/PROTOCOL.md"},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+
+
+# --- W4c: PROTOCOL.md is inside the guarded globs ---------------------------
+
+
+@pytest.mark.parametrize(
+    "rel", ["docs/PROTOCOL.md", "PROTOCOL.md"], ids=["under-docs", "at-root"]
+)
+def test_w4c_protocol_md_is_covered_by_the_guarded_globs(rel: str) -> None:
+    """Marker detection is worth nothing if the path is never a candidate.
+
+    converge-dwi's exposure was exactly this pairing: the H1 word was
+    unrecognised AND the path was outside guarded_globs, so the document was
+    not guarded either way.
+    """
+    from amplifier_module_hooks_candidate_guard.guard import _glob_match_any
+
+    assert _glob_match_any(rel, _config().guarded_globs)
+
+
+def test_w4c_this_repos_own_protocol_reads_as_locked() -> None:
+    """The live instance, not a fixture: this repository's docs/PROTOCOL.md
+    must be BOTH inside the guarded globs and detected as locked by the
+    shipped marker regex. Falsified the day either half drifts."""
+    from amplifier_module_hooks_candidate_guard.guard import _glob_match_any
+
+    protocol = REPO_ROOT / "docs" / "PROTOCOL.md"
+    assert protocol.is_file(), f"expected {protocol} to exist"
+    config = _config()
+
+    assert _glob_match_any("docs/PROTOCOL.md", config.guarded_globs)
+    assert re.search(config.frozen_marker_regex, protocol.read_text(encoding="utf-8"))
+
+
+def test_w4c_guarded_globs_also_match_the_shipped_behavior_config() -> None:
+    """Extends the W3a drift tripwire to the fourth value that must agree.
+
+    guarded_globs moved in this change; it was the one list the tripwire did
+    not cover, and an uncovered value is exactly how the module and the
+    shipped config drifted apart the first time.
+    """
+    text = BEHAVIOR_YAML.read_text(encoding="utf-8")
+    config = _config()
+
+    m = re.search(r"^\s*guarded_globs:\s*\[(.+)\]\s*$", text, re.MULTILINE)
+    assert m, "behaviors/converge.yaml no longer sets guarded_globs"
+    shipped = {v.strip().strip("\"'") for v in m.group(1).split(",")}
+    assert shipped == set(config.guarded_globs)

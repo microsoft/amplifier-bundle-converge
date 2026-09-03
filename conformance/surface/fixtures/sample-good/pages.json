@@ -7,6 +7,7 @@
     {"route": "/", "file": "landing.html"},
     {"route": "/direction", "file": "direction.html"},
     {"route": "/direction/half.v1", "file": "document-half.v1.html"},
-    {"route": "/operation", "file": "operation.html"}
+    {"route": "/operation", "file": "operation.html"},
+    {"route": "/direction/half.v2-candidate", "file": "proposal-half.v2.html"}
   ]
 }
