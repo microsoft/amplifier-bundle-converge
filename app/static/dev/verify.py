@@ -63,6 +63,12 @@ def check(name, ok, detail=""):
 
 
 def shoot(page, label, view):
+    # let any transient toast clear so the screenshot shows the layout, not a banner
+    try:
+        page.wait_for_function(
+            "() => document.getElementById('toast').classList.contains('hidden')", timeout=4000)
+    except Exception:
+        pass
     path = SHOTS / f"{label}-{view}.png"
     page.screenshot(path=str(path), full_page=False)
     return path
@@ -116,6 +122,18 @@ def run_view(browser, view, width, height):
     check(f"[{view}] document body rendered from the API", "thin runtime" in page.text_content("#documentModeContent"))
     shoot(page, "direction-read", view)
     overflow(page, "direction-read", view)
+
+    # --- picking another document fetches it, and "N need your word" navigates back
+    #     to whichever document /api/needs names ---
+    page.click('[data-doc="kernel"]')
+    page.wait_for_function("() => document.getElementById('docPath').textContent.includes('kernel')")
+    check(f"[{view}] selecting another document fetches it",
+          page.text_content("#docTitle").strip() == "Kernel Contract", page.text_content("#docPath"))
+    page.click("#needsYouButton")
+    page.wait_for_selector(".review-sheet")
+    check(f"[{view}] 'need your word' opens the document named by /api/needs",
+          "#42" in page.text_content(".review-hero") and "VISION.md" in page.text_content("#docPath"),
+          page.text_content("#docPath"))
 
     # --- Direction (review) ---
     page.click('[data-doc-mode="review"]')

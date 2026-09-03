@@ -46,6 +46,16 @@
       "detail": "scrollW=1280 clientW=1280 rightMost=1280 (topbar)"
     },
     {
+      "check": "[1280] selecting another document fetches it",
+      "ok": true,
+      "detail": "AMPLIFIER-CORE / contracts/kernel.v1.md"
+    },
+    {
+      "check": "[1280] 'need your word' opens the document named by /api/needs",
+      "ok": true,
+      "detail": "AMPLIFIER-CORE / docs/VISION.md"
+    },
+    {
       "check": "[1280] review sheet renders the fetched proposal",
       "ok": true,
       "detail": ""
@@ -154,6 +164,16 @@
       "check": "[390] no horizontal overflow on direction-read",
       "ok": true,
       "detail": "scrollW=390 clientW=390 rightMost=390 (topbar)"
+    },
+    {
+      "check": "[390] selecting another document fetches it",
+      "ok": true,
+      "detail": "AMPLIFIER-CORE / contracts/kernel.v1.md"
+    },
+    {
+      "check": "[390] 'need your word' opens the document named by /api/needs",
+      "ok": true,
+      "detail": "AMPLIFIER-CORE / docs/VISION.md"
     },
     {
       "check": "[390] review sheet renders the fetched proposal",

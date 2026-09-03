@@ -102,7 +102,18 @@ function wire() {
   $('allSessionsButton').addEventListener('click', showHome);
   $('directionTab').addEventListener('click', () => { state.screen = 'workspace'; state.workspace = 'direction'; renderAll(); });
   $('operationTab').addEventListener('click', () => { state.screen = 'workspace'; state.workspace = 'operation'; renderAll(); });
-  $('needsYouButton').addEventListener('click', () => { state.screen = 'workspace'; state.workspace = 'direction'; state.docMode = 'review'; renderAll(); });
+  $('needsYouButton').addEventListener('click', async () => {
+    // Take the steward to the thing that actually needs their word, not just to a tab.
+    state.screen = 'workspace';
+    state.workspace = 'direction';
+    try {
+      data.needList = (await api.needs(state.managerId)) || [];
+      const first = data.needList.find((n) => n.where && n.where.repoId && n.where.docId);
+      if (first) await selectDoc(first.where.repoId, first.where.docId);
+    } catch { /* no needs endpoint answer: fall back to the open document */ }
+    state.docMode = 'review';
+    renderAll();
+  });
   $('feedbackButton').addEventListener('click', openFeedback);
   $('consoleToggle').addEventListener('click', () => { state.consoleOpen = !state.consoleOpen; renderConsole(); });
   $('consoleClose').addEventListener('click', () => { state.consoleOpen = false; renderConsole(); });
