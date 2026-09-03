@@ -1,0 +1,23 @@
+<aside class="manager-console" id="managerConsole" aria-label="Manager Console">
+  <div class="console-header">
+    <div>
+      <span class="eyebrow">Manager Console</span>
+      <strong id="consoleContextTitle">—</strong>
+    </div>
+    <div class="console-header-actions">
+      <span class="connected-label" id="consoleConnected">● Connected</span>
+      <button id="consoleClose" class="console-icon-button" type="button" title="Close console">×</button>
+    </div>
+  </div>
+  <div class="console-tabs" role="tablist" aria-label="Console context">
+    <button class="console-tab active" data-console-tab="terminal" type="button">Terminal</button>
+    <button class="console-tab" data-console-tab="notes" type="button">Context</button>
+  </div>
+  <div id="consoleBody" class="console-body" aria-live="polite"></div>
+  <form id="consoleForm" class="console-form">
+    <label class="sr-only" for="consoleInput">Message manager</label>
+    <input id="consoleInput" autocomplete="off" placeholder="Message the manager…" disabled />
+    <button type="submit" aria-label="Send" disabled>↵</button>
+  </form>
+  <div class="console-footer"><span id="consoleFooterText">—</span><span class="console-readonly-note">read-only in this version</span></div>
+</aside>
