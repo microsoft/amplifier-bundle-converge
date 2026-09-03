@@ -3,8 +3,10 @@
 Everything in this module is synchronous and coordinator-free so it can be
 unit tested directly (see ``tests/test_guard.py``) without mocking a live
 Amplifier session. The only I/O is reading small text files from disk
-(the guarded contract file itself, sibling ``CANDIDATE-*.md`` files, and the
-optional emergency-unlock token file) -- all funneled through
+(the guarded contract file itself, sibling proposal files under either
+sanctioned name -- ``<contract>.vN-candidate.md`` or the legacy
+``CANDIDATE-*.md`` -- and the optional emergency-unlock token file), all
+funneled through
 ``_read_file_text`` so tests can monkeypatch a single seam to simulate I/O
 failure (see spec Test Plan U8, fail-closed).
 
@@ -15,7 +17,8 @@ Implements the decision order from
 2. ``bash`` scan (self-contained branch, §2.4).
 3. ``tool_name`` not in (intercept_tools | tool_name_aliases) -> continue.
 4. Extract paths (§2.3), normalized repo-relative against cwd.
-5. ``always_allow_globs`` (CANDIDATE-*.md) beats guarding -- checked first.
+5. ``always_allow_globs`` (both proposal names -- see ``PROPOSAL_GLOBS``)
+   beats guarding -- checked first.
 6. Guarded-path determination (§2.5): glob match AND (optionally) the
    FROZEN/RATIFIED marker actually present in the file's current content.
 7. Escape hatch (§2.7) per guarded path: ratified-CANDIDATE (primary) or
@@ -37,6 +40,17 @@ from amplifier_core import HookResult
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
+
+
+# The two sanctioned proposal filenames, in preference order. A proposal is
+# `<contract>.vN-candidate.md` (contracts/documents.v1 clause 8); the legacy
+# `CANDIDATE-<topic>.md` from PROTOCOL.md §5 is still admitted so repos written
+# against the older name keep working. Both are the ONLY writes sanctioned
+# beside a locked (FROZEN) contract -- composition.v1 clause 7.
+PROPOSAL_GLOBS: list[str] = [
+    "**/*.v[0-9]*-candidate.md",
+    "**/CANDIDATE-*.md",
+]
 
 
 @dataclass
@@ -62,7 +76,7 @@ class GuardConfig:
     frozen_marker_regex: str = (
         r"(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN"
     )
-    always_allow_globs: list[str] = field(default_factory=lambda: ["**/CANDIDATE-*.md"])
+    always_allow_globs: list[str] = field(default_factory=lambda: list(PROPOSAL_GLOBS))
 
     # §2.3 tools intercepted + path extraction
     intercept_tools: list[str] = field(
@@ -98,7 +112,7 @@ class GuardConfig:
 
     # §2.7 escape hatch
     escape_mode: str = "ratified_candidate"  # ratified_candidate | token | both
-    candidate_glob: list[str] = field(default_factory=lambda: ["**/CANDIDATE-*.md"])
+    candidate_glob: list[str] = field(default_factory=lambda: list(PROPOSAL_GLOBS))
     ratified_stamp_regex: str = r"(?im)^ratified(?:\s+as\s+edited)?\b.*\bby\s+owner\b"
     candidate_target_field: str = "target"
     allow_emergency_unlock: bool = False
@@ -159,6 +173,10 @@ def _translate_glob(pattern: str) -> re.Pattern[str]:
     - ``**/`` (or a bare ``**`` segment) matches zero or more path segments.
     - ``*`` matches any run of characters except ``/``.
     - ``?`` matches a single character except ``/``.
+    - ``[...]`` matches one character from the set (ranges and a leading
+      ``!``/``^`` negation supported, never crossing ``/``). Needed by the
+      shipped ``**/*.v[0-9]*-candidate.md`` proposal glob so that "vN"
+      requires an actual digit; an unterminated ``[`` is treated literally.
     - Everything else is matched literally.
 
     Python's stdlib ``fnmatch``/``pathlib.PurePath.match`` don't give us this
@@ -185,10 +203,52 @@ def _translate_glob(pattern: str) -> re.Pattern[str]:
         elif c == "?":
             i += 1
             out.append("[^/]")
+        elif c == "[":
+            body, next_i = _scan_char_class(pattern, i)
+            if body is None:
+                # Unterminated '[' -- literal, matching fnmatch's behavior.
+                i += 1
+                out.append(re.escape(c))
+            else:
+                i = next_i
+                out.append(body)
         else:
             i += 1
             out.append(re.escape(c))
     return re.compile("^" + "".join(out) + "$")
+
+
+def _scan_char_class(pattern: str, start: int) -> tuple[str | None, int]:
+    """Scan a ``[...]`` class starting at ``start`` (which indexes the ``[``).
+
+    Returns ``(regex_fragment, index_after_class)``, or ``(None, start)`` if
+    the class is unterminated. The fragment never matches ``/`` -- a path
+    separator can never be swallowed by a character class, mirroring the
+    ``*``/``?`` rules above.
+    """
+    i = start + 1
+    n = len(pattern)
+    negated = False
+    if i < n and pattern[i] in "!^":
+        negated = True
+        i += 1
+    # A ']' immediately after '[' (or after the negation) is a literal ']'.
+    body_start = i
+    if i < n and pattern[i] == "]":
+        i += 1
+    while i < n and pattern[i] != "]":
+        i += 1
+    if i >= n:
+        return (None, start)
+    raw = pattern[body_start:i]
+    if not raw:
+        return (None, start)
+    # Escape regex metacharacters that are still special inside a class,
+    # leaving '-' ranges intact.
+    safe = raw.replace("\\", "\\\\").replace("^", "\\^").replace("[", "\\[")
+    if negated:
+        return (f"[^/{safe}]", i + 1)
+    return (f"(?![/])[{safe}]", i + 1)
 
 
 _GLOB_CACHE: dict[str, re.Pattern[str]] = {}
@@ -353,9 +413,13 @@ def _extract_field(content: str, field_name: str) -> str | None:
 
 
 def _find_ratified_candidate(rel: str, cwd: str, config: GuardConfig) -> str | None:
-    """Search cwd for a CANDIDATE-*.md whose `target:` names ``rel`` and
-    whose content carries the ratified stamp. Returns the candidate's
-    repo-relative path, or None."""
+    """Search cwd for a proposal file -- under either sanctioned name,
+    ``<contract>.vN-candidate.md`` or the legacy ``CANDIDATE-*.md`` -- whose
+    ``target:`` names ``rel`` and whose content carries the ratified stamp.
+    Returns the proposal's repo-relative path, or None.
+
+    The ``target:`` line is required under BOTH names: the guard never infers
+    which contract a proposal amends from its filename alone."""
     root = Path(cwd)
     seen: set[Path] = set()
     for pattern in config.candidate_glob:
@@ -430,23 +494,45 @@ def _check_escape_hatch(
 # ---------------------------------------------------------------------------
 
 
+def _proposal_name_for(rel: str) -> str:
+    """Suggest the concrete proposal filename for a locked contract path.
+
+    ``contracts/composition.v1.md`` -> ``contracts/composition.v2-candidate.md``.
+    Falls back to the generic shape when the path carries no ``vN`` version
+    segment (e.g. ``docs/VISION.md``), so the deny message always names a
+    real, writable path rather than a template the reader has to decode.
+    """
+    m = re.match(r"^(?P<stem>.*)\.v(?P<n>\d+)\.md$", rel)
+    if m:
+        return f"{m.group('stem')}.v{int(m.group('n')) + 1}-candidate.md"
+    if rel.endswith(".md"):
+        return f"{rel[: -len('.md')]}.v2-candidate.md"
+    return "<contract>.vN-candidate.md"
+
+
 def _deny_result(paths: list[str], *, via_shell: bool) -> HookResult:
     rel_path = ", ".join(paths)
     via = " via shell" if via_shell else ""
+    suggestion = _proposal_name_for(paths[0]) if paths else "<contract>.vN-candidate.md"
     reason = (
         f"converge/candidate-guard: BLOCKED direct write{via} to FROZEN file "
         f"'{rel_path}'.\n"
-        "PROTOCOL.md §5 (pillar 3): amendments to a frozen vision/contract are "
-        "CANDIDATE artifacts, never direct edits.\n"
-        "Remedy: author a sibling 'CANDIDATE-<topic>.md' (exact diff · evidence · "
-        '"what does NOT change" · ratification ask); the OWNER ratifies with the '
-        "literal word ('ratified' / 'ratified as edited' / declined-with-reason). "
-        "On ratification the edit lands via the escape hatch (see the module "
-        "README / spec §2.7)."
+        "PROTOCOL.md §5 (pillar 3) / contracts/composition.v1.md clause 7: a "
+        "locked contract changes by proposal, never by direct edit — by person "
+        "or agent.\n"
+        f"Remedy: write a sibling proposal '{suggestion}' "
+        "(name shape '<contract>.vN-candidate.md'; the legacy "
+        "'CANDIDATE-<topic>.md' is also admitted). A proposal has three parts, "
+        "in order: (1) the exact change, sentence by sentence; (2) the evidence "
+        "— a cost paid or a failure caught, since a preference is not evidence; "
+        "(3) what does NOT change. The original stays the law until ratified: "
+        "the OWNER ratifies with the literal word ('ratified' / 'ratified as "
+        "edited' / declined-with-reason), and on ratification the edit lands "
+        "via the escape hatch (see the module README / spec §2.7)."
     )
     user_message = (
-        f"Blocked direct edit of frozen {rel_path} — use CANDIDATE-<topic>.md "
-        "(PROTOCOL.md §5)."
+        f"Blocked direct edit of locked {rel_path} — write {suggestion} instead "
+        "(PROTOCOL.md §5, composition.v1 clause 7)."
     )
     return HookResult(
         action="deny",
