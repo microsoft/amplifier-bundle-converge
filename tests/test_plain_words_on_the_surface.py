@@ -408,12 +408,20 @@ def _surface_kit():
     return module
 
 
-def test_the_shipped_kit_reports_rule_5_pass_on_every_page(loud_client, loud_project, tmp_path):
+def test_the_shipped_kit_reports_rule_8c_pass_on_every_page(loud_client, loud_project, tmp_path):
     """`conformance/surface/run.py`, run at the app rather than at the mockup.
 
-    Rule 5 is the one this walks alongside: *no internal vocabulary outside
-    Details folds*. The kit is the contract's own runnable definition, so its
-    verdict — not this file's opinion — is what settles the question.
+    Rule 8c is the one this walks alongside: *no internal vocabulary outside
+    Details folds*, the surface kit's row for surface.v1 clause 8. The kit is
+    the contract's own runnable definition, so its verdict — not this file's
+    opinion — is what settles the question.
+
+    Select it by the id the kit publishes today. That row was numbered `5`
+    until 2026-09-03, when the steward anchored kit rule ids to their
+    contract's Core clauses; `5` now judges Core 5 (proposals) and SKIPs on a
+    page with no proposal on it. An id that still resolves — to a different
+    rule — is the failure mode conformance/README.md names, so keep this in
+    step with that kit's README table.
     """
     kit = _surface_kit()
     rendered = tmp_path / "rendered"
@@ -424,7 +432,7 @@ def test_the_shipped_kit_reports_rule_5_pass_on_every_page(loud_client, loud_pro
         target = rendered / f"page-{number}.html"
         target.write_text(loud_client.get(page).text, encoding="utf-8")
         report = kit.run_conformance(target)
-        rule = next(r for r in report["results"] if r["rule"] == "5")
+        rule = next(r for r in report["results"] if r["rule"] == "8c")
         verdicts.append(f"{page}: {rule['status']} — {rule['detail']}")
         assert rule["status"] == "PASS", f"{page}: {rule['detail']}"
     assert verdicts
