@@ -2,8 +2,8 @@
 
 Three runnable kits, one per contract. Each is the **executable version of the
 promises its contract makes** — point it at a target and it reports, rule by
-rule, whether they are kept. Which sentences a kit numbers its rules to
-differs by kit today; see *Numbering follows the contract* below.
+rule, whether they are kept. All three number their rules to their contract's
+Core clauses; see *Numbering follows the contract* below.
 
 | Kit | Contract | Target | What it judges |
 |---|---|---|---|
@@ -60,52 +60,95 @@ uv run --with pytest pytest conformance/ -q          # all three kits
 uv run --with pytest pytest conformance/documents/ -q # one kit
 ```
 
-## Numbering follows the contract — to one of two anchors
+## Numbering follows the contract — one anchor, the Core clauses
 
-Every rule row is numbered to a sentence in its contract, so a reader can go
-from a failed rule straight to the promise it operationalizes. Where one
-sentence carries several independent promises, the kit emits one row per
-promise, lettered inside it (`1a`, `1b`, …) — a failure names the exact
-promise rather than a whole paragraph. Each kit's README carries the full
+Every rule row is numbered to the **Core clause** it judges, so a failing rule
+names the clause it breaks and a reader can go straight from the failure to the
+promise. Where one clause carries several independent promises, the kit emits
+one row per promise, lettered inside it (`1a`, `1b`, …) — a failure names the
+exact promise rather than a whole paragraph. Each kit's README carries the full
 table with the contract sentence quoted beside each row.
 
-**Two kits anchor to the *Conformance kit asserts* bullets; one anchors to the
-Core clauses.** That is the current state, measured, not an aspiration:
+**All three kits anchor to their contract's Core clauses**, and every clause has
+a row:
 
-| Kit | Core clauses | *Conformance kit asserts* bullets | Rule ids | Anchored to |
-|---|---|---|---|---|
-| `composition/` | 1–7 | 1–4 | 1–4 | the bullets |
-| `documents/` | 1–13 | 1–7 | 1–13 | the **Core clauses** |
-| `surface/` | 1–10 | 1–5 | 1–5 | the bullets |
+| Kit | Core clauses | Rule ids | Every clause has a row |
+|---|---|---|---|
+| `composition/` | 1–7 | 1a–7b | `test_every_core_clause_has_a_row` |
+| `documents/` | 1–13 | 1–13 | `test_every_core_clause_has_a_row` |
+| `surface/` | 1–10 | 1a–10 | `test_every_core_clause_has_a_row` |
 
-The documents kit moved because the bullet anchor **hid a real gap**. A
-contract's bullet list is shorter than its Core clause list, so a clause with
-no bullet gets no row — and a missing row is invisible: nothing looks wrong.
+It was not always one anchor. Two kits were numbered to their contract's
+*Conformance kit asserts* bullets, and that **hid a real gap**: a contract's
+bullet list is shorter than its Core clause list, so a clause with no bullet got
+no row — and a missing row is invisible, because nothing looks wrong.
 `documents.v1` clause 10 ("Plain state words everywhere") and clause 11
 ("Technical detail is folded") had no bullet, therefore no row, therefore no
-check, and nobody could see it. The same arithmetic still holds next door:
+check, and nobody could see it. The same arithmetic held next door:
 `composition.v1` has seven Core clauses behind four bullets, `surface.v1` ten
-behind five. **Under a bullet anchor no kit can tell you whether a Core clause
-went unchecked** — there is no row to be missing. Only the documents kit's
-self-test carries `test_every_core_clause_has_a_row`; the other two have no
-such test, because under their anchor there is nothing for it to count. That
-is a fact about those kits recorded here rather than papered over; changing
-them waits on the ruling below.
+behind five — and under the bullets, `composition.v1` Core 3, 4 and 5 and
+`surface.v1` Core 4 and 5 had no row at all.
 
-Which anchor `documents.v1` clause 5 ("Numbers match the conformance kit's rule
-table") actually means is an open question for the steward, proposed in
-[`contracts/documents.v2-candidate.md`](../contracts/documents.v2-candidate.md).
-Until it is answered, the documents kit's rule 5b reports the divergence and
-stays `SKIP` rather than failing another kit on an unratified reading. If the
-Core-clause reading is ratified, the `composition` and `surface` tables
-renumber and this section collapses to one anchor.
+The steward settled it on 2026-09-03 (see
+[`docs/workflow/owner-ratifications-2026-09-03.md`](../docs/workflow/owner-ratifications-2026-09-03.md),
+call 2): **conformance-kit rule ids anchor to the contract's clause numbers**,
+`documents.v1` §5 as written. The `composition` and `surface` tables were
+renumbered to match, and each grew the rows its uncovered clauses needed.
+`test_every_core_clause_has_a_row` — which only means anything under this anchor
+— now runs in all three kits, so a clause added to a contract later cannot go
+unchecked without a test going red.
 
-Check the table above at any time:
+Check the alignment at any time:
 
 ```sh
 uv run conformance/documents/run.py . --json-only \
   | python3 -c "import json,sys; print(*[o for o in [r for r in json.load(sys.stdin)['results'] if r['rule']=='5b'][0]['observed']], sep='\n')"
 ```
+
+## The 2026-09-03 renumbering, and what still points at the old ids
+
+Two tables moved. Nothing about what a rule asserts changed — only its number.
+
+| composition, was | now | surface, was | now |
+|---|---|---|---|
+| `1a` no heavy-package reference | `1a` | `1a` places switch | `1a` |
+| `1c` lean base named | `1b` | `1b` answering shortens the strip | `1b` |
+| `1b` no heavy helper in a step | `2a` | `4` answers land in the record | `2` |
+| `1e` every step is declared | `2b` | `3a` exactly four writes | `3a` |
+| `2` a session reaches both helpers | `3b` | `3b` writes map to operations | `3b` |
+| `1d` no session-wide tool stripping | `6a` | `1e` what-changed shows removals | `6` |
+| `3` an unrelated session keeps its tools | `6b` | `1d` the lock gate | `7` |
+| `4a` guard admits both proposal names | `7a` | `5` no internal vocabulary | `8c` |
+| `4b` guard knows the locked marker | `7b` | `1c` fill updates the gauge | `9a` |
+| — | `3a`, `4`, `5` are **new** rows | `9` the whole operation in view | `9b` |
+| | | `2` renders at two widths | `10` |
+| | | — | `4`, `5` are **new** rows |
+
+`ledger/checks/verify.py` names every ledger row still pointing at an old id.
+Measured 2026-09-03, four rows need re-pointing (this lane does not own
+`ledger/`):
+
+| Row | Clause | `ref` today | should name |
+|---|---|---|---|
+| CVG-001 | composition Core 1 | `run.py (rules 1a, 1b, 1c)` | `rules 1a, 1b` |
+| CVG-002 | composition Core 2 | `run.py (rules 1b, 1e)` | `rules 2a, 2b` |
+| CVG-006 | composition Core 6 | `run.py (rule 1d)` | `rules 6a, 6b` |
+| CVG-007 | composition Core 7 | `… + run.py (rules 4a, 4b)` | `rules 7a, 7b` |
+
+**CVG-001 and CVG-002 both name `1b`, which still resolves — to a different
+rule.** That is the failure mode `verify.py`'s rule-id tripwire exists for: a
+ref pointing confidently at the wrong rule is worse than one that dangles.
+
+Two further consequences, neither of them this directory's to fix:
+
+- `tests/test_plain_words_on_the_surface.py:427` selects the surface kit's
+  vocabulary rule by id (`== "5"`, now `"8c"`) — one line, and the row it wants
+  is the one that moved. CVG-066's probe runs that very test, so that row goes
+  green again the moment the line changes.
+- `composition` Core 3, 4 and 5 and `surface` Core 4 and 5 now have kit rules
+  (3a, 4, 5 and 4, 5). Their ledger rows — CVG-003/004/005, CVG-033/034 — are
+  hand-written probes or point at the app's own tests; each could now name a kit
+  rule instead. That is an upgrade, not a defect.
 
 ## When a kit reports a finding
 

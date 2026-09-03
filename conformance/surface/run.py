@@ -25,6 +25,21 @@ handlers wiring elements together. Every rule here is written against that:
 An assertion that genuinely needs a browser — a render at two widths, with a
 console — reports SKIP with the reason, never a fabricated PASS.
 
+Numbering
+---------
+Rule numbering follows the contract's **Core clause** numbers, as documents.v1
+clause 5 asks: rule 7 judges Core 7, so a failing rule names the clause it
+breaks. Where one clause carries several independent promises the kit emits one
+row per promise, lettered inside the clause (8a, 8b, 8c). Every one of the ten
+Core clauses has a row, and the self-test fails if one does not.
+
+The kit was numbered to the contract's *Conformance kit asserts* bullets until
+2026-09-03, when the steward ratified the Core-clause anchor (see
+``docs/workflow/owner-ratifications-2026-09-03.md``, call 2). Under the bullets,
+five bullets covered ten clauses and Core 4 and Core 5 had no row at all — and a
+missing row is invisible, because nothing looks wrong. Rules 4 and 5 are those
+rows.
+
 Usage
 -----
     uv run conformance/surface/run.py http://127.0.0.1:8091
@@ -95,7 +110,7 @@ STOP_WORDS = re.compile(r"\b(stop|kill|abort|terminate|halt|cancel)\b", re.IGNOR
 #: Rows a static read of served pages cannot close, with the reason each says.
 #: Neither reason may claim the app is unbuilt — it ships in src/amplifier_converge/.
 UNFIXTURABLE = {
-    "2": (
+    "10": (
         "needs a real browser at 390 and 1280 pixels with a console, and this kit "
         "launches none. The app asserts the same promise structurally against its "
         "stylesheet in tests/test_renders_at_both_widths.py; a live render at two "
@@ -104,32 +119,36 @@ UNFIXTURABLE = {
 }
 
 RULES = [
-    ("1a", "kit 1 / Core 1", "places_switch",
+    ("1a", 1, "places_switch",
      "places switch — every place link resolves to a page the app serves"),
-    ("1b", "kit 1 / Core 1", "answering_shortens_the_strip",
+    ("1b", 1, "answering_shortens_the_strip",
      "answering marks the card and shortens the list"),
-    ("1c", "kit 1 / Core 9", "fill_updates_the_gauge_and_the_board",
-     "fill updates the gauge and the board"),
-    ("1d", "kit 1 / Core 7", "lock_stays_off_until_four_green",
-     "the lock control stays off until all four conditions are green"),
-    ("1e", "kit 1 / Core 6", "what_changed_shows_removals",
-     "what-changed shows removed sentences, not only additions"),
-    ("2", "kit 2 / Core 10", "renders_at_390_and_1280",
-     "renders at 390 and 1280 pixels with nothing cut off and no console errors"),
-    ("3a", "kit 3 / Core 3", "exactly_four_write_paths",
-     "exactly four write paths, and no fifth"),
-    ("3b", "kit 3 / Core 3", "write_paths_map_to_operations",
-     "each write path maps to a named manager-session operation"),
-    ("4", "kit 4 / Core 2", "answers_land_in_the_record",
+    ("2", 2, "answers_land_in_the_record",
      "every answer lands in the dated ratification record"),
-    ("5", "kit 5 / Core 8b", "no_internal_vocabulary_outside_details",
-     "no internal vocabulary outside Details folds"),
-    ("8a", "Core 8a", "the_surface_says_only_plain_state_words",
+    ("3a", 3, "exactly_four_write_paths",
+     "exactly four write paths, and no fifth"),
+    ("3b", 3, "write_paths_map_to_operations",
+     "each write path maps to a named manager-session operation"),
+    ("4", 4, "no_data_of_its_own",
+     "no data of its own — every page reads back from the project, and says so"),
+    ("5", 5, "proposals_look_the_same_whoever_proposed",
+     "a proposal shows what changes, the evidence, and what does not change"),
+    ("6", 6, "what_changed_shows_removals",
+     "what-changed shows removed sentences, not only additions"),
+    ("7", 7, "lock_stays_off_until_four_green",
+     "the lock control stays off until all four conditions are green"),
+    ("8a", 8, "the_surface_says_only_plain_state_words",
      "every state the app shows is one of the plain words"),
-    ("8b", "Core 8a", "both_state_vocabularies_are_spoken",
+    ("8b", 8, "both_state_vocabularies_are_spoken",
      "the contract vocabulary and the lane vocabulary are both actually used"),
-    ("9", "Core 9", "the_whole_operation_in_view",
+    ("8c", 8, "no_internal_vocabulary_outside_details",
+     "no internal vocabulary outside Details folds"),
+    ("9a", 9, "fill_updates_the_gauge_and_the_board",
+     "fill updates the gauge and the board"),
+    ("9b", 9, "the_whole_operation_in_view",
      "the whole operation in view, and stopping is never a board button"),
+    ("10", 10, "renders_at_390_and_1280",
+     "renders at 390 and 1280 pixels with nothing cut off and no console errors"),
 ]
 
 
@@ -446,7 +465,7 @@ def resolve_target(spec: str):
 
 
 # --------------------------------------------------------------------------- #
-# bullet 1 — the five promised interactions                                    #
+# clauses 1, 6, 7 and 9 — the promised interactions                            #
 # --------------------------------------------------------------------------- #
 def check_places_switch(pages):
     if len(pages) < 2:
@@ -541,14 +560,14 @@ GAUGE = re.compile(r"(\d+)\s+of\s+(\d+)\s+running", re.IGNORECASE)
 def check_fill_updates_the_board(pages):
     operation = next((p for p in pages if p.is_operation_page()), None)
     if operation is None:
-        return _result("1c", "FAIL", "no page shows the lanes")
+        return _result("9a", "FAIL", "no page shows the lanes")
     lanes = operation.first(node_id="lanes")
     if lanes is None:
-        return _result("1c", "FAIL", "the operation page states no gauge for the lanes")
+        return _result("9a", "FAIL", "the operation page states no gauge for the lanes")
     text = lanes.text()
     match = GAUGE.search(text)
     if match is None:
-        return _skip("1c", "the lanes cannot be read in this target, so the gauge states no "
+        return _skip("9a", "the lanes cannot be read in this target, so the gauge states no "
                            f"number to check against the fill control — the page says: “{text[:120]}”")
     running, intended = int(match.group(1)), int(match.group(2))
     fill = [f for f, m, _ in _forms_of(lanes) if m == "post"
@@ -556,24 +575,24 @@ def check_fill_updates_the_board(pages):
                  or "fill" in (_field_value(f, "ask") or "").lower())]
     short_by = intended - running
     if short_by > 0 and not fill:
-        return _result("1c", "FAIL",
+        return _result("9a", "FAIL",
                        f"{running} of {intended} lanes are running and the gauge says so, but the "
                        "board offers no way to fill the rest",
                        running=running, intended=intended)
     if short_by <= 0 and fill:
-        return _result("1c", "FAIL",
+        return _result("9a", "FAIL",
                        f"every lane you asked for is running ({running} of {intended}), yet the board "
                        "still offers to fill them",
                        running=running, intended=intended)
     if fill:
         action = fill[0].attrs.get("action", "")
         if not action:
-            return _result("1c", "FAIL", "the fill control posts nowhere")
-        return _result("1c", "PASS",
+            return _result("9a", "FAIL", "the fill control posts nowhere")
+        return _result("9a", "PASS",
                        f"the gauge says {running} of {intended} running, and the fill control posts "
                        f"to {action}, which is where the board is changed",
                        running=running, intended=intended, fill_action=action)
-    return _result("1c", "PASS",
+    return _result("9a", "PASS",
                    f"the gauge says {running} of {intended} running — nothing is short, and the board "
                    "offers no fill it does not need",
                    running=running, intended=intended)
@@ -588,14 +607,14 @@ def check_lock_gated(pages):
     if not gates:
         docs = [p for p in pages if p.is_document_page()]
         if not docs:
-            return _skip("1d", "no document page is in this target, so no lock gate states its "
+            return _skip("7", "no document page is in this target, so no lock gate states its "
                                "conditions")
         locked = [p for p in docs if "locked" in p.root.text().lower()]
         if locked:
-            return _skip("1d", f"every document in this target is already locked ({len(locked)} of "
+            return _skip("7", f"every document in this target is already locked ({len(locked)} of "
                                f"{len(docs)}), so no gate is drawn — point the kit at a project with "
                                "a draft document to check the gate")
-        return _result("1d", "FAIL",
+        return _result("7", "FAIL",
                        f"{len(docs)} document page(s) and not one states the four conditions for locking")
     problems = []
     checked = []
@@ -629,8 +648,8 @@ def check_lock_gated(pages):
         checked.append({"page": page.route, "conditions": len(conditions),
                         "green": len(green), "control_off": disabled})
     if problems:
-        return _result("1d", "FAIL", "; ".join(problems[:6]), gates=checked)
-    return _result("1d", "PASS",
+        return _result("7", "FAIL", "; ".join(problems[:6]), gates=checked)
+    return _result("7", "PASS",
                    f"{len(checked)} lock gate(s), each stating four conditions, and each control off "
                    "exactly when a condition is not yet green",
                    gates=checked)
@@ -642,7 +661,7 @@ WHAT_CHANGED = "what changed since you last read this"
 def check_what_changed(pages):
     documents = [p for p in pages if p.is_document_page()]
     if not documents:
-        return _skip("1e", "no document page is in this target, so nothing states what changed")
+        return _skip("6", "no document page is in this target, so nothing states what changed")
     problems = []
     removed = added = 0
     lists = 0
@@ -662,24 +681,24 @@ def check_what_changed(pages):
                 problems.append(f"{page.route}: the sentences that changed are listed without saying "
                                 "which were taken away and which were added")
     if problems:
-        return _result("1e", "FAIL", "; ".join(problems[:6]), removed=removed, added=added)
+        return _result("6", "FAIL", "; ".join(problems[:6]), removed=removed, added=added)
     if not lists:
-        return _skip("1e", "no document in this target has changed since it was last read, so no "
+        return _skip("6", "no document in this target has changed since it was last read, so no "
                            "sentence-by-sentence list is drawn — mark a document read, change a "
                            "sentence, and run again (render.py --exercise-what-changed does exactly "
                            "that against a throwaway copy)")
     if not removed:
-        return _skip("1e", f"{lists} change list(s) are drawn and every sentence in them was added — "
+        return _skip("6", f"{lists} change list(s) are drawn and every sentence in them was added — "
                            "nothing has been taken away yet, so the half a reader cannot otherwise "
                            "check is not on screen to check")
-    return _result("1e", "PASS",
+    return _result("6", "PASS",
                    f"{removed} removed sentence(s) are shown alongside {added} added, each marked as "
                    f"which it is, across {lists} change list(s)",
                    removed=removed, added=added, lists=lists)
 
 
 # --------------------------------------------------------------------------- #
-# bullet 3 — the four writes                                                   #
+# clause 3 — the four writes                                                   #
 # --------------------------------------------------------------------------- #
 def _forms_of(node):
     out = []
@@ -812,7 +831,7 @@ def check_write_paths_map_to_operations(pages, write_prefix):
 
 
 # --------------------------------------------------------------------------- #
-# bullet 4 — answers land in the record                                        #
+# clause 2 — answers land in the record                                        #
 # --------------------------------------------------------------------------- #
 DATED = re.compile(r"<date>|\{date\}|\d{4}-\d{2}-\d{2}|dated", re.IGNORECASE)
 
@@ -823,7 +842,7 @@ def check_answers_land_in_the_record(pages, write_prefix):
     problems = []
     if answer is None:
         problems.append("the surface never says where an answer lands")
-        return _result("4", "FAIL", "; ".join(problems), declared=declared)
+        return _result("2", "FAIL", "; ".join(problems), declared=declared)
     lands_in = declared[answer]["lands_in"]
     if "ratification" not in lands_in.lower():
         problems.append(f"an answer is said to land in “{lands_in}”, which is not the ratification record")
@@ -849,15 +868,15 @@ def check_answers_land_in_the_record(pages, write_prefix):
             problems.append(f"{page.route}: an answer form sends no word")
             break
     if problems:
-        return _result("4", "FAIL", "; ".join(problems[:6]), lands_in=lands_in, forms=len(forms))
-    return _result("4", "PASS",
+        return _result("2", "FAIL", "; ".join(problems[:6]), lands_in=lands_in, forms=len(forms))
+    return _result("2", "PASS",
                    f"{len(forms)} answer form(s), each naming what it answers, and the surface says "
                    f"every answer lands in {lands_in}",
                    lands_in=lands_in, forms=len(forms))
 
 
 # --------------------------------------------------------------------------- #
-# bullet 5 / Core 8 second half — plain words on the surface                    #
+# clause 8 — plain words on the surface                                        #
 # --------------------------------------------------------------------------- #
 IDENTIFIER_CHARS = "-_/."
 
@@ -895,10 +914,10 @@ def check_vocabulary(pages):
                 break
     if hits:
         named = ", ".join(f"{h['term']} ({h['page']})" for h in hits[:6])
-        return _result("5", "FAIL",
+        return _result("8c", "FAIL",
                        f"{len(hits)} internal term(s) in the app's own words: {named}",
                        hits=hits)
-    return _result("5", "PASS",
+    return _result("8c", "PASS",
                    f"across {len(pages)} page(s), nothing in the app's own words would send a reader "
                    f"to a glossary; {folded} word(s) of technical detail sit behind Details folds",
                    pages=len(pages), folded_words=folded)
@@ -983,7 +1002,7 @@ def check_both_vocabularies(pages):
 def check_whole_operation_in_view(pages):
     operation = next((p for p in pages if p.is_operation_page()), None)
     if operation is None:
-        return _result("9", "FAIL", "no page shows the operation")
+        return _result("9b", "FAIL", "no page shows the operation")
 
     text = operation.root.text()
     checks = []
@@ -1047,14 +1066,133 @@ def check_whole_operation_in_view(pages):
 
     missing = [c for c in checks if c["status"] == "FAIL"]
     if missing:
-        return _result("9", "FAIL",
+        return _result("9b", "FAIL",
                        f"{len(missing)} of {len(checks)} not in view: "
                        + "; ".join(f"{c['in view']} ({c['detail']})" for c in missing[:5]),
                        in_view=checks)
-    return _result("9", "PASS",
+    return _result("9b", "PASS",
                    f"all {len(checks)} parts of the operation are on one page, and nothing on the "
                    "board stops anything",
                    in_view=checks)
+
+
+# --------------------------------------------------------------------------- #
+# clause 4 — no data of its own                                                #
+# --------------------------------------------------------------------------- #
+#: The surface saying, in its own words, where the truth it shows lives.
+KEEPS_NOTHING_RE = re.compile(
+    r"keeps? nothing of its own|holds no data of its own|no data of its own", re.I
+)
+#: A project artifact named on the page — the file a document page is a view of.
+PROJECT_PATH_RE = re.compile(r"\b[\w.-]+/[\w.-]+\.(?:md|yaml|yml|json|py|html)\b")
+
+
+def check_no_data_of_its_own(pages):
+    """Core 4: "No data of its own. … No second copy of the truth."
+
+    Two halves are readable from what the app serves. Every page must SAY the
+    surface keeps nothing of its own — a reader who cannot tell whether they
+    are looking at the project or at the app's private copy has to go and check
+    the repository, which is the trip this promise exists to remove. And every
+    document page must NAME the project artifact it is a view of, so the claim
+    is checkable on the page rather than taken on trust.
+
+    What a static read cannot do is prove a private store does not exist behind
+    the page; that is the app's own test suite's job, and the detail below says
+    so rather than implying more than was checked.
+    """
+    problems = []
+    silent = [p.route for p in pages if not KEEPS_NOTHING_RE.search(p.own_words())]
+    if silent:
+        problems.append(
+            f"{len(silent)} of {len(pages)} page(s) never say the surface keeps no data "
+            f"of its own: {silent[:4]}"
+        )
+    docs = [p for p in pages if p.is_document_page()]
+    unattributed = [p.route for p in docs if not PROJECT_PATH_RE.search(p.html)]
+    if unattributed:
+        problems.append(
+            f"{len(unattributed)} of {len(docs)} document page(s) name no project file they "
+            f"are a view of: {unattributed[:4]}"
+        )
+    if problems:
+        return _result("4", "FAIL", "; ".join(problems), silent=silent,
+                       unattributed=unattributed)
+    attributed = (f"{len(docs)} document page(s) name the project file they show"
+                  if docs else "no document page in this target to attribute")
+    return _result(
+        "4", "PASS",
+        f"all {len(pages)} page(s) say the surface keeps no data of its own, and "
+        f"{attributed}; whether a private store sits behind them is not readable here",
+        documents=len(docs),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# clause 5 — proposals look the same whoever proposed                          #
+# --------------------------------------------------------------------------- #
+#: surface.v1 Core 5, and documents.v1 Core 8: the three parts, in this order.
+PROPOSAL_PARTS = (
+    ("what changes", re.compile(r"the exact change", re.I)),
+    ("the evidence", re.compile(r"the evidence", re.I)),
+    ("what does not change", re.compile(r"what does\s+(?:\*\*)?not(?:\*\*)?\s+change", re.I)),
+)
+
+
+def _proposal_pages(pages):
+    out = []
+    for p in pages:
+        if "proposal" in p.route.lower() or "candidate" in p.route.lower():
+            out.append(p)
+        elif PROPOSAL_PARTS[0][1].search(p.own_words()):
+            out.append(p)
+    return out
+
+
+def check_proposals_look_the_same(pages):
+    """Core 5: "Proposals look the same whoever proposed."
+
+    The clause fixes the shape: what changes, sentence by sentence · the
+    evidence · what does not change. The kit reads the page's OWN words, not
+    the proposal's, because the promise is that the SURFACE lays every proposal
+    out the same way — a manager session's draft and a teammate's pull request
+    reaching a reader in two different shapes is the failure. Order matters:
+    evidence before the change asks a reader to judge a case before they know
+    what it is.
+    """
+    proposals = _proposal_pages(pages)
+    if not proposals:
+        return _skip(
+            "5",
+            "no proposal is open in this target, so no page lays one out — point the "
+            "kit at an app whose project carries a `*.vN-candidate.md`, or at a page "
+            "set rendered from one",
+        )
+    problems, checked = [], []
+    for p in proposals:
+        words = p.own_words()
+        at = {label: rx.search(words) for label, rx in PROPOSAL_PARTS}
+        missing = [label for label, m in at.items() if m is None]
+        row = {"route": p.route, "missing": missing}
+        if missing:
+            problems.append(f"{p.route} shows no {', no '.join(missing)}")
+        else:
+            order = [at[label].start() for label, _ in PROPOSAL_PARTS]
+            row["order"] = order
+            if order != sorted(order):
+                problems.append(
+                    f"{p.route} lays the three parts out in the wrong order "
+                    f"({[l for l, _ in PROPOSAL_PARTS]} at {order})"
+                )
+        checked.append(row)
+    if problems:
+        return _result("5", "FAIL", "; ".join(problems[:6]), proposals=checked)
+    return _result(
+        "5", "PASS",
+        f"all {len(proposals)} proposal page(s) show what changes, the evidence, and "
+        "what does not change — in that order, whoever proposed",
+        proposals=checked,
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -1074,19 +1212,21 @@ def run_conformance(target, *, write_prefix: str = "/do/", changes_nothing=()):
     pages, meta = resolve_target(str(target))
     changes_nothing = list(changes_nothing) + list(meta.get("changes_nothing", []))
     results = [
-        check_places_switch(pages),
-        check_answering_shortens(pages),
-        check_fill_updates_the_board(pages),
-        check_lock_gated(pages),
-        check_what_changed(pages),
-        _skip("2"),
-        check_write_paths(pages, write_prefix, changes_nothing),
-        check_write_paths_map_to_operations(pages, write_prefix),
-        check_answers_land_in_the_record(pages, write_prefix),
-        check_vocabulary(pages),
-        check_state_words(pages),
-        check_both_vocabularies(pages),
-        check_whole_operation_in_view(pages),
+        check_places_switch(pages),                                  # 1a
+        check_answering_shortens(pages),                             # 1b
+        check_answers_land_in_the_record(pages, write_prefix),       # 2
+        check_write_paths(pages, write_prefix, changes_nothing),     # 3a
+        check_write_paths_map_to_operations(pages, write_prefix),    # 3b
+        check_no_data_of_its_own(pages),                             # 4
+        check_proposals_look_the_same(pages),                        # 5
+        check_what_changed(pages),                                   # 6
+        check_lock_gated(pages),                                     # 7
+        check_state_words(pages),                                    # 8a
+        check_both_vocabularies(pages),                              # 8b
+        check_vocabulary(pages),                                     # 8c
+        check_fill_updates_the_board(pages),                         # 9a
+        check_whole_operation_in_view(pages),                        # 9b
+        _skip("10"),
     ]
     summary = {
         "pass": sum(r["status"] == "PASS" for r in results),
