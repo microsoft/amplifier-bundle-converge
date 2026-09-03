@@ -258,6 +258,18 @@ def create_app(config_path: Path | None = None, secret_path: Path | None = None)
     static_dir.mkdir(parents=True, exist_ok=True)
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
+    from fastapi.responses import FileResponse
+
+    @app.get("/manifest.webmanifest", include_in_schema=False)
+    def manifest():
+        return FileResponse(static_dir / "manifest.webmanifest", media_type="application/manifest+json")
+
+    @app.get("/sw.js", include_in_schema=False)
+    def service_worker():
+        return FileResponse(static_dir / "sw.js", media_type="application/javascript",
+                            headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"})
+
+
     branding_dir = REPO_ROOT / "assets" / "branding"
     if branding_dir.is_dir():
         app.mount("/branding", StaticFiles(directory=str(branding_dir)), name="branding")
