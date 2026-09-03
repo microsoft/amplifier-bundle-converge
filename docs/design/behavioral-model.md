@@ -1,5 +1,14 @@
 # Behavioral Model — `converge`
 
+> **Snapshot — 2026-08-29.** A design-time record of what was intended then, kept
+> as history. It is not current law and is not maintained against the shipped
+> bundle: the rules are `docs/PROTOCOL.md`, the promises are `contracts/`, and
+> what actually ships is `README.md`. Where this document and those disagree,
+> they win. Known drift since: the `encode` and `full-wave` recipes were retired
+> (`seed-reconcile` is the one recipe); `amendment-drafter` is now
+> `proposal-drafter`; the bundle assembles on the lean `anchors` base, so read
+> any heavy-package helper named below as its lean equivalent.
+
 > Derived **solely** from `docs/design/mechanism-spec.md` (via structured extraction).
 > Nothing in this document is inferred beyond that source. Where the spec is silent,
 > this document says so rather than filling the gap. Section references (§n) are to

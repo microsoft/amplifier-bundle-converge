@@ -1,8 +1,9 @@
 # Conformance kits
 
-Three runnable kits, one per contract. Each is the **executable version of its
-contract's "Conformance kit asserts" section** — point it at a target and it
-reports, rule by rule, whether the promises are kept.
+Three runnable kits, one per contract. Each is the **executable version of the
+promises its contract makes** — point it at a target and it reports, rule by
+rule, whether they are kept. Which sentences a kit numbers its rules to
+differs by kit today; see *Numbering follows the contract* below.
 
 | Kit | Contract | Target | What it judges |
 |---|---|---|---|
@@ -59,14 +60,52 @@ uv run --with pytest pytest conformance/ -q          # all three kits
 uv run --with pytest pytest conformance/documents/ -q # one kit
 ```
 
-## Numbering follows the contract
+## Numbering follows the contract — to one of two anchors
 
-Every rule row is numbered to its contract's **Conformance kit asserts** bullet.
-Where one bullet carries several independent promises, the kit emits one row per
-promise, lettered inside the bullet (`1a`, `1b`, …) — so a failure names the
-exact promise rather than a whole paragraph, and a reader can go from a failed
-rule straight to the sentence it operationalizes. Each kit's README carries the
-full table with the contract sentence quoted beside each row.
+Every rule row is numbered to a sentence in its contract, so a reader can go
+from a failed rule straight to the promise it operationalizes. Where one
+sentence carries several independent promises, the kit emits one row per
+promise, lettered inside it (`1a`, `1b`, …) — a failure names the exact
+promise rather than a whole paragraph. Each kit's README carries the full
+table with the contract sentence quoted beside each row.
+
+**Two kits anchor to the *Conformance kit asserts* bullets; one anchors to the
+Core clauses.** That is the current state, measured, not an aspiration:
+
+| Kit | Core clauses | *Conformance kit asserts* bullets | Rule ids | Anchored to |
+|---|---|---|---|---|
+| `composition/` | 1–7 | 1–4 | 1–4 | the bullets |
+| `documents/` | 1–13 | 1–7 | 1–13 | the **Core clauses** |
+| `surface/` | 1–10 | 1–5 | 1–5 | the bullets |
+
+The documents kit moved because the bullet anchor **hid a real gap**. A
+contract's bullet list is shorter than its Core clause list, so a clause with
+no bullet gets no row — and a missing row is invisible: nothing looks wrong.
+`documents.v1` clause 10 ("Plain state words everywhere") and clause 11
+("Technical detail is folded") had no bullet, therefore no row, therefore no
+check, and nobody could see it. The same arithmetic still holds next door:
+`composition.v1` has seven Core clauses behind four bullets, `surface.v1` ten
+behind five. **Under a bullet anchor no kit can tell you whether a Core clause
+went unchecked** — there is no row to be missing. Only the documents kit's
+self-test carries `test_every_core_clause_has_a_row`; the other two have no
+such test, because under their anchor there is nothing for it to count. That
+is a fact about those kits recorded here rather than papered over; changing
+them waits on the ruling below.
+
+Which anchor `documents.v1` clause 5 ("Numbers match the conformance kit's rule
+table") actually means is an open question for the steward, proposed in
+[`contracts/documents.v2-candidate.md`](../contracts/documents.v2-candidate.md).
+Until it is answered, the documents kit's rule 5b reports the divergence and
+stays `SKIP` rather than failing another kit on an unratified reading. If the
+Core-clause reading is ratified, the `composition` and `surface` tables
+renumber and this section collapses to one anchor.
+
+Check the table above at any time:
+
+```sh
+uv run conformance/documents/run.py . --json-only \
+  | python3 -c "import json,sys; print(*[o for o in [r for r in json.load(sys.stdin)['results'] if r['rule']=='5b'][0]['observed']], sep='\n')"
+```
 
 ## When a kit reports a finding
 

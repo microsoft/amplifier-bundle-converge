@@ -1,0 +1,80 @@
+<!--
+  GOAL-FILE.md.template — the brief one worker session runs alone.
+  Copy to the lane's goal file, replace every <placeholder>, delete this
+  comment. One screen when finished. The lane sees this file and its working
+  copy and nothing else, so anything missing here does not exist.
+
+  The one rule that decides whether a lane is credited: every acceptance item
+  must be checkable from a file on disk or from printed command output. What a
+  lane passed as a tool-call argument is invisible to whoever judges it.
+-->
+
+# Lane <lane name> — <the one thing this lane is for>
+
+Worker session in its own copy of <repository>, on branch `lane/<item id>`.
+Read first: <the two or three files this lane cannot work without>.
+
+**Work item:** `<item id>` — read it, claim it, and at the end resolve it, then
+**read it back** with the queue's read command (`work_list`, given the item's
+id) and print the stored reason. That printed read-back is the evidence; the
+resolve call is not.
+
+**File ownership — edit ONLY:** `<path>/**` and `<path>/**`. Everything else is
+off-limits. Never merge to the integration branch. Commit to your branch.
+
+## Outcome
+
+<Two or three sentences describing the state of the world when this lane is
+right. Present tense. No steps.>
+
+## Done means exactly ONE of
+
+- **A) SUCCESS** — every acceptance item met, with its evidence visible in a
+  committed file or in printed output; the work committed; the item resolved,
+  read back, and the stored reason printed. Write
+  `<absolute path outside the repository>/DONE.json`:
+  `{"status":"success","summary":"…","commits":<n>,"residuals":[…]}`.
+- **B) BLOCKED** — a blocker this lane cannot clear. Write
+  `<absolute path outside the repository>/BLOCKED.md` naming the cause; commit
+  whatever is sound; stop.
+
+No third outcome. If every deliverable is committed and its evidence is on disk
+or in printed output, the outcome is A.
+
+## Acceptance
+
+<Number them. Every item names a file path, or a command whose output this lane
+prints. An item that names neither is not an acceptance item yet — rewrite it
+until it does. Quote the contract clause the lane closes, so "done" is checked
+against the promise rather than against a feeling.>
+
+1. `<path/to/file>` <says exactly what — a version, a section title, a rule>.
+2. `<command>` is run and its output printed, showing <what>.
+3. `grep -n '<the exact string>' <path>` prints at least one line, and that
+   output is shown.
+4. The item is resolved, then read back with `work_list` and the stored reason
+   printed.
+
+## Scope-outs
+
+<What this lane must not touch: paths, live services, shared tooling, other
+people's files. Named, not implied.>
+
+## Known
+
+<The honesty gate first: the exact sentence this lane must be able to say if the
+work turns out not to be provable here — "no <device or host> available, so
+verification is <weaker kind> only, and the write-up says so" — and where that
+sentence will be visible. Then any fact that saves the lane an hour.>
+
+- Show command output inline; never assert a result without it.
+
+---
+
+LANE COMPLETION MARKER: when the goal is met, write the terminal marker to the
+absolute path below. It is OUTSIDE the repository on purpose — a lane's own
+`git add -A` can then never stage it, and two lanes' markers can never collide
+when their branches merge. Do not create, stage, or commit a marker inside the
+repository.
+
+  <absolute path outside the repository>/DONE.json

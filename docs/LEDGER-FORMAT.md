@@ -4,9 +4,9 @@
 **Promotion trigger (named):** the moment a *second* repo adopts this format,
 or the first real cross-repo ledger query is needed, this crosses the seam
 test ("if this changed silently, who breaks?"). At that point: author
-`ledger-format.v1.md` in the shared contracts repo and take it through the
-Freeze Bar. Until then, adopting repos may deviate freely — deviations are
-data for v1.
+`ledger-format.v1.md` in the shared contracts repo and lock it once it meets the
+four conditions (`docs/PROTOCOL.md` §5). Until then, adopting repos may deviate
+freely — deviations are data for v1.
 **Derived from:** better-attractor's spec-conformance matrix
 (`DESIGN-conformance-matrix.md`, ~154 rows, probes measured passing) — the
 only working implementation. Portable parts kept; engine-specific parts

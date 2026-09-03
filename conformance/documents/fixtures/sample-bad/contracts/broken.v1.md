@@ -9,12 +9,16 @@ the H1 (which carries none at all).
 
 1. Clauses that do not lead in bold — VIOLATES 5a. The reader skimming the
    bold text reads nothing, because there is none.
-2. A second clause, also unbolded. Its state is CONFORMS until the check runs
-   — VIOLATES 10a: a machine disposition token standing in prose where a plain
-   state word belongs. The plain form is *Kept*.
+2. A second clause, also unbolded. Its state is CONFORMS until the check runs,
+   the lane is RUNNING and the item is BLOCKED — VIOLATES 10a: machine state
+   words from all three of clause 10's vocabularies standing in prose where
+   plain state words belong. The plain forms are *Kept*, *Working*, and
+   *Waiting on you*.
 3. A third clause whose deciding sentence has to be read around the snippet
-   below — VIOLATES 11: technical detail among the teeth instead of folded
+   below — VIOLATES 11a: technical detail among the teeth instead of folded
    into a marked section.
+4. **A clause that asserts and then stops — VIOLATES 5c: it leads in bold and
+   says not one plain line of why.**
 
 ```sh
 ./scripts/check --strict --format=json | jq '.rows[] | select(.ok == false)'

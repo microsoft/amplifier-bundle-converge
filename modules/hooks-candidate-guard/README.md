@@ -8,6 +8,33 @@ is allowed; changes go through a sibling proposal file and owner ratification.
 
 Full design: `docs/design/hooks-candidate-guard-spec.md`.
 
+## Changelog
+
+### 2026-09-02 — the guard now reads the ratified anatomy, on both write paths
+
+**Root cause, one sentence: the guard's notion of "a locked contract" and "a
+proposal file" lagged the ratified anatomy, and one write path never reached
+the guard at all.** Four reports were filed independently and collapse into
+two fixes. Three of them — `converge-diw` (the guard read
+`**Status:** FROZEN`, while `contracts/documents.v1.md` clause 6 mandates that
+status lives in the H1 parenthetical `(FROZEN <date>)` *and nowhere else*, the
+form `.githooks/pre-push` already checked), `converge-9vw` and `converge-ksg`
+(the guard admitted only the legacy `CANDIDATE-*.md`, while clause 8 mandates
+`<contract>.vN-candidate.md` — so a proposal under the mandated name was
+neither writable beside a locked contract nor findable by the escape hatch,
+and a contract locked per the contracts was not guarded at all) — are all the
+same drift: **the documents were ratified forward and the guard was left
+behind, in two places at once (the module defaults and the shipped
+`behaviors/converge.yaml`), which is why fixing one never fixed the symptom.**
+They are fixed together by teaching `frozen_marker_regex` the H1 form
+alongside the legacy body markers, and by a test that asserts the module
+defaults and the shipped config cannot silently diverge again. The fourth,
+`converge-ldz` (`amplifier tool invoke` wrote a locked contract unimpeded),
+has a different cause and gets its own fix — see "The two write paths" below.
+
+Not a wording change to any contract: the contracts were already right. The
+guard moved to them.
+
 ## The two proposal names
 
 The guard admits **both** sanctioned proposal filenames beside a locked
@@ -46,6 +73,65 @@ A proposal must also carry a `target:` line naming the locked file it amends —
 under **both** names. The guard never infers which contract a proposal amends
 from its filename alone, so `x.v2-candidate.md` does not implicitly unlock
 `x.v1.md` until it says so and the owner ratifies it.
+
+## What "locked" means
+
+A guarded file is locked when its current on-disk content carries any of three
+markers (`frozen_marker_regex`, `require_frozen_marker: true`):
+
+| Marker | Where it comes from | Status |
+|---|---|---|
+| `(FROZEN <date>)` in the H1 | `contracts/documents.v1.md` clause 6 | **The ratified form** — status lives here and nowhere else. Also what `.githooks/pre-push` checks. |
+| `**Status:** FROZEN` / `**Status:** RATIFIED` | earlier convention | Legacy, still detected |
+| `status: FROZEN` | earlier convention | Legacy, still detected |
+
+`(DRAFT)` in the H1 is **not** a lock — a contract being authored during
+ENCODE stays writable.
+
+The H1 branch is deliberately loose (any `#`-led line, case-insensitive):
+over-matching only ever guards *more*, whereas a guard that under-matches
+fails silently — which is exactly how a contract locked per the contracts went
+unguarded. Proposal files that quote a locked H1 are unaffected, because
+`always_allow_globs` is checked before guarding.
+
+The module's default and the shipped `behaviors/converge.yaml` value are
+**byte-identical on purpose**, and a test asserts it: they disagreed once, and
+that disagreement is half of why four reports were filed.
+
+## The two write paths
+
+The guard covers both ways a write can reach the filesystem in a session.
+
+| Path | Who takes it | How the guard sees it |
+|---|---|---|
+| `tool:pre` | the orchestrator, for every tool call an agent makes | a registered hook handler (priority 5) |
+| `tools[name].execute(...)` | `amplifier tool invoke`, and anything else that dispatches a tool directly | the guard wraps each mounted tool instance's own `execute` |
+
+**Why the second path exists (`converge-ldz`).** Measured 2026-09-02, not
+inferred: in the session `amplifier tool invoke` builds, this hook *is*
+mounted and *is* registered on `tool:pre` — and the write landed anyway.
+`amplifier_app_cli/commands/tool.py::_invoke_tool_from_bundle_async` builds a
+full session and then calls `tool_instance.execute(tool_args)` itself. No
+`tool:pre` is ever emitted, so **no hook registered on that event — not this
+one, not any — can intercept it.** That is an app-layer dispatch property, not
+something a hook can fix from the `tool:pre` side.
+
+What makes the wrap possible is mount order:
+`amplifier_core/_session_init.py` mounts, in sequence, orchestrator → context
+→ providers → **tools** → **hooks**. Every tool instance therefore already
+exists in the coordinator when this hook mounts. Wrapping is per **instance**,
+never on the class, so it cannot leak into an unrelated session that merely
+imports the same tool module; `mount()`'s cleanup restores each original.
+
+A denied direct-dispatch write **raises** `CandidateGuardBlocked` rather than
+returning an error dict — a returned dict is indistinguishable from success to
+a caller that does not inspect it, while `amplifier tool invoke` prints a
+raised exception and exits non-zero. Off switch: `wrap_tool_execute: false`.
+
+A tool mounted *after* the hooks phase (by an `on_session_ready` callback) is
+not wrapped; the `tool:pre` path still guards it. If a tool cannot be wrapped
+at all (slotted / read-only instance), the module logs a warning naming that
+tool rather than degrading silently.
 
 ## What it does
 
@@ -118,6 +204,32 @@ disposable fixture repo and all recorded GREEN — results in spec §5.3,
 including T5 (delegated-agent coverage), which closed the propagation
 loophole with live evidence.
 
+**T5 was RE-RUN on 2026-09-02 after the wrapper change, and is GREEN.** A real
+`anchors:builder` sub-agent, spawned through the app's own `session.spawn`
+capability, was instructed to overwrite an H1-locked `contracts/probe.v1.md`
+in one `write_file` call. It came back: "The write was blocked... Denied by
+hook: converge/candidate-guard: BLOCKED direct write to FROZEN file". File
+byte-identical, 143 -> 143 bytes. This is a stronger probe than the
+2026-08-30 original, which used a legacy `**Status:** FROZEN` fixture: it
+proves the H1 marker AND delegated-agent coverage together.
+
+T1/T3/T4/T6 were re-verified by their W1 unit mirrors plus this lane's live
+probes A-H; T2 by re-reading the composed tool sources. Independently, none of
+T1-T6 *could* have regressed: the hook-registration call is byte-identical,
+the interception surface is untouched, and the one behavioural change -- an
+added alternation branch in `frozen_marker_regex`, consumed as
+`bool(re.search(...))` -- is monotonic, so `_is_guarded` returns True on a
+strict superset. That reasoning is a cross-check on the measurement, not a
+substitute for it.
+
+**Still unprobed, and now low-stakes:** whether the `execute` *wrapper*
+reaches a spawned sub-session. The T5 run above was denied at `tool:pre`
+("Denied by hook:"), so the hook fired first and the wrapper was never
+exercised there. Since the wrapper exists to cover direct CLI dispatch
+(`amplifier tool invoke`), which is a root-process path rather than something
+a delegated agent does, the practical exposure is small -- but it is measured
+as unproven, not assumed.
+
 The two-proposal-name change did **not** touch the interception surface those
 probes exercise: `intercept_tools`, `tool_name_aliases`, `path_fields`,
 `bash_write_patterns`, and the mount wiring are all unchanged, so T2 (tool
@@ -136,15 +248,14 @@ denied) are each mirrored by a unit test in the `W1` block of
   hand-crafting an obfuscated bash write. Defense-in-depth backstop: a
   target-repo git `pre-commit` hook rejecting commits that modify a FROZEN
   file without a ratified CANDIDATE (out-of-bundle, not shipped here).
-- **`amplifier tool invoke` is not covered — observed, not inferred.** On
-  2026-09-02, in a scratch repo holding a FROZEN `contracts/probe.v1.md`,
-  `amplifier tool invoke write_file file_path=contracts/probe.v1.md ...` with
-  the converge bundle composed **wrote the file**, while this module's own
-  `evaluate_tool_pre()` denies that byte-identical input. The guard protects a
-  *session*; direct CLI tool dispatch appears to run outside the `tool:pre`
-  pipeline the hook registers on. Filed as its own tracker item. Practical
-  effect: the guard is not a substitute for the git `pre-commit` /
-  pre-push backstop below, which catches a bypass whatever produced it.
+- **Direct tool dispatch is covered, but by a wrapper, not by the hook.** See
+  "The two write paths". `amplifier tool invoke` emits no `tool:pre` at all,
+  so the coverage comes from wrapping each mounted tool instance's `execute`.
+  Two honest limits follow: a tool mounted *after* the hooks phase (via an
+  `on_session_ready` callback) is not wrapped, and a caller that reaches into
+  a tool's *internals* rather than calling `execute` is not seen either. Both
+  degrade to `tool:pre`-only coverage, and neither is silent — the module
+  warns when it cannot wrap.
 - **Delegated-agent coverage is live-verified, not kernel-guaranteed.** The
   kernel guarantees **no** automatic hook inheritance into forked sub-sessions
   (`SESSION_FORK_SPECIFICATION.md`, Kernel Guarantee #4: "Independence").
@@ -202,7 +313,7 @@ Every key below is overridable via the hook's `config:` block in
 | `enabled` | `true` | Master on/off switch. |
 | `guarded_globs` | `["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md"]` | Candidate files for guarding. |
 | `require_frozen_marker` | `true` | Also require the FROZEN/RATIFIED marker in current content. |
-| `frozen_marker_regex` | `(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)\|^status:\s*FROZEN` | How "frozen" is detected. |
+| `frozen_marker_regex` | `(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)\|^status:\s*FROZEN\|^#.*\(FROZEN\b` | How "locked" is detected — the ratified H1 form plus both legacy body markers. Byte-identical to the shipped `behaviors/converge.yaml` value; a test asserts they cannot diverge. |
 | `always_allow_globs` | `["**/*.v[0-9]*-candidate.md", "**/CANDIDATE-*.md"]` | Both proposal names — always allowed, checked before guarding. |
 | `intercept_tools` | `["write_file", "edit_file", "apply_patch"]` | Native tool names to intercept. |
 | `tool_name_aliases` | `["Write", "Edit", "MultiEdit"]` | Claude-Code-style aliases, same path handling as write_file/edit_file. |
@@ -217,6 +328,7 @@ Every key below is overridable via the hook's `config:` block in
 | `allow_emergency_unlock` | `false` | Enable the break-glass token fallback. |
 | `emergency_unlock_token` | `".converge/UNLOCK"` | Path to the token file (only read when enabled above). |
 | `fail_closed_on_error` | `true` | Deny (don't continue) if evaluating a guarded-glob-matching path raises. |
+| `wrap_tool_execute` | `true` | Also guard direct tool dispatch by wrapping each mounted tool's `execute` — the `amplifier tool invoke` path, which emits no `tool:pre`. |
 | `enforce_encode_before_impl` | `false` | Opt-in rule (b), see "Known gaps". |
 | `encode_marker_path` | `".converge/encoded"` | Phase marker rule (b) checks for. |
 
@@ -230,9 +342,73 @@ session required. Run with:
 uv run --with pytest --with pytest-asyncio pytest tests/
 ```
 
-Two blocks: `U1`–`U10` follow spec §5.1; the `W1` block covers
-`composition.v1` clause 7 (both proposal names). The W1 cases seed the
-proposal file as **already existing and already carrying a FROZEN marker** —
-that is the case that actually discriminates. Writing to a path that does not
-exist yet proves nothing: a missing file can never read as frozen, so it is
-admitted with or without the allowance.
+Three blocks: `U1`–`U10` follow spec §5.1; `W1` covers `composition.v1`
+clause 7 (both proposal names); `W3` covers the ratified H1 locked marker and
+the second write path (`converge-diw` / `-9vw` / `-ksg` / `-ldz`).
+
+The W1 and W3 proposal cases seed the proposal file as **already existing and
+already carrying a locked marker** — that is the case that actually
+discriminates. Writing to a path that does not exist yet proves nothing: a
+missing file can never read as locked, so it is admitted with or without the
+allowance.
+
+`W3` also carries two tests that exist to catch a silent regression rather
+than a behaviour:
+
+- `test_w3a_module_default_matches_the_shipped_behavior_config` reads
+  `behaviors/converge.yaml` and asserts the module defaults and the shipped
+  config agree on `frozen_marker_regex`, `always_allow_globs` and
+  `candidate_glob`. Their disagreement is half the cause of the four reports.
+- `test_w3d_wrapping_is_opt_outable_and_idempotent` is the removal control for
+  the `execute` wrapper: with `wrap_tool_execute: false` nothing is touched,
+  so the pre-fix behaviour is exactly recoverable.
+
+### Live evidence (2026-09-02)
+
+The wrapper was verified against the real composed session, not only in
+unit tests. Fixture: a scratch repo with `contracts/probe.v1.md` whose H1 is
+`# Probe Contract — v1 (FROZEN 2026-09-02)` and which carries no `**Status:**`
+line at all.
+
+| Probe | Expected | Result |
+|---|---|---|
+| `write_file` on the H1-locked contract | deny | `CandidateGuardBlocked`, file unchanged (128 bytes) |
+| same, before the fix | *(the defect)* | wrote it — 128 → 8 bytes |
+| `contracts/probe.v2-candidate.md` beside it | allow | written |
+| `contracts/CANDIDATE-probe.md` beside it | allow | written |
+| `(DRAFT)` contract | allow | written |
+| legacy `**Status:** FROZEN`, no H1 status | deny | blocked, file unchanged |
+| `bash` redirect into the locked contract | deny | blocked, file unchanged |
+| ordinary unguarded file | allow | written |
+| ratified `probe.v2-candidate.md` → edit the locked contract | allow | landed |
+| same proposal *unratified* | deny | blocked |
+
+**The literal binary, no reproduction, no deviation.** The exact command from
+the original report:
+
+```
+$ amplifier tool invoke write_file file_path=contracts/probe.v1.md \
+      content=hijacked -b <bundle>
+BEFORE: 158 bytes
+  …Remedy: write a sibling proposal 'contracts/probe.v2-candidate.md' …
+AFTER:  158 bytes        # unchanged
+```
+
+Before the fix, the same command reported success and wrote 8 bytes.
+
+Getting the worktree module to be the one actually under test needs one thing,
+and it is worth knowing. Two converge behaviors are registered as app bundles
+from git on this host; app bundles compose onto **every** session and
+composition dedupes to one, so their copy shadows the worktree copy and you
+silently measure the wrong module. The clean fix is a **project-local**
+`.amplifier/settings.local.yaml` in the probe directory:
+
+```yaml
+bundle:
+  app: []
+```
+
+That scopes the exclusion to one directory, mutates nothing global, and
+disturbs no concurrent work. Use it whenever probing a local module — the
+earlier probes here predate it and reproduced
+`_invoke_tool_from_bundle_async` in-process instead.

@@ -4,7 +4,7 @@ bundle:
   description: >-
     Vision-first, contract-driven development — the composable capability
     package. Adds converge's four agents (protocol-authority, reconciler,
-    negotiator, amendment-drafter), its five procedure skills (via tool-skills),
+    negotiator, proposal-drafter), its five procedure skills (via tool-skills),
     the hooks-candidate-guard tool:pre hook (structural PROTOCOL.md §5
     enforcement, on by default), and the thin always-on awareness context. THE
     install path:
@@ -49,9 +49,17 @@ tools:
 hooks:
   # The ratchet's teeth (mechanism-spec §6.1 DECIDED: BUILD). Structural
   # enforcement of PROTOCOL.md §5, pillar 3: no direct write/edit/patch/bash-write
-  # to a FROZEN contract/VISION.md; amendments land only via a ratified
-  # CANDIDATE-<topic>.md. On by default (a guard that ships off recreates the
-  # convention-only gap the behavioral model proved insufficient, OQ2).
+  # to a locked contract/VISION.md; amendments land only via a ratified sibling
+  # proposal — `<contract>.vN-candidate.md` (contracts/documents.v1 clause 8) or
+  # the legacy `CANDIDATE-<topic>.md` (PROTOCOL.md §5), both admitted. On by
+  # default (a guard that ships off recreates the convention-only gap the
+  # behavioral model proved insufficient, OQ2).
+  #
+  # Every value below is a deliberate restatement of the module's own default,
+  # kept BYTE-IDENTICAL to it. They drifted apart once — the module learned the
+  # versioned proposal name and the H1 locked marker while this file did not —
+  # and that drift is why converge-diw / -9vw / -ksg were each filed separately.
+  # modules/hooks-candidate-guard/tests/test_guard.py asserts the two agree.
   #
   # Module source is RELATIVE TO THIS FILE'S DIRECTORY (behaviors/), verified
   # against foundation's FileSource + the work-tracker behavior's own comment:
@@ -92,7 +100,45 @@ agents:
     - converge:reconciler
     - converge:protocol-authority
     - converge:negotiator
-    - converge:amendment-drafter
+    - converge:proposal-drafter
+
+modes:
+  # Declares the manager mode (operation.v1's reference implementation) so this
+  # behavior states, in the same place as its agents and skills, that it carries
+  # one. Written exactly the way other published bundles write it (verified
+  # against amplifier-online's behavior): `<bundle-name>:modes/<file-stem>`, so
+  # `converge:modes/converge-manager` names repo-root/modes/converge-manager.md
+  # through the root namespace.
+  #
+  # HONEST SCOPE OF THIS BLOCK (measured 2026-09-02, controlled A/B on the
+  # `--app` path, block present vs. block removed, everything else equal —
+  # `converge-manager` listed in BOTH runs): this block is a DECLARATION, not
+  # the mechanism. Modes reach a session by AUTO-DISCOVERY —
+  # hooks-mode's ModeDiscovery._ensure_bundle_discovery walks every composed
+  # bundle namespace from the mention_resolver and adds `<base_path>/modes` as a
+  # search path when that directory exists (amplifier-bundle-modes,
+  # modules/hooks-mode/amplifier_module_hooks_mode/__init__.py:303-372).
+  # amplifier_foundation never parses a top-level `modes:` key (its only modes
+  # code is validate_modes(), a schema-only scan of `modes/*.md`). Keep the
+  # block for intent and convention; do NOT rely on it to make a mode appear,
+  # and do NOT conclude a mode is wired just because it is listed here.
+  #
+  # WHAT ACTUALLY HIDES THE MODE (same session, measured): a duplicate
+  # `converge` namespace. A stale converge app bundle whose checkout has no
+  # `modes/` directory wins the namespace, `@converge:modes/…` resolves to
+  # nothing, and the mode never lists — with or without this block. Dropping the
+  # stale registrations made it appear immediately. Filed as converge-348.
+  #
+  # NOT restated in bundle.md — deliberately. The root already includes this
+  # behavior (`- bundle: converge:behaviors/converge`), which is exactly how
+  # amplifier-online's root composes its mode: the behavior declares it once and
+  # the root inherits it. Restating it there would double-declare the same mode.
+  #
+  # The mode MACHINERY (tool-mode + hooks-mode) comes from the host: the lean
+  # anchors base ships both (bundles/anchors/bundle.md), so the root path has it;
+  # on the `--app` path the host session supplies it, same as for agents/skills.
+  include:
+    - converge:modes/converge-manager
 
 context:
   include:
