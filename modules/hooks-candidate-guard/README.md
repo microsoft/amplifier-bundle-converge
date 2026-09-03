@@ -3,12 +3,49 @@
 Structural enforcement of `contracts/composition.v1.md` clause 7 and
 `PROTOCOL.md` §5 (pillar 3): **a locked contract changes by proposal, never by
 direct edit — by person or agent.** No direct write/edit/patch (or bash
-write-laundering attempt) to a **locked** (FROZEN) contract file or `VISION.md`
-is allowed; changes go through a sibling proposal file and owner ratification.
+write-laundering attempt) to a **locked** (FROZEN *or* RATIFIED) contract
+file, `VISION.md` or `PROTOCOL.md` is allowed; changes go through a sibling
+proposal file and owner ratification.
 
 Full design: `docs/design/hooks-candidate-guard-spec.md`.
 
 ## Changelog
+
+### 2026-09-03 — one word, one path, one false alarm
+
+Two reports, two independent causes, both silent in the wrong direction.
+
+**`converge-dwi` — `(RATIFIED <date>)` in the H1 was not a lock.** The marker
+regex accepted `**Status:** RATIFIED` in the *body* but only `(FROZEN` in the
+*H1*. So the same status word read as **locked** in one place and **unlocked**
+in the other — while `contracts/documents.v1.md` clause 6 mandates the H1 form
+and nowhere else. `docs/PROTOCOL.md` is the live instance: its H1 reads
+`… Protocol v3 (RATIFIED 2026-09-03)` and it carries no body status line at
+all, so the guard saw no marker on it whatsoever. Two halves of the same
+exposure, and both are fixed here: the H1 branch now reads `(RATIFIED` as well
+as `(FROZEN`, and `docs/PROTOCOL.md` / `PROTOCOL.md` join `VISION.md` in
+`guarded_globs`. Marker detection without glob coverage would have guarded
+nothing; glob coverage without marker detection likewise. The drift tripwire
+now covers `guarded_globs` too — it was the one value it did not check, and an
+unchecked value is exactly how the module and the shipped config drifted apart
+the first time.
+
+**`converge-drz` — the "no mounted tools visible" warning fired on every
+launch.** `mount()` is called **twice**, not once:
+`amplifier_core/validation/hook.py::_check_protocol_compliance` trial-mounts
+every hook module against a bare `amplifier_core.testing.MockCoordinator()`
+whose `get("tools")` returns `{}` and always will, *before* the real mount.
+The check fired there. The reporter measured both calls in one `-v` run:
+validator pass `tools_wrapped=0` (warning emitted), real mount
+`tools_wrapped=4` immediately after. So the guard was working exactly as
+designed and telling the user, on every start, that a safety property was
+**off**. A guard whose own diagnostic is a known false positive trains its
+reader to ignore it — which is precisely the failure mode a candidate guard
+exists to prevent. `mount()` now recognises the validation mock **by type**
+(`is_validation_mock`) and stays quiet for it. Not by duck-typing an empty
+tool dict: "no tools" is the very condition the warning reports, so inferring
+the mock from it would have silenced the genuine case too. A removal-control
+test asserts a real coordinator with no tools **still** warns.
 
 ### 2026-09-02 — the guard now reads the ratified anatomy, on both write paths
 
@@ -82,11 +119,25 @@ markers (`frozen_marker_regex`, `require_frozen_marker: true`):
 | Marker | Where it comes from | Status |
 |---|---|---|
 | `(FROZEN <date>)` in the H1 | `contracts/documents.v1.md` clause 6 | **The ratified form** — status lives here and nowhere else. Also what `.githooks/pre-push` checks. |
+| `(RATIFIED <date>)` in the H1 | same clause, the word ratified documents use | **The ratified form.** `docs/PROTOCOL.md` is the live instance (`… Protocol v3 (RATIFIED 2026-09-03)`, no body status line) |
 | `**Status:** FROZEN` / `**Status:** RATIFIED` | earlier convention | Legacy, still detected |
 | `status: FROZEN` | earlier convention | Legacy, still detected |
 
 `(DRAFT)` in the H1 is **not** a lock — a contract being authored during
 ENCODE stays writable.
+
+**Both H1 words, deliberately (`converge-dwi`).** The body branch accepted
+`**Status:** RATIFIED` from the start. Until 2026-09-03 the H1 branch accepted
+only `(FROZEN`, so the *same status word* read as locked in the body and
+unlocked in the H1 — with the H1 being the only place clause 6 allows status
+to live. Which word a document uses is a matter of its genre (a contract is
+frozen, a protocol is ratified), never a matter of whether it is law.
+
+A marker is only half of it: the path must also be inside `guarded_globs`
+(`contracts/*.md`, `contracts/**/*.md`, `docs/VISION.md`, `VISION.md`,
+`docs/PROTOCOL.md`, `PROTOCOL.md`). `docs/PROTOCOL.md` was outside that list
+until 2026-09-03, so it went unguarded regardless of what its H1 said. Listing
+a path costs nothing while it is `(DRAFT)` — guarding needs the marker too.
 
 The H1 branch is deliberately loose (any `#`-led line, case-insensitive):
 over-matching only ever guards *more*, whereas a guard that under-matches
@@ -132,6 +183,27 @@ A tool mounted *after* the hooks phase (by an `on_session_ready` callback) is
 not wrapped; the `tool:pre` path still guards it. If a tool cannot be wrapped
 at all (slotted / read-only instance), the module logs a warning naming that
 tool rather than degrading silently.
+
+### `mount()` is called twice per session
+
+Once by `amplifier_core/validation/hook.py::_check_protocol_compliance`
+against a bare `amplifier_core.testing.MockCoordinator()`, then once for real.
+The mock's `get("tools")` returns `{}` and always will — it is a
+protocol-compliance dry run, not a session — so **nothing is wrapped on that
+call, by construction, and nothing should be.** `mount()` detects it with
+`is_validation_mock(coordinator)` (type identity: class name `MockCoordinator`
+in an `amplifier_core` module) and suppresses the "no mounted tools visible"
+warning for it alone.
+
+This matters when reading logs: a `-v` run shows **two** mount lines, and the
+first one's `tools_wrapped=0` is expected. The real mount is the second.
+Anything that reads the first as the session's state will conclude the guard
+is off when it is not — which is exactly what `converge-drz` was.
+
+Detection is by type, never by "the tool dict is empty". A genuinely empty
+tool dict on a real coordinator is the condition the warning exists to report,
+and it still warns; `test_w4a_a_real_coordinator_with_no_tools_still_warns` is
+the removal control for that.
 
 ## What it does
 
@@ -265,6 +337,14 @@ denied) are each mirrored by a unit test in the `W1` block of
   app's composition — a delegated `foundation:file-ops` write to a FROZEN
   contract was denied — but that is a live-verified property, not a promise:
   **re-probe whenever the spawner or the composition changes.**
+- **The deny message's suggested proposal name reads the filename, not the
+  document.** `_proposal_name_for` derives `contracts/x.v2-candidate.md` from
+  `contracts/x.v1.md` by incrementing the `vN` in the *path*. A document that
+  carries its version only in its H1 — `docs/PROTOCOL.md`, whose H1 says
+  `v3` — gets the generic fallback `docs/PROTOCOL.v2-candidate.md` suggested,
+  which is a writable, admitted name but not the one a reader would pick
+  (`v4-candidate`). The guard admits **any** `*.v[0-9]*-candidate.md`, so this
+  costs a slightly-off suggestion, never a blocked proposal.
 - **Rule (b), ENCODE-before-implement, is a coarse approximation.**
   `enforce_encode_before_impl` (off by default) denies an "implementation
   write" (not `.md`, not under a `tests/` path) while the phase marker
@@ -311,9 +391,9 @@ Every key below is overridable via the hook's `config:` block in
 | Key | Default | Purpose |
 |---|---|---|
 | `enabled` | `true` | Master on/off switch. |
-| `guarded_globs` | `["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md"]` | Candidate files for guarding. |
+| `guarded_globs` | `["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md", "docs/PROTOCOL.md", "PROTOCOL.md"]` | Candidate files for guarding. Byte-identical to the shipped `behaviors/converge.yaml` value; a test asserts they cannot diverge. |
 | `require_frozen_marker` | `true` | Also require the FROZEN/RATIFIED marker in current content. |
-| `frozen_marker_regex` | `(?im)^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)\|^status:\s*FROZEN\|^#.*\(FROZEN\b` | How "locked" is detected — the ratified H1 form plus both legacy body markers. Byte-identical to the shipped `behaviors/converge.yaml` value; a test asserts they cannot diverge. |
+| `frozen_marker_regex` | `(?im)^\*\*Status:\*\*\s*(?:RATIFIED\|FROZEN)\|^status:\s*FROZEN\|^#.*\((?:FROZEN\|RATIFIED)\b` | How "locked" is detected — **both** ratified H1 words plus all the legacy body markers. Byte-identical to the shipped `behaviors/converge.yaml` value; a test asserts they cannot diverge. |
 | `always_allow_globs` | `["**/*.v[0-9]*-candidate.md", "**/CANDIDATE-*.md"]` | Both proposal names — always allowed, checked before guarding. |
 | `intercept_tools` | `["write_file", "edit_file", "apply_patch"]` | Native tool names to intercept. |
 | `tool_name_aliases` | `["Write", "Edit", "MultiEdit"]` | Claude-Code-style aliases, same path handling as write_file/edit_file. |
@@ -342,9 +422,11 @@ session required. Run with:
 uv run --with pytest --with pytest-asyncio pytest tests/
 ```
 
-Three blocks: `U1`–`U10` follow spec §5.1; `W1` covers `composition.v1`
-clause 7 (both proposal names); `W3` covers the ratified H1 locked marker and
-the second write path (`converge-diw` / `-9vw` / `-ksg` / `-ldz`).
+Four blocks: `U1`–`U10` follow spec §5.1; `W1` covers `composition.v1`
+clause 7 (both proposal names); `W3` covers the H1 `(FROZEN …)` locked marker
+and the second write path (`converge-diw` / `-9vw` / `-ksg` / `-ldz`); `W4`
+covers the validation trial-mount and the H1 `(RATIFIED …)` word
+(`converge-drz` / `-dwi`).
 
 The W1 and W3 proposal cases seed the proposal file as **already existing and
 already carrying a locked marker** — that is the case that actually
@@ -359,9 +441,18 @@ than a behaviour:
   `behaviors/converge.yaml` and asserts the module defaults and the shipped
   config agree on `frozen_marker_regex`, `always_allow_globs` and
   `candidate_glob`. Their disagreement is half the cause of the four reports.
+  `test_w4c_guarded_globs_also_match_the_shipped_behavior_config` extends the
+  same tripwire to `guarded_globs` — the fourth value, and the one it did not
+  cover.
 - `test_w3d_wrapping_is_opt_outable_and_idempotent` is the removal control for
   the `execute` wrapper: with `wrap_tool_execute: false` nothing is touched,
   so the pre-fix behaviour is exactly recoverable.
+- `test_w4a_a_real_coordinator_with_no_tools_still_warns` is the removal
+  control for the validation-mock suppression: silencing the *genuine* case
+  too would be a fix that deleted the diagnostic rather than corrected it.
+- `test_w4c_this_repos_own_protocol_reads_as_locked` asserts against the live
+  `docs/PROTOCOL.md`, not a fixture — it fails the day either half of that
+  document's coverage (glob membership, marker detection) drifts.
 
 ### Live evidence (2026-09-02)
 
