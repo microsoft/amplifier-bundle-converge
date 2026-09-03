@@ -1,0 +1,85 @@
+<!doctype html>
+<!--
+  A conforming short list (surface.v1 Core 1 and 2, kit rule 1b).
+
+  The list says how long it is in two places — the rail badge and the heading —
+  and both agree with the number of cards. That agreement is what makes
+  "answering shortens the list" checkable without a browser: answer one, the
+  page is drawn again, and both numbers are one smaller.
+
+  Every card carries the word to answer with and where to come back to.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Needs your word — Converge</title>
+</head>
+<body>
+<div class="shell">
+  <header class="rail">
+    <div class="brand"><span class="wordmark">Converge</span><span class="project">kettle</span></div>
+    <nav class="places" aria-label="Places">
+      <a class="place is-on" href="/">Needs your word <span class="count">2</span></a>
+      <a class="place" href="/direction">Direction</a>
+      <a class="place" href="/operation">Operation</a>
+    </nav>
+  </header>
+  <main id="main">
+    <div class="section">
+      <h2>2 things need your word</h2>
+      <p>Each one is worked out already: what it is, why now, what we suggest, and the two ways it
+      could go. Answering <em>later</em> re-ranks it and never dismisses it.</p>
+    </div>
+
+    <article class="card decision">
+      <h3>Lock <span class="doc quote">the halves promise</span></h3>
+      <p class="why">You read it a week ago and nothing has changed since; three of the four
+      conditions for locking it are green.</p>
+      <p class="rec"><span class="lbl">We suggest</span><br>Leave it open until the last condition
+      is green, then lock it in one pass.</p>
+      <ul class="tradeoffs">
+        <li>Locking it now means the next change costs a written proposal.</li>
+        <li>Leaving it open means two people can still read it two ways.</li>
+      </ul>
+      <form class="words" method="post" action="/do/answer-with-a-word">
+        <input type="hidden" name="subject" value="Lock the halves promise">
+        <input type="hidden" name="back" value="/">
+        <button class="word is-primary" type="submit" name="word" value="ratified">ratified</button>
+        <button class="word" type="submit" name="word" value="ratified with edits">ratified with edits</button>
+        <button class="word" type="submit" name="word" value="declined">declined</button>
+        <button class="word" type="submit" name="word" value="later">later</button>
+      </form>
+      <p class="muted"><a href="/direction/half.v1">Open it in Direction</a></p>
+    </article>
+
+    <article class="card decision">
+      <h3>Two lanes are idle</h3>
+      <p class="why">Two of the three lanes you asked for are carrying work, and four pieces of work
+      need nothing from you.</p>
+      <p class="rec"><span class="lbl">We suggest</span><br>Fill them, and look at the board
+      afterwards.</p>
+      <ul class="tradeoffs">
+        <li>Filling them starts work you have already agreed to.</li>
+        <li>Looking first costs you a minute and changes nothing.</li>
+      </ul>
+      <form class="words" method="post" action="/do/steer">
+        <input type="hidden" name="ask" value="fill the lanes">
+        <input type="hidden" name="back" value="/">
+        <button class="word is-primary" type="submit">fill the lanes</button>
+      </form>
+      <p class="muted"><a href="/operation">Open it in Operation</a></p>
+    </article>
+
+    <article class="card stack">
+      <span class="lbl">Since you were last here</span>
+      <p>One lane finished and one is stuck. Nothing else moved.</p>
+      <p class="muted"><a href="/operation">Open Operation</a></p>
+    </article>
+
+    <p class="foot">This page keeps nothing of its own. Everything on it is read back from the
+    project — its documents, its code record, its work queue, its lanes.</p>
+  </main>
+</div>
+</body>
+</html>

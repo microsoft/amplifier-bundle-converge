@@ -1,0 +1,93 @@
+<!doctype html>
+<!--
+  A board that shows a number and offers nothing to do about it.
+
+  Broken here:
+  * rule 1c — the gauge says the lanes are short by four and there is no fill
+    control anywhere on the board.
+  * rule 3a — a fifth write, /do/close-lane, sits beside the four.
+  * rule 3b — the Details fold names three writes, not four, so a steward
+    cannot tell which manager-session operation the rest are.
+  * rule 4  — an answer is said to land in "the session log", which is neither
+    the ratification record nor dated.
+  * rule 8a — a lane's state is shown as `held`, a token from the machinery
+    rather than one of the plain words.
+  * rule 9  — no limits, no manager sessions, no way to tell them all, a lane
+    with no evidence and nothing to drill into, and a Stop control on the board.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operation — Converge</title>
+</head>
+<body>
+<div class="shell">
+  <header class="rail">
+    <nav class="places" aria-label="Places">
+      <a class="place" href="/">Needs your word <span class="count">4</span></a>
+      <a class="place" href="/direction">Direction</a>
+      <a class="place is-on" href="/operation">Operation</a>
+      <a class="place" href="/nowhere">Reports</a>
+    </nav>
+  </header>
+  <main id="main">
+    <div class="section"><h2>Operation</h2></div>
+
+    <article class="card" id="lanes">
+      <span class="lbl">Lanes</span>
+      <div class="gauge"><span class="big">1 of 5 running</span></div>
+    </article>
+
+    <article class="card" id="lane-thermostat">
+      <div class="step"><div class="body">
+        <h3><span class="doc quote">thermostat</span></h3>
+        <p class="muted"><span class="mark">held</span></p>
+      </div></div>
+      <form method="post" action="/do/close-lane" class="words">
+        <input type="hidden" name="lane" value="thermostat">
+        <button class="word" type="submit">Stop this lane</button>
+      </form>
+    </article>
+
+    <article class="card">
+      <span class="lbl">What is planned next</span>
+      <form method="post" action="/do/signal-priority" class="words">
+        <input type="hidden" name="item_id" value="kettle-1">
+        <button class="word" type="submit" name="direction" value="sooner">sooner</button>
+      </form>
+    </article>
+
+    <article class="card">
+      <span class="lbl">Drop feedback</span>
+      <form method="post" action="/do/drop-feedback">
+        <input type="text" name="text">
+        <button class="word" type="submit">Drop it</button>
+      </form>
+    </article>
+
+    <article class="card">
+      <span class="lbl">Steer</span>
+      <form method="post" action="/do/steer">
+        <input type="text" name="objective">
+        <button class="word" type="submit">Set it</button>
+      </form>
+    </article>
+
+    <article class="card">
+      <span class="lbl">The things you can do here</span>
+      <details>
+        <summary>Details</summary>
+        <div class="inner">
+          <p>answer-with-a-word → the session log — manager operation record-ratification</p>
+          <p>drop-feedback → the project, at .converge/feedback/ — manager operation read-feedback-drop</p>
+          <p>steer → the project, at .converge/constraints.yaml — manager operation apply-constraints</p>
+        </div>
+      </details>
+    </article>
+
+    <p class="foot">This page keeps nothing of its own.</p>
+  </main>
+</div>
+</body>
+</html>

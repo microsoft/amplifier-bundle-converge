@@ -1,0 +1,108 @@
+<!doctype html>
+<!--
+  A document, conforming (surface.v1 Core 6 and 7, kit rules 1d and 1e).
+
+  Two things are worth reading closely here:
+
+  * The lock gate states exactly four conditions, one of them not yet green,
+    and the control beside them carries `disabled`. Rule 1d checks the two
+    against each other, not for a fixed state: all four green with the control
+    still off would fail just as loudly.
+  * The change list marks removed sentences apart from added ones. A list that
+    showed only additions could never answer "was anything dropped?", which is
+    the whole reason the view exists.
+
+  The rendered document itself sits in `article.card.doc`, and its own words —
+  including "ledger", which is jargon — are out of scope for rule 5. A
+  contract's prose is that document's business, not this page's.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The halves promise — Converge</title>
+</head>
+<body>
+<div class="shell">
+  <header class="rail">
+    <div class="brand"><span class="wordmark">Converge</span><span class="project">kettle</span></div>
+    <nav class="places" aria-label="Places">
+      <a class="place" href="/">Needs your word <span class="count">2</span></a>
+      <a class="place is-on" href="/direction">Direction</a>
+      <a class="place" href="/operation">Operation</a>
+    </nav>
+  </header>
+  <main id="main">
+    <p class="muted"><a href="/direction">← Direction</a></p>
+    <div class="section">
+      <h2><span class="doc quote">The halves promise</span></h2>
+      <p><span class="chip">Draft</span> <span class="chip">Not yet</span></p>
+      <details><summary>Details</summary><div class="inner"><p>contracts/half.v1.md</p></div></details>
+    </div>
+
+    <article class="card">
+      <span class="lbl">What changed since you last read this</span>
+      <p class="muted">Since you read this on 12 August: 1 sentence added, 2 removed.</p>
+      <ul class="diff doc">
+        <li class="removed">Every half is answered in a single pass.</li>
+        <li class="removed">A half nobody answered is carried to the next day.</li>
+        <li class="added">Every half is answered in one pass, or carried with a reason.</li>
+      </ul>
+      <form method="post" action="/direction/half.v1/mark-read" class="words">
+        <button class="word" type="submit">I have read this</button>
+      </form>
+    </article>
+
+    <article class="card">
+      <span class="lbl">Answer with a word</span>
+      <p class="muted">Your word is recorded in the dated ratification record, and it is the word
+      every session afterwards obeys.</p>
+      <form method="post" action="/do/answer-with-a-word">
+        <input type="hidden" name="subject" value="The halves promise">
+        <input type="hidden" name="back" value="/direction/half.v1">
+        <div class="field">
+          <label for="note-half">In your words, if you want to say more</label>
+          <textarea id="note-half" name="note"></textarea>
+        </div>
+        <div class="words">
+          <button class="word is-primary" type="submit" name="word" value="ratified">ratified</button>
+          <button class="word" type="submit" name="word" value="ratified with edits">ratified with edits</button>
+          <button class="word" type="submit" name="word" value="declined">declined</button>
+          <button class="word" type="submit" name="word" value="later">later</button>
+        </div>
+      </form>
+    </article>
+
+    <article class="card">
+      <span class="lbl">Locking</span>
+      <ul class="gate">
+        <li><span class="state green">Green</span><span>It says what it means.<br>
+          <span class="muted">Purpose and the numbered promises are both present.</span></span></li>
+        <li><span class="state green">Green</span><span>It carries a real example of right and wrong.<br>
+          <span class="muted">It points at a worked example of both.</span></span></li>
+        <li><span class="state green">Green</span><span>It can be checked against reality.<br>
+          <span class="muted">It lists what a machine or a named reader checks.</span></span></li>
+        <li><span class="state not-yet">Not yet</span><span>You have read it and agreed.<br>
+          <span class="muted">Your agreeing word is not in the dated record yet.</span></span></li>
+      </ul>
+      <form method="post" action="/do/answer-with-a-word" class="words">
+        <input type="hidden" name="subject" value="Lock the halves promise">
+        <input type="hidden" name="back" value="/direction/half.v1">
+        <button class="word" type="submit" disabled>Lock it</button>
+      </form>
+      <p class="gate-note">The control stays off until all four are green. The page never locks
+      anything on its own.</p>
+    </article>
+
+    <article class="card doc">
+      <h1>The halves promise (DRAFT)</h1>
+      <p>Every half is answered in one pass, or carried with a reason.</p>
+      <p>A row in the ledger is derived from this promise, never hand-edited into agreement with
+      it.</p>
+    </article>
+
+    <p class="foot">This page keeps nothing of its own.</p>
+  </main>
+</div>
+</body>
+</html>

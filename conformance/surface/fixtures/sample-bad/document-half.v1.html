@@ -1,0 +1,81 @@
+<!doctype html>
+<!--
+  A document whose two hardest promises are markup only.
+
+  Broken here:
+  * rule 1a — the rail marks no place as the one you are on.
+  * rule 1d — the lock states three conditions, one of them not yet green, and
+    the control beside them is live anyway.
+  * rule 1e — the sentences that changed are listed without saying which were
+    taken away, so a reader still cannot tell whether anything was dropped.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The halves promise — Converge</title>
+</head>
+<body>
+<div class="shell">
+  <header class="rail">
+    <nav class="places" aria-label="Places">
+      <a class="place" href="/">Needs your word <span class="count">4</span></a>
+      <a class="place" href="/direction">Direction</a>
+      <a class="place" href="/operation">Operation</a>
+      <a class="place" href="/nowhere">Reports</a>
+    </nav>
+  </header>
+  <main id="main">
+    <p class="muted"><a href="/direction">← Direction</a></p>
+    <div class="section"><h2><span class="doc quote">The halves promise</span></h2>
+      <p><span class="chip">Draft</span></p></div>
+
+    <article class="card">
+      <span class="lbl">What changed since you last read this</span>
+      <p class="muted">Since you read this on 12 August: 3 sentences changed.</p>
+      <ul class="diff doc">
+        <li>Every half is answered in one pass, or carried with a reason.</li>
+        <li>A carried half is re-ranked the next morning.</li>
+        <li>The record keeps the word you answered with.</li>
+      </ul>
+      <form method="post" action="/direction/half.v1/mark-read" class="words">
+        <button class="word" type="submit">I have read this</button>
+      </form>
+    </article>
+
+    <article class="card">
+      <span class="lbl">Answer with a word</span>
+      <form method="post" action="/do/answer-with-a-word">
+        <input type="hidden" name="subject" value="The halves promise">
+        <input type="hidden" name="back" value="/direction/half.v1">
+        <div class="words">
+          <button class="word is-primary" type="submit" name="word" value="ratified">ratified</button>
+          <button class="word" type="submit" name="word" value="declined">declined</button>
+        </div>
+      </form>
+    </article>
+
+    <article class="card">
+      <span class="lbl">Locking</span>
+      <ul class="gate">
+        <li><span class="state green">Green</span><span>It says what it means.</span></li>
+        <li><span class="state green">Green</span><span>It can be checked against reality.</span></li>
+        <li><span class="state not-yet">Not yet</span><span>You have read it and agreed.</span></li>
+      </ul>
+      <form method="post" action="/do/answer-with-a-word" class="words">
+        <input type="hidden" name="subject" value="Lock the halves promise">
+        <input type="hidden" name="back" value="/direction/half.v1">
+        <button class="word is-primary" type="submit" name="word" value="ratified">Lock it</button>
+      </form>
+    </article>
+
+    <article class="card doc">
+      <h1>The halves promise (DRAFT)</h1>
+      <p>Every half is answered in one pass, or carried with a reason.</p>
+    </article>
+
+    <p class="foot">This page keeps nothing of its own.</p>
+  </main>
+</div>
+</body>
+</html>
