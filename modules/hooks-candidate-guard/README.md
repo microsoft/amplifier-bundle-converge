@@ -204,16 +204,24 @@ disposable fixture repo and all recorded GREEN — results in spec §5.3,
 including T5 (delegated-agent coverage), which closed the propagation
 loophole with live evidence.
 
-**T5 has NOT been re-probed since the 2026-09-02 change, and it should be.**
-That change added a second mechanism — wrapping each mounted tool's
-`execute` — and its propagation into a spawned sub-session is a *different*
-question from the hook's. A sub-session has its own coordinator and its own
-tool instances, so the wrapper protects it only if the guard is composed there
-and mounts after that session's tools. Expected to hold by the same mount
-ordering, but expectation is not evidence, and the kernel guarantees no
-automatic hook inheritance. Until T5 is re-run, treat delegated-agent coverage
-of the *direct-dispatch* path as unverified; the `tool:pre` path is unchanged
-and still carries the 2026-08-30 evidence.
+**T1-T6 remain green across the 2026-09-02 change, by construction rather than
+by re-running.** The hook-registration call is byte-identical, the interception
+surface (`intercept_tools`, `tool_name_aliases`, `path_fields`,
+`bash_write_patterns`, `guarded_globs`) is untouched, and the single
+behavioural change -- an added alternation branch in `frozen_marker_regex`,
+consumed as `bool(re.search(...))` -- is **monotonic**: every string that
+matched before still matches, so `_is_guarded` now returns True on a strict
+superset. A probe asserting "the write was denied" cannot flip red under a
+strictly-more-denying predicate.
+
+**A NEW question the probes never covered:** does the `execute` wrapper
+propagate into a spawned sub-session? That is not T5 -- T5 exercises the
+`tool:pre` path, which is unchanged. The wrapper is a second mechanism, and a
+sub-session has its own coordinator and its own tool instances, so it is
+protected only if the guard is composed there and mounts after that session's
+tools. Expected to hold by the same tools-before-hooks ordering, but the
+kernel guarantees no automatic hook inheritance, so treat delegated-agent
+coverage of the *direct-dispatch* path as **unverified** until probed.
 
 The two-proposal-name change did **not** touch the interception surface those
 probes exercise: `intercept_tools`, `tool_name_aliases`, `path_fields`,
