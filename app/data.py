@@ -316,9 +316,15 @@ def lane_evidence(mc: ManagerConfig, lane: LaneRow) -> str:
             return "finished"
     if blocked.is_file():
         try:
-            return first_sentence(blocked.read_text(encoding="utf-8")) or "stopped, reason recorded"
+            text = blocked.read_text(encoding="utf-8")
         except OSError:
             return "stopped, reason recorded"
+        # A blocked marker opens with bold metadata fields. The reason is the
+        # first sentence that is prose, not a field.
+        for line in sentences(text):
+            if not re.match(r"^\*\*[^*]+:?\*\*\s*\S*$", line.strip()):
+                return line
+        return "stopped, reason recorded"
     return ""
 
 

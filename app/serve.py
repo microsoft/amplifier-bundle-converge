@@ -284,10 +284,10 @@ def main(argv: list[str] | None = None) -> int:
 
     made = create_app(Path(args.config) if args.config else None)
     found = made.state.settings
-    print(f"config: {found.source}")
+    print(f"config: {found.source}", flush=True)
     for one in found.managers:
-        print(f"  manager {one.id}: batch={one.batch_dir} repos={[str(r) for r in one.repos]} socket={one.tmux_socket}")
-    print(f"serving on http://{args.host}:{args.port} — every route behind a PAM sign-in")
+        print(f"  manager {one.id}: batch={one.batch_dir} repos={[str(r) for r in one.repos]} socket={one.tmux_socket}", flush=True)
+    print(f"serving on http://{args.host}:{args.port} — every route behind a PAM sign-in", flush=True)
     uvicorn.run(made, host=args.host, port=args.port, log_level="info")
     return 0
 
