@@ -503,3 +503,327 @@ def test_rule_b_off_by_default(tmp_path: Path) -> None:
     )
 
     assert decision.result.action == "continue"
+
+
+# ---------------------------------------------------------------------------
+# W1 -- both proposal names (contracts/composition.v1.md clause 7)
+#
+# A locked contract changes by proposal, never by direct edit. Two names are
+# sanctioned: `<contract>.vN-candidate.md` (contracts/documents.v1 clause 8)
+# and the legacy `CANDIDATE-*.md` (PROTOCOL.md §5). Every OTHER write to the
+# locked file is refused, by person or agent.
+#
+# Acceptance items 1-4 of the lane goal map to the four scenarios below.
+# ---------------------------------------------------------------------------
+
+
+def _frozen_contract(tmp_path: Path) -> GuardConfig:
+    """Seed a FROZEN contracts/x.v1.md and return the default config."""
+    _write(tmp_path, "contracts/x.v1.md", FROZEN_STAMP + "the locked clause\n")
+    return _config()
+
+
+@pytest.mark.parametrize(
+    ("tool_name", "tool_input"),
+    [
+        ("write_file", {"file_path": "contracts/x.v1.md", "content": "rewritten"}),
+        (
+            "edit_file",
+            {
+                "file_path": "contracts/x.v1.md",
+                "old_string": "the locked clause",
+                "new_string": "a different clause",
+            },
+        ),
+    ],
+    ids=["write_file", "edit_file"],
+)
+def test_w1_locked_contract_write_denied_on_both_tool_paths(
+    tmp_path: Path, tool_name: str, tool_input: dict
+) -> None:
+    """Acceptance 1 -- FROZEN contracts/x.v1.md refuses a direct write.
+
+    Both the write_file and edit_file paths are exercised: they are separate
+    entries in ``intercept_tools`` and a guard that only covered one would
+    leave the other as a silent hole.
+    """
+    config = _frozen_contract(tmp_path)
+
+    decision = evaluate_tool_pre(tool_name, tool_input, config, str(tmp_path))
+
+    assert decision.result.action == "deny"
+    assert decision.result.reason is not None
+    assert "contracts/x.v1.md" in decision.result.reason
+    assert [e[0] for e in decision.events] == ["converge:guard_blocked"]
+
+    # Ground truth: the guard is a gate, so the bytes on disk are untouched.
+    assert (tmp_path / "contracts/x.v1.md").read_text() == (
+        FROZEN_STAMP + "the locked clause\n"
+    )
+
+
+@pytest.mark.parametrize(
+    "proposal_rel",
+    ["contracts/x.v2-candidate.md", "contracts/CANDIDATE-x.md"],
+    ids=["versioned", "legacy"],
+)
+def test_w1_proposal_beside_locked_contract_allowed(
+    tmp_path: Path, proposal_rel: str
+) -> None:
+    """Acceptance 2 and 3 -- both proposal names are the sanctioned write.
+
+    The proposal file is seeded ALREADY EXISTING and already carrying a
+    FROZEN marker, which is the case that actually discriminates. A
+    proposal's first part is "the exact change, sentence by sentence"
+    (contracts/documents.v1 clause 8), so it routinely quotes the locked
+    contract's own status line. Without the allowance the proposal file
+    matches `contracts/*.md`, reads as frozen, and revising it gets denied —
+    the guard would block the very artifact it demands. Writing to a path
+    that does not exist yet proves nothing here: a missing file can never
+    read as frozen, so it is admitted either way.
+    """
+    _write(tmp_path, proposal_rel, FROZEN_STAMP + "quoted from the locked contract\n")
+    config = _frozen_contract(tmp_path)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {
+            "file_path": proposal_rel,
+            "content": "## The exact change\n## The evidence\n## What does NOT change\n",
+        },
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+
+
+def test_w1_draft_contract_write_allowed(tmp_path: Path) -> None:
+    """Acceptance 4 -- the guard keys on LOCKED, not on the path alone.
+
+    `contracts/x.v1.md` in DRAFT is the same path as the frozen case above;
+    only the status marker differs. Editing a DRAFT contract during ENCODE
+    must stay ordinary work.
+    """
+    _write(tmp_path, "contracts/x.v1.md", "# Contract x — v1 (DRAFT)\n\nclause\n")
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "revised draft"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+
+
+@pytest.mark.parametrize(
+    "rel",
+    [
+        "contracts/x.v2-candidate.md",
+        "contracts/x.v10-candidate.md",
+        "contracts/composition.v2-candidate.md",
+        "contracts/nested/deep/y.v3-candidate.md",
+        "x.v2-candidate.md",
+        "contracts/CANDIDATE-x.md",
+        "CANDIDATE-topic.md",
+        "contracts/nested/CANDIDATE-topic.md",
+    ],
+)
+def test_w1_every_sanctioned_proposal_name_is_admitted(tmp_path: Path, rel: str) -> None:
+    """Both names, at every depth, never blocked — even reading as frozen."""
+    _write(tmp_path, rel, FROZEN_STAMP + "quoted clause\n")
+    config = _frozen_contract(tmp_path)
+
+    decision = evaluate_tool_pre(
+        "write_file", {"file_path": rel, "content": "proposal"}, config, str(tmp_path)
+    )
+
+    assert decision.result.action == "continue", rel
+
+
+@pytest.mark.parametrize(
+    "rel",
+    [
+        "contracts/x.v1.md",  # the locked file itself
+        "contracts/x.candidate.md",  # no version segment
+        "contracts/x.v-candidate.md",  # 'vN' with no digit
+        "contracts/x.v2-candidate.txt",  # not markdown
+        "contracts/x.v2-candidates.md",  # near-miss suffix
+        "contracts/candidate-x.md",  # lowercase legacy near-miss
+    ],
+)
+def test_w1_near_miss_names_do_not_bypass_the_guard(tmp_path: Path, rel: str) -> None:
+    """A name that merely LOOKS like a proposal must not unlock the guard.
+
+    Every path here is checked against ``always_allow_globs`` and must fail
+    it. Only ``contracts/x.v1.md`` is additionally guarded (it is the locked
+    file), so it is the only one that denies; the rest are simply ordinary
+    unguarded writes. The assertion that matters is that none of them is
+    admitted *by the proposal allowance*.
+    """
+    from amplifier_module_hooks_candidate_guard.guard import _glob_match_any
+
+    config = _frozen_contract(tmp_path)
+    assert not _glob_match_any(rel, config.always_allow_globs), rel
+
+    decision = evaluate_tool_pre(
+        "write_file", {"file_path": rel, "content": "x"}, config, str(tmp_path)
+    )
+    expected = "deny" if rel == "contracts/x.v1.md" else "continue"
+    assert decision.result.action == expected, rel
+
+
+def test_w1_deny_message_names_both_proposal_names_and_the_three_parts(
+    tmp_path: Path,
+) -> None:
+    """The deny message must name the escape hatch, not just the refusal.
+
+    A block that does not tell the reader what to write instead is how an
+    agent ends up retrying the same denied edit.
+    """
+    config = _frozen_contract(tmp_path)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "rewritten"},
+        config,
+        str(tmp_path),
+    )
+
+    reason = decision.result.reason
+    assert reason is not None
+    # The concrete next filename, computed from the locked path.
+    assert "contracts/x.v2-candidate.md" in reason
+    # Both sanctioned names present.
+    assert "<contract>.vN-candidate.md" in reason
+    assert "CANDIDATE-<topic>.md" in reason
+    # The three-part proposal shape (contracts/documents.v1 clause 8).
+    assert "exact change" in reason
+    assert "evidence" in reason
+    assert "what does NOT change" in reason.replace("NOT", "NOT")
+    # And the human-facing line names the remedy too.
+    assert decision.result.user_message is not None
+    assert "contracts/x.v2-candidate.md" in decision.result.user_message
+
+
+def test_w1_proposal_name_suggestion_handles_vision_and_double_digits() -> None:
+    from amplifier_module_hooks_candidate_guard.guard import _proposal_name_for
+
+    assert _proposal_name_for("contracts/x.v1.md") == "contracts/x.v2-candidate.md"
+    assert _proposal_name_for("contracts/x.v9.md") == "contracts/x.v10-candidate.md"
+    assert _proposal_name_for("docs/VISION.md") == "docs/VISION.v2-candidate.md"
+
+
+def test_w1_versioned_candidate_is_a_working_escape_hatch(tmp_path: Path) -> None:
+    """A ratified `*.vN-candidate.md` lands the amendment, same as the legacy name.
+
+    Admitting the new name only for writing the proposal, while the escape
+    hatch still recognised the old name alone, would leave a ratified
+    proposal unable to land.
+    """
+    config = _frozen_contract(tmp_path)
+    _write(
+        tmp_path,
+        "contracts/x.v2-candidate.md",
+        "target: contracts/x.v1.md\n\n"
+        "## The exact change\n...\n"
+        "## The evidence\na failure caught in production\n"
+        "## What does NOT change\neverything else\n\n"
+        "Ratified as edited — by owner\n",
+    )
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "the amended clause"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+    assert decision.events == [
+        (
+            "converge:guard_allowed_ratified",
+            {"path": "contracts/x.v1.md", "candidate": "contracts/x.v2-candidate.md"},
+        )
+    ]
+
+
+def test_w1_unratified_versioned_candidate_does_not_unlock(tmp_path: Path) -> None:
+    """Presence of a proposal is not ratification. Only the owner's word is."""
+    config = _frozen_contract(tmp_path)
+    _write(
+        tmp_path,
+        "contracts/x.v2-candidate.md",
+        "target: contracts/x.v1.md\n\n## The exact change\n...\n",
+    )
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "the amended clause"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+
+
+def test_w1_bash_laundering_into_locked_contract_still_denied(tmp_path: Path) -> None:
+    """The two-name change must not open a shell-shaped hole (mirrors T6)."""
+    config = _frozen_contract(tmp_path)
+
+    decision = evaluate_tool_pre(
+        "bash",
+        {"command": "echo 'sneaky' >> contracts/x.v1.md"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+    assert decision.result.reason is not None
+    assert "via shell" in decision.result.reason
+
+
+def test_w1_bash_write_to_a_proposal_file_is_allowed(tmp_path: Path) -> None:
+    """The shell scan honours the same allowance as the tool path."""
+    config = _frozen_contract(tmp_path)
+
+    decision = evaluate_tool_pre(
+        "bash",
+        {"command": "echo 'proposal' >> contracts/x.v2-candidate.md"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+
+
+# ---------------------------------------------------------------------------
+# W1 -- glob translator character-class support (the mechanism the versioned
+# proposal name depends on: 'vN' must require a real digit)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("pattern", "path", "expected"),
+    [
+        ("**/*.v[0-9]*-candidate.md", "contracts/x.v1-candidate.md", True),
+        ("**/*.v[0-9]*-candidate.md", "contracts/x.v42-candidate.md", True),
+        ("**/*.v[0-9]*-candidate.md", "x.v1-candidate.md", True),
+        ("**/*.v[0-9]*-candidate.md", "contracts/x.vN-candidate.md", False),
+        ("**/*.v[0-9]*-candidate.md", "contracts/x.v-candidate.md", False),
+        ("[abc].md", "b.md", True),
+        ("[abc].md", "d.md", False),
+        ("[!abc].md", "d.md", True),
+        ("[!abc].md", "a.md", False),
+        # A character class never swallows a path separator.
+        ("a[b/c]d.md", "a/d.md", False),
+        # An unterminated '[' is a literal, not a crash.
+        ("a[bc.md", "a[bc.md", True),
+    ],
+)
+def test_w1_glob_character_classes(pattern: str, path: str, expected: bool) -> None:
+    from amplifier_module_hooks_candidate_guard.guard import _glob_match_any
+
+    assert _glob_match_any(path, [pattern]) is expected
