@@ -11,5 +11,12 @@
     "title": "Make the vision readable",
     "description": "A reader said \"I could not tell what this project already does.\"\n\nDone means: a reader finishes the vision and can say what is true today.",
     "acceptance": "GIVEN the vision WHEN a reader finishes it THEN they can name what is true today."
+  },
+  {
+    "_fixture_note": "VIOLATES 9 on one count: it names a contract that exists and it does define done — but it defines done in machine state words rather than plain ones, so the reader who has to accept it cannot tell what accepting looks like.",
+    "id": "bad-3",
+    "title": "Finish the last row of the sample kit",
+    "description": "Serves broken.v1. A reviewer said \"I could not tell what finishing this looks like.\"",
+    "acceptance": "GIVEN the sample kit WHEN it next runs THEN the last row is no longer GAP and its disposition is CONFORMS."
   }
 ]
