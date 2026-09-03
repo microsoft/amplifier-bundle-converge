@@ -74,6 +74,8 @@ Run the check for one contract:
 python conformance/<contract>/run.py
 ```
 
+The documents kit's rule 9a reads the work queue, which is not a file in this tree — refresh its export with `uv run scripts/export-work-items.py --project converge --out docs/work-items.json` before you trust that rule's verdict.
+
 **Neither the ledger nor the kits exist yet** — they are the next wave of work.
 Until they do, a claim that a contract is kept is an opinion, and must be
 labelled as one.
