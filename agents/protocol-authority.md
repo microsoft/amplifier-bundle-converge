@@ -81,7 +81,7 @@ meaning is owned by `PROTOCOL.md` §3.3:
    the contract; it owes a proposal with evidence before the work, or it is debt
    the moment it lands — §5"*).
 4. For the mechanics of a procedure, point at the matching skill: `seam-test`,
-   `candidate-amendment`, `freeze-bar`, `ledger-disposition`, `lane-brief`.
+   `proposing-a-change`, `freeze-bar`, `ledger-disposition`, `lane-brief`.
 5. When something is heading to the intent steward, test it against their four
    calls and say whether it belongs there or is a defect.
 

@@ -7,7 +7,7 @@ bundle:
     manager session negotiate at the contract level; work is derived from the
     gap between repo reality and the contracts, never invented; a standing
     conformance ledger (the "ratchet") prevents silent backsliding. Ships four
-    agents (protocol-authority, reconciler, negotiator, amendment-drafter),
+    agents (protocol-authority, reconciler, negotiator, proposal-drafter),
     five procedure skills, the hooks-candidate-guard hook (structural
     enforcement of PROTOCOL.md §5), the thin awareness context, and one
     recipe — seed-reconcile, the ratchet loop. Assembles on the lean anchors
@@ -78,11 +78,11 @@ honest between waves and refuses silent drift in either direction.
 - **`converge:negotiator`** — Phase 1 NEGOTIATE. Turns investigation evidence
   into decision-level minutes: options, a recommendation, and the one decision
   the owner must make. Returns needs; never re-routes; read-only.
-- **`converge:amendment-drafter`** — authors a proposal beside a locked contract
+- **`converge:proposal-drafter`** — authors a proposal beside a locked contract
   and stops. Never edits the locked file, never self-ratifies.
 - **Skills** (load on demand for a *procedural* "how do I…" ask):
   - `seam-test` — is this a seam? does it warrant a contract?
-  - `candidate-amendment` — how to author a proposal beside a locked contract
+  - `proposing-a-change` — how to author a proposal beside a locked contract
   - `freeze-bar` — the four-condition DRAFT → locked checklist
   - `ledger-disposition` — the ledger disposition vocabulary + row schema
   - `lane-brief` — honesty gate, file-ownership split, provenance discipline
@@ -109,6 +109,6 @@ to them rather than restating them.
 ## Status
 
 **Live**: 4 agents (protocol-authority, reconciler, negotiator,
-amendment-drafter), 5 skills, candidate-guard hook, 1 recipe (seed-reconcile).
+proposal-drafter), 5 skills, candidate-guard hook, 1 recipe (seed-reconcile).
 
 See `README.md` for build history. Spec of record: `docs/design/mechanism-spec.md`.
