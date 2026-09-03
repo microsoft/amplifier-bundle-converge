@@ -1,0 +1,12 @@
+{
+  "rendered_by": "written by hand — every promise broken once, on purpose",
+  "app": "none; this is what a surface looks like when the markup is there and the promise is not",
+  "changes_nothing": ["/direction/*/mark-read"],
+  "note": "Marking a document read is declared here exactly as in sample-good, so rule 3a's only complaint is the fifth write and not this.",
+  "pages": [
+    {"route": "/", "file": "landing.html"},
+    {"route": "/direction", "file": "direction.html"},
+    {"route": "/direction/half.v1", "file": "document-half.v1.html"},
+    {"route": "/operation", "file": "operation.html"}
+  ]
+}

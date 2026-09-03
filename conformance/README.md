@@ -9,7 +9,7 @@ differs by kit today; see *Numbering follows the contract* below.
 |---|---|---|---|
 | [`composition/`](composition/) | [`composition.v1`](../contracts/composition.v1.md) | a repository root | Does this repository sit lightly on its host, and does its guard protect a locked contract? |
 | [`documents/`](documents/) | [`documents.v1`](../contracts/documents.v1.md) | a repository root | Do this repository's contracts, vision, proposals, and participant kit keep their shape? |
-| [`surface/`](surface/) | [`surface.v1`](../contracts/surface.v1.md) | the companion page | Are the promised interactions present and wired to one another? |
+| [`surface/`](surface/) | [`surface.v1`](../contracts/surface.v1.md) | the companion app (running, or its rendered pages) | Are the promised interactions present and wired to one another? |
 
 There is no `operation/` kit here. That contract's promises are about a running
 system, and closing them needs the turnkey harness (`converge-qtp`), not a file
@@ -20,7 +20,7 @@ scan.
 ```sh
 uv run conformance/composition/run.py .
 uv run conformance/documents/run.py .
-uv run conformance/surface/run.py <path-to-index.html>
+uv run conformance/surface/run.py <running app URL, or a page set written by conformance/surface/render.py>
 ```
 
 Every kit behaves the same way, on purpose:

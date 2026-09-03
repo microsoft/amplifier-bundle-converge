@@ -7,6 +7,12 @@
   The one rule that decides whether a lane is credited: every acceptance item
   must be checkable from a file on disk or from printed command output. What a
   lane passed as a tool-call argument is invisible to whoever judges it.
+
+  The second rule, which decides whether that evidence can be trusted: any
+  acceptance item whose evidence is an artifact the lane itself authors must
+  also say what would make that artifact FALSE, not only what would make it
+  present. A criterion stating only the presence condition reads PASS the moment
+  the artifact appears — including when the artifact is wrong.
 -->
 
 # Lane <lane name> — <the one thing this lane is for>
@@ -30,30 +36,56 @@ right. Present tense. No steps.>
 ## Done means exactly ONE of
 
 - **A) SUCCESS** — every acceptance item met, with its evidence visible in a
-  committed file or in printed output; the work committed; the item resolved,
-  read back, and the stored reason printed. Write
+  committed file or in printed output and no stated falsifier tripped; the work
+  committed; the item resolved, read back, and the stored reason printed. Write
   `<absolute path outside the repository>/DONE.json`:
   `{"status":"success","summary":"…","commits":<n>,"residuals":[…]}`.
 - **B) BLOCKED** — a blocker this lane cannot clear. Write
   `<absolute path outside the repository>/BLOCKED.md` naming the cause; commit
   whatever is sound; stop.
 
-No third outcome. If every deliverable is committed and its evidence is on disk
-or in printed output, the outcome is A.
+No third outcome. If every deliverable is committed, its evidence is on disk or
+in printed output, and no stated falsifier is tripped, the outcome is A.
 
 ## Acceptance
 
 <Number them. Every item names a file path, or a command whose output this lane
 prints. An item that names neither is not an acceptance item yet — rewrite it
-until it does. Quote the contract clause the lane closes, so "done" is checked
-against the promise rather than against a feeling.>
+until it does. Every item whose evidence is an artifact this lane authors also
+says what would make that artifact false. Quote the contract clause the lane
+closes, so "done" is checked against the promise rather than against a feeling.>
 
 1. `<path/to/file>` <says exactly what — a version, a section title, a rule>.
-2. `<command>` is run and its output printed, showing <what>.
+   False if the committed file says otherwise.
+2. `<command>` is run and its output printed, showing <what>. False if the run
+   is against a weakened or stubbed check, or the printed output is not that
+   run's.
 3. `grep -n '<the exact string>' <path>` prints at least one line, and that
-   output is shown.
+   output is shown. False if the printed output came from anywhere but the
+   committed state of that path.
 4. The item is resolved, then read back with `work_list` and the stored reason
-   printed.
+   printed. False if the printed reason asserts something this lane knows to be
+   untrue, or omits a correction made after storing it and not reachable from
+   the reason itself.
+
+<Write a criterion the lane itself authors in three parts — criterion, evidence,
+what would falsify it. The example above is item 4 in that shape:
+
+  Criterion. The item is resolved and its stored reason read back and printed.
+  Evidence.  The printed `work_list` read-back of `<item id>`.
+  Falsifier. The printed reason asserts something the lane knows to be untrue,
+             or omits a correction made after storing it. If that is found after
+             the reason is stored, the correction must be reachable from the
+             reason itself — not only from a linked item — or the item is unmet.
+
+Without the falsifier, item 4 would read PASS for a lane that printed a reason it
+had already discovered to be false. With it, that lane fails the item and says
+so. Write the version that survives a lane which made a mistake and caught it.
+
+If this lane finds its own evidence wrong: correct it in place and print the
+correction beside the original; if it cannot be edited in place, make the
+correction reachable from the artifact itself; then judge against the falsity
+condition as briefed, never as re-read at grading time.>
 
 ## Scope-outs
 
