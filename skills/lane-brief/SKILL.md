@@ -8,7 +8,7 @@ description: >
   deciding whether a lane is actually done, or when a run looks successful but
   may have produced nothing. Applies PROTOCOL.md §4 (lane discipline) and
   pillars 2 and 5.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Lane briefs and honest completion
@@ -16,6 +16,27 @@ version: 0.1.0
 **Owned by `@converge:docs/PROTOCOL.md` §4 (lane discipline, imported intact
 from cortex-core — all measured) and pillars 2 & 5.** This skill is the
 procedure.
+
+## Runtime: a lane is a tmux `/goal` session, not an in-session agent
+
+Every lane runs as its own tmux `/goal` session, in its own git worktree, on its
+own branch `lane/<item id>`, started by an external launcher. **`delegate()` and
+in-session agent fan-out never execute lane work** — a wave that cannot reach a
+launcher fails loud rather than falling back to agents.
+
+The one sanctioned in-loop `delegate()` is the integrator's watcher/monitor: it
+has to stay in the main agent loop to report back, and it executes no lane work.
+
+What that means for the brief you write:
+
+- **The brief is standalone.** The lane sees the goal file and its worktree, not
+  your conversation. Everything it needs is in the file or it does not exist.
+- **The terminal marker lives OUTSIDE the worktree** (the launcher names its
+  absolute path in the goal file), so a lane's own `git add -A` can never stage
+  the marker and collide at merge.
+- **A commit is the only thing the wave can read back.** A lane whose branch tip
+  still equals its base committed nothing and is credited as *blocked*, whatever
+  its marker claims.
 
 ## What every lane brief carries
 
