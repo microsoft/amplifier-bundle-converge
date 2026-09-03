@@ -1,0 +1,219 @@
+{
+  "url": "http://127.0.0.1:8098",
+  "screens": [
+    {
+      "width": "phone",
+      "screen": "1-home",
+      "file": "phone-1-home.png",
+      "note": "the list of manager sessions",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 390,
+        "docClientW": 390,
+        "bodyScrollW": 390,
+        "rightMost": 374,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "phone",
+      "screen": "2-direction-reading",
+      "file": "phone-2-direction-reading.png",
+      "note": "the vision, read",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 390,
+        "docClientW": 390,
+        "bodyScrollW": 390,
+        "rightMost": 374,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "phone",
+      "screen": "3-direction-changes",
+      "file": "phone-3-direction-changes.png",
+      "note": "what changed since the last saved version",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 390,
+        "docClientW": 390,
+        "bodyScrollW": 390,
+        "rightMost": 374,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "phone",
+      "screen": "4-direction-review",
+      "file": "phone-4-direction-review.png",
+      "note": "a proposal, answered with a word",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 390,
+        "docClientW": 390,
+        "bodyScrollW": 390,
+        "rightMost": 374,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "phone",
+      "screen": "5-operation",
+      "file": "phone-5-operation.png",
+      "note": "the manager session at work",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 390,
+        "docClientW": 390,
+        "bodyScrollW": 390,
+        "rightMost": 374,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "phone",
+      "screen": "6-direction-console-open",
+      "file": "phone-6-direction-console-open.png",
+      "note": "the console pane, open beside Direction",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 390,
+        "docClientW": 390,
+        "bodyScrollW": 390,
+        "rightMost": 374,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "phone",
+      "screen": "7-operation-console-open",
+      "file": "phone-7-operation-console-open.png",
+      "note": "the same pane, still open after switching places",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 390,
+        "docClientW": 390,
+        "bodyScrollW": 390,
+        "rightMost": 374,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "phone",
+      "screen": "console-survives-the-toggle",
+      "open_in_direction": true,
+      "open_in_operation": true,
+      "pane_has_content": true,
+      "pass": true
+    },
+    {
+      "width": "desktop",
+      "screen": "1-home",
+      "file": "desktop-1-home.png",
+      "note": "the list of manager sessions",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 1280,
+        "docClientW": 1280,
+        "bodyScrollW": 1280,
+        "rightMost": 1182,
+        "rightMostEl": "cards"
+      }
+    },
+    {
+      "width": "desktop",
+      "screen": "2-direction-reading",
+      "file": "desktop-2-direction-reading.png",
+      "note": "the vision, read",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 1280,
+        "docClientW": 1280,
+        "bodyScrollW": 1280,
+        "rightMost": 1176,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "desktop",
+      "screen": "3-direction-changes",
+      "file": "desktop-3-direction-changes.png",
+      "note": "what changed since the last saved version",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 1280,
+        "docClientW": 1280,
+        "bodyScrollW": 1280,
+        "rightMost": 1176,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "desktop",
+      "screen": "4-direction-review",
+      "file": "desktop-4-direction-review.png",
+      "note": "a proposal, answered with a word",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 1280,
+        "docClientW": 1280,
+        "bodyScrollW": 1280,
+        "rightMost": 1176,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "desktop",
+      "screen": "5-operation",
+      "file": "desktop-5-operation.png",
+      "note": "the manager session at work",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 1280,
+        "docClientW": 1280,
+        "bodyScrollW": 1280,
+        "rightMost": 1176,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "desktop",
+      "screen": "6-direction-console-open",
+      "file": "desktop-6-direction-console-open.png",
+      "note": "the console pane, open beside Direction",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 1280,
+        "docClientW": 1280,
+        "bodyScrollW": 1280,
+        "rightMost": 736,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "desktop",
+      "screen": "7-operation-console-open",
+      "file": "desktop-7-operation-console-open.png",
+      "note": "the same pane, still open after switching places",
+      "overflow": false,
+      "measured": {
+        "docScrollW": 1280,
+        "docClientW": 1280,
+        "bodyScrollW": 1280,
+        "rightMost": 736,
+        "rightMostEl": "top"
+      }
+    },
+    {
+      "width": "desktop",
+      "screen": "console-survives-the-toggle",
+      "open_in_direction": true,
+      "open_in_operation": true,
+      "pane_has_content": true,
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "overflow": []
+}
