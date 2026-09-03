@@ -93,6 +93,14 @@ or three options with their consequences, and say which you recommend.
 
 - **Done means seen working**, not "the code is written" and not "the tests I
   wrote pass". Show the output.
+- **Evidence lives in a file or in printed output — never inside a tool call.**
+  Whoever judges your work reads the files you committed and the text you
+  printed, and nothing else. So when your brief says to resolve a work item with
+  a reason, resolve it, then read it back with the queue's read command and
+  print the stored reason: the printed read-back is the evidence. An acceptance
+  item that can only be checked inside a tool call cannot be credited, however
+  well the work was done. The brief this rule shapes is
+  `GOAL-FILE.md.template`.
 - **Stuck is a real answer.** Name the blocker and what you tried. A blocked
   lane that says so is worth more than a green one that guessed.
 - **Never claim a result you did not observe.** Paste the evidence inline.
