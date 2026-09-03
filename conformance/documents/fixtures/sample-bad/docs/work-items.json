@@ -1,0 +1,15 @@
+[
+  {
+    "_fixture_note": "VIOLATES 9 on all three counts: names no contract that exists in contracts/, defines no done, quotes no source.",
+    "id": "bad-1",
+    "title": "Tidy up the docs",
+    "description": "Some of the wording is a bit off in places. Have a look and improve it."
+  },
+  {
+    "_fixture_note": "VIOLATES 9 on one count: it defines done and quotes its source, but names no contract, so nobody can tell which promise it serves.",
+    "id": "bad-2",
+    "title": "Make the vision readable",
+    "description": "A reader said \"I could not tell what this project already does.\"\n\nDone means: a reader finishes the vision and can say what is true today.",
+    "acceptance": "GIVEN the vision WHEN a reader finishes it THEN they can name what is true today."
+  }
+]

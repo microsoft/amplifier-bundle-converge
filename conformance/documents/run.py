@@ -9,11 +9,15 @@ Point it at a repository ROOT. It mechanically asserts the conformance list of
 proposals beside a locked contract, its participant kit, and the templates it
 ships for other projects to adopt.
 
-Rule numbering follows the contract's bullet order. Where one bullet names
-several independent promises, the kit emits one row per promise, lettered
-inside the bullet (1a, 1b, ...), so a failure names the exact promise rather
-than a whole paragraph. Promises that need a person — or a system this kit
-cannot read — are reported SKIP with the reason, never a fabricated PASS.
+Rule numbering follows the contract's **Core clause** numbers, as clause 5
+asks: rule 4 judges Core 4, so a failing rule names the clause it breaks.
+Where one clause carries several independent promises, the kit emits one row
+per promise, lettered inside the clause (5a, 5b, ...), so a failure names the
+exact promise rather than a whole paragraph. Each row also carries the
+``bullet`` it came from in the contract's *Conformance kit asserts* list, or
+``null`` where that list names no bullet for the clause. Promises that need a
+person — or a system this kit cannot read — are reported SKIP with the reason,
+never a fabricated PASS.
 
 Stdlib only: a document check that needed a package would be one more reason
 not to run it.
@@ -36,48 +40,85 @@ import re
 import sys
 from pathlib import Path
 
+# (rule id, Core clause, Conformance-asserts bullet or None, id, what it judges)
+#
+# Numbered to documents.v1's **Core** clauses, not to its Conformance-asserts
+# bullets. Clause 5 asks for exactly that ("Numbers match the conformance kit's
+# rule table"), and the bullet numbering hid a real gap: the contract's
+# Conformance-asserts list carries seven bullets for thirteen Core clauses, so
+# Core 10 and Core 11 had no bullet — and therefore no row — at all.
 RULES = [
-    ("1a", 1, "contract_line3_names_who",
-     "line 3 of every contract begins '**Who builds against this:**'"),
-    ("1b", 1, "contract_section_order",
-     "the required sections appear, in the fixed order"),
-    ("1c", 1, "contract_length",
+    ("1", 1, 7, "written_for_information_workers",
+     "a reader who is not an engineer reads these and looks nothing up"),
+    ("2", 2, 1, "contract_length",
      "one contract is about one screen — 50 to 100 lines"),
-    ("1d", 1, "contract_status_only_in_h1",
-     "status lives in the H1 parenthetical and nowhere else"),
-    ("1e", 1, "contract_clauses_bold_led",
+    ("3", 3, 1, "contract_line3_names_who",
+     "line 3 of every contract begins '**Who builds against this:**'"),
+    ("4", 4, 1, "contract_section_order",
+     "the required sections appear, in the fixed order"),
+    ("5a", 5, 1, "contract_clauses_bold_led",
      "every Core clause leads with the rule as fact, in bold"),
-    ("2a", 2, "vision_not_written_as_a_plan",
+    ("5b", 5, 1, "clause_numbers_match_the_rule_table",
+     "a contract's clause numbers match its kit's rule table"),
+    ("6", 6, 1, "contract_status_only_in_h1",
+     "status lives in the H1 parenthetical and nowhere else"),
+    ("7a", 7, 2, "vision_not_written_as_a_plan",
      "the vision is written as though already true, not as a roadmap"),
-    ("2b", 2, "vision_dated_changelog",
+    ("7b", 7, 2, "vision_dated_changelog",
      "the vision carries a dated changelog"),
-    ("2c", 2, "vision_present_tense_reading",
+    ("7c", 7, 2, "vision_present_tense_reading",
      "the vision reads in the present tense throughout"),
-    ("3", 3, "proposal_has_three_parts",
+    ("8", 8, 3, "proposal_has_three_parts",
      "every proposal has the three parts, in order"),
-    ("4", 4, "work_item_names_a_contract",
-     "every work item names its contract and quotes its source"),
-    ("5a", 5, "participant_kit_present",
+    ("9a", 9, 4, "work_item_names_a_contract",
+     "every work item names its contract and defines done in plain words"),
+    ("9b", 9, 4, "work_item_quotes_its_source",
+     "every work item quotes the feedback or gap it came from"),
+    ("10a", 10, None, "plain_state_words",
+     "documents carry plain state words, not machine state tokens"),
+    ("10b", 10, None, "plain_state_words_reading",
+     "every state word in every document comes from the plain vocabularies"),
+    ("11", 11, None, "technical_detail_is_folded",
+     "technical detail sits in a marked section, never among the teeth"),
+    ("12a", 12, 5, "participant_kit_present",
      "a converged repository carries the participant kit"),
-    ("5b", 5, "workspace_template_complete",
+    ("12b", 12, 5, "workspace_template_complete",
      "the shipped workspace template carries every participant-kit file"),
-    ("6", 6, "shipped_templates_carry_the_anatomy",
+    ("13", 13, 6, "shipped_templates_carry_the_anatomy",
      "Converge's own templates produce the anatomy they check for"),
-    ("7", 7, "non_engineer_reader_recorded",
-     "a reader who is not an engineer read these and looked nothing up"),
 ]
 
 # Rows no file scan can judge. Pinned by the self-test so a rule may not drift
 # into SKIP to dodge a failure.
 UNFIXTURABLE = {
-    "2c": ("mechanical tense detection reports false findings on legitimate "
-           "subordinate clauses (\"the project as it will be when it is right\"); "
-           "judging the whole document's tense needs a reader. Rule 2a checks the "
-           "part that is mechanical — that it is not written as a plan."),
-    "4": ("work items live in the work-tracker queue, not in the repository; "
-          "this kit reads files"),
-    "7": ("needs a named human reader and a date; no file scan can stand in for a "
+    "1": ("needs a named human reader and a date; no file scan can stand in for a "
           "person reporting what they had to look up"),
+    "5b": ("which numbering clause 5 means — the Core clauses or the "
+           "Conformance-asserts bullets — is an open question filed for the "
+           "steward (see contracts/documents.v2-candidate.md). This kit is "
+           "numbered to the Core clauses and reports what it observes below; "
+           "failing another kit on an unratified reading would be this kit "
+           "inventing a ruling the contract does not make."),
+    "7c": ("mechanical tense detection reports false findings on legitimate "
+           "subordinate clauses (\"the project as it will be when it is right\"); "
+           "judging the whole document's tense needs a reader. Rule 7a checks the "
+           "part that is mechanical — that it is not written as a plan."),
+    "9b": ("measured against this repository's own queue: the literal test — a "
+           "blockquote or a quoted span — passes 7 of 24 real items, and most of "
+           "the 17 it fails do point at their origin, in the item's own words "
+           "rather than the source's. Widening it to accept any clause or item "
+           "reference passes 20 of 24, but would also pass an item that merely "
+           "names its contract, which rule 9a already checks — so the widened "
+           "form proves nothing. Telling a quotation of feedback from a quoted "
+           "filename needs a reader. Rule 9a checks the parts that are "
+           "mechanical."),
+    "10b": ("both mechanical whole-vocabulary signals were measured against this "
+            "repository and both landed on legitimate prose: the vision's \"work "
+            "in progress\" is ordinary English, and documents.v1 clause 6's own "
+            "\"kept / broken / in-progress\" is the sentence forbidding those "
+            "words, not a use of them. Judging every state word needs a reader. "
+            "Rule 10a checks the part that is mechanical — a machine disposition "
+            "token standing in a document's prose."),
 }
 
 # documents.v1 Core 4 — the fixed section order. Changelog only if amended.
@@ -139,11 +180,10 @@ PROPOSAL_PARTS = [
 
 
 def _result(rid, status, detail, **extra):
-    bullet = next(r[1] for r in RULES if r[0] == rid)
-    name = next(r[2] for r in RULES if r[0] == rid)
-    desc = next(r[3] for r in RULES if r[0] == rid)
-    out = {"rule": rid, "bullet": bullet, "id": name, "name": desc,
-           "status": status, "detail": detail}
+    row = next(r for r in RULES if r[0] == rid)
+    _, clause, bullet, name, desc = row
+    out = {"rule": rid, "clause": clause, "bullet": bullet, "id": name,
+           "name": desc, "status": status, "detail": detail}
     out.update(extra)
     return out
 
@@ -242,7 +282,7 @@ def core_section_body(text: str):
 
 
 # --------------------------------------------------------------------------- #
-# bullet 1 — every contract                                                    #
+# clauses 2, 3, 4, 5 and 6 — every contract                                    #
 # --------------------------------------------------------------------------- #
 def _no_contracts(rid):
     return _result(rid, "SKIP",
@@ -253,7 +293,7 @@ def _no_contracts(rid):
 def check_line3(root: Path):
     files = contract_files(root)
     if not files:
-        return _no_contracts("1a")
+        return _no_contracts("3")
     rows = []
     for p in files:
         lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -262,13 +302,13 @@ def check_line3(root: Path):
         rows.append({"file": _rel(root, p), "status": "PASS" if ok else "FAIL",
                      "detail": ("line 3 names who builds against this" if ok
                                 else f"line 3 is {line3[:60]!r}, not {WHO_MARKER!r}")})
-    return _roll("1a", rows, "contract(s) name who builds against them on line 3")
+    return _roll("3", rows, "contract(s) name who builds against them on line 3")
 
 
 def check_section_order(root: Path):
     files = contract_files(root)
     if not files:
-        return _no_contracts("1b")
+        return _no_contracts("4")
     rows = []
     for p in files:
         text = p.read_text(encoding="utf-8", errors="replace")
@@ -297,13 +337,13 @@ def check_section_order(root: Path):
             rows.append({"file": _rel(root, p), "status": "PASS",
                          "detail": f"all five required sections, in order{note}",
                          "extra_sections": extra})
-    return _roll("1b", rows, "contract(s) carry the required sections in order")
+    return _roll("4", rows, "contract(s) carry the required sections in order")
 
 
 def check_length(root: Path):
     files = contract_files(root)
     if not files:
-        return _no_contracts("1c")
+        return _no_contracts("2")
     rows = []
     for p in files:
         n = len(p.read_text(encoding="utf-8", errors="replace").splitlines())
@@ -312,13 +352,13 @@ def check_length(root: Path):
                      "status": "PASS" if ok else "FAIL",
                      "detail": (f"{n} lines" if ok
                                 else f"{n} lines — outside {MIN_LINES}–{MAX_LINES}")})
-    return _roll("1c", rows, f"contract(s) are {MIN_LINES}–{MAX_LINES} lines")
+    return _roll("2", rows, f"contract(s) are {MIN_LINES}–{MAX_LINES} lines")
 
 
 def check_status_only_in_h1(root: Path):
     files = contract_files(root)
     if not files:
-        return _no_contracts("1d")
+        return _no_contracts("6")
     rows = []
     for p in files:
         lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -339,13 +379,13 @@ def check_status_only_in_h1(root: Path):
         else:
             rows.append({"file": _rel(root, p), "status": "PASS",
                          "detail": "status in the H1 parenthetical and nowhere else"})
-    return _roll("1d", rows, "contract(s) keep status in the H1 alone")
+    return _roll("6", rows, "contract(s) keep status in the H1 alone")
 
 
 def check_clauses_bold_led(root: Path):
     files = contract_files(root)
     if not files:
-        return _no_contracts("1e")
+        return _no_contracts("5a")
     rows = []
     for p in files:
         body = core_section_body(p.read_text(encoding="utf-8", errors="replace"))
@@ -372,7 +412,7 @@ def check_clauses_bold_led(root: Path):
         else:
             rows.append({"file": _rel(root, p), "status": "PASS",
                          "detail": f"all {n} Core clause(s) lead with the rule in bold"})
-    return _roll("1e", rows, "contract(s) lead every Core clause in bold")
+    return _roll("5a", rows, "contract(s) lead every Core clause in bold")
 
 
 def _roll(rid, rows, what):
@@ -386,12 +426,12 @@ def _roll(rid, rows, what):
 
 
 # --------------------------------------------------------------------------- #
-# bullet 2 — the vision                                                        #
+# clause 7 — the vision                                                        #
 # --------------------------------------------------------------------------- #
 def check_vision_not_a_plan(root: Path):
     p = vision_file(root)
     if p is None:
-        return _result("2a", "FAIL", "no docs/VISION.md or VISION.md in the target")
+        return _result("7a", "FAIL", "no docs/VISION.md or VISION.md in the target")
     hits = []
     for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
         m = PLAN_LANGUAGE_RE.search(strip_inline_code(line))
@@ -399,39 +439,39 @@ def check_vision_not_a_plan(root: Path):
             hits.append({"line": i, "phrase": m.group(0), "text": line.strip()[:80]})
     if hits:
         where = ", ".join(f"{h['line']} ({h['phrase']})" for h in hits[:5])
-        return _result("2a", "FAIL",
+        return _result("7a", "FAIL",
                        f"{_rel(root, p)} reads as a plan, not an end state, at line(s) {where}",
                        hits=hits)
-    return _result("2a", "PASS",
+    return _result("7a", "PASS",
                    f"{_rel(root, p)} carries no roadmap language — written as though already true")
 
 
 def check_vision_changelog(root: Path):
     p = vision_file(root)
     if p is None:
-        return _result("2b", "FAIL", "no docs/VISION.md or VISION.md in the target")
+        return _result("7b", "FAIL", "no docs/VISION.md or VISION.md in the target")
     text = p.read_text(encoding="utf-8", errors="replace")
     heads = [h for h, _ in sections_of(text)]
     if not any(h.startswith("Changelog") for h in heads):
-        return _result("2b", "FAIL", f"{_rel(root, p)} has no '## Changelog' section")
+        return _result("7b", "FAIL", f"{_rel(root, p)} has no '## Changelog' section")
     dated = [m.group(1) for line in text.splitlines()
              for m in [CHANGELOG_ENTRY_RE.match(line)] if m]
     if not dated:
-        return _result("2b", "FAIL",
+        return _result("7b", "FAIL",
                        f"{_rel(root, p)} has a Changelog with no dated entry "
                        "(expected '- **YYYY-MM-DD …')")
-    return _result("2b", "PASS",
+    return _result("7b", "PASS",
                    f"{_rel(root, p)} carries {len(dated)} dated changelog entry/entries "
                    f"(most recent {max(dated)})", entries=dated)
 
 
 # --------------------------------------------------------------------------- #
-# bullet 3 — proposals                                                         #
+# clause 8 — proposals                                                         #
 # --------------------------------------------------------------------------- #
 def check_proposals(root: Path):
     files = proposal_files(root)
     if not files:
-        return _result("3", "SKIP",
+        return _result("8", "SKIP",
                        "no '*.vN-candidate.md' proposal present in the target — nothing to judge",
                        reason="no proposal files present in the target")
     rows = []
@@ -456,11 +496,11 @@ def check_proposals(root: Path):
             rows.append({"file": _rel(root, p), "status": "PASS",
                          "detail": "carries the exact change, the evidence, "
                                    "and what does not change — in order"})
-    return _roll("3", rows, "proposal(s) carry the three parts in order")
+    return _roll("8", rows, "proposal(s) carry the three parts in order")
 
 
 # --------------------------------------------------------------------------- #
-# bullet 5 — the participant kit                                               #
+# clause 12 — the participant kit                                              #
 # --------------------------------------------------------------------------- #
 def check_participant_kit(root: Path):
     rows = []
@@ -469,7 +509,7 @@ def check_participant_kit(root: Path):
         ok = p.is_file()
         rows.append({"file": rel, "status": "PASS" if ok else "FAIL",
                      "detail": (f"present — {why}" if ok else f"missing — {why}")})
-    return _roll("5a", rows, "participant-kit file(s) present")
+    return _roll("12a", rows, "participant-kit file(s) present")
 
 
 def check_workspace_template(root: Path):
@@ -479,11 +519,11 @@ def check_workspace_template(root: Path):
         ok = p.is_file()
         rows.append({"file": rel, "status": "PASS" if ok else "FAIL",
                      "detail": "present" if ok else "missing"})
-    return _roll("5b", rows, "workspace-template file(s) present")
+    return _roll("12b", rows, "workspace-template file(s) present")
 
 
 # --------------------------------------------------------------------------- #
-# bullet 6 — the shipped templates carry the anatomy they check for            #
+# clause 13 — the shipped templates carry the anatomy they check for           #
 # --------------------------------------------------------------------------- #
 LEADING_COMMENT_RE = re.compile(r"\A\s*<!--.*?-->\s*\n?", re.DOTALL)
 
@@ -530,28 +570,283 @@ def check_templates_carry_anatomy(root: Path):
         rows.append({"file": _rel(root, vt), "status": "PASS" if ok else "FAIL",
                      "detail": ("produces a Changelog section" if ok
                                 else "produces no Changelog section")})
-    return _roll("6", rows, "shipped template(s) carry the anatomy they check for")
+    return _roll("13", rows, "shipped template(s) carry the anatomy they check for")
+
+
+# --------------------------------------------------------------------------- #
+# clause 5 (second sentence) — a contract's numbers and its kit's rule table    #
+# --------------------------------------------------------------------------- #
+README_RULE_ROW_RE = re.compile(r"^\|\s*(\d+)[a-z]?\s*\|")
+CONTRACT_STEM_RE = re.compile(r"^(?P<stem>[A-Za-z0-9][A-Za-z0-9._-]*)\.v\d+\.md$")
+
+
+def _kit_rule_numbers(readme: Path):
+    """Top-level rule numbers in a kit README's rule table (1a, 1b -> {1})."""
+    out = set()
+    for line in readme.read_text(encoding="utf-8", errors="replace").splitlines():
+        m = README_RULE_ROW_RE.match(line.strip())
+        if m:
+            out.add(int(m.group(1)))
+    return out
+
+
+def _core_clause_numbers(text: str):
+    out = set()
+    for _, line in core_section_body(text):
+        m = NUMBERED_CLAUSE_RE.match(line)
+        if m:
+            out.add(int(line.strip().split(".", 1)[0]))
+    return out
+
+
+def check_clause_numbers_match_rule_table(root: Path):
+    """Report — never decide — whether each contract's kit numbers to its clauses.
+
+    documents.v1 clause 5 ends "Numbers match the conformance kit's rule table"
+    without saying which numbering it means. This kit is numbered to the Core
+    clauses; the other kits in this repository are numbered to the
+    Conformance-asserts bullets. Deciding between the two readings is the
+    steward's call, filed as ``contracts/documents.v2-candidate.md``, so this
+    row reports what it observes and stays SKIP.
+    """
+    observed = []
+    for p in contract_files(root):
+        m = CONTRACT_STEM_RE.match(p.name)
+        if not m:
+            continue
+        stem = m.group("stem")
+        readme = root / "conformance" / stem / "README.md"
+        if not readme.is_file():
+            continue
+        clauses = _core_clause_numbers(p.read_text(encoding="utf-8", errors="replace"))
+        rules = _kit_rule_numbers(readme)
+        observed.append({
+            "contract": _rel(root, p),
+            "kit": _rel(root, readme),
+            "core_clauses": sorted(clauses),
+            "kit_rule_numbers": sorted(rules),
+            "aligned": bool(clauses) and clauses == rules,
+        })
+    if not observed:
+        detail = ("no conformance kit sits beside a contract in this target — "
+                  "nothing to compare")
+    else:
+        aligned = [o["contract"] for o in observed if o["aligned"]]
+        adrift = [o["contract"] for o in observed if not o["aligned"]]
+        detail = (f"{len(aligned)} of {len(observed)} contract(s) are numbered to "
+                  f"their kit's rule table"
+                  + (f"; not aligned: {adrift}" if adrift else ""))
+    return _result("5b", "SKIP", detail, reason=UNFIXTURABLE["5b"], observed=observed)
+
+
+# --------------------------------------------------------------------------- #
+# clause 9 — work items                                                        #
+# --------------------------------------------------------------------------- #
+# A work item is not a file in this tree; it lives in the work queue. So the
+# kit reads an EXPORT of the queue — a JSON array or JSONL, each entry an
+# object — rather than growing a dependency on a running tracker. Absent an
+# export it SKIPs with the reason: "nothing to check" and "checked, and it was
+# fine" are different facts.
+WORK_ITEMS_DEFAULT = "docs/work-items.json"
+CONTRACT_REF_RE = re.compile(r"\b([A-Za-z0-9][A-Za-z0-9._-]*)\.v(\d+)\b")
+DONE_PHRASE_RE = re.compile(r"(?im)^\s*(?:done means|acceptance)\b|(?<![A-Za-z])GIVEN\b")
+QUOTED_SOURCE_RE = re.compile(r"^\s*>\s+\S|\"[^\"]{12,}\"|\u201c[^\u201d]{12,}\u201d",
+                              re.MULTILINE)
+SOURCE_FIELD_RE = re.compile(r"(?im)^\s*(?:source|discovered[- ]from|reported[- ]by)\s*:")
+
+WORK_ITEM_TEXT_FIELDS = ("title", "description", "body", "text", "acceptance",
+                         "design", "notes")
+
+
+def _load_work_items(path: Path):
+    """A JSON array of objects, or JSONL (one object per line)."""
+    raw = path.read_text(encoding="utf-8", errors="replace").strip()
+    if not raw:
+        return []
+    if raw.lstrip().startswith("["):
+        data = json.loads(raw)
+        if not isinstance(data, list):
+            raise ValueError("the export is JSON, but not an array of items")
+        return data
+    items = []
+    for i, line in enumerate(raw.splitlines(), 1):
+        line = line.strip()
+        if line:
+            obj = json.loads(line)
+            if not isinstance(obj, dict):
+                raise ValueError(f"line {i} is JSON, but not an object")
+            items.append(obj)
+    return items
+
+
+def _item_text(item: dict) -> str:
+    return "\n".join(str(item.get(f) or "") for f in WORK_ITEM_TEXT_FIELDS)
+
+
+def check_work_items(root: Path, work_items: Path = None):
+    explicit = work_items is not None
+    path = work_items if explicit else (root / WORK_ITEMS_DEFAULT)
+    if not path.is_file():
+        if explicit:
+            return _result("9a", "FAIL",
+                           f"the named work-item export does not exist: {path}")
+        return _result("9a", "SKIP",
+                       f"no work-item export at {WORK_ITEMS_DEFAULT} and none named "
+                       "with --work-items — work items live in the work queue, not "
+                       "in this tree, so the kit has nothing to read",
+                       reason=f"no work-item export at {WORK_ITEMS_DEFAULT} or "
+                              "--work-items")
+    try:
+        items = _load_work_items(path)
+    except (ValueError, json.JSONDecodeError) as e:
+        return _result("9a", "FAIL", f"{_rel(root, path)} is not a readable "
+                                    f"work-item export: {e}")
+    if not items:
+        return _result("9a", "SKIP",
+                       f"{_rel(root, path)} carries no work items — nothing to judge",
+                       reason="the work-item export is empty")
+
+    known = {CONTRACT_STEM_RE.match(p.name).group("stem")
+             for p in contract_files(root) if CONTRACT_STEM_RE.match(p.name)}
+    rows = []
+    for n, item in enumerate(items, 1):
+        ident = str(item.get("id") or item.get("key") or f"item {n}")
+        text = _item_text(item)
+        missing = []
+        named = [f"{m.group(1)}.v{m.group(2)}" for m in CONTRACT_REF_RE.finditer(text)
+                 if not known or m.group(1) in known]
+        if not named:
+            missing.append("names no contract that exists in contracts/")
+        if not (str(item.get("acceptance") or "").strip() or DONE_PHRASE_RE.search(text)):
+            missing.append("does not define done in plain words")
+        quotes = bool(QUOTED_SOURCE_RE.search(text) or SOURCE_FIELD_RE.search(text))
+        rows.append({"file": ident, "status": "FAIL" if missing else "PASS",
+                     "detail": ("; ".join(missing) if missing
+                                else f"names {named[0]} and defines done in plain words"),
+                     "quotes_a_source": quotes})
+    quoting = sum(1 for r in rows if r["quotes_a_source"])
+    out = _roll("9a", rows, "work item(s) name a contract and define done")
+    out["observed_quoting_a_source"] = f"{quoting} of {len(rows)}"
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# clause 10 — plain state words                                                #
+# --------------------------------------------------------------------------- #
+# Machine dispositions, in their machine form. Case-sensitive and word-bounded
+# on purpose, and inline code is stripped first — the same precision rule 6
+# uses. A document that must NAME one of these puts it in a code span; a
+# document that USES one as its state word is what clause 10 forbids.
+# "VIOLATES" does not match "VIOLATION"; the vision's "work in progress" and
+# clause 6's own "kept / broken / in-progress" are lowercase prose and are not
+# machine tokens. Both were measured; see rule 10b's reason.
+MACHINE_STATE_RE = re.compile(
+    r"\b(?:CONFORMS|VIOLATION|NOT-ASSERTABLE|OPEN-PINNED|DIVERGED|EXCLUDED"
+    r"|IN_PROGRESS|IN-PROGRESS|WONTFIX|BACKLOG)\b"
+)
+
+
+def _state_word_documents(root: Path):
+    docs = list(contract_files(root))
+    v = vision_file(root)
+    if v is not None:
+        docs.append(v)
+    return docs
+
+
+def check_plain_state_words(root: Path):
+    docs = _state_word_documents(root)
+    if not docs:
+        return _result("10a", "SKIP",
+                       "no contract and no vision in the target — nothing to judge",
+                       reason="no contract and no vision in the target")
+    rows = []
+    for p in docs:
+        hits = []
+        for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            m = MACHINE_STATE_RE.search(strip_inline_code(line))
+            if m:
+                hits.append({"line": i, "token": m.group(0), "text": line.strip()[:80]})
+        if hits:
+            where = ", ".join(f"{h['line']} ({h['token']})" for h in hits[:5])
+            rows.append({"file": _rel(root, p), "status": "FAIL",
+                         "detail": f"machine state token in prose at line(s) {where}",
+                         "hits": hits})
+        else:
+            rows.append({"file": _rel(root, p), "status": "PASS",
+                         "detail": "carries no machine state token in its prose"})
+    return _roll("10a", rows, "document(s) keep their state words plain")
+
+
+# --------------------------------------------------------------------------- #
+# clause 11 — technical detail is folded                                       #
+# --------------------------------------------------------------------------- #
+# A fenced code block is the unambiguous mark of technical detail. Inside
+# Purpose or Core — the sections that carry the deciding sentences — it is
+# detail standing where the decision should be. The kit checks THAT, and not
+# "a path or a filename in a bold lead": clause 8's own deciding sentence is
+# "**A proposal is `<contract>.vN-candidate.md`**", where the filename IS the
+# rule. Flagging it would be a fabricated finding.
+FENCE_RE = re.compile(r"^\s*(?:```|~~~)")
+DECIDING_SECTIONS = ("Purpose", "Core (the teeth)")
+
+
+def check_technical_detail_is_folded(root: Path):
+    files = contract_files(root)
+    if not files:
+        return _no_contracts("11")
+    rows = []
+    for p in files:
+        lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
+        section, hits, inside_fence = None, [], False
+        for i, line in enumerate(lines, 1):
+            if not inside_fence and line.startswith("## "):
+                section = line[3:].strip()
+                continue
+            if not FENCE_RE.match(line):
+                continue
+            if inside_fence:  # the closing fence of a block already counted
+                inside_fence = False
+                continue
+            inside_fence = True
+            if section is not None and any(section.startswith(s) for s in DECIDING_SECTIONS):
+                hits.append({"line": i, "section": section})
+        if hits:
+            where = ", ".join(f"{h['line']} (under '{h['section']}')" for h in hits[:5])
+            rows.append({"file": _rel(root, p), "status": "FAIL",
+                         "detail": f"technical detail among the teeth at line(s) {where}",
+                         "hits": hits})
+        else:
+            rows.append({"file": _rel(root, p), "status": "PASS",
+                         "detail": "no technical detail inside Purpose or Core"})
+    return _roll("11", rows, "contract(s) keep technical detail out of the teeth")
 
 
 # --------------------------------------------------------------------------- #
 # driver                                                                       #
 # --------------------------------------------------------------------------- #
-def run_conformance(root: Path) -> dict:
+def run_conformance(root: Path, work_items: Path = None) -> dict:
+    # In Core-clause order, so the report reads down the contract.
     results = [
+        _skip("1"),
+        check_length(root),
         check_line3(root),
         check_section_order(root),
-        check_length(root),
-        check_status_only_in_h1(root),
         check_clauses_bold_led(root),
+        check_clause_numbers_match_rule_table(root),
+        check_status_only_in_h1(root),
         check_vision_not_a_plan(root),
         check_vision_changelog(root),
-        _skip("2c"),
+        _skip("7c"),
         check_proposals(root),
-        _skip("4"),
+        check_work_items(root, work_items),
+        _skip("9b"),
+        check_plain_state_words(root),
+        _skip("10b"),
+        check_technical_detail_is_folded(root),
         check_participant_kit(root),
         check_workspace_template(root),
         check_templates_carry_anatomy(root),
-        _skip("7"),
     ]
     summary = {
         "pass": sum(r["status"] == "PASS" for r in results),
@@ -571,7 +866,7 @@ def run_conformance(root: Path) -> dict:
 def print_human_summary(report: dict) -> None:
     w = sys.stderr.write
     w(f"\ndocuments.v1 conformance — {report['target']}\n")
-    w(f"asserts: {report['contract']} (\"Conformance kit asserts\")\n")
+    w(f"asserts: {report['contract']} (rules numbered to its Core clauses)\n")
     w("-" * 74 + "\n")
     for r in report["results"]:
         w(f"  [{r['status']:4}] {r['rule']:3} {r['id']}: {r['detail']}\n")
@@ -588,6 +883,9 @@ def main(argv=None) -> int:
     ap.add_argument("repo_root", help="path to the repository root (holds contracts/, docs/)")
     ap.add_argument("--json-only", action="store_true",
                     help="suppress the human summary on stderr")
+    ap.add_argument("--work-items", metavar="PATH", default=None,
+                    help="a work-queue export (JSON array or JSONL) for rule 9; "
+                         f"defaults to {WORK_ITEMS_DEFAULT} in the target if present")
     args = ap.parse_args(argv)
 
     root = Path(args.repo_root)
@@ -598,7 +896,7 @@ def main(argv=None) -> int:
         sys.stderr.write(f"error: not a directory (a target is a repo root): {args.repo_root}\n")
         return 3
 
-    report = run_conformance(root)
+    report = run_conformance(root, Path(args.work_items) if args.work_items else None)
     sys.stdout.write(json.dumps(report, indent=2) + "\n")
     if not args.json_only:
         print_human_summary(report)
