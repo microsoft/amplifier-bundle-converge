@@ -1,0 +1,13 @@
+name: seed-reconcile
+description: >
+  VIOLATES 1b: an automated step that names a heavy-package helper. The step
+  cannot run in a session assembled on the lean base.
+
+steps:
+  - name: intake
+    agent: "foundation:zen-architect"
+    instruction: Read the target repository's contracts and report what you find.
+
+  - name: reconcile
+    agent: "foundation:modular-builder"
+    instruction: Derive the ledger rows from the contracts.

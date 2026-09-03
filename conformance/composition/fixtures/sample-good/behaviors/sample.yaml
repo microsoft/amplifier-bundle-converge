@@ -1,0 +1,34 @@
+bundle:
+  name: sample-good-behavior
+  version: 0.1.0
+  description: >
+    The capability payload. Carries the candidate guard, configured to admit a
+    proposal beside a locked contract under BOTH names and to recognize a
+    locked contract whose status lives in the H1 parenthetical.
+
+hooks:
+  - module: hooks-candidate-guard
+    source: ../modules/hooks-candidate-guard
+    config:
+      enabled: true
+      guarded_globs: ["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md"]
+      require_frozen_marker: true
+      # Matches the H1-parenthetical status form documents.v1 Core 6 fixes:
+      #   `# Composition Contract — v1 (FROZEN 2026-09-02)`
+      # and the older explicit-field forms.
+      frozen_marker_regex: '(?im)^#.*\((?:FROZEN|RATIFIED|LOCKED)\b|^\*\*Status:\*\*\s*(?:RATIFIED|FROZEN)|^status:\s*FROZEN'
+      always_allow_globs: ["**/CANDIDATE-*.md", "**/*.v[0-9]*-candidate.md"]
+      intercept_tools: ["write_file", "edit_file", "apply_patch"]
+      path_fields: ["file_path", "path"]
+      scan_bash: true
+      escape_mode: "ratified_candidate"
+      candidate_glob: ["**/CANDIDATE-*.md", "**/*.v[0-9]*-candidate.md"]
+      ratified_stamp_regex: '(?im)^ratified(?:\s+as\s+edited)?\b.*\bby\s+owner\b'
+      candidate_target_field: "target"
+      fail_closed_on_error: true
+
+context:
+  include:
+    - sample-good:context/awareness.md
+
+# NO top-level `spawn:` block — deliberately.

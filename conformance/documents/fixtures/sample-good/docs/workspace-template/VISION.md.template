@@ -1,0 +1,19 @@
+<!-- VISION.md.template — copy to docs/VISION.md and delete this comment. -->
+
+# <Project> — Vision (DRAFT)
+
+## Where this is going
+
+<The project as it will be when it is right, written as though already true.>
+
+## Principles
+
+1. **<The principle, in bold.>** <Why it matters.>
+
+## What this project deliberately does not do
+
+<The boundaries, as a single plain paragraph.>
+
+## Changelog
+
+- **<YYYY-MM-DD> — v1 (DRAFT).** <What this version came from.>
