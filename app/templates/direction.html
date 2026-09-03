@@ -1,0 +1,75 @@
+<section id="directionView" class="view direction-view" aria-label="Direction">
+  <div class="workspace-header">
+    <div class="objective-block">
+      <span class="eyebrow">Current objective</span>
+      <strong id="objectiveText">&nbsp;</strong>
+    </div>
+    <div class="constraint-strip">
+      <div><span>Hard limit</span><strong id="deadlineText">—</strong></div>
+      <div><span>Strategy</span><strong id="strategyShort">—</strong></div>
+      <div><span>Lanes</span><strong id="lanesShort">—</strong></div>
+    </div>
+  </div>
+
+  <div class="direction-layout">
+    <aside class="doc-nav" aria-label="Direction documents">
+      <div class="doc-nav-toolbar">
+        <strong>Direction</strong>
+        <select id="repoFilter" aria-label="Repository filter"><option value="all">All repos</option></select>
+      </div>
+      <div id="repoTree"></div>
+      <div class="nav-utilities">
+        <button type="button" data-nav-special="changes"><span>All changes</span><b id="allChangesCount">0</b></button>
+        <button type="button" data-nav-special="proposals"><span>Proposals</span><b id="proposalCountNav">0</b></button>
+        <button type="button" data-nav-special="decisions"><span>My decisions</span><b id="decisionsCountNav" class="hidden"></b></button>
+      </div>
+    </aside>
+
+    <article class="document-surface" id="documentSurface">
+      <div class="document-toolbar">
+        <div class="doc-path" id="docPath">—</div>
+        <div class="doc-tools">
+          <button id="wideToggle" class="tiny-button" type="button" aria-pressed="false">Wide</button>
+          <button id="rawToggle" class="tiny-button" type="button" aria-pressed="false">Raw</button>
+          <button id="copyRendered" class="tiny-button" type="button">Copy</button>
+          <button id="downloadDoc" class="tiny-button" type="button">Download</button>
+        </div>
+      </div>
+
+      <div class="document-title-row">
+        <div>
+          <div class="title-meta"><span id="docStateBadge" class="state-badge kept">Kept</span><span id="docUpdated"></span></div>
+          <h1 id="docTitle">&nbsp;</h1>
+        </div>
+        <button id="bookmarkButton" class="round-button" type="button" aria-pressed="false" title="Bookmark">☆</button>
+      </div>
+
+      <div class="mode-tabs" role="tablist" aria-label="Document mode">
+        <button data-doc-mode="read" class="mode-tab active" role="tab" aria-selected="true" type="button">Read</button>
+        <button data-doc-mode="changes" class="mode-tab" role="tab" aria-selected="false" type="button">Changes <span class="count-chip" id="changesCountChip">0</span></button>
+        <button data-doc-mode="review" class="mode-tab" role="tab" aria-selected="false" type="button">Review <span class="count-chip" id="reviewCountChip">0</span></button>
+        <button data-doc-mode="history" class="mode-tab" role="tab" aria-selected="false" type="button">History</button>
+      </div>
+
+      <div id="documentModeContent" class="document-mode-content"></div>
+    </article>
+
+    <aside class="context-rail" id="contextRail" aria-label="Document context">
+      <div class="context-card">
+        <span class="eyebrow">Since you last read</span>
+        <strong id="sinceSummary">—</strong>
+        <p id="sinceDetail"></p>
+        <button id="showChangesShortcut" class="text-button" type="button">Review what changed →</button>
+      </div>
+
+      <div class="context-card" id="proposalCard"></div>
+
+      <div class="context-card compact">
+        <span class="eyebrow">Reality</span>
+        <div class="reality-row"><span>Contracts kept</span><strong id="realityKept">—</strong></div>
+        <div class="reality-row"><span>Not yet</span><strong id="realityNotYet">—</strong></div>
+        <div class="reality-row"><span>Broken</span><strong id="realityBroken" class="danger-text">—</strong></div>
+      </div>
+    </aside>
+  </div>
+</section>

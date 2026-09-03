@@ -1,0 +1,32 @@
+{
+  "path": "AMPLIFIER-APP-WEB / contracts/surface.v1.md",
+  "title": "Surface Contract",
+  "updated": "Ratified Sep 2, 2026 by bkrabach",
+  "state": "kept",
+  "sections": [
+    ["Purpose", "<p>Give the intent steward one place for direction and one place for operation, while asking for their word only where human judgment is irreplaceable.</p>"],
+    ["Two places", "<ul><li><strong>Direction</strong> — vision and contracts as a living agreement.</li><li><strong>Operation</strong> — the manager session at work, from strategy down to evidence.</li></ul>"],
+    ["The attention budget", "<p>The surface is optimized for fast judgment, not maximum activity. Anything happily proceeding without the steward stays quiet.</p>"]
+  ],
+  "raw": "# Surface Contract\n\n## Purpose\n\nGive the intent steward one place for direction and one place for operation, while asking for their word only where human judgment is irreplaceable.\n\n## Two places\n\n- **Direction** — vision and contracts as a living agreement.\n- **Operation** — the manager session at work, from strategy down to evidence.\n\n## The attention budget\n\nThe surface is optimized for fast judgment, not maximum activity. Anything happily proceeding without the steward stays quiet.\n",
+  "changes": [
+    { "id": "c1", "section": "The attention budget", "before": "The surface shows everything that is happening.", "now": "The surface is optimized for fast judgment, not maximum activity.", "source": "surface: quiet is the default" }
+  ],
+  "proposals": [
+    {
+      "id": "#88",
+      "title": "Add a read-only terminal viewport to the manager console",
+      "source": "Teammate PR",
+      "why": "Stewards want to see the manager's own session without leaving the browser.",
+      "recommendation": "Ratify",
+      "tradeoffs": ["One more live dependency on tmux", "No send-keys path in this version"],
+      "evidence": ["Two stewards asked for it during the pilot", "tmux capture already proven in the field guide"],
+      "unchanged": "The two-places structure and the attention budget do not change.",
+      "file": "contracts/surface-terminal-candidate.md"
+    }
+  ],
+  "history": [
+    { "id": "now", "label": "Current", "date": "Sep 3 · 09:42", "note": "Proposal #88 arrived from a teammate PR.", "sha": "7a99d15" },
+    { "id": "27febe4", "label": "Last ratified", "date": "Sep 2 · 17:10", "note": "Two-places structure ratified.", "sha": "27febe4" }
+  ]
+}

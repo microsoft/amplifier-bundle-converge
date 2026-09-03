@@ -1,0 +1,28 @@
+{
+  "id": "reliability",
+  "name": "Platform reliability",
+  "status": "idle",
+  "statusLabel": "Idle",
+  "age": "2h",
+  "summary": "Paused by the manager after reaching the learning goal.",
+  "objective": "Reduce the highest-impact reliability gaps without changing the public contract.",
+  "deadline": "",
+  "strategy": "Continuous",
+  "lanesMax": 6,
+  "lanesActive": 0,
+  "needs": 0,
+  "repos": 2,
+  "projects": 1,
+  "strategyNarrative": "Burn down verified reliability gaps in dependency order while keeping one lane open for newly discovered incidents.",
+  "tmux": "",
+  "repositories": [
+    {
+      "id": "runtime",
+      "name": "AMPLIFIER-RUNTIME",
+      "path": "/home/bkrabach/dev/amplifier-runtime",
+      "docs": [
+        { "id": "reliability-vision", "title": "Vision", "fullTitle": "Runtime Reliability Vision", "state": "draft" }
+      ]
+    }
+  ]
+}

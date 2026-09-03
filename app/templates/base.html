@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a1020" />
+  <title>{% block title %}Converge{% endblock %}</title>
+
+  <link rel="icon" href="/branding/favicons/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/branding/favicons/favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/branding/favicons/apple-touch-icon.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+
+  <link rel="stylesheet" href="/static/css/tokens.css" />
+  <link rel="stylesheet" href="/static/css/shell.css" />
+  <link rel="stylesheet" href="/static/css/direction.css" />
+  <link rel="stylesheet" href="/static/css/operation.css" />
+  <link rel="stylesheet" href="/static/css/console.css" />
+  <link rel="stylesheet" href="/static/css/dialogs.css" />
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+{% block body %}{% endblock %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

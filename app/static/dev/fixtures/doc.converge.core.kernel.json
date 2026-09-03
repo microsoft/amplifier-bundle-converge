@@ -1,0 +1,18 @@
+{
+  "path": "AMPLIFIER-CORE / contracts/kernel.v1.md",
+  "title": "Kernel Contract",
+  "updated": "Ratified Aug 28, 2026 by bkrabach",
+  "state": "kept",
+  "sections": [
+    ["Purpose", "<p>The kernel supplies a minimal set of lifecycle and orchestration primitives. It does not absorb capabilities that can remain in modules.</p>"],
+    ["Non-negotiables", "<ul><li>Deterministic behavior under identical inputs.</li><li>No breaking contract change without a ratified proposal.</li><li>Observable and diagnosable in production.</li><li>Secure by default.</li></ul>"],
+    ["Interfaces", "<p>Stable seams are small, typed, testable, and intentionally boring. Internal mechanisms remain free to change.</p>"]
+  ],
+  "raw": "# Kernel Contract\n\n## Purpose\n\nThe kernel supplies a minimal set of lifecycle and orchestration primitives. It does not absorb capabilities that can remain in modules.\n\n## Non-negotiables\n\n- Deterministic behavior under identical inputs.\n- No breaking contract change without a ratified proposal.\n- Observable and diagnosable in production.\n- Secure by default.\n\n## Interfaces\n\nStable seams are small, typed, testable, and intentionally boring. Internal mechanisms remain free to change.\n",
+  "changes": [],
+  "proposals": [],
+  "history": [
+    { "id": "now", "label": "Current", "date": "Aug 28 · 10:42", "note": "Ratified; no changes since.", "sha": "21c1d39" },
+    { "id": "eeee029", "label": "Draft", "date": "Aug 21 · 14:02", "note": "First kernel contract drafted from the vision.", "sha": "eeee029" }
+  ]
+}

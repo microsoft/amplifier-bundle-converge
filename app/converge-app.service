@@ -1,0 +1,16 @@
+[Unit]
+Description=Amplifier Converge companion app
+Documentation=file:%h/dev/vision-focused-team-ci/amplifier-bundle-converge/app/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/dev/vision-focused-team-ci/amplifier-bundle-converge
+ExecStart=/usr/bin/env uv run --extra app python -m app.serve --host 0.0.0.0 --port 8788
+Restart=on-failure
+RestartSec=3
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

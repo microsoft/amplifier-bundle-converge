@@ -1,0 +1,4 @@
+[
+  { "kind": "proposal", "title": "Clarify observability and add an architecture diagram", "where": { "repoId": "core", "docId": "vision" }, "since": "Sep 3 · 10:42" },
+  { "kind": "proposal", "title": "Add a read-only terminal viewport to the manager console", "where": { "repoId": "web", "docId": "surface" }, "since": "Sep 3 · 09:42" }
+]

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Converge{% endblock %}
+{% block body %}
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <button class="brand" id="brandHome" type="button" title="All manager sessions">
+        <img src="/branding/icons/converge-icon-64.png" alt="Converge" class="brand-logo" />
+        <span class="brand-word">Converge</span>
+      </button>
+
+      <div class="manager-crumb" id="managerCrumb">
+        <span class="eyebrow">Manager session</span>
+        <button id="managerSelectButton" class="crumb-button" type="button" aria-haspopup="listbox">
+          <strong id="managerNameTop">&nbsp;</strong>
+          <span class="status-dot"></span>
+          <span id="managerStatusTop" class="status-word"></span>
+          <span aria-hidden="true">⌄</span>
+        </button>
+      </div>
+
+      <div class="workspace-switch" id="workspaceSwitch" role="tablist" aria-label="Workspace view">
+        <button class="workspace-tab active" id="directionTab" role="tab" aria-selected="true" type="button">Direction</button>
+        <button class="workspace-tab" id="operationTab" role="tab" aria-selected="false" type="button">Operation</button>
+      </div>
+
+      <div class="top-actions">
+        <button id="needsYouButton" class="attention-pill" type="button"><span class="attention-dot"></span><strong id="needsYouCount">0</strong> need your word</button>
+        <button id="feedbackButton" class="icon-label-button feedbackButton" type="button" title="Give feedback"><span>Feedback</span></button>
+        <button id="consoleToggle" class="icon-label-button active" type="button" aria-pressed="true"><span>Manager Console</span></button>
+      </div>
+    </header>
+
+    <div class="body-grid">
+      <aside class="session-rail" id="sessionRail" aria-label="Manager sessions">
+        <div class="rail-heading">
+          <div>
+            <span class="eyebrow">Manager sessions</span>
+            <h2>Your operation</h2>
+          </div>
+          <button id="allSessionsButton" class="small-button" type="button">All</button>
+        </div>
+        <div id="sessionList" class="session-list"></div>
+        <button class="new-session ghost-disabled" type="button" disabled title="Manager sessions are started from the terminal">＋ New manager session</button>
+      </aside>
+
+      <main class="workspace" id="workspace">
+        {% include "home.html" %}
+        {% include "direction.html" %}
+        {% include "operation.html" %}
+      </main>
+
+      {% include "console.html" %}
+    </div>
+
+    {% include "dialogs.html" %}
+  </div>
+{% endblock %}
+{% block scripts %}
+  <link rel="stylesheet" href="/static/vendor/xterm/css/xterm.css" />
+  <script src="/static/vendor/xterm/lib/xterm.js"></script>
+  <script src="/static/js/tmux.js"></script>
+  <script type="module" src="/static/js/main.js"></script>
+{% endblock %}
