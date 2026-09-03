@@ -1,0 +1,32 @@
+{
+  "fixture": "lumen",
+  "contract": "lumen.v1",
+  "contract_file": "contracts/lumen.v1.md",
+  "check": ["python3", "check.py", "."],
+  "note": "Two planted gaps in two files that do not touch. Two disjoint gaps is the whole point: operation.v1 clause 6 says width is a collision decision, so a fixture with one gap could never justify two lanes, and a fixture with two colliding gaps would have to run them as one lane. These two justify exactly two.",
+  "expected_lane_count": 2,
+  "expected_red_rules_before": ["1", "2"],
+  "expected_red_rules_after": [],
+  "gaps": [
+    {
+      "id": "units",
+      "rule": "1",
+      "clause": 1,
+      "quote": "Every reading names its unit.",
+      "owns": ["src/readings.py"],
+      "must_not_touch": ["docs/INDEX.md"],
+      "done": "check.py rule 1 reports PASS: every Reading(...) names a non-empty unit.",
+      "planted_at": "src/readings.py :: panel_temperature"
+    },
+    {
+      "id": "index",
+      "rule": "2",
+      "clause": 2,
+      "quote": "Every public entry point is named in the index.",
+      "owns": ["docs/INDEX.md"],
+      "must_not_touch": ["src/readings.py"],
+      "done": "check.py rule 2 reports PASS: every public entry point in src/report.py is named in docs/INDEX.md.",
+      "planted_at": "docs/INDEX.md :: render_summary is absent"
+    }
+  ]
+}
