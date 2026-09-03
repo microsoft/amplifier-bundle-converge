@@ -1,0 +1,76 @@
+<!--
+  VISION.md.template — the shape a vision follows.
+  Copy to docs/VISION.md, replace every <placeholder>, delete this comment.
+  Two screens when finished. Written as though the end state is already true:
+  present tense throughout, no roadmap, no dates in the body, no status words.
+  If a sentence needs "will" or "eventually", it belongs in a contract or in a
+  work item, not here.
+-->
+
+# <Project> — Vision (DRAFT)
+
+*Written for amplified information workers. Terms of art are defined where they
+first appear; the specific promises live in `contracts/`.*
+
+---
+
+## Where this is going
+
+<Three to six paragraphs describing the project as it is when it is right.
+Present tense. Say what a person experiences, not what a system does. Define
+each term of art the first time it appears, in the sentence that uses it.
+
+Name the roles if the project has them — who decides, who runs the work, who
+does the bounded pieces — and say plainly what each one is for.
+
+End with the through-line: the one text that both people and machines obey, and
+why that mattering is the point.>
+
+---
+
+## Principles
+
+<Numbered. Each principle leads with a bold sentence that could be quoted alone
+and still mean something, then a few plain lines. A principle is something you
+could violate; if you cannot imagine violating it, it is a description, not a
+principle. Five to ten is the useful range.>
+
+1. **<The principle, stated as a fact.>** <Two to five plain lines of what it
+   means in practice, and what it rules out.>
+
+2. **<The next principle.>** <What it means, what it rules out.>
+
+3. **<The next principle.>** <What it means, what it rules out.>
+
+---
+
+## What this is not
+
+<The boundary. Three to six bullets naming things a reader might reasonably
+assume are in scope and that are not. This section prevents more work than any
+other part of the document.>
+
+- <Not this> — <why not, in one line>.
+- <Not this> — <why not, in one line>.
+
+---
+
+## How you can tell it is working
+
+<Observable signs, written as things a person notices, not metrics a dashboard
+reports. If a sign cannot be observed by someone using the project, cut it.>
+
+- <The observable sign.>
+- <The observable sign.>
+
+---
+
+## Changelog
+
+<Newest first. Every entry carries evidence — a cost actually paid or a failure
+actually caught. Preference is not evidence. A vision is grown, not declared,
+and this section is the record of that growth.>
+
+- **<date>** — <what changed, in one sentence>. Evidence: <the cost paid or the
+  failure caught>. Ratified by <the intent steward>.
+- **<date>** — First draft.
