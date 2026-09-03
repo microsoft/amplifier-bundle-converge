@@ -1,0 +1,162 @@
+# =============================================================================
+# turnkey.yaml -- DTU profile for the operation.v1 turnkey harness (--env dtu)
+# =============================================================================
+#
+# Provisions ONE container that can carry the whole turnkey sentence:
+#
+#   fresh environment -> one install -> start a project, derive from a sample
+#   gap, run two lanes, tend, judge, integrate, re-check, brief
+#
+# What that needs, and why each piece is here:
+#
+#   git + a terminal multiplexer   operation.v1 clause 5: "a lane is a worker
+#                                  session's own working copy, branch, and
+#                                  terminal session". Without tmux and git
+#                                  worktrees there are no lanes at all, and the
+#                                  harness's own assertions would have nothing
+#                                  to read.
+#   the amplifier CLI              the lane launcher and /goal live with it.
+#   the work queue + its service   clause 12: atomic claim with custody. The
+#                                  harness reads holders out of it.
+#   the converge bundle            the system under test; installed by exactly
+#                                  the one command README.md documents, which
+#                                  is step (b) of the harness itself.
+#   a provider                     lanes are real agent sessions; without a
+#                                  provider they cannot run.
+#
+# ---- OUT-OF-BAND STATE THIS PROFILE REQUIRES (it is NOT self-contained) ------
+# Named here rather than discovered at 3am:
+#
+#   1. Network egress to github.com for the amplifier CLI, the work queue and
+#      the converge bundle -- or a mirror plus `url_rewrites`, as
+#      ../../ratchet/profiles/ratchet.yaml does.
+#   2. ANTHROPIC_API_KEY (and optionally ANTHROPIC_BASE_URL) in the launch
+#      environment, forwarded by the passthrough block below. Lanes are agent
+#      sessions; no key means no lanes.
+#   3. Host-built `bd` and `dolt` binaries at the paths in `provision.files`.
+#      systemd --user is unavailable to root in an Incus container, so the
+#      queue's own supervisor is run detached instead -- the work-tracker
+#      `doctor` contract treats a foregrounded `serve` as equivalent to the
+#      managed service.
+#
+# ---- LAUNCH -----------------------------------------------------------------
+#   uv run evaluations/turnkey/run.py --env dtu --project turnkey
+#
+# The harness launches this itself, registers the instance in the infra ledger
+# BEFORE the container exists, and destroys it in a `finally` block. It refuses
+# to launch at all if the ledger is unreachable: an unregistered container that
+# outlives the run is worse than a step the run could not perform.
+#
+# ---- HONEST STATUS ----------------------------------------------------------
+# This profile has NOT been verified end to end. See ../RESULT.md for what was
+# actually run and what was not. The readiness gates below are written to fail
+# LOUDLY rather than let a half-provisioned container look ready -- a container
+# that boots but cannot start a lane would turn the turnkey gate green for the
+# wrong reason, which is the one outcome worse than red.
+# =============================================================================
+
+name: turnkey
+description: >
+  DTU for the Converge turnkey harness: amplifier + the converge bundle
+  installed by its one documented command + a live work queue + git worktrees
+  and tmux, so two REAL lanes can run inside one container.
+
+base:
+  image: ubuntu:24.04
+
+passthrough:
+  allow_external: true
+  services:
+    - name: anthropic-key
+      key_env: ANTHROPIC_API_KEY
+    - name: anthropic-base-url
+      key_env: ANTHROPIC_BASE_URL
+
+provision:
+  files:
+    - src: /home/bkrabach/.local/bin/bd
+      dest: /usr/local/bin/bd
+      mode: "0755"
+    - src: /home/bkrabach/.local/bin/dolt
+      dest: /usr/local/bin/dolt
+      mode: "0755"
+
+  setup_cmds:
+    # -- base tooling. tmux and git are not optional here: they ARE clause 5. --
+    - apt-get update && apt-get install -y git tmux curl ca-certificates rsync
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    # -- the amplifier CLI, which carries the lane launcher and /goal ---------
+    - uv tool install git+https://github.com/microsoft/amplifier
+
+    # -- provider config, so a lane can actually be an agent session ---------
+    - |
+      mkdir -p /root/.amplifier
+      cat > /root/.amplifier/settings.yaml << EOF
+      config:
+        providers:
+          - module: provider-anthropic
+            source: git+https://github.com/microsoft/amplifier-module-provider-anthropic@main
+            config:
+              api_key: ${ANTHROPIC_API_KEY}
+              base_url: ${ANTHROPIC_BASE_URL}
+              default_model: claude-sonnet-5
+      EOF
+
+    # -- the shared work queue and its service -------------------------------
+    - |
+      set -e
+      export BD_NON_INTERACTIVE=1 BD_TELEMETRY_DISABLE=1
+      uv tool install --with httpx --with uvicorn git+https://github.com/microsoft/amplifier-work-tracker@main
+      amplifier-work-tracker --help >/dev/null
+      mkdir -p /var/log
+      setsid bash -c 'exec amplifier-work-tracker serve' >/var/log/awt-serve.log 2>&1 </dev/null &
+      disown 2>/dev/null || true
+      ok=0
+      for i in $(seq 1 60); do
+        if amplifier-work-tracker instances >/tmp/awt-inst.log 2>&1; then ok=1; break; fi
+        sleep 1
+      done
+      [ "$ok" = 1 ] || { echo "FATAL: the shared queue server never came up:"; tail -40 /var/log/awt-serve.log; exit 1; }
+      echo "queue backend up"
+
+    # -- THE one documented install (README.md's first `amplifier bundle add`)
+    #    The harness re-runs this itself as step (b) into a throwaway home, so
+    #    that step measures the install rather than assuming it. Doing it here
+    #    too means the container is usable even if step (b) is skipped.
+    - amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main --app
+    - amplifier bundle use converge
+
+    - mkdir -p /workspace
+    - amplifier --version
+
+readiness:
+  - name: amplifier-installed
+    command: amplifier --version
+  - name: converge-composed
+    command: amplifier bundle list | grep -qi converge
+  - name: queue-healthy
+    # `instances` reads the project list out of the shared server, so a clean
+    # exit proves both the CLI and its backend.
+    command: amplifier-work-tracker instances
+  - name: worktrees-work
+    # Clause 5's first half, proven rather than assumed: if a worktree cannot
+    # be created here, no lane can have its own working copy and the turnkey
+    # claim is unreachable in this container.
+    command: >
+      rm -rf /tmp/wt-probe && mkdir -p /tmp/wt-probe/repo && cd /tmp/wt-probe/repo &&
+      git init -q -b main && git config user.email p@p.invalid && git config user.name p &&
+      git commit -q --allow-empty -m base &&
+      git worktree add -q -b probe /tmp/wt-probe/copy &&
+      git worktree list | grep -q /tmp/wt-probe/copy
+  - name: terminal-sessions-work
+    # Clause 5's second half. A container without a working multiplexer cannot
+    # give a lane its own terminal session, and this must fail the launch
+    # rather than surface later as a mysterious lane assertion failure.
+    command: >
+      tmux kill-session -t probe 2>/dev/null;
+      tmux new-session -d -s probe -c /tmp 'sleep 30' &&
+      tmux list-sessions | grep -q probe &&
+      tmux kill-session -t probe
+  - name: provider-smoke
+    command: 'amplifier run "Say exactly: turnkey-ready"'
