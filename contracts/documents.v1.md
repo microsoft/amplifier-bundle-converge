@@ -1,4 +1,4 @@
-# Documents Contract — v1 (DRAFT)
+# Documents Contract — v1 (DRAFT — amended 2026-09-03, owner-ratified)
 
 **Who builds against this:** everyone who reads or writes a vision, contract,
 proposal, brief, or work item under Converge — in this repository and in every
@@ -26,8 +26,11 @@ checked — by anyone, with any tool.
 4. **The same sections, in the same order, every time.** Purpose → Core (the
    teeth) → What v1 deliberately does NOT freeze (with promotion triggers) →
    Conformance kit asserts → Reserved / open questions → Changelog only if amended.
+   A contract may carry an additional section of its own, provided it neither
+   displaces nor reorders the ones above.
 5. **Clauses lead with the rule as fact,** in bold, then one to three plain lines
-   of why. Numbers match the conformance kit's rule table.
+   of why. The kit's rule table is numbered to these Core clause numbers, so a failing
+   rule names the clause it breaks.
 6. **Status lives in the H1 parenthetical and nowhere else.** `(DRAFT)`,
    `(FROZEN 2026-09-02)`, or the hold-loosely form. Neither vision nor contract
    carries kept / broken / in-progress; that lives in the contract check.
@@ -68,6 +71,8 @@ checked — by anyone, with any tool.
 - Every vision: present tense, no status, dated changelog present.
 - Every proposal named `*.vN-candidate.md` has all three parts.
 - Every work item names a contract and quotes its source.
+- No document uses a machine state token where a plain state word belongs.
+- No contract carries technical detail among its deciding sentences.
 - A converged repository has all four participant-kit files.
 - Converge's own templates and its own repository pass every assertion above.
 - A reader who is not an engineer reads each document here and reports nothing
@@ -77,3 +82,9 @@ checked — by anyone, with any tool.
 
 - Whether the participant kit should also ship a pull-request template asking
   "which contract does this serve?"
+
+## Changelog
+
+| Date | Change | Evidence |
+|---|---|---|
+| 2026-09-03 | Amended (still v1, DRAFT): clause 4 allows one extra section; clause 5 names clause-number anchoring; kit asserts cover Core 10–11 | documents.v2-candidate.md (ratified, owner word "lgtm") |

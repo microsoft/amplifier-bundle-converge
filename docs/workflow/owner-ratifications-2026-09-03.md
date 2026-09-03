@@ -10,5 +10,5 @@
 
 ## Round 2 — word: `lgtm, both protocol candidate and the documents contract candidate`
 - **PROTOCOL.md wording** (lane/w6-protocol-terms: four terms defined at first use; section 0 moved above Sources) — ratified, merged as c39b687.
-- **documents.v2** — ratified: clause 4 allows one additional section; clause 5 names clause-number anchoring; kit asserts cover Core 10–11. Applied as `contracts/documents.v2.md`; v1 kept beside it as `.superseded`; the candidate moved to `docs/workflow/` as the decision record.
+- **documents.v2** — ratified: clause 4 allows one additional section; clause 5 names clause-number anchoring; kit asserts cover Core 10–11. Applied in place to `contracts/documents.v1.md` (a DRAFT contract evolves in place with a changelog row; the version bumps at lock); the candidate moved to `docs/workflow/` as the decision record.
 - **Presentation preference recorded:** the fenced before/after shape of the documents candidate is preferred over the protocol candidate's table — adopt as the proposal presentation convention (guidance: proposing-a-change skill, CONTRACTS-README, proposal-drafter, CONTRACT template).
