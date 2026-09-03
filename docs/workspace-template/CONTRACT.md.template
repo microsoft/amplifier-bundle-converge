@@ -73,7 +73,36 @@ against it. Delete the section if there are none.>
     2. It carries a real example of right and wrong.
     3. It can be checked against reality.
     4. The intent steward has read it and agreed.
-  Only the steward locks it, and locking is the only thing that changes
-  "(DRAFT)" to "(FROZEN <date>)". After that the text changes only through a
-  <contract>.vN-candidate.md proposal — the pre-push scan refuses anything else.
+  Only the steward locks it, and locking is the only thing that replaces
+  "(DRAFT)" with the locked stamp and its date. After that the text changes
+  only through a <contract>.vN-candidate.md proposal — the pre-push scan
+  refuses anything else.
+-->
+
+<!--
+  HOW A PROPOSAL SHOWS ITS CHANGES — the fenced before/after pair.
+
+  Part 1 of a proposal is "the exact change, sentence by sentence". Show each
+  change as two fenced blocks: the current text, then the replacement. One
+  numbered pair per change, labelled with the clause it touches. Not a
+  two-column table — the steward answers on a phone, where a table shreds the
+  sentences it is meant to compare.
+
+      ### Change 1 — clause 2, the length rule
+
+      Current text:
+
+      ```
+      2. **<The rule, stated as a fact.>** <One to three plain lines.>
+      ```
+
+      Replacement:
+
+      ```
+      2. **<The rule, stated as a fact.>** <One to three plain lines, and the
+         trigger that would promote it.>
+      ```
+
+  Then the evidence — a cost actually paid or a failure actually caught — then
+  what does NOT change, then the place for the steward's word.
 -->

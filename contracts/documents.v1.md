@@ -1,4 +1,4 @@
-# Documents Contract — v1 (DRAFT)
+# Documents Contract — v1 (DRAFT — amended 2026-09-03, owner-ratified)
 
 **Who builds against this:** everyone who reads or writes a vision, contract,
 proposal, brief, or work item under Converge — in this repository and in every
@@ -26,8 +26,11 @@ checked — by anyone, with any tool.
 4. **The same sections, in the same order, every time.** Purpose → Core (the
    teeth) → What v1 deliberately does NOT freeze (with promotion triggers) →
    Conformance kit asserts → Reserved / open questions → Changelog only if amended.
+   A contract may carry an additional section of its own, provided it neither
+   displaces nor reorders the ones above.
 5. **Clauses lead with the rule as fact,** in bold, then one to three plain lines
-   of why. Numbers match the conformance kit's rule table.
+   of why. The kit's rule table is numbered to these Core clause numbers, so a failing
+   rule names the clause it breaks.
 6. **Status lives in the H1 parenthetical and nowhere else.** `(DRAFT)`,
    `(FROZEN 2026-09-02)`, or the hold-loosely form. Neither vision nor contract
    carries kept / broken / in-progress; that lives in the contract check.
@@ -35,8 +38,9 @@ checked — by anyone, with any tool.
    tense, with a dated changelog whose entries carry evidence.
 8. **A proposal is `<contract>.vN-candidate.md`** and has three parts in order:
    the exact change, sentence by sentence; the evidence (a cost paid or a failure
-   caught — preference is not evidence); what does **not** change. The original
-   stays the law until ratified.
+   caught — preference is not evidence); what does **not** change. Each change
+   shows the current text in a fenced block, then the replacement in a second
+   fence. The original stays the law until ratified.
 9. **A work item names its contract** in one line, defines done in plain words,
    and quotes the feedback or gap it came from.
 10. **Plain state words everywhere.** Contracts: *Kept · Not yet · Broken ·
@@ -53,6 +57,13 @@ checked — by anyone, with any tool.
 13. **Converge is self-hosting.** Its negotiator and proposal drafter write this
     anatomy from shipped templates; its protocol authority checks documents
     against it; its own repository passes the same kit.
+14. **One contract is one domain component** — read in a minute, one "who builds
+    against this", one conformance kit. Split it when the audience divides, when
+    the kit would need two targets, or when the clauses stop referring to one
+    another; merge it back when a file cannot fill its own sections. A domain
+    too large becomes an umbrella with section and platform contracts beneath
+    it, each pinning the umbrella by hash — the same boundary at which a member
+    may become its own project. `docs/RIGHT-SIZING.md` carries the tests.
 
 ## What v1 deliberately does NOT freeze
 
@@ -68,6 +79,8 @@ checked — by anyone, with any tool.
 - Every vision: present tense, no status, dated changelog present.
 - Every proposal named `*.vN-candidate.md` has all three parts.
 - Every work item names a contract and quotes its source.
+- No document uses a machine state token where a plain state word belongs.
+- No contract carries technical detail among its deciding sentences.
 - A converged repository has all four participant-kit files.
 - Converge's own templates and its own repository pass every assertion above.
 - A reader who is not an engineer reads each document here and reports nothing
@@ -77,3 +90,10 @@ checked — by anyone, with any tool.
 
 - Whether the participant kit should also ship a pull-request template asking
   "which contract does this serve?"
+
+## Changelog
+
+| Date | Change | Evidence |
+|---|---|---|
+| 2026-09-03 | Amended (still v1, DRAFT): clause 4 allows one extra section; clause 5 names clause-number anchoring; kit asserts cover Core 10–11 | documents.v2-candidate.md (ratified, owner word "lgtm") |
+| 2026-09-03 | Amended (still v1, DRAFT — pending the steward's word): new clause 14 fixes contract size at one domain component; clause 8 adopts the fenced before/after presentation | `docs/RIGHT-SIZING.md`; a contract that failed all three size signals at once and had to be split into the experience family |

@@ -8,15 +8,16 @@ description: >
   a failure caught says a locked clause needs to change. NOT for permission
   questions ("am I allowed to edit this?", "does this conform?") — those go to
   converge:protocol-authority. Applies documents.v1 §8 and PROTOCOL.md §5.
-version: 0.2.0
+version: 0.3.0
 ---
 
 # Writing a proposal to change a locked document
 
 A **locked** document — a vision or a contract the intent steward has read and
-agreed to (`FROZEN` in `docs/PROTOCOL.md`) — cannot be edited in place by
-anyone, person or AI. It changes by written proposal, and only the steward
-ratifies, in so many words.
+agreed to, carrying the locked stamp in its first heading line — cannot be
+edited in place by anyone, person or AI. It changes by written proposal, and
+only the steward ratifies, in so many words. `docs/PROTOCOL.md` §5 gives the
+rule; `PINS.md` gives the exact stamp the guards read.
 
 This skill is the procedure. Whether a change is *allowed* is a separate,
 interpretive question; that one belongs to `converge:protocol-authority`. If you
@@ -54,6 +55,27 @@ shape and are reviewed the same way. There is one form, not two.
    against the locked file as it actually reads, so it applies cleanly when
    ratified. Name the file it targets in one line at the top — that line is what
    lets the guard unlock the right document once the steward has answered.
+
+   Show each change as a **fenced before/after pair**: the current text in a
+   fenced block, then the replacement in a second fence. One pair per change,
+   numbered, each with a label naming the clause it touches. Do not use a
+   two-column table — a table wraps the sentences into unreadable slivers on a
+   phone, and the steward answers on a phone.
+
+   > **Change 1 — clause 4, the section order**
+   >
+   > Current text:
+   >
+   > ```
+   > 4. **The same sections, in the same order, every time.**
+   > ```
+   >
+   > Replacement:
+   >
+   > ```
+   > 4. **The same sections, in the same order, every time.** A contract may
+   >    carry one additional section of its own.
+   > ```
 2. **The evidence: a cost paid or a failure caught.** The outage, the measured
    regression, the concrete failure — with enough detail that someone else can
    verify it. **A preference is not evidence.** If all you have is a preference,
