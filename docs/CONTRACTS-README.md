@@ -8,22 +8,46 @@ every AI session obeys.
 
 New here? Jump to [Quickstart by audience](#quickstart-by-audience).
 
-## The four contracts
+## The index
+
+Three contracts govern the method. A family of contracts governs the app.
 
 | Contract | What it promises | Status |
 |---|---|---|
-| [`contracts/documents.v1.md`](../contracts/documents.v1.md) | Every vision, contract, proposal, brief, and work item has one readable shape. | Draft |
-| [`contracts/operation.v1.md`](../contracts/operation.v1.md) | A manager session carries work from gap to verified result without spending your attention. | Draft |
-| [`contracts/surface.v1.md`](../contracts/surface.v1.md) | One place to see direction, one place to see operation; your word asked rarely and answered in seconds. | Draft |
 | [`contracts/composition.v1.md`](../contracts/composition.v1.md) | Converge sits lightly on a host and never touches work that isn't its own. | Draft |
+| [`contracts/operation.v1.md`](../contracts/operation.v1.md) | A manager session carries work from gap to verified result without spending your attention. | Draft |
+| [`contracts/documents.v1.md`](../contracts/documents.v1.md) | Every vision, contract, proposal, brief, and work item has one readable shape. | Draft |
+
+### The experience family
+
+One experience, many bodies. The **umbrella** holds the behaviors every body
+keeps; a **section** contract holds one area of the app; a **platform** contract
+holds one body's idiom. Every member names the umbrella and the exact revision
+it was written against. Why the family exists, and where its boundaries fall, is
+in [`docs/RIGHT-SIZING.md`](RIGHT-SIZING.md).
+
+| Contract | What it promises | Status |
+|---|---|---|
+| `contracts/experience.v1.md` | Umbrella — the behaviors every body of the app keeps, whatever it runs on. | Not yet written |
+| `contracts/experience-direction.v1.md` | Direction — the vision and contracts as one experience: read, see what changed, review, restore. | Not yet written |
+| `contracts/experience-operation.v1.md` | Operation — the manager session at work: return brief, strategy, waves and lanes, evidence, limits. | Not yet written |
+| `contracts/experience-console.v1.md` | The Manager Console — one pane that stays open beside either place, carrying your live conversation. | Not yet written |
+| `contracts/experience-collaboration.v1.md` | People collaborate through the shared code host; a teammate's proposal and a manager session's read alike. | Not yet written |
+| `contracts/platform-web.v1.md` | The browser and installable web app body, in its own idiom. | Not yet written |
+| `contracts/platform-ios.v1.md` | The iOS body, in its own idiom. | Not yet written |
+| `contracts/platform-android.v1.md` | The Android body, in its own idiom. | Not yet written |
+| `contracts/platform-macos.v1.md` | The macOS body, in its own idiom. | Not yet written |
+| `contracts/platform-windows.v1.md` | The Windows body, in its own idiom. | Not yet written |
+| [`contracts/surface.v1.md`](../contracts/surface.v1.md) | The first statement of the two places — now carried by the family above. | Superseded 2026-09-03 |
 
 ## The anatomy every contract follows
 
 One file, one contract, about one screen — fifty to a hundred lines. Same
 sections, same order, every time:
 
-1. **H1 with the status in parentheses** — `(DRAFT)` or `(FROZEN <date>)`.
-   Status lives here and nowhere else.
+1. **H1 with the status in parentheses** — `(DRAFT)` while it is a draft, and
+   the locked stamp with its date once the steward has locked it (clause 6 of
+   `documents.v1` gives the exact form). Status lives here and nowhere else.
 2. **Line 3: `**Who builds against this:**`** — two to six lines naming the
    people and systems that would be surprised by a silent change.
 3. **Purpose** — why this contract exists, in a short paragraph.
@@ -40,6 +64,11 @@ editor can read it and know what it means. Terms of art are defined at first use
 or not used. Technical detail is folded into a marked section, never carried in
 the deciding sentence.
 
+**How much belongs in one contract** — one domain component: read in a minute,
+one "who builds against this", one conformance kit. When to split it, when to
+merge it back, and how an umbrella, its sections, and its platforms relate is in
+[`docs/RIGHT-SIZING.md`](RIGHT-SIZING.md).
+
 ## When a contract locks
 
 A contract is **draft** until all four are true — then, and only then, the
@@ -53,15 +82,35 @@ intent steward locks it and others are turned loose against it:
 A contract that meets the bar may be held unlocked on purpose while its
 neighbours mature. That is the steward's call, and it is recorded.
 
-Locked contracts carry `(FROZEN <date>)` in the H1. Nothing edits one in place —
-not a person, not an AI session. The repository refuses (see `PINS.md`).
+A locked contract carries the locked stamp and its date in the H1. Nothing edits
+one in place — not a person, not an AI session. The repository refuses (see
+`PINS.md`).
 
 ## How to propose a change
 
 Write a sibling file named `<contract>.vN-candidate.md` — for example
 `contracts/documents.v2-candidate.md`. It has three parts, in order:
 
-1. **The exact change**, sentence by sentence.
+1. **The exact change**, sentence by sentence. Show each change as a **fenced
+   before/after pair**: quote the current text in a fenced block, then the
+   replacement in a second fence. Nothing between them but the label — the
+   reader compares two blocks, not two columns of a table.
+
+   > **Change 1 — clause 2, the length rule**
+   >
+   > Current text:
+   >
+   > ```
+   > **One contract, one file, about one screen.** Fifty to a hundred lines.
+   > ```
+   >
+   > Replacement:
+   >
+   > ```
+   > **One contract, one file, about one screen.** Fifty to a hundred lines,
+   > measured after the changelog.
+   > ```
+
 2. **The evidence** — a cost actually paid or a failure actually caught.
    Preference is not evidence.
 3. **What does *not* change.**

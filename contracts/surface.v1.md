@@ -1,5 +1,5 @@
 # Surface Contract — v1 (DRAFT)
-
+**Superseded 2026-09-03 by the experience family** — `experience.v1` and its section and platform contracts. Kept for the record; build against the family.  
 **Who builds against this:** intent stewards and their teammates, who open the
 app; the manager session, which must be able to do anything the app can; and
 whoever builds the app itself. The companion web page shipped inside Converge

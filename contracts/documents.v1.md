@@ -38,8 +38,9 @@ checked — by anyone, with any tool.
    tense, with a dated changelog whose entries carry evidence.
 8. **A proposal is `<contract>.vN-candidate.md`** and has three parts in order:
    the exact change, sentence by sentence; the evidence (a cost paid or a failure
-   caught — preference is not evidence); what does **not** change. The original
-   stays the law until ratified.
+   caught — preference is not evidence); what does **not** change. Each change
+   shows the current text in a fenced block, then the replacement in a second
+   fence. The original stays the law until ratified.
 9. **A work item names its contract** in one line, defines done in plain words,
    and quotes the feedback or gap it came from.
 10. **Plain state words everywhere.** Contracts: *Kept · Not yet · Broken ·
@@ -56,6 +57,13 @@ checked — by anyone, with any tool.
 13. **Converge is self-hosting.** Its negotiator and proposal drafter write this
     anatomy from shipped templates; its protocol authority checks documents
     against it; its own repository passes the same kit.
+14. **One contract is one domain component** — read in a minute, one "who builds
+    against this", one conformance kit. Split it when the audience divides, when
+    the kit would need two targets, or when the clauses stop referring to one
+    another; merge it back when a file cannot fill its own sections. A domain
+    too large becomes an umbrella with section and platform contracts beneath
+    it, each pinning the umbrella by hash — the same boundary at which a member
+    may become its own project. `docs/RIGHT-SIZING.md` carries the tests.
 
 ## What v1 deliberately does NOT freeze
 
@@ -88,3 +96,4 @@ checked — by anyone, with any tool.
 | Date | Change | Evidence |
 |---|---|---|
 | 2026-09-03 | Amended (still v1, DRAFT): clause 4 allows one extra section; clause 5 names clause-number anchoring; kit asserts cover Core 10–11 | documents.v2-candidate.md (ratified, owner word "lgtm") |
+| 2026-09-03 | Amended (still v1, DRAFT — pending the steward's word): new clause 14 fixes contract size at one domain component; clause 8 adopts the fenced before/after presentation | `docs/RIGHT-SIZING.md`; a contract that failed all three size signals at once and had to be split into the experience family |
