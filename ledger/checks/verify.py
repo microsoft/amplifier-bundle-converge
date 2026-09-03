@@ -124,7 +124,14 @@ print(f"  {'TOTAL (non-SYNC)':34s} {sum(tot.values()):3d} rows  " + "  ".join(f"
 print(f"  {'TOTAL (with SYNC)':34s} {len(rows):3d}")
 
 print("\nCLAUSE COVERAGE (every Core clause cited by >=1 row)")
-for p in sorted(ROOT.glob("contracts/*.md")):
+# The SYNC row's pin list is the authority on what counts as a contract here,
+# NOT a `contracts/*.md` glob. Wave 4 added contracts/documents.v2-candidate.md,
+# a proposal with no "## Core (the teeth)" section, and the glob form crashed on
+# it with an IndexError mid-report — losing this tripwire and the two contracts
+# after it in the sort order, silently, at exit 0. Fixed 2026-09-02 by
+# converge-jc9. A candidate is a proposal until the steward ratifies it; it has
+# no clauses to cover.
+for p in [pathlib.Path(pin["file"]) for pin in rows[0]["pins"]]:
     core = p.read_text().split("## Core (the teeth)")[1].split("\n## ")[0]
     n = len(re.findall(r"^\d+\.\s", core, re.M))
     cited = {r["contract"]["clause"] for r in rows[1:] if r["contract"]["file"] == f"contracts/{p.name}"}
