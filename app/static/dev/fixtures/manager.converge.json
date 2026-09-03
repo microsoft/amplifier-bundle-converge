@@ -1,0 +1,38 @@
+{
+  "id": "converge",
+  "name": "Amplifier Converge",
+  "status": "running",
+  "statusLabel": "Running",
+  "age": "2h 37m",
+  "summary": "The experience wave is merging; the mockup is being made real.",
+  "objective": "Have a convincing stakeholder demo ready by noon.",
+  "deadline": "Today, 12:00 PM",
+  "strategy": "3 waves",
+  "lanesMax": 8,
+  "lanesActive": 6,
+  "needs": 2,
+  "repos": 3,
+  "projects": 2,
+  "strategyNarrative": "First make the complete demo path work. Then make it dependable. Use remaining time for visible polish.",
+  "tmux": { "socket": "hw", "session": "hw__converge__manager" },
+  "repositories": [
+    {
+      "id": "core",
+      "name": "AMPLIFIER-CORE",
+      "path": "/home/bkrabach/dev/vision-focused-team-ci/amplifier-bundle-converge",
+      "docs": [
+        { "id": "vision", "title": "Vision", "fullTitle": "Amplifier Core Vision", "state": "kept" },
+        { "id": "kernel", "title": "Kernel Contract", "fullTitle": "Kernel Contract", "state": "kept" }
+      ]
+    },
+    {
+      "id": "web",
+      "name": "AMPLIFIER-APP-WEB",
+      "path": "/home/bkrabach/dev/vision-focused-team-ci/amplifier-app-web",
+      "docs": [
+        { "id": "surface", "title": "Surface Contract", "fullTitle": "Surface Contract", "state": "kept" },
+        { "id": "ux", "title": "UX Contract", "fullTitle": "UX Contract", "state": "gap" }
+      ]
+    }
+  ]
+}

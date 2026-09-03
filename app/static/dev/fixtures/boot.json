@@ -1,0 +1,56 @@
+{
+  "user": "bkrabach",
+  "managers": [
+    {
+      "id": "converge",
+      "name": "Amplifier Converge",
+      "status": "running",
+      "statusLabel": "Running",
+      "age": "2h 37m",
+      "summary": "The experience wave is merging; the mockup is being made real.",
+      "objective": "Have a convincing stakeholder demo ready by noon.",
+      "deadline": "Today, 12:00 PM",
+      "strategy": "3 waves",
+      "lanesMax": 8,
+      "lanesActive": 6,
+      "needs": 2,
+      "repos": 3,
+      "projects": 2,
+      "strategyNarrative": "First make the complete demo path work. Then make it dependable. Use remaining time for visible polish."
+    },
+    {
+      "id": "release",
+      "name": "Amplifier release",
+      "status": "waiting",
+      "statusLabel": "Waiting on you",
+      "age": "18m",
+      "summary": "Surface contract amendment is blocking the release cut.",
+      "objective": "Cut the Amplifier release candidate with the agreed surface contract.",
+      "deadline": "Today, 4:00 PM",
+      "strategy": "2 waves",
+      "lanesMax": 8,
+      "lanesActive": 4,
+      "needs": 1,
+      "repos": 4,
+      "projects": 1,
+      "strategyNarrative": "Resolve the one direction decision first. Then finish packaging, conformance, and release evidence."
+    },
+    {
+      "id": "reliability",
+      "name": "Platform reliability",
+      "status": "idle",
+      "statusLabel": "Idle",
+      "age": "2h",
+      "summary": "Paused by the manager after reaching the learning goal.",
+      "objective": "Reduce the highest-impact reliability gaps without changing the public contract.",
+      "deadline": "",
+      "strategy": "Continuous",
+      "lanesMax": 6,
+      "lanesActive": 0,
+      "needs": 0,
+      "repos": 2,
+      "projects": 1,
+      "strategyNarrative": "Burn down verified reliability gaps in dependency order while keeping one lane open for newly discovered incidents."
+    }
+  ]
+}

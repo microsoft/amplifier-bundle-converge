@@ -1,0 +1,19 @@
+{
+  "waves": [
+    { "id": "w1", "label": "Wave 1", "title": "Settle the direction decision", "phase": "NOW", "cls": "now", "progress": 50, "items": [["Amendment drafted", 1], ["Owner ratification", 0]] },
+    { "id": "w2", "label": "Wave 2", "title": "Package and prove", "phase": "NEXT", "cls": "next", "progress": 0, "items": [["Packaging", 0], ["Conformance run", 0], ["Release evidence", 0]] }
+  ],
+  "lanes": [
+    { "id": "packaging", "status": "working", "title": "Wheel and entry points", "worker": "packaging · lane/packaging", "wave": "Wave 2", "age": "9m", "evidence": "2 commits", "tmux": { "socket": "hw", "session": "hw__release__packaging" } },
+    { "id": "conformance", "status": "silent", "title": "Conformance kit run", "worker": "conformance · lane/conformance", "wave": "Wave 2", "age": "41m", "evidence": "1 commit", "tmux": { "socket": "hw", "session": "hw__release__conformance" } }
+  ],
+  "timeline": [
+    ["Sep 3", "Amendment drafted", "A candidate was written beside the frozen release contract."]
+  ],
+  "returnBrief": [
+    "Needs you: one proposal is blocking the release cut.",
+    "Progress: packaging is moving in parallel."
+  ],
+  "throughput": { "derived": 9, "resolved": 6, "verified": 5, "reopened": 1, "spark": [1, 0, 2, 1, 3, 2, 6] },
+  "confidence": { "pct": 71, "kept": 10, "notyet": 3, "broken": 1 }
+}

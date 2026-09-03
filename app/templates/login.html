@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Sign in — Converge{% endblock %}
+{% block body %}
+  <div class="login-shell">
+    <form class="login-card" method="post" action="/login">
+      <img src="/branding/icons/converge-icon-64.png" alt="Converge" class="login-logo" />
+      <span class="eyebrow">Amplifier</span>
+      <h1>Converge</h1>
+      <p class="muted">Sign in with your account on this machine.</p>
+      {% if error %}<p class="login-error" role="alert">{{ error }}</p>{% endif %}
+      <input type="hidden" name="next" value="{{ next|default('/') }}" />
+      <div class="dialog-field">
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" autofocus required />
+      </div>
+      <div class="dialog-field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+      </div>
+      <button class="primary-button login-submit" type="submit">Sign in</button>
+    </form>
+  </div>
+{% endblock %}

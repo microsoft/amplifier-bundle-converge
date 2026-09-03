@@ -1,0 +1,38 @@
+{
+  "path": "AMPLIFIER-CORE / docs/VISION.md",
+  "title": "Amplifier Core Vision",
+  "updated": "Updated Sep 3, 2026 by bkrabach",
+  "state": "kept",
+  "sections": [
+    ["Purpose", "<p>Amplifier Core is the thin runtime that lets teams build powerful agentic systems without making the kernel own application policy.</p>"],
+    ["North Star", "<p>A world where intent drives outcome, infrastructure stays replaceable, and humans can work comfortably above the task and code layer.</p>"],
+    ["What we must always deliver", "<ul><li><strong>Thin core.</strong> The kernel coordinates; user-land modules implement policy.</li><li><strong>Observable by default.</strong> Important execution can be inspected without forcing people to live in logs.</li><li><strong>Portable composition.</strong> Providers, tools, context, and applications can evolve independently.</li><li><strong>Evidence over claims.</strong> Completed work is trusted because the system can show what actually happened.</li></ul>"],
+    ["Guiding principles", "<ul><li>Make the hard things composable rather than magical.</li><li>Prefer explicit boundaries over hidden convention.</li><li>Keep the manager able to reason across the whole system while workers stay bounded.</li></ul>"]
+  ],
+  "raw": "# Amplifier Core Vision\n\n## Purpose\n\nAmplifier Core is the thin runtime that lets teams build powerful agentic systems without making the kernel own application policy.\n\n## North Star\n\nA world where intent drives outcome, infrastructure stays replaceable, and humans can work comfortably above the task and code layer.\n\n## What we must always deliver\n\n- **Thin core.** The kernel coordinates; user-land modules implement policy.\n- **Observable by default.** Important execution can be inspected without forcing people to live in logs.\n- **Portable composition.** Providers, tools, context, and applications can evolve independently.\n- **Evidence over claims.** Completed work is trusted because the system can show what actually happened.\n\n## Guiding principles\n\n- Make the hard things composable rather than magical.\n- Prefer explicit boundaries over hidden convention.\n- Keep the manager able to reason across the whole system while workers stay bounded.\n",
+  "changes": [
+    { "id": "c1", "section": "Guiding principles", "before": "Observable — we measure what matters.", "now": "Observable by default — important execution can be inspected without forcing people to live in logs.", "source": "vision: sharpen the observability promise" },
+    { "id": "c2", "section": "North Star", "before": "Humans focus on what only they can do.", "now": "Humans can work comfortably above the task and code layer.", "source": "vision: name the layer humans work at" },
+    { "id": "c3", "section": "Purpose", "before": "A reliable core for agent systems.", "now": "A thin runtime that lets teams build powerful agentic systems without making the kernel own application policy.", "source": "vision: state the thin-core boundary" },
+    { "id": "c4", "section": "Guiding principles", "before": "Keep boundaries clean.", "now": "Prefer explicit boundaries over hidden convention.", "source": "vision: sharpen the observability promise" }
+  ],
+  "proposals": [
+    {
+      "id": "#42",
+      "title": "Clarify observability and add an architecture diagram",
+      "source": "Manager session",
+      "why": "Recent incident review showed that \"observable\" was being read as \"there are logs somewhere.\"",
+      "recommendation": "Ratify with edits",
+      "tradeoffs": ["Stronger promise to users", "Slightly more implementation constraint"],
+      "evidence": ["Pilot feedback from three users", "Incident postmortem #17", "Current conformance gap on observability"],
+      "unchanged": "The thin-kernel boundary, provider model, and public module interfaces do not change.",
+      "file": "docs/VISION-observability-candidate.md"
+    }
+  ],
+  "history": [
+    { "id": "now", "label": "Current", "date": "Sep 3 · 10:42", "note": "Proposal #42 open; four sentence-level changes since the last ratified version.", "sha": "5cf4208" },
+    { "id": "7a99d15", "label": "Last ratified", "date": "Aug 28 · 10:42", "note": "North Star and non-negotiables ratified after stakeholder review.", "sha": "7a99d15" },
+    { "id": "27febe4", "label": "Aug 26", "date": "Aug 26 · 16:18", "note": "Provider portability language added; observability wording still broad.", "sha": "27febe4" },
+    { "id": "eeee029", "label": "Initial draft", "date": "Aug 22 · 09:03", "note": "First vision captured from the design sessions.", "sha": "eeee029" }
+  ]
+}

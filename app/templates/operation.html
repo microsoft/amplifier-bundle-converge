@@ -1,0 +1,64 @@
+<section id="operationView" class="view operation-view hidden" aria-label="Operation">
+  <div class="workspace-header operation-header">
+    <div class="objective-block">
+      <span class="eyebrow">Current objective</span>
+      <strong id="opObjectiveText">&nbsp;</strong>
+    </div>
+    <button id="steerButton" class="primary-subtle-button" type="button">Steer</button>
+  </div>
+
+  <div class="operation-grid">
+    <section class="strategy-card panel-card">
+      <div class="card-heading"><div><span class="eyebrow">Manager strategy</span><h2 id="strategyHeadline">—</h2></div><span class="live-badge">Live</span></div>
+      <p id="strategyNarrative"></p>
+      <div class="strategy-facts">
+        <div><span>Hard limit</span><strong id="strategyDeadline">—</strong></div>
+        <div><span>Lane budget</span><strong id="strategyLaneBudget">—</strong></div>
+        <div><span>Lanes active</span><strong id="strategyLanesActive">—</strong></div>
+      </div>
+    </section>
+
+    <section class="return-card panel-card">
+      <div class="card-heading"><div><span class="eyebrow">While you were away</span><h2 id="awayDuration">—</h2></div><button id="timelineButton" class="text-button" type="button">Timeline →</button></div>
+      <div id="returnBrief" class="brief-list"></div>
+    </section>
+
+    <section class="throughput-card panel-card">
+      <div class="card-heading"><div><span class="eyebrow">Flow today</span><h2>Work is moving</h2></div><strong id="throughputNet" class="positive-text">—</strong></div>
+      <div class="throughput-stats">
+        <div><span>Derived</span><strong id="throughputDerived">—</strong></div>
+        <div><span>Resolved</span><strong id="throughputResolved">—</strong></div>
+        <div><span>Verified</span><strong id="throughputVerified">—</strong></div>
+        <div><span>Reopened</span><strong id="throughputReopened">—</strong></div>
+      </div>
+      <svg id="throughputSpark" class="sparkline" viewBox="0 0 360 72" role="img" aria-label="Resolved work per day"></svg>
+    </section>
+
+    <section class="confidence-card panel-card">
+      <div class="card-heading"><div><span class="eyebrow">Contract confidence</span><h2>Reality vs direction</h2></div></div>
+      <div class="confidence-content">
+        <div class="confidence-ring" id="confidenceRing"><span id="confidencePct">—</span><small>kept</small></div>
+        <div class="confidence-legend">
+          <div><span class="legend-dot kept-dot"></span><span>Kept</span><strong id="confidenceKept">—</strong></div>
+          <div><span class="legend-dot gap-dot"></span><span>Not yet</span><strong id="confidenceNotYet">—</strong></div>
+          <div><span class="legend-dot broken-dot"></span><span>Broken</span><strong id="confidenceBroken">—</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="waves-card panel-card wide-card">
+      <div class="card-heading"><div><span class="eyebrow">Execution plan</span><h2 id="wavesHeadline">Waves</h2></div><span class="muted">Manager-owned · visible to you</span></div>
+      <div id="wavesGrid" class="waves-grid"></div>
+    </section>
+
+    <section class="lanes-card panel-card wide-card">
+      <div class="card-heading"><div><span class="eyebrow">Live lanes</span><h2><span id="activeLaneCount">0</span> of <span id="laneBudgetCount">0</span> working</h2></div><button id="fillLanesButton" class="primary-subtle-button" type="button">Fill lanes</button></div>
+      <div id="lanesGrid" class="lanes-grid"></div>
+    </section>
+
+    <section class="timeline-card panel-card wide-card hidden" id="timelineCard">
+      <div class="card-heading"><div><span class="eyebrow">Confidence timeline</span><h2>Meaningful changes, not a log</h2></div><button id="closeTimelineButton" class="text-button" type="button">Close</button></div>
+      <div id="timelineList" class="timeline-list"></div>
+    </section>
+  </div>
+</section>

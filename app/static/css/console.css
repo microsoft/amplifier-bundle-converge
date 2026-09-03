@@ -1,0 +1,60 @@
+/* Manager Console: dock on desktop, sheet on mobile. Terminal pane is owned by tmux.js. */
+.manager-console {
+  min-width:0;
+  background:var(--navy);
+  color:#e4ebf5;
+  border-left:1px solid #17263a;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  transition:opacity .15s ease;
+}
+.body-grid.console-closed .manager-console { opacity:0; pointer-events:none; }
+.console-header { min-height:60px; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 13px; border-bottom:1px solid rgba(255,255,255,.08); }
+.console-header .eyebrow { color:#7789a1; }
+.console-header strong { display:block; margin-top:4px; color:#fff; }
+.console-header-actions { display:flex; align-items:center; gap:9px; }
+.connected-label { color:#55d99b; font-size:10px; }
+.connected-label.detached { color:#8b9ab0; }
+.console-icon-button { width:30px; height:30px; border-radius:8px; border:1px solid rgba(255,255,255,.09); background:#0c1828; color:#aab8c9; font-size:18px; }
+.console-tabs { display:flex; padding:6px 10px 0; border-bottom:1px solid rgba(255,255,255,.07); }
+.console-tab { border:0; background:transparent; color:#76879f; padding:7px 11px; border-bottom:2px solid transparent; }
+.console-tab.active { color:#fff; border-color:#7256f2; }
+.console-body { flex:1; min-height:300px; padding:14px; overflow:auto; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; line-height:1.58; background:radial-gradient(circle at top right,rgba(62,61,160,.13),transparent 32%),#08121f; }
+.terminal-line { white-space:pre-wrap; overflow-wrap:anywhere; }
+.terminal-line .time { color:#77869a; }
+.terminal-line .prompt { color:#6fd4ff; }
+.terminal-line .success { color:#57d59a; }
+.terminal-line .attention { color:#e9b356; }
+.terminal-spacer { height:10px; }
+.terminal-host { height:100%; min-height:260px; }
+.console-notice { font-family:Inter,ui-sans-serif,sans-serif; color:#9aa8ba; border:1px dashed #21344b; border-radius:10px; padding:12px; }
+.console-notice strong { display:block; color:#fff; margin-bottom:4px; }
+.context-note { font-family:Inter,ui-sans-serif,sans-serif; border:1px solid #21344b; background:#0d1d30; padding:10px; border-radius:10px; margin-bottom:9px; }
+.context-note strong { display:block; color:#fff; margin-bottom:4px; }
+.context-note p { color:#9aa8ba; margin:0; }
+.console-form { display:grid; grid-template-columns:minmax(0,1fr) 40px; padding:10px; gap:7px; border-top:1px solid rgba(255,255,255,.08); background:#0a1524; }
+.console-form input { min-width:0; background:#0e1c2f; border:1px solid #26374e; color:#fff; border-radius:9px; padding:10px 11px; }
+.console-form input:disabled, .console-form button:disabled { opacity:.55; cursor:not-allowed; }
+.console-form button { border:1px solid #374a66; background:#182943; color:#fff; border-radius:9px; }
+.console-footer { display:flex; justify-content:space-between; gap:10px; color:#65758b; font-size:9px; padding:6px 11px 9px; background:#091320; }
+.console-readonly-note { color:#8b9ab0; }
+
+@media (max-width: 980px) {
+  .manager-console {
+    position:fixed;
+    z-index:50;
+    left:10px;
+    right:10px;
+    bottom:10px;
+    height:min(68vh,650px);
+    border:1px solid #26374f;
+    border-radius:15px;
+    box-shadow:0 28px 80px rgba(2,8,19,.35);
+  }
+  .body-grid.console-closed .manager-console { transform:translateY(calc(100% + 20px)); opacity:0; }
+}
+
+@media (max-width: 520px) {
+  .manager-console { left:6px; right:6px; bottom:6px; height:76vh; }
+}

@@ -1,0 +1,13 @@
+/* Modal dialogs (decision edits, feedback, steer). */
+.modal-backdrop { position:fixed; inset:0; z-index:80; background:rgba(6,11,19,.48); backdrop-filter:blur(2px); }
+.app-dialog { z-index:90; width:min(640px,calc(100vw - 24px)); border:0; border-radius:16px; padding:0; box-shadow:0 28px 90px rgba(5,12,25,.32); }
+.app-dialog::backdrop { background:transparent; }
+.dialog-header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:18px 20px 12px; border-bottom:1px solid var(--line); }
+.dialog-header h2 { margin:4px 0 0; }
+.dialog-close { width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:#fff; color:#667085; font-size:18px; }
+.dialog-content { padding:18px 20px; }
+.dialog-actions { padding:12px 20px 18px; display:flex; justify-content:flex-end; gap:8px; }
+.dialog-content textarea, .dialog-content input, .dialog-content select { width:100%; border:1px solid var(--line-strong); border-radius:9px; padding:10px 11px; font-size:14px; background:#fff; }
+.dialog-content textarea { min-height:120px; resize:vertical; }
+.dialog-field { margin-bottom:14px; }
+.dialog-field label { display:block; font-weight:750; font-size:12px; margin-bottom:6px; }

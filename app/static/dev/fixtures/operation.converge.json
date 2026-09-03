@@ -1,0 +1,30 @@
+{
+  "waves": [
+    { "id": "w1", "label": "Wave 1", "title": "Make the demo path real", "phase": "NOW", "cls": "now", "progress": 75, "items": [["Sign-in path", 1], ["Main interaction", 1], ["Demo data", 1], ["End-to-end verification", 0]] },
+    { "id": "w2", "label": "Wave 2", "title": "Make it dependable", "phase": "NEXT", "cls": "next", "progress": 0, "items": [["Error handling", 0], ["Recovery", 0], ["Performance pass", 0]] },
+    { "id": "e1", "label": "Wave 3", "title": "If time remains", "phase": "STRETCH", "cls": "stretch", "progress": 0, "items": [["Visual polish", 0], ["Secondary workflow", 0], ["Nice-to-have improvements", 0]] }
+  ],
+  "lanes": [
+    { "id": "app-frontend", "status": "working", "title": "The mockup split into real templates and modules", "worker": "app-frontend · lane/app-frontend", "wave": "Wave 1", "age": "17m", "evidence": "3 commits", "tmux": { "socket": "hw", "session": "hw__converge__app-frontend" } },
+    { "id": "app-backend", "status": "working", "title": "FastAPI service, PAM auth, JSON API", "worker": "app-backend · lane/app-backend", "wave": "Wave 1", "age": "22m", "evidence": "5 commits", "tmux": { "socket": "hw", "session": "hw__converge__app-backend" } },
+    { "id": "app-tmux", "status": "quiet", "title": "Read-only tmux viewport", "worker": "app-tmux · lane/app-tmux", "wave": "Wave 1", "age": "11m", "evidence": "2 commits", "tmux": { "socket": "hw", "session": "hw__converge__app-tmux" } },
+    { "id": "device-check", "status": "stuck", "title": "Physical device interaction", "worker": "device-check · lane/device-check", "wave": "Wave 1", "age": "29m", "evidence": "Needs a device check", "tmux": { "socket": "hw", "session": "hw__converge__device-check" } },
+    { "id": "telemetry", "status": "working", "title": "Instrument demo telemetry", "worker": "telemetry · lane/telemetry", "wave": "Wave 2", "age": "8m", "evidence": "1 commit", "tmux": { "socket": "hw", "session": "hw__converge__telemetry" } },
+    { "id": "recovery", "status": "done", "title": "Surface error recovery", "worker": "recovery · lane/recovery", "wave": "Wave 2", "age": "6m", "evidence": "Merged; recovery path verified end to end", "tmux": { "socket": "hw", "session": "hw__converge__recovery" } }
+  ],
+  "timeline": [
+    ["Sep 3", "The experience wave returned", "Four lanes merged and the mockup became the thing to make real."],
+    ["Sep 2", "Documents kit pinned rule 14", "Right-sizing was recorded as an unfixturable skip with self-tests green."],
+    ["Sep 1", "Lane board rebuilt", "The board was regrouped by wave so progress reads at a glance."],
+    ["Aug 28", "Kernel contract ratified", "North Star and non-negotiables ratified after stakeholder review."]
+  ],
+  "returnBrief": [
+    "Finished: four pieces landed and were independently verified.",
+    "Progress: the complete demo path now works end to end.",
+    "Stuck: one device interaction still requires a physical-device check.",
+    "Needs you: two decisions about scope or direction.",
+    "Quietly changed: the Surface Contract has a new proposal from a teammate PR."
+  ],
+  "throughput": { "derived": 28, "resolved": 24, "verified": 19, "reopened": 3, "spark": [4, 2, 7, 5, 11, 9, 24] },
+  "confidence": { "pct": 82, "kept": 14, "notyet": 2, "broken": 1 }
+}
