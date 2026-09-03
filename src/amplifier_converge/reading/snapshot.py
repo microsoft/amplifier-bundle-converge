@@ -13,6 +13,7 @@ from . import Reading
 from .constraints import Constraints, read_constraints
 from .documents import Document, read_direction
 from .gitfacts import GitFacts, read_git
+from .kept import Standing, read_promises
 from .lanes import Board, read_board
 from .proposals import Proposal, read_proposals
 from .queue import QueueSummary, WorkItem, read_items, read_summary
@@ -23,6 +24,8 @@ class Snapshot:
     repo: Path
     project: str
     documents: Reading[list[Document]]
+    #: Where each promise stands against reality, by the file it lives in.
+    promises: Reading[dict[str, Standing]]
     proposals: Reading[list[Proposal]]
     board: Reading[Board]
     items: Reading[list[WorkItem]]
@@ -37,6 +40,12 @@ class Snapshot:
         Only where `available` is False. A source that answered and had
         nothing to say is not a problem, and saying so at the top of the page
         would train the reader to ignore the one box that matters.
+
+        `promises` is deliberately not among them. A project with no record of
+        whether its promises are kept already says so in the one place a reader
+        is looking — the word beside each promise reads *Can't check* — and a
+        banner at the top of every page would say it a second time, louder,
+        about something no page but Direction shows.
         """
         out: list[tuple[str, str]] = []
         for reading in (
@@ -76,6 +85,7 @@ def take(
         repo=repo,
         project=project,
         documents=read_direction(repo),
+        promises=read_promises(repo),
         proposals=read_proposals(repo, include_remote=include_remote_proposals),
         board=read_board(repo, batch_dir),
         items=read_items(repo, project),

@@ -11,6 +11,7 @@ from __future__ import annotations
 from ..reading import Reading
 from ..reading.brief import PlanStep
 from ..reading.documents import Document, lock_conditions, lock_is_available
+from ..reading.kept import standing_of
 from ..reading.lanes import Board, Lane
 from ..reading.proposals import Proposal
 from ..reading.queue import QueueSummary, WorkItem
@@ -19,7 +20,7 @@ from ..reading.strip import Decision, empty_state
 from ..reading.whatchanged import WhatChanged
 from ..words import GATE_WORDS
 from ..writing import WRITES
-from .markup import document_html, esc, inline, quoted, quoted_markup
+from .markup import document_html, esc, inline, quoted, quoted_markup, state
 from .styles import STYLESHEET, WORDMARK
 
 
@@ -184,9 +185,40 @@ def _brief_card(snapshot: Snapshot) -> str:
 # --------------------------------------------------------------------------
 
 
-def _document_row(doc: Document, repo) -> str:
-    chip = f'<span class="chip{" locked" if doc.locked else ""}">{esc(doc.state_word)}</span>'
-    conditions = lock_conditions(doc, repo)
+#: How the word beside a promise is coloured. Moss for kept, brick for broken,
+#: amber for the two that are neither, and nothing for a word that is only an
+#: admission that we could not look.
+KEPT_TONE = {
+    "Kept": "kept",
+    "Broken": "broken",
+    "Not yet": "open",
+    "Pinned open": "open",
+}
+
+
+def _document_chip(doc: Document) -> str:
+    """Where it stands as a document: still being written, or settled."""
+    return state(doc.state_word, "chip locked" if doc.locked else "chip")
+
+
+def _kept_line(doc: Document, snapshot: Snapshot) -> str:
+    """Whether the promise is being kept — a different question, said apart.
+
+    Only a promise gets one. The vision says where the project is going; it is
+    not a thing that can be kept or broken clause by clause, and putting a word
+    there would be inventing a judgement nothing measured.
+    """
+    if doc.kind != "contract":
+        return ""
+    standing = standing_of(doc.relpath, snapshot.promises.value)
+    chip = state(standing.word, f"chip {KEPT_TONE.get(standing.word, 'unsure')}")
+    return (
+        f'<p class="muted" style="margin-top:6px">{chip} &nbsp; {esc(standing.sentence)}</p>'
+    )
+
+
+def _document_row(doc: Document, snapshot: Snapshot) -> str:
+    conditions = lock_conditions(doc, snapshot.repo)
     green = sum(1 for _, ok, _ in conditions if ok)
     gate = (
         "Locked — it changes only by a written proposal backed by evidence."
@@ -195,7 +227,8 @@ def _document_row(doc: Document, repo) -> str:
     )
     return f"""<article class="card">
   <h3><a href="/direction/{esc(doc.slug)}">{quoted(doc.title)}</a></h3>
-  <p class="muted" style="margin-top:6px">{chip} &nbsp; {esc(gate)}</p>
+  <p class="muted" style="margin-top:6px">{_document_chip(doc)} &nbsp; {esc(gate)}</p>
+  {_kept_line(doc, snapshot)}
 </article>"""
 
 
@@ -211,10 +244,10 @@ def direction_index(snapshot: Snapshot) -> str:
         "The same words a colleague reads are the words every session obeys.</p></div>"
     ]
     if vision:
-        parts.append("".join(_document_row(d, snapshot.repo) for d in vision))
+        parts.append("".join(_document_row(d, snapshot) for d in vision))
     if contracts:
         parts.append('<div class="section"><h2>The promises</h2></div>')
-        parts.append('<div class="rows two">' + "".join(_document_row(d, snapshot.repo) for d in contracts) + "</div>")
+        parts.append('<div class="rows two">' + "".join(_document_row(d, snapshot) for d in contracts) + "</div>")
     if not docs:
         parts.append(f'<article class="card"><p>{esc(snapshot.documents.note)}</p></article>')
 
@@ -349,10 +382,10 @@ def _answer_document_card(doc: Document) -> str:
 
 
 def direction_document(snapshot: Snapshot, doc: Document, changed: WhatChanged) -> str:
-    chip = f'<span class="chip{" locked" if doc.locked else ""}">{esc(doc.state_word)}</span>'
     body = document_html(doc.text, ask_href=f"/direction/{doc.slug}/ask?anchor={{anchor}}")
     return f"""<p class="muted"><a href="/direction">← Direction</a></p>
-<div class="section"><h2>{quoted(doc.title)}</h2><p>{chip}</p>
+<div class="section"><h2>{quoted(doc.title)}</h2><p>{_document_chip(doc)}</p>
+{_kept_line(doc, snapshot)}
 <details><summary>Details</summary><div class="inner"><p>{esc(doc.relpath)}</p></div></details></div>
 {_what_changed_card(doc, changed)}
 {_answer_document_card(doc)}
