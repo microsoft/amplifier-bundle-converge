@@ -40,7 +40,9 @@ Converge is the Amplifier packaging of the ratified vision-first, contract-drive
 
 ## Named Residual
 
-Durable multi-lane execution (worker-session custody, refill-on-drain, ten-lane-highway) is OUTSIDE this bundle. full-wave's EXECUTE is bounded in-session fan-out. Documented seam hands authorized queue to external lane orchestrator and resumes at MERGE.
+The lane launcher/orchestrator itself is OUTSIDE this bundle. full-wave's EXECUTE writes a brief per authorized item, hands each to an external launcher that runs it as a tmux `/goal` session in its own worktree and branch, and reads completion back from the lane's terminal marker and branch tip; it never executes lane work in session, and it fails loud rather than falling back to agent fan-out. What this bundle does not own is lane scheduling: worker-session custody, refill-on-drain, cross-session reclaim. The seam is declared, the handoff is real, and the wave resumes at MERGE from what the lanes actually committed.
+
+*(2026-09-02: narrowed. EXECUTE was previously bounded in-session fan-out and the residual was the whole of durable multi-lane execution; it is now the launcher alone.)*
 
 ---
 

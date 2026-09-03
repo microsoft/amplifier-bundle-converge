@@ -509,7 +509,7 @@ current session via `load_skill`. None fork; none delegate. Each answers
   |---|---|---|---|
   | **S0 seed** | invoke `seed-reconcile` as a sub-recipe (flat, gateless) → populated/ refreshed ledger + filed GAP/VIOLATION tracker items | — | — |
   | **S1 queue** | `converge:reconciler` turns READY ledger rows into tracker items with clause-quoting acceptance (applies `lane-brief` discipline: honesty gate + file-ownership split) → a **candidate queue** for the owner to pick/kill | **priority-kill** (§6 #4) | — |
-  | **S2 execute** | assert+persist `priority-kill` record → work ONLY the owner-authorized item set (see EXECUTOR below) → lane commits + `DONE.md` per item | **irreversible-ops** (§6 #2) | `priority-kill` |
+  | **S2 execute** | assert+persist `priority-kill` record → brief, LAUNCH (external tmux `/goal` launcher) and AWAIT one lane per owner-authorized item, and ONLY those (see EXECUTOR below) → lane commits + `DONE.md` per item, read back from each lane's terminal marker + branch tip | **irreversible-ops** (§6 #2) | `priority-kill` |
   | **S3 merge** | assert+persist `irreversible-ops` record → `foundation:git-ops` merges the authorized, completed lanes to main | **human-device-verify** (§6 #3) | `irreversible-ops` |
   | **S4 verify** | assert+persist `human-device-verify` record → `converge:reconciler` re-runs the ledger post-merge; **each verdict promoted only by its own artifact check** (pillar 2; `lane-brief` provenance — inherited-from-fork artifacts are the #1 false signal) → verify report | **ratify-changes** (§6 #1) | `human-device-verify` |
   | **S5 close** | assert+persist `ratify-changes` record → `converge:reconciler` emits the **freeze-bar report** (residuals named honestly per §5/pillar 5); if the owner's ratify message stamped any DRAFT→FROZEN or amendment, record it (the recipe still **does not stamp FROZEN itself** — it records the owner's literal word) | — | `ratify-changes` |
@@ -532,30 +532,58 @@ current session via `load_skill`. None fork; none delegate. Each answers
   - Each of the four §6 items is covered exactly once; every other transition is
     gateless. A fifth owner-facing gate would be a protocol defect (§C).
 
-- **EXECUTOR — honest v1 scope (what a recipe CAN deliver):**
-  - **Deliverable now:** a **`foreach` over the owner-authorized queued items**,
-    each handled by a **work-capable agent step** that claims the tracker item
-    (`work_claim`), does the bounded change **within cwd**, writes `DONE.md` +
-    commits, and resolves/records the item. Bounded parallelism via the engine's
-    `foreach` concurrency cap. This is real, in-engine, and testable.
-  - **Residual (NOT deliverable as a recipe — named, not hidden):** full
-    **autonomous lane orchestration with true parallel worktree custody** (the
-    cortex-style N-lane highway with per-lane tmux/worktree lease management) is
-    **out of scope for the recipe engine.** A recipe `foreach` is bounded
-    fan-out, not durable multi-session custody: no cross-session lease/reclaim,
-    no per-lane liveness independent of the wave, no worktree-per-lane isolation
-    guarantee. `full-wave` v1 therefore executes items **sequentially or in
-    bounded `foreach` batches inside the wave's own session**, and DEFERS true
-    lane custody to an external orchestrator (the ten-lane-highway / goal-batch
-    tooling) invoked *outside* the recipe. The `lane-brief` skill still governs
-    how each item is briefed and how completion is judged (git artifacts, not
-    liveness) — that discipline holds regardless of executor.
+- **EXECUTOR — lane work runs as tmux `/goal` sessions, never as in-session
+  agent fan-out:**
+  - **What the recipe does:** S2 writes ONE lane brief per owner-authorized item
+    under `wave_dir/goals/`, hands each to the EXTERNAL launcher named by the
+    `lane_launcher` context variable, then POLLS for that lane's terminal marker.
+    Each lane runs as a tmux `/goal` session in its own worktree on branch
+    `lane/<item id>`: it claims the tracker item (`work_claim`), makes the
+    bounded change within its file ownership, writes `DONE.md` and **commits**,
+    then resolves the item — or writes `BLOCKED.md` naming the cause.
+  - **Launcher contract (the seam):** `<launcher> BATCH_DIR LANE REPO_PATH
+    GOAL_FILE [BASE_REF]`. The launcher owns the worktree, the branch, the tmux
+    session, and `BATCH_DIR/manifest.tsv` (of which it is the ONLY writer); it
+    keeps each lane's terminal marker and log OUTSIDE the worktree, so a lane's
+    own `git add -A` can never stage the marker and collide at merge. S2 passes
+    `BATCH_DIR=wave_dir/lanes`, `LANE=<item id>`, `REPO_PATH=target_repo`,
+    `GOAL_FILE=`the written brief, `BASE_REF=main`.
+  - **No fallback, by construction:** an `agent:` step / `delegate()` NEVER
+    executes lane work. If `lane_launcher` is empty or not executable, S2 prints
+    the exact commands the owner's highway session should run and FAILS. (With
+    zero authorized items it is a clean no-op instead — authorizing nothing
+    stays a valid owner answer.) The one sanctioned in-loop delegate in this
+    practice is a watcher/monitor that must stay in the main agent loop to
+    report back; it executes no lane work.
+  - **Completion is read, never assumed:** `await-lanes` polls each lane
+    directory (resolved from `manifest.tsv`, else `HIGHWAY_LANES_ROOT` /
+    `BATCH_DIR/lanes`) until every lane has a terminal marker or `lane_timeout`
+    expires, then emits `executed_items` (id, title, status, branch, commit,
+    marker, not-proven note) in the shape `merge-lanes` consumes. A DONE marker
+    whose branch tip still equals its base is DOWNGRADED to blocked — an
+    inherited-from-fork tip is the #1 false signal, and a self-report is never
+    proof (pillar 2). A lane still running at the deadline is reported blocked
+    ("still running at deadline"), never fabricated as done.
+  - **Residual (named, not hidden):** the launcher/orchestrator itself lives
+    OUTSIDE this bundle. Lane scheduling — worker-session custody,
+    refill-on-drain, cross-session reclaim — is not the recipe's to own: the
+    recipe declares the seam, hands off, and reads the result. The `lane-brief`
+    skill still governs how each item is briefed and how completion is judged
+    (git artifacts, not liveness) — that discipline holds regardless of executor.
+  - *(2026-09-02: narrowed. This executor was previously a bounded in-session
+    `foreach` over a builder agent, and the residual was the whole of durable
+    multi-lane execution. The owner ruled that lane work executes only as tmux
+    `/goal` sessions launched externally, so the recipe now hands off — and the
+    residual is the launcher alone.)*
 
 - **inputs (recipe context):** `target_repo` (required; = session cwd or within
   it) · `contracts_glob`, `ledger_dir`, `tracker_project` (passed through to the
   `seed-reconcile` sub-recipe) · `authorized_items` (populated from the
   `priority-kill` gate message; the item ids the owner picked) · `wave_dir`
-  (default `.converge/wave/`, where gate records persist).
+  (default `.converge/wave/`, where gate records persist) · `lane_launcher`
+  (REQUIRED to execute anything; the external tmux `/goal` launcher — empty ⇒
+  S2 prints the exact commands and fails) · `lane_timeout` (default 1800s; how
+  long `await-lanes` polls for lane terminal markers).
 - **outputs:** refreshed ledger + filed tracker items (from S0) · lane commits +
   `DONE.md` per executed item · merged main (S3) · post-merge verify report (S4)
   · freeze-bar report with honestly-named residuals (S5) · four persisted gate
