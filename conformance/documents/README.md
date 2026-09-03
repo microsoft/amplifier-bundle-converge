@@ -25,7 +25,7 @@ suppress the stderr summary.
 # a conforming repository  ->  VERDICT: PASS, exit 0
 uv run conformance/documents/run.py conformance/documents/fixtures/sample-good
 
-# a broken repository      ->  VERDICT: FAIL (all fourteen checkable rules), exit 1
+# a broken repository      ->  VERDICT: FAIL (all fifteen checkable rules), exit 1
 uv run conformance/documents/run.py conformance/documents/fixtures/sample-bad
 
 # this repository          ->  the real result, whatever it is
@@ -67,26 +67,28 @@ the contract and quietly go unchecked.
 | 4 | Core 4: "The same sections, in the same order, every time." | Requires *Purpose* → *Core (the teeth)* → *What v1 deliberately does NOT freeze* → *Conformance kit asserts* → *Reserved / open questions*, each present and in that relative order. Headings are matched by prefix, so "Reserved / open questions (NOT frozen)" counts. Any **extra** section is reported in the row's detail rather than failed — the contract fixes the order, and whether extras are permitted is an open question (see below). |
 | 5a | Core 5: "Clauses lead with the rule as fact, in bold." | Every numbered clause under `## Core (the teeth)` must continue with `**`. A reader skimming only the bold text has then read the whole contract. |
 | 5b | Core 5: "Numbers match the conformance kit's rule table." | **SKIP** — the clause does not say *which* numbering it means, and the kits in this repository disagree. The row still reports what it observes: for every contract with a kit beside it, the contract's Core clause numbers against that kit's rule-table numbers. Deciding is the steward's (see below). |
+| 5c | Core 5: "Clauses lead with the rule as fact, in bold, **then one to three plain lines of why**." | Requires a why: every bold-led Core clause must carry plain prose after its bold lead. A clause that asserts and stops is the failure this half of the promise names. The **ceiling** ("one to three") is reported in the row (`observed_why_over_three_source_lines`, `observed_why_over_three_sentences`) and deliberately **not** failed — see below. |
 | 6 | Core 6: "Status lives in the H1 parenthetical and nowhere else." | Requires a status parenthetical in the H1 and none anywhere else. Inline `` `code spans` `` are stripped first — clause 6 spells out `(DRAFT)` and `(FROZEN 2026-09-02)` as *examples*, and reading those as a second status would be a fabricated finding. |
 | 7a | Core 7: "Visions are written as though already true." | Flags roadmap language — "we will build", "we plan to add", "will eventually", "in a future release", "coming soon", "on the roadmap", `TODO`, `TBD`. Deliberately narrow: a bare "will" is legitimate inside a subordinate clause, so only unambiguous plan constructions are flagged. |
 | 7b | Core 7: "with a dated changelog whose entries carry evidence" | Requires a `## Changelog` section with at least one `- **YYYY-MM-DD` entry. |
 | 7c | Core 7: "end state in the present tense" (the whole-document reading) | **SKIP** — mechanical tense detection reports false findings on legitimate subordinate clauses; judging a whole document's tense needs a reader. Row 7a checks the part that is mechanical. |
 | 8 | Core 8: "A proposal is `<contract>.vN-candidate.md` and has three parts in order." | For every `*.vN-candidate.md`: requires the exact change, the evidence, and what does not change — present, and **in that order**. SKIPs with a reason when the target has no proposals. |
-| 9a | Core 9: "A work item names its contract in one line, defines done in plain words." | Reads a work-queue export (see *Run it*). Per item: it must name a contract that **exists** in the target's `contracts/`, by filename stem and version (`operation.v1`) — a bare prose mention of the word "operation" is not a name a machine can tell from ordinary English — and it must carry a non-empty acceptance, a "Done means", or a `GIVEN`. SKIPs with a reason when no export is present. |
+| 9a | Core 9: "A work item names its contract in one line, defines done in plain words." | Reads a work-queue export (see *Run it*). Per item: it must name a contract that **exists** in the target's `contracts/`, by filename stem and version (`operation.v1`) — a bare prose mention of the word "operation" is not a name a machine can tell from ordinary English — and it must carry a non-empty acceptance, a "Done means", or a `GIVEN`. **"In plain words"** is asserted the way rule 10a asserts it of a document: the sentence that defines done must carry no machine state word. An item is free to quote one in its description — that is how a defect gets reported — but not in its definition of done. SKIPs with a reason when no export is present. |
 | 9b | Core 9: "and quotes the feedback or gap it came from" | **SKIP** — measured, with the numbers recorded. Against this repository's live queue the literal test (a blockquote or a quoted span) passes 7 of 24 real items, and most of the 17 it fails *do* point at their origin — in the item's own words rather than the source's. Widening it to accept any clause or item reference passes 20 of 24, but would also pass an item that merely names its contract, which row 9a already checks. Telling a quotation of feedback from a quoted filename needs a reader. The row still reports how many items carry a quotation, in `observed_quoting_a_source` on row 9a. |
-| 10a | Core 10: "Plain state words everywhere." | Scans every contract and the vision for a **machine** disposition token standing in prose — `CONFORMS`, `VIOLATION`, `NOT-ASSERTABLE`, `OPEN-PINNED`, `DIVERGED`, `EXCLUDED`, `IN_PROGRESS`, `IN-PROGRESS`, `WONTFIX`, `BACKLOG`. Case-sensitive and word-bounded, with inline code stripped first: a document that must *name* one puts it in a code span; a document that *uses* one as its state word is what clause 10 forbids. |
+| 10a | Core 10: "Plain state words everywhere. Contracts: … Work: … Lanes: …" | Scans every contract and the vision for a **machine** state word standing in prose, across **all three** vocabularies the clause names — contracts (`CONFORMS`, `GAP`, `VIOLATION`, `NOT-ASSERTABLE`, `OPEN-PINNED`, `DIVERGED`, `EXCLUDED`), work (`READY`, `BLOCKED`, `HELD`, `DEFERRED`, `RESOLVED`, `CLOSED`, `IN_PROGRESS`, `IN-PROGRESS`, `WIP`, `TODO`, `DONE`, `WONTFIX`, `BACKLOG`), lanes (`RUNNING`, `IDLE`, `STALE`, `DEAD`). Case-sensitive and word-bounded, with inline code stripped first: a document that must *name* one puts it in a code span; a document that *uses* one as its state word is what clause 10 forbids. Every match on a line is reported, not just the first. |
 | 10b | Core 10: the whole-vocabulary reading | **SKIP** — measured, with the finding recorded. Both wider mechanical signals landed on legitimate prose in this repository: the vision's "work in progress" is ordinary English, and clause 6's own "kept / broken / in-progress" is the sentence *forbidding* those words. A rule built on either would be a false-positive machine. Row 10a checks the part that is mechanical. |
-| 11 | Core 11: "Technical detail is folded, never in the deciding sentence — … in a marked section in a document." | Fails a fenced code block inside a contract's *Purpose* or *Core (the teeth)* — the sections that carry the deciding sentences. Detail belongs in a later, marked section. |
+| 11a | Core 11: "Technical detail is folded, never in the deciding sentence — … **in a marked section in a document**." | Fails a fenced code block inside a contract's *Purpose* or *Core (the teeth)* — the sections that carry the deciding sentences. Detail belongs in a later, marked section. |
+| 11b | Core 11: "… **behind a Details fold in the app** …" | **SKIP** — not this kit's target. This kit reads a repository's documents; an app is markup and behaviour. The promise is asserted where it can be seen: `conformance/surface` rule 5, against `surface.v1` clause 8 ("Technical detail waits behind a Details fold"). Passing it here would be a claim about a file this kit never opened. |
 | 12a | Core 12: "Every converged repository carries the participant kit." | Requires `AGENTS.md`, `PINS.md`, `docs/CONTRACTS-README.md`, and `.githooks/pre-push`. |
 | 12b | Core 12: the participant kit's source | Requires the five files under `docs/workspace-template/` that a project copies to get that kit. |
 | 13 | Core 13: "Converge is self-hosting … its own repository passes the same kit." | Judges `CONTRACT.md.template` and `VISION.md.template` **as the documents they produce** — the leading HTML instruction comment (which the copier is told to delete) is stripped first. Requires the template to produce line 3 and all five sections, and the vision template to produce a Changelog. |
 
 ### The SKIPs are honest, and pinned
 
-Five rows (1, 5b, 7c, 9b, 10b) are judgments this kit structurally cannot make.
-Rather than fabricate a PASS it reports `SKIP` with the reason, and the
-self-test pins the SKIP set to exactly `{1, 5b, 7c, 9b, 10b}` — so a rule cannot
-quietly drift into SKIP to dodge a failure. Rules 8 and 9a SKIP *conditionally*,
+Six rows (1, 5b, 7c, 9b, 10b, 11b) are judgments this kit structurally cannot
+make. Rather than fabricate a PASS it reports `SKIP` with the reason, and the
+self-test pins the SKIP set to exactly `{1, 5b, 7c, 9b, 10b, 11b}` — so a rule
+cannot quietly drift into SKIP to dodge a failure. Rules 8 and 9a SKIP *conditionally*,
 when a target carries no proposal or no work-item export at all, and the
 self-test asserts that specifically: absent evidence must SKIP, never vacuously
 PASS.
@@ -100,7 +102,7 @@ kit. Reporting `sample-bad`'s intentionally-malformed proposal as a violation
 of *this repository* would be a fabricated finding, and would mean every kit's
 own negative fixture failed the repository that ships it.
 
-### Five places the kit deliberately does not fabricate a finding
+### Six places the kit deliberately does not fabricate a finding
 
 - **A template's own instructions.** A template opens with an HTML comment
   telling the copier to delete it. Reading line 3 of the raw file would report
@@ -117,13 +119,17 @@ own negative fixture failed the repository that ships it.
   tokens only — uppercase and word-bounded. The vision's "work in progress" and
   clause 6's "kept / broken / in-progress" stay unflagged, and `VIOLATES` is not
   `VIOLATION`.
-- **A filename in a deciding sentence.** Rule 11 flags a fenced code block, not
+- **A filename in a deciding sentence.** Rule 11a flags a fenced code block, not
   "a path in a bold lead": clause 8's own deciding sentence is "**A proposal is
   `<contract>.vN-candidate.md`**", where the filename *is* the rule.
 
+- **A ceiling that moves when a paragraph is reflowed.** Rule 5c requires a
+  why and reports how long it ran; it does not fail a clause for running past
+  three of a unit the contract never names.
+
 Each is covered by its own test.
 
-### Two open questions this kit surfaces rather than decides
+### Three open questions this kit surfaces rather than decides
 
 **Whether a contract may carry an extra section.** `documents.v1` clause 4 says
 "the same sections, in the same order, every time," and lists six. It does not
@@ -133,6 +139,19 @@ therefore asserts what the contract unambiguously fixes — presence and order �
 and reports any extra section in its detail, so the fact is visible without the
 kit inventing a ruling the contract does not make.
 
+**How long "one to three plain lines of why" is.** Clause 5's second promise
+has a floor and a ceiling. The floor is unambiguous, so rule 5c enforces it:
+after the bold lead there must *be* a why. The ceiling is not. "Lines" has no
+wrapping-independent meaning — the same prose rewrapped at a different column
+changes the count — and counting sentences is a different unit that answers
+differently. Measured across this repository's four contracts (43 bold-led
+clauses): a ceiling of three **source lines** flags 14 of them, a ceiling of
+three **sentences** flags 3, and 11 clauses are flagged by one unit and not the
+other. Failing a third of a set of contracts nobody has reported as unreadable
+says the unit is wrong, not the contracts. So rule 5c reports the ceiling in
+its row and refuses to fail on it — the same treatment rule 4 gives an extra
+section.
+
 **Which numbering clause 5 means.** Clause 5 ends "Numbers match the conformance
 kit's rule table" without saying whether the anchor is the Core clauses or the
 *Conformance kit asserts* bullets. This kit is numbered to the Core clauses,
@@ -141,8 +160,10 @@ because the bullet numbering hid a real gap (see the changelog). The
 reports that divergence and stays SKIP rather than failing another kit on a
 reading the steward has not ratified.
 
-Both are proposed to the steward in
+The first and the third are proposed to the steward in
 [`contracts/documents.v2-candidate.md`](../../contracts/documents.v2-candidate.md).
+The second needs no ruling to be useful: rule 5c enforces the half that is
+unambiguous today and records the half that is not.
 
 ## Fixtures (the kit's own proof)
 
@@ -150,14 +171,17 @@ Both are proposed to the steward in
   with the full anatomy, a vision with a dated changelog, a well-formed
   proposal beside the contract, a work-item export whose items name their
   contract and quote their source, the four participant-kit files, and the five
-  workspace templates. The kit reports **PASS** on all fourteen checkable rules.
+  workspace templates. The kit reports **PASS** on all fifteen checkable rules.
 - `fixtures/sample-bad/` — an **intentionally broken** repository that violates
-  every checkable rule at once: twenty-nine lines (2), no who-line (3), sections
-  out of order and two missing (4), unbolded clauses (5a), a `**Status:**` field
-  in the body (6), a vision written as a roadmap (7a) with no changelog (7b), a
-  proposal missing two of its three parts (8), work items that name no contract
-  (9a), a machine disposition token in prose (10a), a code block among the teeth
-  (11), and no participant kit and no templates at all (12a, 12b, 13).
+  every checkable rule at once: thirty-three lines (2), no who-line (3),
+  sections out of order and two missing (4), unbolded clauses (5a), a clause
+  that asserts and says no why (5c), a `**Status:**` field in the body (6), a
+  vision written as a roadmap (7a) with no changelog (7b), a proposal missing
+  two of its three parts (8), a work item that names no contract and another
+  that defines done in machine state words (9a), machine state words from all
+  three of clause 10's vocabularies standing in prose (10a), a code block among
+  the teeth (11a), and no participant kit and no templates at all (12a, 12b,
+  13).
 
 Each fixture file names the rule it violates and why, so the fixture reads as a
 worked example of the contract rather than a puzzle.
@@ -181,6 +205,30 @@ Three tests are load-bearing:
   drift apart silently.
 
 ## Changelog
+
+- **2026-09-02 — six rules tightened to what their clauses actually say.**
+  A follow-up report said six rows under Core 5, 9, 10 and 11 asserted less
+  than their clause text. Read against the contract, each was a clause with
+  more than one promise where the kit answered only one of them.
+
+  *What changed.* Clause 5's second promise ("then one to three plain lines of
+  why") gained rule **5c**: a bold assertion with no why now FAILs, and the
+  ceiling is reported rather than failed, because the two candidate units
+  disagree — measured, 14 clauses over three source lines against 3 over three
+  sentences. Rule **9a** now asserts "in plain words" and not merely "done is
+  defined": a definition of done carrying a machine state word FAILs. Rule
+  **10a** now covers all three vocabularies clause 10 names — contracts, work
+  and lanes — where it previously listed only the ledger dispositions, and
+  had no `GAP` at all; every match on a line is reported, not just the first.
+  Rule 11 split into **11a** (the document half, unchanged) and **11b** (the
+  app half), because "behind a Details fold in the app" is not a document and
+  this kit never opens the app — 11b SKIPs and names `conformance/surface`
+  rule 5 as the place that does assert it.
+
+  *What did not change.* Rules **5b**, **9b** and **10b** were already honest
+  SKIPs carrying their measurement, and stay as they are. `sample-bad` gained
+  a negative fixture for each tightening; the SKIP set is re-pinned to
+  `{1, 5b, 7c, 9b, 10b, 11b}`.
 
 - **2026-09-02 — numbered to the Core clauses; Core 9, 10 and 11 answered.**
   Three reports said the kit was quiet where the contract has teeth. They shared

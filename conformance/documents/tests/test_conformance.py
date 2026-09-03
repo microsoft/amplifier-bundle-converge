@@ -29,7 +29,7 @@ BAD = KIT / "fixtures" / "sample-bad"
 # Declared in run.py as un-judgeable from files. Both fixtures carry a proposal
 # and a work-item export, so rules 8 and 9 are checkable in both and are NOT in
 # this set.
-EXPECTED_SKIPS = {"1", "5b", "7c", "9b", "10b"}
+EXPECTED_SKIPS = {"1", "5b", "7c", "9b", "10b", "11b"}
 
 # documents.v1 Core clauses. Every one must be answered by at least one row.
 CORE_CLAUSES = set(range(1, 14))
@@ -74,8 +74,8 @@ def test_bad_repo_fails_named_rules():
     assert report["verdict"] == "FAIL", report
     assert code == 1
     failed = {r["rule"] for r in report["results"] if r["status"] == "FAIL"}
-    assert failed == {"2", "3", "4", "5a", "6", "7a", "7b", "8", "9a",
-                      "10a", "11", "12a", "12b", "13"}, failed
+    assert failed == {"2", "3", "4", "5a", "5c", "6", "7a", "7b", "8", "9a",
+                      "10a", "11a", "12a", "12b", "13"}, failed
 
 
 def test_bad_failures_carry_readable_detail():
@@ -86,12 +86,14 @@ def test_bad_failures_carry_readable_detail():
     assert "outside 50" in rules["2"]["detail"]
     assert "outside the H1" in rules["6"]["detail"]
     assert "bold" in rules["5a"]["detail"]
+    assert "without saying why" in rules["5c"]["detail"]
     assert "plan" in rules["7a"]["detail"]
     assert "Changelog" in rules["7b"]["detail"]
     assert "missing part" in rules["8"]["detail"]
     assert "names no contract" in rules["9a"]["detail"]
+    assert "machine state word" in rules["9a"]["detail"]
     assert "CONFORMS" in rules["10a"]["detail"]
-    assert "among the teeth" in rules["11"]["detail"]
+    assert "among the teeth" in rules["11a"]["detail"]
     assert "AGENTS.md" in rules["12a"]["detail"]
 
 
@@ -143,7 +145,7 @@ def test_absent_evidence_skips_rather_than_passing(tmp_path=None):
         assert rules["9a"]["status"] == "SKIP", rules["9a"]
         assert "work-item export" in rules["9a"]["reason"], rules["9a"]
         # Same discipline for the contract rules when there are no contracts.
-        for rule in ("2", "3", "4", "5a", "6"):
+        for rule in ("2", "3", "4", "5a", "5c", "6"):
             assert rules[rule]["status"] == "SKIP", rules[rule]
             assert rules[rule].get("reason", "").strip(), rules[rule]
 
@@ -260,7 +262,83 @@ def test_a_filename_in_a_deciding_sentence_is_not_technical_detail():
     sentence is "**A proposal is `<contract>.vN-candidate.md`**" — there the
     filename IS the rule, not detail that belongs in a marked section."""
     _, report = run_kit(REPO)
-    assert by_rule(report)["11"]["status"] == "PASS", by_rule(report)["11"]
+    assert by_rule(report)["11a"]["status"] == "PASS", by_rule(report)["11a"]
+
+
+def test_rule_10a_covers_all_three_vocabularies_clause_10_names():
+    """Clause 10 names three vocabularies — contracts, work, lanes — so the
+    machine forms of all three must be catchable, not just the contract's.
+
+    The earlier rule listed only the ledger dispositions, so a document could
+    say HELD or RUNNING and no rule noticed. sample-bad now carries one word
+    from each vocabulary; rule 10a must name them.
+    """
+    _, report = run_kit(BAD)
+    row = by_rule(report)["10a"]
+    assert row["status"] == "FAIL", row
+    tokens = {h["token"] for f in row["files"] for h in f.get("hits", [])}
+    for vocabulary, token in (("contracts", "CONFORMS"),
+                              ("work", "BLOCKED"),
+                              ("lanes", "RUNNING")):
+        assert token in tokens, f"the {vocabulary} vocabulary is unguarded: {tokens}"
+
+
+def test_rule_9a_requires_done_in_plain_words_not_just_present():
+    """Clause 9 asks for done "in plain words".
+
+    An item that defines done at all used to pass. sample-bad's third item
+    defines done entirely in machine state words, and must FAIL for that
+    reason and be named for it.
+    """
+    _, report = run_kit(BAD)
+    row = by_rule(report)["9a"]
+    bad3 = next(f for f in row["files"] if f["file"] == "bad-3")
+    assert bad3["status"] == "FAIL", bad3
+    assert "machine state word" in bad3["detail"], bad3
+    assert "GAP" in bad3["detail"] or "CONFORMS" in bad3["detail"], bad3
+
+
+def test_rule_5c_fails_a_clause_that_asserts_without_saying_why():
+    """Clause 5: "Clauses lead with the rule as fact, in bold, then one to
+    three plain lines of why." A bold assertion with no why breaks it."""
+    _, good = run_kit(GOOD)
+    _, bad = run_kit(BAD)
+    assert by_rule(good)["5c"]["status"] == "PASS", by_rule(good)["5c"]
+    row = by_rule(bad)["5c"]
+    assert row["status"] == "FAIL", row
+    assert "without saying why" in row["detail"], row
+
+
+def test_rule_5c_reports_the_line_ceiling_and_does_not_fail_on_it():
+    """The ceiling ("one to three plain lines") is reported, never failed.
+
+    "Lines" has no wrapping-independent meaning, and the two candidate units
+    answer differently: measured against this repository, a source-line
+    ceiling flags many more clauses than a sentence ceiling. A verdict that
+    flips when a paragraph is reflowed would be a false-positive machine, so
+    the row must carry the observation AND still PASS.
+    """
+    _, report = run_kit(REPO)
+    row = by_rule(report)["5c"]
+    assert row["status"] == "PASS", row
+    over_lines = row["observed_why_over_three_source_lines"]
+    over_sentences = row["observed_why_over_three_sentences"]
+    assert over_lines, "the observation is empty — the ceiling is not being reported"
+    assert len(over_lines) > len(over_sentences), (
+        "the two units no longer disagree; re-measure before enforcing a ceiling"
+    )
+    assert row["ceiling_note"].strip()
+
+
+def test_rule_11_is_split_and_the_app_half_says_where_it_is_checked():
+    """Clause 11 folds detail in two places. This kit reads documents, so the
+    app half is a SKIP that names the kit which does assert it — not a pass
+    on a file this kit never opened."""
+    _, report = run_kit(REPO)
+    row = by_rule(report)["11b"]
+    assert row["status"] == "SKIP", row
+    assert "surface" in row["reason"], row
+    assert by_rule(report)["11a"]["clause"] == row["clause"] == 11
 
 
 # --------------------------------------------------------------------------- #

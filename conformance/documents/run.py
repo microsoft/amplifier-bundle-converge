@@ -60,6 +60,8 @@ RULES = [
      "every Core clause leads with the rule as fact, in bold"),
     ("5b", 5, 1, "clause_numbers_match_the_rule_table",
      "a contract's clause numbers match its kit's rule table"),
+    ("5c", 5, 1, "contract_clauses_carry_their_why",
+     "every Core clause carries plain lines of why after its bold lead"),
     ("6", 6, 1, "contract_status_only_in_h1",
      "status lives in the H1 parenthetical and nowhere else"),
     ("7a", 7, 2, "vision_not_written_as_a_plan",
@@ -78,8 +80,10 @@ RULES = [
      "documents carry plain state words, not machine state tokens"),
     ("10b", 10, None, "plain_state_words_reading",
      "every state word in every document comes from the plain vocabularies"),
-    ("11", 11, None, "technical_detail_is_folded",
+    ("11a", 11, None, "technical_detail_is_folded",
      "technical detail sits in a marked section, never among the teeth"),
+    ("11b", 11, None, "technical_detail_folded_in_the_app",
+     "technical detail waits behind a Details fold in the app"),
     ("12a", 12, 5, "participant_kit_present",
      "a converged repository carries the participant kit"),
     ("12b", 12, 5, "workspace_template_complete",
@@ -112,6 +116,15 @@ UNFIXTURABLE = {
            "form proves nothing. Telling a quotation of feedback from a quoted "
            "filename needs a reader. Rule 9a checks the parts that are "
            "mechanical."),
+    "11b": ("clause 11 folds technical detail in two places, and only one of them "
+            "is a document. The app half \u2014 \"behind a Details fold in the app\" \u2014 "
+            "is not in this kit's target: this kit reads a repository's "
+            "documents, and an app is markup and behaviour. It is asserted "
+            "where it can be seen, by conformance/surface against surface.v1 "
+            "clause 8 (\"Technical detail waits behind a Details fold\"), whose "
+            "rule 5 scans the app's own words. Passing it here on a document "
+            "scan would be a claim about a file this kit never opened. Rule 11a "
+            "checks the document half."),
     "10b": ("both mechanical whole-vocabulary signals were measured against this "
             "repository and both landed on legitimate prose: the vision's \"work "
             "in progress\" is ordinary English, and documents.v1 clause 6's own "
@@ -415,6 +428,115 @@ def check_clauses_bold_led(root: Path):
     return _roll("5a", rows, "contract(s) lead every Core clause in bold")
 
 
+# documents.v1 clause 5, second promise: "then one to three plain lines of why".
+#
+# The FLOOR is unambiguous and mechanical: after the bold lead there must BE a
+# why. A clause that is a bold assertion and nothing else is the failure this
+# promise names.
+#
+# The CEILING is not. "Lines" has no wrapping-independent meaning: the same
+# prose rewrapped at a different column changes the count, and counting
+# sentences is a different unit that answers differently. Measured across this
+# repository's four contracts (43 bold-led clauses): a ceiling of three SOURCE
+# LINES flags 14 of them, a ceiling of three SENTENCES flags 3, and 11 clauses
+# are flagged by one unit and not the other. Failing a third of a set of
+# contracts nobody has reported as unreadable says the unit is wrong, not the
+# contracts -- the same reasoning that keeps rule 9b honest. So the ceiling is
+# REPORTED in the row, never failed: the treatment rule 4 gives an extra
+# section.
+BOLD_LEAD_RE = re.compile(r"^\s*\*\*(.+?)\*\*(.*)$", re.DOTALL)
+SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+WHY_LINES_CEILING = 3
+
+
+def core_clauses(text):
+    """[{line, lead_text, why_lines}] for each numbered clause under Core."""
+    out, cur = [], None
+    for lineno, line in core_section_body(text):
+        m = NUMBERED_CLAUSE_RE.match(line)
+        if m:
+            cur = {"line": lineno, "first": m.group(1), "rest": []}
+            out.append(cur)
+        elif cur is not None:
+            if line.strip() == "":
+                cur = None  # a blank line ends the numbered list
+            else:
+                cur["rest"].append(line.strip())
+    return out
+
+
+def _why_of(clause):
+    """(why_text, source_line_count) for a clause, or (None, 0) if unbolded.
+
+    The bold lead is matched against the clause JOINED, because a lead may
+    legitimately wrap across two source lines; matching only the first line
+    would read a wrapped lead as unbolded and let a bare assertion through.
+    """
+    parts = [clause["first"].strip()] + clause["rest"]
+    joined = " ".join(parts)
+    m = BOLD_LEAD_RE.match(joined)
+    if not m:
+        return None, 0  # rule 5a owns an unbolded clause; 5c does not pile on
+    lead_len = len(joined) - len(m.group(2))
+    why = m.group(2).strip()
+    if not why:
+        return "", 0
+    spans, off = [], 0
+    for part in parts:
+        spans.append((off, off + len(part)))
+        off += len(part) + 1
+    nlines = sum(1 for a, b in spans
+                 if b > lead_len and joined[max(a, lead_len):b].strip())
+    return why, nlines
+
+
+def check_clauses_carry_their_why(root: Path):
+    files = contract_files(root)
+    if not files:
+        return _no_contracts("5c")
+    rows, over_lines, over_sentences = [], [], []
+    for p in files:
+        clauses = core_clauses(p.read_text(encoding="utf-8", errors="replace"))
+        bare, judged = [], 0
+        for c in clauses:
+            why, nlines = _why_of(c)
+            if why is None:
+                continue
+            judged += 1
+            if not why:
+                bare.append({"line": c["line"], "text": c["first"].strip()[:70]})
+                continue
+            nsent = len([s for s in SENTENCE_SPLIT_RE.split(why) if s.strip()])
+            where = f"{_rel(root, p)}:{c['line']}"
+            if nlines > WHY_LINES_CEILING:
+                over_lines.append({"at": where, "lines": nlines})
+            if nsent > WHY_LINES_CEILING:
+                over_sentences.append({"at": where, "sentences": nsent})
+        if judged == 0:
+            rows.append({"file": _rel(root, p), "status": "PASS",
+                         "detail": "no bold-led Core clause to judge (rule 5a owns that)"})
+        elif bare:
+            where = ", ".join(str(b["line"]) for b in bare[:5])
+            rows.append({"file": _rel(root, p), "status": "FAIL",
+                         "detail": f"{len(bare)} of {judged} Core clause(s) assert "
+                                   f"without saying why, at line(s) {where}",
+                         "clauses": bare})
+        else:
+            rows.append({"file": _rel(root, p), "status": "PASS",
+                         "detail": f"all {judged} bold-led Core clause(s) carry a why"})
+    out = _roll("5c", rows, "contract(s) say why after every bold lead")
+    out["observed_why_over_three_source_lines"] = over_lines
+    out["observed_why_over_three_sentences"] = over_sentences
+    out["ceiling_note"] = (
+        f"the clause's ceiling (\"one to three plain lines\") is reported, not "
+        f"failed: {len(over_lines)} clause(s) run past {WHY_LINES_CEILING} source "
+        f"lines and {len(over_sentences)} past {WHY_LINES_CEILING} sentences, and "
+        f"the two units disagree \u2014 a count that changes when a paragraph is "
+        f"rewrapped cannot settle it."
+    )
+    return out
+
+
 def _roll(rid, rows, what):
     failed = [r for r in rows if r["status"] == "FAIL"]
     if failed:
@@ -683,6 +805,19 @@ def _item_text(item: dict) -> str:
     return "\n".join(str(item.get(f) or "") for f in WORK_ITEM_TEXT_FIELDS)
 
 
+def _done_definition(item: dict, text: str) -> str:
+    """The part of an item that DEFINES DONE — not the whole item.
+
+    Clause 9 asks for done "in plain words", so the plain-words test is aimed
+    at the sentence that defines done, and nowhere else. An item is free to
+    quote a machine token in its description (that is how a defect gets
+    reported); putting one in its definition of done is what clause 9 forbids.
+    """
+    parts = [str(item.get("acceptance") or "").strip()]
+    parts += [line for line in text.splitlines() if DONE_PHRASE_RE.search(line)]
+    return "\n".join(p for p in parts if p.strip())
+
+
 def check_work_items(root: Path, work_items: Path = None):
     explicit = work_items is not None
     path = work_items if explicit else (root / WORK_ITEMS_DEFAULT)
@@ -717,8 +852,19 @@ def check_work_items(root: Path, work_items: Path = None):
                  if not known or m.group(1) in known]
         if not named:
             missing.append("names no contract that exists in contracts/")
-        if not (str(item.get("acceptance") or "").strip() or DONE_PHRASE_RE.search(text)):
+        done = _done_definition(item, text)
+        if not done:
             missing.append("does not define done in plain words")
+        else:
+            # "in plain words" — the mechanical half, the same test rule 10a
+            # applies to a document: a machine state token standing where a
+            # plain state word belongs.
+            tokens = sorted({m.group(0) for line in done.splitlines()
+                             for m in [MACHINE_STATE_RE.search(strip_inline_code(line))]
+                             if m})
+            if tokens:
+                missing.append(f"defines done with machine state word(s) {tokens}, "
+                               "not in plain words")
         quotes = bool(QUOTED_SOURCE_RE.search(text) or SOURCE_FIELD_RE.search(text))
         rows.append({"file": ident, "status": "FAIL" if missing else "PASS",
                      "detail": ("; ".join(missing) if missing
@@ -733,16 +879,35 @@ def check_work_items(root: Path, work_items: Path = None):
 # --------------------------------------------------------------------------- #
 # clause 10 — plain state words                                                #
 # --------------------------------------------------------------------------- #
-# Machine dispositions, in their machine form. Case-sensitive and word-bounded
+# Machine state words, in their machine form. Case-sensitive and word-bounded
 # on purpose, and inline code is stripped first — the same precision rule 6
 # uses. A document that must NAME one of these puts it in a code span; a
 # document that USES one as its state word is what clause 10 forbids.
 # "VIOLATES" does not match "VIOLATION"; the vision's "work in progress" and
 # clause 6's own "kept / broken / in-progress" are lowercase prose and are not
 # machine tokens. Both were measured; see rule 10b's reason.
+#
+# Clause 10 names THREE vocabularies, not one, so this list covers all three.
+# The contract vocabulary alone was the earlier gap: a document could say
+# HELD or RUNNING or GAP and no rule noticed. Each machine form below is
+# grouped under the plain words clause 10 puts in its place.
+MACHINE_STATE_TOKENS = {
+    # Contracts: Kept · Not yet · Broken · Pinned open · Can't check
+    "contracts": ["CONFORMS", "GAP", "VIOLATION", "NOT-ASSERTABLE",
+                  "OPEN-PINNED", "DIVERGED", "EXCLUDED"],
+    # Work: Truly ready · Waiting on you · Working · Stuck · Done
+    "work": ["READY", "BLOCKED", "HELD", "DEFERRED", "RESOLVED", "CLOSED",
+             "IN_PROGRESS", "IN-PROGRESS", "WIP", "TODO", "DONE",
+             "WONTFIX", "BACKLOG"],
+    # Lanes: Working · Quiet · Silent — may have died
+    "lanes": ["RUNNING", "IDLE", "STALE", "DEAD"],
+}
+# Longest-first so "IN-PROGRESS" is not reported as the shorter "IN".
 MACHINE_STATE_RE = re.compile(
-    r"\b(?:CONFORMS|VIOLATION|NOT-ASSERTABLE|OPEN-PINNED|DIVERGED|EXCLUDED"
-    r"|IN_PROGRESS|IN-PROGRESS|WONTFIX|BACKLOG)\b"
+    r"\b(?:"
+    + "|".join(sorted((t for g in MACHINE_STATE_TOKENS.values() for t in g),
+                      key=len, reverse=True))
+    + r")\b"
 )
 
 
@@ -764,8 +929,10 @@ def check_plain_state_words(root: Path):
     for p in docs:
         hits = []
         for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
-            m = MACHINE_STATE_RE.search(strip_inline_code(line))
-            if m:
+            # every match on the line, not just the first: a sentence carrying
+            # two machine state words has two things wrong with it, and naming
+            # one of them sends the reader back for the other.
+            for m in MACHINE_STATE_RE.finditer(strip_inline_code(line)):
                 hits.append({"line": i, "token": m.group(0), "text": line.strip()[:80]})
         if hits:
             where = ", ".join(f"{h['line']} ({h['token']})" for h in hits[:5])
@@ -794,7 +961,7 @@ DECIDING_SECTIONS = ("Purpose", "Core (the teeth)")
 def check_technical_detail_is_folded(root: Path):
     files = contract_files(root)
     if not files:
-        return _no_contracts("11")
+        return _no_contracts("11a")
     rows = []
     for p in files:
         lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -819,7 +986,7 @@ def check_technical_detail_is_folded(root: Path):
         else:
             rows.append({"file": _rel(root, p), "status": "PASS",
                          "detail": "no technical detail inside Purpose or Core"})
-    return _roll("11", rows, "contract(s) keep technical detail out of the teeth")
+    return _roll("11a", rows, "contract(s) keep technical detail out of the teeth")
 
 
 # --------------------------------------------------------------------------- #
@@ -834,6 +1001,7 @@ def run_conformance(root: Path, work_items: Path = None) -> dict:
         check_section_order(root),
         check_clauses_bold_led(root),
         check_clause_numbers_match_rule_table(root),
+        check_clauses_carry_their_why(root),
         check_status_only_in_h1(root),
         check_vision_not_a_plan(root),
         check_vision_changelog(root),
@@ -844,6 +1012,7 @@ def run_conformance(root: Path, work_items: Path = None) -> dict:
         check_plain_state_words(root),
         _skip("10b"),
         check_technical_detail_is_folded(root),
+        _skip("11b"),
         check_participant_kit(root),
         check_workspace_template(root),
         check_templates_carry_anatomy(root),
