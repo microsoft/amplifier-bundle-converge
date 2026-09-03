@@ -1080,9 +1080,17 @@ def step_derived(ctx: Context) -> Result:
                 "contracts_in_repo": contracts,
                 "named_only_by_bare_stem": weakly,
                 "without_contract_or_done": offenders}
+    if not sampled and not items:
+        return Result(
+            FAIL,
+            "The sample gap is planted and the project is started, but no work has "
+            "been derived from it — the queue is empty.",
+            evidence=evidence,
+        )
     if not sampled:
         return Result(SKIP, "No item records could be read.",
-                      reason="the queue returned items but none of their full records read back")
+                      reason=f"the queue returned {len(items)} items but none of their "
+                             "full records read back")
     if not contracts:
         return Result(SKIP, f"No contracts found under {ctx.repo}/contracts.",
                       reason="with no contract to trace to, 'derived, never invented' "
