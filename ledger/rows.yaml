@@ -5,8 +5,11 @@
 # converge:reconciler and three protocol rulings from converge:protocol-authority
 # — see "WHAT THE CROSS-CHECK CHANGED" below.
 # RECONCILED 2026-09-02, same day again, against repo @ c5fe505 — see
-# "THE SECOND RECONCILE" below. THIS LEDGER DESCRIBES c5fe505. Main moves
-# hourly; a ledger that chases it converges on nothing. Re-read on merge.
+# "THE SECOND RECONCILE" below.
+# RECONCILED AGAIN 2026-09-02, after the wave-4 merges, against repo @ 10a8d76
+# — see "THE THIRD RECONCILE" below. THIS LEDGER DESCRIBES 10a8d76, and only
+# its documents.v1 section was re-derived in that pass. Main moves hourly; a
+# ledger that chases it converges on nothing. Re-read on merge.
 #
 # WHAT THIS REPO OWES
 # -------------------
@@ -173,11 +176,72 @@
 # also add contracts/documents.v2-candidate.md, which proposes wording for the
 # two questions CVG-044 and CVG-046 pin open. None of that is in c5fe505, so none
 # of it is asserted here.
+#   THAT PREDICTION LANDED (2026-09-02, at 10a8d76) AND IT WAS RIGHT ON BOTH
+#   COUNTS. The renumber arrived and CVG-052/CVG-053 broke exactly as forecast —
+#   verify.py reports both red, with rule ids the pinned lists never heard of.
+#   converge-jc9 re-derived the six rows it was briefed for and left those two
+#   alone rather than guess at a re-derivation it did not own; they are filed as
+#   work. Read this paragraph as the ledger's own forecast being scored, not as
+#   an outstanding warning: the merge has happened.
+#
+# THE THIRD RECONCILE (2026-09-02, after the wave-4 merges — converge-jc9)
+# -----------------------------------------------------------------------
+# The four merges at 10a8d76 landed the documents kit that the SECOND RECONCILE
+# above listed as "KNOWN IN-FLIGHT, NOT YET IN THIS TREE". It renumbers the kit's
+# rules to documents.v1's Core clauses 1..13 and adds six assertions aimed at
+# exactly the six clauses this ledger had recorded as unasserted. All six of
+# those rows moved off GAP — and NOT all in the same direction, which is the
+# result worth reading:
+#
+#   CVG-059  Core 2   -> CONFORMS       rule 2b measures the vision: 68 lines
+#   CVG-061  Core 6   -> CONFORMS       rule 6b scans all 5 documents
+#   CVG-064  Core 12  -> CONFORMS       rule 12c reads 3 kit files, topic by topic
+#   CVG-058  Core 1   -> NOT-ASSERTABLE rule 1 SKIPs: needs a reader
+#   CVG-063  Core 7   -> NOT-ASSERTABLE rule 7d SKIPs, with the measurement
+#   CVG-065  Core 13  -> NOT-ASSERTABLE rule 13b SKIPs: a live-session claim
+#
+# THREE became a real check; THREE became a published refusal to check. The
+# tracker item that asked for this work predicted "four ... and two" in its
+# acceptance while its own description said three and three. The kit's own
+# output settles it at three and three, and it is recorded that way here
+# because that item's acceptance also said no row may move on its mapping
+# alone. A count in a work item is not evidence; the run is.
+#
+# A refusal is not a downgrade. GAP said "nobody has built this check yet";
+# NOT-ASSERTABLE here says "somebody built it, ran it, and published why it
+# does not discriminate" — see CVG-063, where a literal evidence test failed
+# 1 of 1 entries that plainly carry evidence. That is the ratchet working in
+# the direction people forget it has: refusing a green it could have taken.
+#
+# One row was SPLIT (never renumbered): CVG-059 carried two sentences of
+# clause 2 and wave 4 answered only one, so "a brief is a few sentences" became
+# CVG-067 rather than riding a green it does not share.
+#
+# STILL DRIFTED AFTER THIS PASS, and deliberately not touched by it: the same
+# renumbering broke CVG-052 and CVG-053 (their pinned rule-id lists) and left
+# stale rule numbers in a dozen `indexed` refs and `proves` lines across the
+# documents section. `ledger/checks/verify.py` reports CVG-052, CVG-053,
+# CVG-057 and CVG-066 red — all four drifting TOWARD spec, which LEDGER-FORMAT
+# §3 counts as drift all the same. Those are re-derivations this lane did not
+# own and did not guess at: filed as converge-12o rather than quietly fixed.
+# The four rows keep their stale expectations on purpose until then; a red row
+# with a live tracker ref is honest, a bumped expectation nobody re-derived is
+# not.
+#
+# ONE THING THAT WAS FIXED IN PASSING, because it is in ledger/ and it was
+# silently eating this file's own tripwire: `ledger/checks/verify.py` globbed
+# `contracts/*.md` for its clause-coverage pass, and wave 4 added
+# `contracts/documents.v2-candidate.md` — a proposal with no "## Core (the
+# teeth)" section. The glob crashed with an IndexError partway through the
+# report, taking operation.v1's and surface.v1's coverage checks with it, AT
+# EXIT 0. The tripwire had stopped running and said nothing. It now reads the
+# SYNC row's pin list, which is this ledger's own definition of what a contract
+# is, and all four contracts report coverage again.
 #
 # ROW COUNTS BY CONTRACT (full tally at the foot of this file)
 #   composition.v1   9 rows      operation.v1   15 rows
-#   surface.v1      13 rows      documents.v1   24 rows
-#   + CVG-000 SYNC   1                                     = 62 rows total
+#   surface.v1      13 rows      documents.v1   25 rows
+#   + CVG-000 SYNC   1                                     = 63 rows total
 #
 # Ids are stable forever, never renumbered, never reused. Rows added by the
 # cross-check revision take fresh ids (CVG-009, CVG-056..CVG-065) rather than
@@ -220,6 +284,18 @@
     reading of it is still correct.
     Out-of-repo artifacts a row depends on are pinned in that ROW, not here —
     see declared deviation 3 and CVG-037.
+    RE-VERIFIED 2026-09-02 by converge-jc9, after the wave-4 merges (10a8d76):
+    `sha256sum contracts/*.v1.md` returns all four pinned hashes UNCHANGED, so
+    no full-ledger re-review is triggered and the six rows moved by that item
+    were re-derived against contract text that has not moved. Wave 4 changed the
+    KIT, not the contracts — which is the only reason a six-row edit is a
+    legitimate response rather than a re-seed.
+    ONE OBSERVATION, DELIBERATELY NOT A PIN: `contracts/` now also holds
+    `documents.v2-candidate.md`, so this row's own `ref` glob (`contracts/*.md`)
+    matches five files where it pins four. A candidate is a proposal, not a
+    contract, and pinning one would make an unratified file's bytes trigger a
+    ledger re-review. The glob is left wide on purpose; the pin list is the
+    authority on what is a contract here.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # composition.v1 — 9 rows.  The healthy one: 7 of 9 CONFORM, each by a kit rule
@@ -1226,27 +1302,42 @@
     Core 11: "a check only a person or device can perform").
 
 - id: CVG-058
-  title: terms of art are defined at first use or not used
+  title: terms of art are defined at first use or not used — a judgment about the reader
   contract:
     file: contracts/documents.v1.md
     clause: "Core 1"
     quote: "Terms of art are defined at first use or not used."
-  disposition: GAP
+  disposition: NOT-ASSERTABLE
   assertion:
     kind: probe
-    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;print(\"NO-TERMS-OF-ART-RULE\" if not any(\"term\" in r[\"id\"] or \"jargon\" in r[\"id\"] for r in json.load(sys.stdin)[\"results\"]) else \"TERMS-OF-ART-RULE-EXISTS\")"'
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"written_for_information_workers\"][0];print(\"CLAUSE-1-STILL-NEEDS-A-READER\" if r[\"status\"]==\"SKIP\" and \"terms of art\" in r[\"reason\"] else \"CLAUSE-1-NOW-MACHINE-CHECKED\")"'
     expect:
       exit: 0
-      stdout_contains: "NO-TERMS-OF-ART-RULE"
+      stdout_contains: "CLAUSE-1-STILL-NEEDS-A-READER"
+  proves: >
+    Only that the kit still declines to check this clause, and still says why.
+    It proves NOTHING about whether terms of art are in fact defined at first
+    use in this repository's documents — read `justification` before the green.
+  justification: >
+    RAN 2026-09-02: documents kit rule 1 (`written_for_information_workers`)
+    reports SKIP with its reason — "needs a named human reader and a date; no
+    file scan can stand in for a person reporting what they had to look up.
+    This covers both halves of clause 1 … whether a term needed defining is a
+    judgment about the reader, not about the text."
   notes: >
-    RAN 2026-09-02 → NO-TERMS-OF-ART-RULE. GAP and not NOT-ASSERTABLE, and the
-    difference matters: unlike its clause-mate CVG-040, a machine CAN check this.
-    The surface kit's rule 5 does exactly this kind of vocabulary scan and finds
-    real defects (CVG-037). Nothing scans documents for undefined terms of art.
-    ADDED BY THE CROSS-CHECK, which spotted that CVG-040 (NOT-ASSERTABLE) and
-    CVG-052 (GAP, same reasoning) were treating near-identical clauses differently
-    while this sentence went unrowed entirely.
-  work: converge-nht
+    RAN 2026-09-02 `uv run conformance/documents/run.py .` → rule 1 SKIP →
+    CLAUSE-1-STILL-NEEDS-A-READER. WAS GAP (work converge-nht) on the argument
+    that "a machine CAN check this — the surface kit's rule 5 does exactly this
+    kind of vocabulary scan". The kit that arrived (wave 4) answered that
+    argument rather than ignoring it: a scan can flag a candidate word, but
+    "defined at first use OR NOT USED" turns on whether a reader needed the
+    definition, and that is a fact about the reader, not about the text.
+    GAP → NOT-ASSERTABLE. This also settles an inconsistency the cross-check
+    itself flagged: CVG-040, this row's clause-mate on the same Core 1 sentence,
+    has been NOT-ASSERTABLE all along. The `work` ref goes with the GAP —
+    converge-nht is closed, and a NOT-ASSERTABLE row files nothing; it is
+    reviewed at cadence (PROTOCOL.md §3.3).
+    MOVED BY converge-jc9, on this run and not on that item's mapping.
 
 - id: CVG-041
   title: one contract, one file, about one screen
@@ -1268,24 +1359,63 @@
     operation 91, surface 75.
 
 - id: CVG-059
-  title: a vision fits two screens, a brief is a few sentences — nothing measures either
+  title: a vision fits two screens
   contract:
     file: contracts/documents.v1.md
     clause: "Core 2"
-    quote: "A vision fits two screens. A brief is a few sentences."
-  disposition: GAP
+    quote: "A vision fits two screens."
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;print(\"NO-RULE-MEASURES-A-VISION\" if not any(\"length\" in r[\"id\"] and \"vision\" in r[\"id\"] for r in json.load(sys.stdin)[\"results\"]) else \"VISION-LENGTH-RULE-EXISTS\")"'
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"vision_fits_two_screens\"][0];print(\"VISION-LENGTH-RULE-PASSES\" if r[\"status\"]==\"PASS\" else \"VISION-LENGTH-RULE-\"+r[\"status\"])"'
     expect:
       exit: 0
-      stdout_contains: "NO-RULE-MEASURES-A-VISION"
+      stdout_contains: "VISION-LENGTH-RULE-PASSES"
   notes: >
-    RAN 2026-09-02 → NO-RULE-MEASURES-A-VISION. Rule 1c counts `contracts/*.md`
-    only; its own detail line says "all 4 **contract(s)**". docs/VISION.md is 68
-    lines and nothing measures it; no brief artifact is measured anywhere.
-    ADDED BY THE CROSS-CHECK.
-  work: converge-nht
+    RAN 2026-09-02 → rule 2b (`vision_fits_two_screens`) PASS,
+    "docs/VISION.md is 68 lines -- inside two screens (200)" →
+    VISION-LENGTH-RULE-PASSES. The 200-line unit is not invented: the kit takes
+    it as twice the 100-line ceiling clause 2's own preceding sentence sets for
+    a contract. WAS GAP (work converge-nht) when no rule read docs/VISION.md at
+    all; wave 4 added rule 2b. QUOTE NARROWED to the vision sentence alone —
+    the "brief" sentence it used to swallow is now CVG-067, so that one word of
+    the clause is never simultaneously CONFORMS and unasserted (the defect the
+    cross-check found between CVG-048 and CVG-049).
+    MOVED BY converge-jc9, on this run and not on that item's mapping.
+
+- id: CVG-067
+  title: a brief is a few sentences — no brief exists in this tree to measure
+  contract:
+    file: contracts/documents.v1.md
+    clause: "Core 2"
+    quote: "A brief is a few sentences."
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: probe
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;print(\"NO-RULE-MEASURES-A-BRIEF\" if not any(\"brief\" in x[\"id\"] for x in json.load(sys.stdin)[\"results\"]) else \"BRIEF-RULE-EXISTS\")"'
+    expect:
+      exit: 0
+      stdout_contains: "NO-RULE-MEASURES-A-BRIEF"
+  proves: >
+    Only that no kit rule measures a brief. It proves nothing about whether
+    briefs are in fact a few sentences.
+  justification: >
+    RAN 2026-09-02 → NO-RULE-MEASURES-A-BRIEF. Two independent reasons, either
+    of which is sufficient. (a) NO SUBJECT: a brief is not an artifact in this
+    repository. Briefs are goal files in lane worktrees and items in the work
+    queue — neither is in the kit's target tree, the same reason rule 9a SKIPs
+    for work items. `docs/workspace-template/GOAL-FILE.md.template` is a
+    template, not a brief. (b) NO THRESHOLD: "a few sentences" names no number,
+    where the vision half of the same clause inherits a countable one (twice a
+    contract's 100 lines). NOT-ASSERTABLE and not GAP: GAP would file work
+    against a check nobody can build from this sentence, which operation.v1
+    Core 1 forbids.
+  notes: >
+    SPLIT OUT BY converge-jc9 from CVG-059, which carried both sentences of
+    clause 2's second half under one GAP. Wave 4's rule 2b answered the vision
+    sentence and left this one untouched; keeping them in one row would have
+    published a green over an unasserted promise. Fresh id, per this file's
+    never-renumber rule.
 
 - id: CVG-042
   title: line 3 says who builds against this
@@ -1439,8 +1569,13 @@
     kind: indexed
     ref: conformance/documents/run.py (rule 1d)
   proves: >
-    That the four files in contracts/ keep status in the H1. Visions are never
-    scanned — that is CVG-061.
+    That the four files in contracts/ keep status in the H1. This rule never
+    reads a vision; the vision half of clause 6 is asserted separately, by
+    rule 6b, and rowed at CVG-061.
+    NARROWING RESTATED 2026-09-02 by converge-jc9: this line used to read
+    "Visions are never scanned", which stopped being true when wave 4 added
+    rule 6b. Nothing about THIS row's claim changed — only the sentence that
+    described its neighbour.
   notes: >
     RAN 2026-09-02 → rule 1d PASS, "all 4 contract(s) keep status in the H1
     alone". A naive `grep -cE '(DRAFT|FROZEN)'` on documents.v1.md past line 1
@@ -1451,26 +1586,32 @@
     assertion here.
 
 - id: CVG-061
-  title: neither vision nor contract carries kept / broken / in-progress — visions unscanned
+  title: neither vision nor contract carries kept / broken / in-progress
   contract:
     file: contracts/documents.v1.md
     clause: "Core 6"
     quote: |
       Neither vision nor contract carries kept / broken / in-progress; that lives
       in the contract check.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"contract_status_only_in_h1\"][0];print(\"STATUS-RULE-SCANS-CONTRACTS-ONLY\" if \"contract(s)\" in r[\"detail\"] else \"STATUS-RULE-WIDENED\")"'
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"no_progress_words_as_status\"][0];print(\"PROGRESS-WORD-RULE-PASSES-ON-\"+str(len(r[\"files\"]))+\"-DOCS\" if r[\"status\"]==\"PASS\" else \"PROGRESS-WORD-RULE-\"+r[\"status\"])"'
     expect:
       exit: 0
-      stdout_contains: "STATUS-RULE-SCANS-CONTRACTS-ONLY"
+      stdout_contains: "PROGRESS-WORD-RULE-PASSES-ON-5-DOCS"
   notes: >
-    RAN 2026-09-02 → STATUS-RULE-SCANS-CONTRACTS-ONLY. The rule's own detail line
-    is the evidence: "all 4 **contract(s)** keep status in the H1 alone". The
-    clause names visions too, and no rule reads docs/VISION.md for state words.
-    ADDED BY THE CROSS-CHECK.
-  work: converge-nht
+    RAN 2026-09-02 → rule 6b (`no_progress_words_as_status`) PASS, "all 5
+    document(s) leave progress out of their status" →
+    PROGRESS-WORD-RULE-PASSES-ON-5-DOCS. The five are the four contracts AND
+    docs/VISION.md, each reported individually: this is the whole clause, not
+    the contract half of it. WAS GAP (work converge-nht) because rule 6 (then
+    1d) reads contracts only and the clause names visions too; wave 4 added
+    rule 6b, which scans both, in status position only.
+    THE DOCUMENT COUNT IS IN THE EXPECTATION ON PURPOSE: a rule that quietly
+    stopped reading the vision would still say PASS, and this row would still
+    be green. It goes red at 4.
+    MOVED BY converge-jc9, on this run and not on that item's mapping.
 
 - id: CVG-048
   title: visions are written as though already true
@@ -1520,32 +1661,51 @@
     kind: indexed
     ref: conformance/documents/run.py (rule 2b)
   proves: >
-    That at least one dated entry exists. NOT that entries carry evidence —
-    rule 2b never inspects entry content. That is CVG-063.
+    That at least one dated entry exists. NOT that entries carry evidence — this
+    rule never inspects entry content. That is CVG-063, which wave 4's rule 7d
+    now answers with a measured refusal.
+    RULE NUMBER RESTATED 2026-09-02 by converge-jc9: wave 4 renumbered this kit
+    to the Core clauses, so the rule named here is 7b, not the 2b this line used
+    to say — and 2b now belongs to a different rule entirely.
   notes: >
     RAN 2026-09-02 → rule 2b PASS, "docs/VISION.md carries 1 dated changelog
     entry/entries (most recent 2026-09-02)".
     SPLIT OUT BY THE CROSS-CHECK from a CONFORMS that also claimed the evidence half.
 
 - id: CVG-063
-  title: changelog entries carry evidence — nothing inspects entry content
+  title: changelog entries carry evidence — telling evidence-in-prose from none needs a reader
   contract:
     file: contracts/documents.v1.md
     clause: "Core 7"
     quote: "whose entries carry evidence."
-  disposition: GAP
+  disposition: NOT-ASSERTABLE
   assertion:
     kind: probe
-    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"vision_dated_changelog\"][0];print(\"CHANGELOG-RULE-COUNTS-ENTRIES-ONLY\" if \"entry/entries\" in r[\"detail\"] else \"CHANGELOG-RULE-WIDENED\")"'
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"changelog_entries_carry_evidence\"][0];print(\"EVIDENCE-TEST-STILL-NEEDS-A-READER\" if r[\"status\"]==\"SKIP\" and \"a literal test\" in r[\"reason\"] else \"EVIDENCE-TEST-NOW-MECHANICAL\")"'
     expect:
       exit: 0
-      stdout_contains: "CHANGELOG-RULE-COUNTS-ENTRIES-ONLY"
+      stdout_contains: "EVIDENCE-TEST-STILL-NEEDS-A-READER"
+  proves: >
+    Only that rule 7d still declines, and still declines for the measured
+    reason. It proves nothing about whether this repository's changelog entries
+    carry evidence.
+  justification: >
+    RAN 2026-09-02: rule 7d (`changelog_entries_carry_evidence`) reports SKIP
+    and shows its working — the literal test (a link, a path, a command, a
+    commit id, or a quoted span) was run against this repository's only dated
+    entry and FAILED 1 of 1, on an entry that plainly carries its evidence in
+    prose, naming four sources. A check that fails the one true case is not a
+    check. The same judgment defeated rule 9b, for the same reason.
   notes: >
-    RAN 2026-09-02 → CHANGELOG-RULE-COUNTS-ENTRIES-ONLY. Rule 2b requires a
-    `## Changelog` with at least one dated entry; it never reads what the entry
-    says. A changelog of dated entries carrying no evidence would pass.
-    ADDED BY THE CROSS-CHECK.
-  work: converge-nht
+    RAN 2026-09-02 → rule 7d SKIP → EVIDENCE-TEST-STILL-NEEDS-A-READER. WAS GAP
+    (work converge-nht) — "nothing inspects entry content". Wave 4 built the
+    inspection, ran it, and reported that it does not discriminate. That is a
+    stronger result than the gap it replaces: GAP said nobody had tried;
+    NOT-ASSERTABLE says somebody tried and published the measurement.
+    THE HONEST COST: this row can no longer go red on a changelog entry that
+    carries no evidence. Nothing here can. That is the trade NOT-ASSERTABLE
+    names out loud rather than hiding behind a green.
+    MOVED BY converge-jc9, on this run and not on that item's mapping.
 
 - id: CVG-050
   title: a proposal is `<contract>.vN-candidate.md` with three parts in order
@@ -1686,23 +1846,36 @@
       contract; propose instead; where the ledger is; how to run conformance), a
       pins file of hard facts every lane reads first, and a pre-push scan that
       refuses edits to locked contracts.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"participant_kit_present\"][0];print(\"KIT-RULE-CHECKS-PRESENCE-ONLY\" if \"present\" in r[\"detail\"] and \"contain\" not in r[\"detail\"] else \"KIT-RULE-WIDENED\")"'
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"participant_kit_carries_its_content\"][0];print(\"KIT-CONTENT-RULE-PASSES-ON-\"+str(len(r[\"files\"]))+\"-FILES\" if r[\"status\"]==\"PASS\" else \"KIT-CONTENT-RULE-\"+r[\"status\"])"'
     expect:
       exit: 0
-      stdout_contains: "KIT-RULE-CHECKS-PRESENCE-ONLY"
+      stdout_contains: "KIT-CONTENT-RULE-PASSES-ON-3-FILES"
+  proves: >
+    That THREE of the four files this clause enumerates carry the topics it
+    names for them — docs/CONTRACTS-README.md (4 topics), AGENTS.md (5), and
+    .githooks/pre-push (2). PINS.md is not among them: the clause asks it for
+    "hard facts every lane reads first", which enumerates no topic a scan could
+    look for, so only its PRESENCE is asserted (rule 12a). The kit's README
+    states that exclusion and why. Read this before the green: an empty PINS.md
+    would still pass, and no row anywhere claims otherwise.
   notes: >
-    RAN 2026-09-02 → KIT-RULE-CHECKS-PRESENCE-ONLY. The clause enumerates what
-    each of the four files must carry; the rules check four filenames exist. An
-    empty AGENTS.md would pass. Partial corroboration exists but is not an
-    assertion: converge-qwy recorded a push experiment proving the pre-push scan
-    refuses, and CVG-007 asserts the in-session guard — but nothing re-runs the
-    push experiment, and nothing reads the other three files for their required
-    contents.
-    ADDED BY THE CROSS-CHECK.
-  work: converge-nht
+    RAN 2026-09-02 → rule 12c (`participant_kit_carries_its_content`) PASS,
+    "all 3 participant-kit file(s) carry what clause 12 asks of them", each
+    reporting `topics_absent: []` → KIT-CONTENT-RULE-PASSES-ON-3-FILES. WAS GAP
+    (work converge-nht) — "an empty AGENTS.md would pass". It no longer would.
+    NOT SPLIT, unlike CVG-059/CVG-067, and the difference is in the clause: for
+    the brief, clause 2 states a measurable property with no subject in the
+    tree, so a second row can say something true. For the pins file, clause 12
+    states no checkable content at all, and its presence IS asserted — a
+    second row would have nothing to assert that rule 12a does not already.
+    The narrowing is disclosed in `proves` instead, which is what that field is
+    for.
+    THE FILE COUNT IS IN THE EXPECTATION ON PURPOSE: a rule that quietly
+    stopped reading one of the three would still say PASS. It goes red at 2.
+    MOVED BY converge-jc9, on this run and not on that item's mapping.
 
 - id: CVG-055
   title: Converge is self-hosting — its templates and its own repository pass the kit
@@ -1731,58 +1904,91 @@
     no evidence and no mention.
 
 - id: CVG-065
-  title: the protocol authority checks documents against this anatomy — unasserted
+  title: the protocol authority checks documents against this anatomy — a live-session claim, not a file
   contract:
     file: contracts/documents.v1.md
     clause: "Core 13"
     quote: "its protocol authority checks documents against it;"
-  disposition: GAP
+  disposition: NOT-ASSERTABLE
   assertion:
-    kind: absence
-    ref: 'test "$(grep -ci "documents.v1\|anatomy" agents/protocol-authority.md)" = 0 && echo AUTHORITY-DOES-NOT-CITE-THE-ANATOMY || echo AUTHORITY-CITES-THE-ANATOMY'
+    kind: probe
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"protocol_authority_checks_documents\"][0];print(\"AUTHORITY-CHECK-IS-A-LIVE-SESSION-CLAIM\" if r[\"status\"]==\"SKIP\" and \"live session\" in r[\"reason\"] else \"AUTHORITY-CHECK-NOW-IN-THE-TREE\")"'
     expect:
       exit: 0
-      stdout_contains: "AUTHORITY-DOES-NOT-CITE-THE-ANATOMY"
+      stdout_contains: "AUTHORITY-CHECK-IS-A-LIVE-SESSION-CLAIM"
+  proves: >
+    Only that rule 13b still declines, and still declines for being a claim
+    about a running agent rather than about a file. It proves nothing about
+    whether the authority does or does not check documents against the anatomy.
+  justification: >
+    RAN 2026-09-02: rule 13b (`protocol_authority_checks_documents`) reports
+    SKIP — "clause 13 makes three promises and only two are files. That the
+    protocol authority CHECKS documents against this anatomy is a claim about a
+    running agent's behaviour in a live session, not about anything in the
+    tree — the same class of promise the composition kit SKIPs as 'needs a live
+    Amplifier session'."
   notes: >
-    RAN 2026-09-02 → AUTHORITY-DOES-NOT-CITE-THE-ANATOMY. agents/protocol-authority.md
-    carries the ratified protocol and answers interpretive questions; it does not
-    name documents.v1's anatomy as something it checks, and no rule asserts that it
-    does. The agent DID answer three rulings for this seed — competently — but that
-    is evidence of the agent working, not of this specific promise being kept.
-    ADDED BY THE CROSS-CHECK.
-  work: converge-nht
+    RAN 2026-09-02 → rule 13b SKIP → AUTHORITY-CHECK-IS-A-LIVE-SESSION-CLAIM.
+    WAS GAP (work converge-nht) asserted by an absence probe over
+    agents/protocol-authority.md. That probe was answering a weaker question
+    than the clause asks: an agent file that NAMED the anatomy would have
+    flipped it green without anyone observing the authority check a single
+    document. The clause is about behaviour in a session; the tree cannot hold
+    the evidence either way, so the disposition says so.
+    WHAT WOULD MOVE THIS: an observed session in which the authority is given a
+    document and reports it against documents.v1's anatomy, recorded by name
+    and date — the same shape of evidence clause 12's human-reader assertion
+    asks for. Not a file, and not this kit.
+    MOVED BY converge-jc9, on this run and not on that item's mapping.
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TALLY — 61 rows, seeded and revised 2026-09-02 @ 2543e1c
+# TALLY — 62 rows, third reconcile 2026-09-02 @ 10a8d76 (converge-jc9).
+# Printed by `uv run --with pyyaml ledger/checks/verify.py`, not counted by hand.
 #
 #   contract          rows   CONFORMS  GAP  VIOLATION  OPEN-PINNED  NOT-ASSERTABLE
 #   composition.v1       9          7    2          0            0               0
 #   operation.v1        15          1   14          0            0               0
 #   surface.v1          13         10    3          0            0               0
-#   documents.v1        24         10    9          0            3               2
+#   documents.v1        25         13    3          0            3               6
 #   ─────────────────────────────────────────────────────────────────────────────
-#   totals              61         28   28          0            3               2
+#   totals              62         31   22          0            3               6
 #   + CVG-000 SYNC       1
-#   TOTAL               62
+#   TOTAL               63
 #
-# In the steward's words (documents.v1 Core 10): 28 Kept · 28 Not yet ·
-# 0 Broken · 3 Pinned open · 2 Can't check.
+# In the steward's words (documents.v1 Core 10): 31 Kept · 22 Not yet ·
+# 0 Broken · 3 Pinned open · 6 Can't check.
+#
+# WHAT MOVED SINCE THE SECOND RECONCILE (was: 28 / 28 / 0 / 3 / 2, 62 rows):
+#   +3 Kept, -6 Not yet, +4 Can't check, +1 row.
+# All of it is documents.v1 and all of it is one cause — wave 4's kit. Three
+# clauses gained a real check; three gained a published refusal; one row split
+# (CVG-067) rather than let a clause sentence ride a green it does not share.
+# No other contract's rows were re-derived by that pass, and none moved.
+#
+# THE ARITHMETIC IS NOT THE POINT. "Can't check" tripling is not decay: every
+# one of those four rows is backed by a kit rule that RAN, refused, and said
+# why — where GAP only ever meant nobody had looked. A ledger that could not
+# tell those two apart would read this pass as no progress at all.
 #
 # WHERE THE WEIGHT SITS, IN ONE LINE EACH:
 #   composition.v1  the healthy one — 7 of 9 kept, each by a kit rule or a
 #                   command that fails when the fact stops being true.
 #   surface.v1      transformed today. The companion page shipped mid-session
 #                   and took 9 rows from "not yet" to "kept" in one commit.
-#   documents.v1    10 kept, and the 9 not-yet are all the same shape: a rule
-#                   that asserts the first sentence of its clause and stops.
+#   documents.v1    13 kept, 3 not yet, 6 can't check. The "asserts the first
+#                   sentence of its clause and stops" shape that described its
+#                   9 not-yet rows is gone: wave 4's kit went back for the
+#                   second sentences, and where it could not, said so.
 #   operation.v1    14 of 15 not yet, and the contract says why in its own
 #                   words. Its kit now EXISTS and is RED — which is progress:
 #                   at seed it did not exist to be red.
 #
 # The two 28s are a coincidence of one day's arithmetic, not a milestone.
 #
-# Tracker refs carried by red rows: converge-qtp (16) · converge-nht (6) ·
-# converge-fmz (3) · converge-8om (3) · converge-lnt (1) · converge-bmp (1).
+# Tracker refs carried by red rows: converge-qtp (16) · converge-fmz (3) ·
+# converge-8om (3). converge-nht carried 6 and now carries none — those six are
+# the rows converge-jc9 moved off GAP; a closed item may not stay cited as the
+# thing that will fix a red row.
 # CVG-007 carries `stale_open` (not `work`) for three items that call a
 # now-passing clause broken — see that row.
 #
@@ -1827,4 +2033,30 @@
 #   extra section removed       EXTRA-SECTION-PRESENT  -> EXTRA-SECTION-GONE
 #   a clause grows a line       …-THREE-LINES=8        -> …-THREE-LINES=9
 #   a contract byte changes     SYNC hash              -> mismatch (full re-review)
+#
+# NEGATIVE CONTROL FOR THE THIRD RECONCILE, RUN 2026-09-02 (converge-jc9) —
+# the seven probes it wrote or rewrote, each broken on purpose in a scratch copy
+# of this tree, each flipped, each restored:
+#   vision grown to 268 lines    VISION-LENGTH-RULE-PASSES  -> …-FAIL
+#   '(KEPT)' added to the vision PROGRESS-WORD-RULE-PASSES…  -> …-FAIL
+#   AGENTS.md's ledger section   KIT-CONTENT-RULE-PASSES-ON- -> …-FAIL, naming
+#     deleted (958 bytes)          3-FILES                      ['where the ledger
+#                                                                is','how to run
+#                                                                conformance']
+#   kit rule 1 drops the         CLAUSE-1-STILL-NEEDS-A-     -> CLAUSE-1-NOW-
+#     terms-of-art half            READER                       MACHINE-CHECKED
+#   a rule id gains 'brief'      NO-RULE-MEASURES-A-BRIEF   -> BRIEF-RULE-EXISTS
+#   rule 7d's refusal reworded   EVIDENCE-TEST-STILL-NEEDS- -> EVIDENCE-TEST-NOW-
+#                                  A-READER                     MECHANICAL
+#   rule 13b's refusal reworded  AUTHORITY-CHECK-IS-A-LIVE- -> AUTHORITY-CHECK-
+#                                  SESSION-CLAIM                NOW-IN-THE-TREE
+# TWO OF THOSE BREAKS FAILED TO BREAK ANYTHING ON THE FIRST ATTEMPT, and the
+# reason is recorded because it is the same class of error this ledger caught in
+# itself on day one: the first run pointed the probe at the SOURCE kit while
+# editing the SCRATCH kit, so three "breaks" changed nothing the probe could
+# see; and one sed left 'LEDGERR', which still contains 'LEDGER'. A negative
+# control that passes because the break never landed is exactly the false green
+# it exists to catch, so it was re-run until each break was observed to land.
+# WHAT THIS DOES NOT PROVE: that a row READS its clause correctly. Four of the
+# seven assert a kit REFUSAL, not the clause — see each row's `proves`.
 # ─────────────────────────────────────────────────────────────────────────────
