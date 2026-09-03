@@ -3,7 +3,7 @@
     "id": "converge-12o",
     "title": "Re-derive CVG-052, CVG-053, CVG-057 and CVG-066 — wave 4 moved them toward spec and their probes went red",
     "status": "resolved",
-    "description": "Serves documents.v1 (CVG-052/053), surface.v1 (CVG-057/066). Found while working converge-jc9, which owned only the six rows named in that item and deliberately did not guess at these four.\n\n`uv run --with pyyaml ledger/checks/verify.py` at 10a8d76 (after converge-jc9's edits) reports 4 of 35 executable refs not meeting their expect. Every one of them is drift TOWARD spec — LEDGER-FORMAT §3 says that is drift too, and must be re-derived rather than quietly enjoyed:\n\n  CVG-052  expected  DOCUMENTS-RULE-IDS contract_clauses_bold_led,contrac…\n           got       DOCUMENTS-RULE-IDS changelog_entries_carry_evidence,clause_numbers_match_the_rule_table,contract_clauses_bold_led,…\n  CVG-053  same pinned rule-id list, same break\n  CVG-057  expected  STATE-WORDS-ASSERTED=1-OF-8   got  STATE-WORDS-ASSERTED=2-OF-8\n  CVG-066  expected  NO-VOCABULARY-SCAN-AGAINST-THE-APP   got  VOCABULARY-SCAN-WIRED\n\nCVG-052/CVG-053 were forecast by the ledger's own header: wave 4 renumbers the documents kit's rules to documents.v1's Core clauses 1..13, \"which would break CVG-052/CVG-053's pinned rule-id list by design\". The forecast was right. CVG-057 and CVG-066 are the surface side of the same wave.\n\nTwo further things a holder should fix in the same pass, both left alone by converge-jc9 for the same ownership reason:\n\n1. STALE RULE NUMBERS THROUGHOUT THE documents.v1 SECTION. The renumber means `indexed` refs like \"conformance/documents/run.py (rule 1c)\" (CVG-041), \"(rule 1d)\" (CVG-047), \"(rule 2a)\" (CVG-048), \"(rule 2b)\" (CVG-062), \"(rules 5a, 5b)\" (CVG-054) and \"(rule 6)\" (CVG-055) now name rules that either do not exist or belong to a DIFFERENT clause. verify.py cannot catch this: an `indexed` ref is only checked for path existence, and the path still exists. converge-jc9 corrected only the two `proves` lines that named rows it was moving (CVG-047, CVG-062) and left the rest.\n\n2. THE `indexed` REFS ARE THE WEAK FORM. converge-jc9 gave all seven of its rows executable probes with a distinctive token for both outcomes, negative-controlled in a scratch copy. The CONFORMS rows around them still cite a file path that cannot fail. Promoting them is the cheap half of this item.\n</description>\n<parameter name=\"acceptance\">GIVEN the documents and surface kits as merged at 10a8d76 WHEN CVG-052, CVG-053, CVG-057 and CVG-066 are each re-derived against the rule that now answers them THEN `uv run --with pyyaml ledger/checks/verify.py` prints \"[OK  ] N executable refs, each meeting its declared expect\" and exits 0, with that output shown; AND every `indexed` ref in the documents.v1 section names a rule number that appears in `uv run conformance/documents/run.py . --json-only`, shown by printing both lists; AND no row is moved on the strength of this item's summary alone.",
+    "description": "Contract: documents.v1 §5, §9 (ledger rows re-derived from the documents kit). Serves documents.v1 (CVG-052/053), surface.v1 (CVG-057/066). Found while working converge-jc9, which owned only the six rows named in that item and deliberately did not guess at these four.",
     "acceptance": null,
     "design": null,
     "contract_named_on_line_one": true
@@ -12,10 +12,10 @@
     "id": "converge-19b",
     "title": "conformance/README.md says every kit numbers to the Conformance-asserts bullets; the documents kit no longer does",
     "status": "resolved",
-    "description": "Found while closing converge-bmp.\n\nconformance/README.md, section \"Numbering follows the contract\", says:\n\n  \"Every rule row is numbered to its contract's **Conformance kit asserts** bullet.\"\n\nThat is now true of the composition and surface kits only. The documents kit is numbered to documents.v1's Core clause numbers (1..13), because the bullet numbering hid a real gap: the bullet list carries seven bullets for thirteen clauses, so Core 10 and Core 11 had no bullet, therefore no row, therefore nothing visibly missing.\n\nThe shared README is outside conformance/documents/**, so the lane that made the change could not update it.\n\nTwo things to settle, in order:\n1. The steward's ruling on contracts/documents.v2-candidate.md change 2 (which numbering clause 5 means). Filed as converge-bmp's residual.\n2. Whichever way it goes, conformance/README.md's numbering paragraph needs one edit — and if the Core-clause reading is ratified, the composition and surface kit rule tables renumber to their contracts' Core clauses, and documents kit rule 5b can stop reporting a divergence.\n\nReproduce:\n  uv run conformance/documents/run.py . --json-only | python3 -c \"import json,sys;print([x for x in json.load(sys.stdin)['results'] if x['rule']=='5b'][0]['observed'])\"\n\n---\n\nCLOSED WITH AN UNMET ACCEPTANCE CLAUSE — read this before trusting the status.\n\nThis item was resolved on 2026-09-03 by lane w4-doc-kit-2, and its status reads \"resolved\". Only the first half of its acceptance was actually met. The status alone is misleading, so the fact is recorded on the item rather than only inside the resolution text.\n\nMet: \"conformance/README.md ... its numbering paragraph describes what the three kits actually do\" — commit acc77b8 replaced the false sentence with the measured per-kit anchor table.\n\nNOT met: \"AND documents kit rule 5b reports every contract aligned with its kit's rule table.\" Its own GIVEN (\"a ruling on documents.v2-candidate change 2\") never occurred. Rule 5b still reports 1 of 3 aligned, with composition.v1 and surface.v1 listed as not aligned, and that is correct behaviour — 5b refuses to fail another kit on a reading the steward has not ratified.\n\nNote also that this item's description above and its acceptance sentence disagreed with each other: the description framed the work as \"one edit, whichever way it goes\", while the acceptance additionally required an aligned 5b that only a ratification can produce. That contradiction is what let the item look closeable. It is named here so the next reader does not have to rediscover it.\n\nThe unmet half now lives in converge-duf (linked follow-up-of this item), which is blocked on the steward's word rather than sitting in the ready queue.",
+    "description": "Contract: documents.v1 §5 (kit rule numbering claim in conformance/README.md). Found while closing converge-bmp.",
     "acceptance": "GIVEN a ruling on documents.v2-candidate change 2 WHEN conformance/README.md is read THEN its numbering paragraph describes what the three kits actually do; AND documents kit rule 5b reports every contract aligned with its kit's rule table.",
     "design": null,
-    "contract_named_on_line_one": false
+    "contract_named_on_line_one": true
   },
   {
     "id": "converge-1tx",
@@ -39,15 +39,15 @@
     "id": "converge-2st",
     "title": "seed-reconcile's comments still route findings to the retired full-wave gate",
     "status": "resolved",
-    "description": "recipes/seed-reconcile.yaml:19 tells the reader that any finding needing a steward decision \"is filed as a ledger row + tracker item and LEFT there for the next `full-wave` priority-kill gate.\" The `full-wave` recipe was retired on 2026-09-02, so this comment names a destination that no longer exists — a live routing claim, not a historical note. (Line 79 of the same file IS a correct historical note and should stay.)\n\nFound during the w4-doc-sweep lane (converge-c28). Not fixed there: that lane's brief scopes it to README, context/, docs/design/, and the agent/skill renames; recipes/ is outside its file ownership, and this is a mechanism claim rather than a vocabulary fix.",
+    "description": "Contract: operation.v1 §11 (seed-reconcile routes findings to the steward's gates, not a retired recipe gate). recipes/seed-reconcile.yaml:19 tells the reader that any finding needing a steward decision \"is filed as a ledger row + tracker item and LEFT there for the next `full-wave` priority-kill gate.\" The `full-wave` recipe was retired on 2026-09-02, so this comment names a destination that no longer exists — a live routing claim, not a historical note. (Line 79 of the same file IS a correct historical note and should stay.)",
     "acceptance": "GIVEN recipes/seed-reconcile.yaml WHEN a reader looks for where an owner-decision finding goes THEN the comment names a destination that actually exists (the ledger row + tracker item, awaiting the steward's priority call), and no live comment presents `full-wave` as a current recipe. The dated \"retired on 2026-09-02\" note at line 79 stays.",
     "design": null,
-    "contract_named_on_line_one": false
+    "contract_named_on_line_one": true
   },
   {
     "id": "converge-348",
     "title": "modes surface by bundle-root auto-discovery, not by a `modes:` include block — and a stale app-bundle namespace hides them",
-    "status": "deferred",
+    "status": "resolved",
     "description": "Contract: composition.v1 §1 (what the behavior composes). Modes surface by bundle-root auto-discovery rather than by the modes: include block; the include is correct but informational until registration cleanup. Upstream observation for the modes bundle; filed with the close-out issue.",
     "acceptance": "GIVEN a reader of the converge composition docs WHEN they ask \"what makes a mode visible to a composed session\" THEN they find the auto-discovery mechanism named (bundle-root modes/ dir per composed namespace), not just the `modes:` include convention; AND the duplicate-namespace shadowing failure mode is written down somewhere a user hitting it can find it.",
     "design": null,
@@ -66,7 +66,7 @@
     "id": "converge-5m8",
     "title": "W3 ledger: seed our own ledger with the reconciler (SYNC row + rows)",
     "status": "resolved",
-    "description": "Contract operation.v1 §8 / ratchet. Run converge:reconciler in SEED mode on this repo against the four contracts → ledger/rows.yaml per LEDGER-FORMAT.md with CXC-000 SYNC row (sha256 per contract) and one row per checkable clause; GAP rows become work items.",
+    "description": "Contract: operation.v1 §8 (the ratchet — this repository's own ledger seeded). Contract operation.v1 §8 / ratchet. Run converge:reconciler in SEED mode on this repo against the four contracts → ledger/rows.yaml per LEDGER-FORMAT.md with CXC-000 SYNC row (sha256 per contract) and one row per checkable clause; GAP rows become work items.",
     "acceptance": "GIVEN ledger/rows.yaml THEN every contract clause has a row with disposition + evidence pointer; SYNC hashes match; GAP/VIOLATION rows link to tracker items.",
     "design": null,
     "contract_named_on_line_one": true
@@ -111,7 +111,7 @@
     "id": "converge-8om",
     "title": "Documents: Core 9, 10 and 11 have no conformance rule (ledger GAP rows CVG-051/052/053)",
     "status": "resolved",
-    "description": "Seeding ledger/rows.yaml (converge-5m8) found three documents.v1 Core clauses with no rule in conformance/documents/, and no other check on disk:\n\n- Core 9 \"A work item names its contract in one line, defines done in plain words, and quotes the feedback or gap it came from.\" The documents kit reports rule 4 SKIP: \"work items live in the work-tracker queue, not in the repository; this kit reads files\". A machine check IS possible — it just has to read the queue, not the tree.\n- Core 10 \"Plain state words everywhere.\" No rule scans documents for the three state vocabularies (contracts / work / lanes). The surface kit does exactly this kind of vocabulary scan for the app (its rule 5), so the technique is proven.\n- Core 11 \"Technical detail is folded, never in the deciding sentence.\" No rule checks that a document's marked section, not its deciding sentence, carries the technical detail.\n\nShared cause: the documents kit's rule table stops at the clauses a file scan of the tree can reach. These three need either a queue-reading check (Core 9) or a vocabulary/structure scan (Core 10, 11).\n\nFiled rather than fixed: conformance kits are not this lane's to write (ledger/** only).",
+    "description": "Contract: documents.v1 §9–11 (kit rules for clauses 9, 10, 11). Seeding ledger/rows.yaml (converge-5m8) found three documents.v1 Core clauses with no rule in conformance/documents/, and no other check on disk:",
     "acceptance": "GIVEN conformance/documents/ WHEN run against this repo THEN it reports a real PASS/FAIL (not SKIP, not absence) for documents.v1 Core 9, Core 10 and Core 11; AND ledger rows CVG-051 (Core 9), CVG-052 (Core 10) and CVG-053 (Core 11) move off GAP with an assertion ref into the kit.",
     "design": null,
     "contract_named_on_line_one": true
@@ -147,10 +147,10 @@
     "id": "converge-bmp",
     "title": "Documents: Core 5 says clause numbers match the kit's rule table, but kits number to the Conformance-asserts bullets",
     "status": "resolved",
-    "description": "Found while seeding ledger/rows.yaml (converge-5m8); recorded as ledger row CVG-046, disposition OPEN-PINNED.\n\ndocuments.v1 Core 5 ends: \"Numbers match the conformance kit's rule table.\"\n\nThe three shipped kits number their rules to the contract's **Conformance kit asserts** bullets, not to its Core clause numbers. conformance/composition/README.md says so in its own words: \"Rows are numbered to the contract's **Conformance kit asserts** bullets.\" So composition kit rule \"1a\" is conformance bullet 1, not Core clause 1 — and Core clause 1 has no rule numbered 1.\n\nTwo readings, both defensible, and the clause does not settle it:\n(a) the kit's rules should be numbered to the Core clauses (the teeth), so a failing rule names the clause it breaks; or\n(b) numbering to the conformance bullets is correct, and the clause means the bullets.\n\nThis is an interpretive call about what documents.v1 requires, not a defect in the kits. One sentence from the intent steward settles it; whichever way it goes, either the clause or the three kit rule tables get one edit.\n\nNot a blocker: no kit or ledger row depends on the answer today.",
+    "description": "Contract: documents.v1. Found while seeding ledger/rows.yaml (converge-5m8); recorded as ledger row CVG-046, disposition OPEN-PINNED.",
     "acceptance": "GIVEN documents.v1 Core 5's last sentence WHEN the steward has ruled THEN either the clause names which numbering it means, or the three kit rule tables renumber to the Core clauses; AND ledger row CVG-046 moves off OPEN-PINNED.",
     "design": null,
-    "contract_named_on_line_one": false
+    "contract_named_on_line_one": true
   },
   {
     "id": "converge-c28",
@@ -164,7 +164,7 @@
   {
     "id": "converge-cym",
     "title": "Upstream ask: `amplifier tool invoke` never emits tool:pre, so no hook can guard it",
-    "status": "deferred",
+    "status": "resolved",
     "description": "Contract: composition.v1 §6–7 (the guard's coverage). Upstream ask: 'amplifier tool invoke' never emits tool:pre, so no hook — including the candidate guard — can intercept a direct tool invocation. Filed upstream with the close-out issue.",
     "acceptance": "GIVEN a bundle that registers a hook on tool:pre AND a repo holding a file that hook would deny writes to WHEN `amplifier tool invoke write_file file_path=<that file> content=...` runs with that bundle composed THEN the hook fires and the write is denied — OR the non-coverage is documented as intended behavior in the app-CLI docs, so bundle authors do not assume hook coverage on this path that they do not have.",
     "design": null,
@@ -191,7 +191,7 @@
   {
     "id": "converge-dxv",
     "title": "Highway: launcher should refuse a lane for an already-held item (duplicate lane observed)",
-    "status": "deferred",
+    "status": "resolved",
     "description": "Contract: operation.v1 §5–6 (real lanes, width). Upstream highway-skill report: the launcher should refuse a lane for an already-held work item so a wake and an interactive manager cannot double-launch. Filed with the highway skill owners via converge-l44 at close.",
     "acceptance": "GIVEN an item already held by a live peer WHEN a manager instance tries to launch a lane for it THEN the launch is refused before any worktree or tmux session is created, naming the holder; AND a single batch cannot carry two lanes for the same work item.",
     "design": null,
@@ -281,7 +281,7 @@
   {
     "id": "converge-l44",
     "title": "W3 upstream + mirror: highway skill feedback filed; Gitea mirror re-synced",
-    "status": "deferred",
+    "status": "open",
     "description": "Contract: operation.v1 §5–6 (real lanes, width) and §12 (dependencies). Close-out: file upstream highway-skill feedback (refill enforcement, .width truth, the false 'todo board is the dashboard' claim, marker-outside-worktree, launcher refuses already-held items) with session evidence; re-sync the Gitea mirror used by the evaluations to origin/main.",
     "acceptance": "GIVEN the issues exist with session evidence AND the mirror HEAD equals origin/main.",
     "design": null,
