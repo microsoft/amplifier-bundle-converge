@@ -39,8 +39,8 @@
 #                    (sub-recipe: flat, context-isolated)
 #   S1  queue        converge:reconciler → candidate      priority-kill      (§6 #4)
 #                    queue (lane-brief discipline)
-#   S2  execute      consume priority-kill → foreach over  irreversible-ops   (§6 #2)
-#                    owner-authorized items (executor)
+#   S2  execute      consume priority-kill → brief, LAUNCH irreversible-ops   (§6 #2)
+#                    tmux /goal lanes, await their markers
 #   S3  merge        consume irreversible-ops →            —
 #                    foundation:git-ops merges to main
 #   S4  verify       converge:reconciler re-runs ledger    human-device-verify(§6 #3)
@@ -70,17 +70,42 @@
 #   note, the only reading under which S4b is not redundant.)
 #
 # -----------------------------------------------------------------------------
-# EXECUTOR (S2) — the honest v1 scope (owner-decided; do not re-open):
-#   A `foreach` over the owner-authorized queued items, bounded parallelism, each
-#   item handled by a work-capable agent step: work_claim the tracker item → a
-#   bounded change WITHIN cwd → DONE.md + commit → work_resolve. This is real,
-#   in-engine, testable fan-out.
-#   RESIDUAL (named, never hidden — S5 reports it): true autonomous lane custody
-#   (per-lane worktree/tmux leases, cross-session reclaim, liveness independent
-#   of the wave) is OUT OF SCOPE for the recipe engine and DEFERRED to an
-#   external orchestrator (ten-lane-highway / goal-batch) invoked outside this
-#   recipe. `full-wave` v1 executes items in bounded in-session foreach batches.
-#   The `lane-brief` skill still governs briefing + completion-by-artifact.
+# EXECUTOR (S2) — lane work runs as tmux `/goal` sessions, NEVER as in-session
+# agent fan-out (owner ruling; do not re-open):
+#   S2 writes ONE lane brief per owner-authorized item under {{wave_dir}}/goals/,
+#   hands each to an EXTERNAL LAUNCHER named by the `lane_launcher` context
+#   variable, then POLLS for each lane's terminal marker. The launcher owns the
+#   worktree, the branch `lane/<item id>`, the tmux `/goal` session and the batch
+#   manifest; this recipe owns the brief, the handoff, and the honest read-back.
+#   FORBIDDEN: executing an item through an `agent:` step or `delegate()`. If
+#   `lane_launcher` is empty or not executable, S2 prints the exact commands the
+#   owner's highway session should run and FAILS — it never falls back to agents.
+#   (The one sanctioned in-loop delegate anywhere in this practice is a
+#   watcher/monitor that must stay in the main agent loop to report back; it
+#   executes no lane work.)
+#
+#   LAUNCHER CONTRACT — what `lane_launcher` must accept:
+#     <launcher> BATCH_DIR LANE REPO_PATH GOAL_FILE [BASE_REF]
+#   It must: create the lane worktree and branch `lane/<LANE>` from BASE_REF;
+#   start the lane as a tmux `/goal` session on GOAL_FILE; be the ONLY writer of
+#   BATCH_DIR/manifest.tsv (columns: lane, worktree, branch, base_sha, tmux,
+#   goal, log, launched_at); and keep the lane's terminal marker and log in the
+#   lane directory OUTSIDE the worktree, so a lane's own `git add -A` can never
+#   stage the marker and collide at merge. S2 passes
+#   BATCH_DIR={{wave_dir}}/lanes, LANE=<item id>, REPO_PATH={{target_repo}},
+#   GOAL_FILE=the written brief, BASE_REF=main.
+#
+#   COMPLETION IS READ, NEVER ASSUMED: `await-lanes` polls each lane directory
+#   (resolved from manifest.tsv, else HIGHWAY_LANES_ROOT / BATCH_DIR/lanes) for a
+#   terminal marker. A DONE marker whose branch tip still equals its base is
+#   DOWNGRADED to blocked — an inherited-from-fork tip is the #1 false signal and
+#   a self-report is never proof (pillar 2). A lane still running at the
+#   `lane_timeout` deadline is reported BLOCKED ("still running at deadline"),
+#   never fabricated as done.
+#   RESIDUAL (named, never hidden — S5 reports it): the launcher/orchestrator
+#   itself lives OUTSIDE this bundle; this recipe declares the seam and reads the
+#   result. The `lane-brief` skill still governs briefing and
+#   completion-by-artifact.
 #
 # -----------------------------------------------------------------------------
 # HARD CONSTRAINTS (mechanism-spec §4.3 — zero latitude):
@@ -111,13 +136,22 @@
 #   - authorized_items (optional) default "" — normally runtime-derived from the
 #     priority-kill gate message; may be pre-set as an explicit override (e.g. a
 #     non-interactive test). The S2 parse step honors it when non-empty.
-#   - execute_parallel (optional) default 2 — bounded foreach concurrency for S2.
+#   - lane_launcher  (REQUIRED to execute any item) default "" — path to, or name
+#     on PATH of, an executable implementing the LAUNCHER CONTRACT above. Empty
+#     or non-executable ⇒ S2 prints the exact commands and FAILS (no agent
+#     fallback). With zero authorized items S2 is a clean no-op instead.
+#   - lane_timeout   (optional) default 1800 — seconds `await-lanes` waits for
+#     lane terminal markers, polling every 60s. It MUST stay below the
+#     `await-lanes` step's own `timeout:` (7200s), which is the hard ceiling;
+#     raise both together or the poll is killed before it can report.
 #
 # Outputs:
-#   - refreshed ledger + filed tracker items (S0) · lane commits + DONE.md per
-#     executed item (S2) · merged main (S3) · post-merge verify report (S4) ·
-#     freeze-bar report with honestly-named residuals incl. deferred lane custody
-#     (S5) · four persisted gate records under {{wave_dir}} (the audit trail).
+#   - refreshed ledger + filed tracker items (S0) · one lane brief per authorized
+#     item under {{wave_dir}}/goals/ and one launched tmux /goal lane per item,
+#     each with its own worktree, branch `lane/<item id>` and terminal marker (S2)
+#     · merged main (S3) · post-merge verify report (S4) · freeze-bar report with
+#     honestly-named residuals incl. the external launcher seam (S5) · four
+#     persisted gate records under {{wave_dir}} (the audit trail).
 #
 # Usage: invoke FROM the workspace root (cwd IS the workspace). The wave pauses
 # at each of the four gates; approve each with the owner's literal word (item
@@ -143,6 +177,30 @@
 #       lane custody DEFERRED and named as an S5 residual.
 #     * Honors within-cwd, write-denial/candidate-guard (never stamps FROZEN),
 #       work_* tracker filing, and derive-nothing-new.
+#
+# v1.1.0 (2026-09-02):
+#   - BREAKING (executor): the S2 EXECUTE stage no longer runs lane work in
+#     session. The `execute-items` foreach over a builder agent (which no longer
+#     exists in the catalog) is REPLACED by three bash steps —
+#     `write-lane-briefs`, `launch-lanes`, `await-lanes` — that brief each
+#     authorized item, hand it to an external
+#     tmux `/goal` launcher, and read completion back from the lane's terminal
+#     marker and branch tip. Lane work executes ONLY as tmux `/goal` sessions;
+#     in-session agent fan-out is forbidden, with no fallback.
+#     * NEW context: `lane_launcher` (required to execute; empty ⇒ print the
+#       exact commands and fail) and `lane_timeout` (marker poll deadline).
+#     * REMOVED context: `execute_parallel` — there is no in-session foreach to
+#       bound; lane concurrency is the launcher's concern.
+#     * `executed_items` keeps the shape `merge-lanes` consumes (id, commit SHA,
+#       resolved vs blocked, honest not-proven note) and now also carries the
+#       branch and marker path. A DONE marker whose branch tip still equals its
+#       base is downgraded to blocked (pillar 2); a lane still running at the
+#       deadline is reported blocked, never fabricated as done.
+#     * `merge-lanes` prompt: minimal tweak only — it now reads the per-item
+#       `branch:`/`commit:` fields and is told that a `no commit (...)` item has
+#       nothing to merge. No other merge/verify/ratify/close behavior changed.
+#     * S5's named residual narrows: the launcher/orchestrator itself lives
+#       outside this bundle (it is no longer "the wave executes in session").
 # =============================================================================
 
 name: "full-wave"
@@ -150,10 +208,12 @@ description: >
   The Converge owner-gated wave. Composes the whole loop — SEED/RECONCILE →
   QUEUE → EXECUTE → MERGE → VERIFY → CLOSE — with approval gates at exactly the
   four §6 owner-attention points and nowhere else. Seeds via the seed-reconcile
-  sub-recipe, queues real work from the ledger gap, executes owner-authorized
-  items as bounded foreach fan-out, merges, re-verifies post-merge, and closes
-  with a freeze-bar report. Never stamps FROZEN; invents no work.
-version: "1.0.0"
+  sub-recipe, queues real work from the ledger gap, hands each owner-authorized
+  item to an external tmux /goal lane launcher and reads completion back from
+  the lane's terminal marker and branch tip, merges, re-verifies post-merge, and
+  closes with a freeze-bar report. Never executes lane work as in-session agent
+  fan-out; never stamps FROZEN; invents no work.
+version: "1.1.0"
 author: "converge bundle"
 tags: ["converge", "full-wave", "loop", "queue", "execute", "merge", "verify", "close", "staged"]
 
@@ -171,8 +231,13 @@ context:
   # --- optional (passed through to the seed-reconcile sub-recipe) ---
   contracts_glob: "contracts/*.md"
   ledger_dir: "ledger/"
-  # --- execution tuning ---
-  execute_parallel: 2            # bounded foreach concurrency for S2 execute
+  # --- lane execution (S2 hands every item to an EXTERNAL tmux /goal launcher) ---
+  lane_launcher: ""              # path/name of an executable implementing:
+                                 #   <launcher> BATCH_DIR LANE REPO_PATH GOAL_FILE [BASE_REF]
+                                 # empty or non-executable => S2 prints the exact
+                                 # commands and FAILS; it never falls back to agents
+  lane_timeout: 1800             # seconds to await lane terminal markers (60s poll);
+                                 # MUST stay below the await-lanes step timeout (7200)
   # --- normally runtime-derived; may be pre-set as an explicit override ---
   authorized_items: ""           # owner-authorized item ids (else parsed from the gate)
   # --- runtime-injected by the gates (declared so static validation resolves it;
@@ -252,7 +317,9 @@ stages:
           gate; keep the ids stable and unambiguous so the owner can name them.
 
   # ===========================================================================
-  # S2 execute — work ONLY the owner-authorized items (bounded foreach).
+  # S2 execute — brief, LAUNCH and AWAIT one tmux /goal lane per owner-authorized
+  #   item. Lane work NEVER runs inside this session: no `agent:` step, no
+  #   delegate(), no fallback (see EXECUTOR (S2) in the header).
   #   CONSUMES priority-kill (assert+persist FIRST, then parse authorized ids).
   #   DECLARES irreversible-ops (fires after S2, gating entry to S3 merge).
   # ===========================================================================
@@ -323,43 +390,383 @@ stages:
             "notes": "<how you read the owner's word>"
           }
 
-      - id: "execute-items"
-        foreach: "{{authorized.item_ids}}"
-        as: "item"
-        parallel: "{{execute_parallel}}"
-        agent: "foundation:modular-builder"
-        timeout: 1800
-        output: "item_result"
-        collect: "executed_items"
-        prompt: |
-          Work EXACTLY ONE authorized queued item, end to end, honestly.
+      # --- (a) brief every authorized item as a standalone lane goal file ------
+      - id: "write-lane-briefs"
+        type: "bash"
+        on_error: "fail"
+        timeout: 300
+        output: "lane_briefs"
+        command: |
+          set -euo pipefail
+          goals_dir="{{wave_dir}}/goals"
+          mkdir -p "$goals_dir"
 
-          Item: {{item.id}} — {{item.title}}
+          items=$(cat <<'CONVERGE_ITEMS_EOF'
+          {{authorized.item_ids}}
+          CONVERGE_ITEMS_EOF
+          )
 
-          Do, in order:
-          1. work_claim {{item.id}} — take custody of the tracker item and read
-             its clause-quoting acceptance criteria (your spec for "done").
+          rows=$(printf '%s' "$items" | "${AMPLIFIER_PYTHON:-python3}" -c '
+          import json, sys
+          data = json.loads(sys.stdin.read().strip() or "[]")
+          for entry in data:
+              if isinstance(entry, dict):
+                  ident = str(entry.get("id", "")).strip()
+                  title = str(entry.get("title", "")).strip()
+              else:
+                  ident, title = str(entry).strip(), ""
+              if ident:
+                  sys.stdout.write(ident + "\t" + title.replace("\t", " ") + "\n")
+          ')
+
+          if [ -z "$rows" ]; then
+            echo "No items were authorized this wave — no lane briefs written."
+            echo "(Authorizing nothing is a valid owner answer; the wave will merge/verify/close with zero executed items.)"
+            exit 0
+          fi
+
+          # The invariant lane discipline, written ONCE and appended to every
+          # brief. Quoted heredoc: only the recipe engine substitutes here, the
+          # shell does not.
+          discipline="$goals_dir/.lane-discipline.md"
+          cat > "$discipline" <<'CONVERGE_DISCIPLINE_EOF'
+          ## How this lane runs
+
+          You are ONE autonomous lane, running as a tmux `/goal` session in your own
+          git worktree, on branch `lane/<this item id>`. No other agent is working
+          this item. Work it end to end, honestly, then stop.
+
+          ## Do, in order
+
+          1. `work_claim` this item in work-tracker project `{{tracker_project}}` —
+             take custody and read its clause-quoting acceptance criteria. That
+             acceptance is your spec for "done"; nothing else is.
           2. Make the BOUNDED change that satisfies that acceptance, entirely
-             WITHIN cwd / {{target_repo}}. Touch only what this item owns (respect
-             the lane-brief file-ownership split). Do NOT write FROZEN
-             contract/VISION.md files — those ride the CANDIDATE flow, not a lane;
-             if the change would require one, stop and record it as blocked.
-          3. Write a DONE.md for this item stating what was done and — per the
-             honesty gate — what is NOT proven, then COMMIT the change + DONE.md
-             (a commit is the only durable evidence; a self-report is never proof,
-             pillar 2).
-          4. work_resolve {{item.id}} with a short user-facing reason, OR, if you
-             could not honestly finish, leave it unresolved and write a
-             BLOCKED.md naming the cause (a missing artifact is a real result,
-             pillar 5 — never fabricate completion).
+             within this worktree of `{{target_repo}}`. Touch ONLY the files this
+             item owns (respect the lane-brief file-ownership split). NEVER write a
+             FROZEN contract or VISION.md file — those ride the CANDIDATE amendment
+             flow, not a lane; if the change would require one, stop and record it
+             as blocked.
+          3. Write `DONE.md` stating what was done and — per the honesty gate —
+             what is NOT proven, then COMMIT the change together with `DONE.md`. A
+             commit is the only durable evidence; a self-report is never proof
+             (pillar 2). An uncommitted change is invisible to MERGE and will not
+             be credited: if your branch tip still equals its base, you committed
+             nothing and this wave will report you blocked.
+          4. `work_resolve` this item with a short, user-facing reason.
 
-          WRITE-DENIAL DOCTRINE: if a write is denied by tool policy, do NOT
-          circumvent it (not via bash, not any other tool) — record the denied
-          path and stop that path honestly; a denial in an ephemeral workspace
-          means misconfiguration or a FROZEN-path collision.
+          ## If you cannot honestly finish
 
-          Output a short result for this item: {{item.id}}, the commit SHA (or
-          "no commit"), resolved vs blocked, and the honest not-proven note.
+          Leave the item unresolved and write `BLOCKED.md` naming the cause, in the
+          SAME directory as the terminal-marker path named at the end of this file
+          (that directory is outside the repo on purpose), and commit a `BLOCKED.md`
+          in the repo as well. A missing artifact is a real result (pillar 5) —
+          never fabricate completion.
+
+          ## Write-denial doctrine
+
+          If a write is denied by tool policy, do NOT circumvent it — not via bash,
+          not via any other tool. Record the denied path and stop that path
+          honestly. A denial in an ephemeral workspace means misconfiguration or a
+          FROZEN-path collision.
+
+          ## How completion is judged
+
+          From git artifacts and your terminal marker only — never from session
+          liveness and never from a self-report. An inherited-from-fork commit is
+          the #1 false signal, so provenance is checked before any lane is credited.
+          CONVERGE_DISCIPLINE_EOF
+
+          count=0
+          while IFS=$'\t' read -r id title; do
+            if [ -z "$id" ]; then continue; fi
+            case "$id" in
+              *[!A-Za-z0-9_-]*)
+                echo "FATAL: item id '$id' is not a legal lane name ([A-Za-z0-9_-]+); the launcher will reject it. Fix the tracker id before authorizing it." >&2
+                exit 1 ;;
+            esac
+            brief="$goals_dir/$id.md"
+            {
+              printf '# GOAL — lane %s\n\n' "$id"
+              printf 'Item: %s — %s\n\n' "$id" "${title:-(no title)}"
+              cat "$discipline"
+            } > "$brief"
+            echo "brief: $brief"
+            count=$((count + 1))
+          done <<< "$rows"
+
+          echo "Wrote $count lane brief(s) under $goals_dir."
+
+      # --- (b) hand every brief to the EXTERNAL tmux /goal launcher ------------
+      - id: "launch-lanes"
+        type: "bash"
+        on_error: "fail"
+        timeout: 900
+        output: "lane_launches"
+        command: |
+          set -euo pipefail
+          launcher="{{lane_launcher}}"
+          goals_dir="{{wave_dir}}/goals"
+          batch_dir="{{wave_dir}}/lanes"
+
+          items=$(cat <<'CONVERGE_ITEMS_EOF'
+          {{authorized.item_ids}}
+          CONVERGE_ITEMS_EOF
+          )
+
+          ids=$(printf '%s' "$items" | "${AMPLIFIER_PYTHON:-python3}" -c '
+          import json, sys
+          data = json.loads(sys.stdin.read().strip() or "[]")
+          for entry in data:
+              ident = str(entry.get("id", "")).strip() if isinstance(entry, dict) else str(entry).strip()
+              if ident:
+                  print(ident)
+          ')
+
+          if [ -z "$ids" ]; then
+            echo "No items were authorized this wave — no lanes launched."
+            exit 0
+          fi
+
+          # Resolve the launcher as a path OR as a name on PATH.
+          launcher_bin=""
+          if [ -n "$launcher" ]; then
+            if [ -x "$launcher" ]; then
+              launcher_bin="$launcher"
+            else
+              launcher_bin=$(command -v "$launcher" 2>/dev/null || true)
+            fi
+          fi
+
+          if [ -z "$launcher_bin" ]; then
+            {
+              echo "EXECUTE cannot proceed: recipe context 'lane_launcher' is empty or not executable (got: '$launcher')."
+              echo
+              echo "Set lane_launcher to an executable implementing:"
+              echo "  <launcher> BATCH_DIR LANE REPO_PATH GOAL_FILE [BASE_REF]"
+              echo "It must create the lane worktree and branch lane/<LANE>, start the lane as a"
+              echo "tmux /goal session, and be the ONLY writer of BATCH_DIR/manifest.tsv."
+              echo
+              echo "Until then, run exactly these commands from the owner's highway session, then"
+              echo "re-run this wave with lane_launcher set:"
+              while read -r id; do
+                if [ -z "$id" ]; then continue; fi
+                echo "  <launcher> \"$batch_dir\" \"$id\" \"{{target_repo}}\" \"$goals_dir/$id.md\" main"
+              done <<< "$ids"
+              echo
+              echo "lane work executes only as tmux /goal sessions via an external launcher; in-session agent fan-out is forbidden"
+            } >&2
+            exit 1
+          fi
+
+          mkdir -p "$batch_dir"
+          launched=0
+          while read -r id; do
+            if [ -z "$id" ]; then continue; fi
+            brief="$goals_dir/$id.md"
+            if [ ! -f "$brief" ]; then
+              echo "FATAL: missing lane brief $brief — write-lane-briefs did not produce it." >&2
+              exit 1
+            fi
+            echo "launching lane $id ..."
+            "$launcher_bin" "$batch_dir" "$id" "{{target_repo}}" "$brief" main
+            launched=$((launched + 1))
+          done <<< "$ids"
+
+          echo "Handed $launched lane(s) to $launcher_bin (BATCH_DIR=$batch_dir, REPO_PATH={{target_repo}}, BASE_REF=main)."
+
+      # --- (c) await each lane's terminal marker; read completion, never assume -
+      - id: "await-lanes"
+        type: "bash"
+        on_error: "fail"
+        timeout: 7200
+        output: "executed_items"
+        command: |
+          set -euo pipefail
+          batch_dir="{{wave_dir}}/lanes"
+          manifest="$batch_dir/manifest.tsv"
+          lanes_root="${HIGHWAY_LANES_ROOT:-$batch_dir/lanes}"
+          repo="{{target_repo}}"
+          timeout_s="{{lane_timeout}}"
+          poll_s=60
+          step_ceiling=7200   # this step's own `timeout:` — the hard ceiling
+
+          case "$timeout_s" in
+            ''|*[!0-9]*)
+              echo "FATAL: lane_timeout must be whole seconds, got '$timeout_s'." >&2
+              exit 1 ;;
+          esac
+          if [ "$timeout_s" -ge "$step_ceiling" ]; then
+            echo "FATAL: lane_timeout ($timeout_s s) meets or exceeds this step's own timeout ($step_ceiling s); the engine would kill the poll before it could report. Raise this step's timeout: in the recipe as well." >&2
+            exit 1
+          fi
+
+          items=$(cat <<'CONVERGE_ITEMS_EOF'
+          {{authorized.item_ids}}
+          CONVERGE_ITEMS_EOF
+          )
+
+          rows=$(printf '%s' "$items" | "${AMPLIFIER_PYTHON:-python3}" -c '
+          import json, sys
+          data = json.loads(sys.stdin.read().strip() or "[]")
+          for entry in data:
+              if isinstance(entry, dict):
+                  ident = str(entry.get("id", "")).strip()
+                  title = str(entry.get("title", "")).strip()
+              else:
+                  ident, title = str(entry).strip(), ""
+              if ident:
+                  sys.stdout.write(ident + "\t" + title.replace("\t", " ") + "\n")
+          ')
+
+          if [ -z "$rows" ]; then
+            echo "EXECUTED ITEMS: none — the owner authorized no items this wave."
+            echo "Nothing was briefed, launched or executed. An empty execution is an honest result, not a failure."
+            exit 0
+          fi
+
+          # Lane directory: the launcher is the manifest's only writer, so the
+          # manifest's log column is authoritative (lane dir == its parent).
+          lane_dir_for() {
+            local lane="$1" logcol=""
+            if [ -f "$manifest" ]; then
+              logcol=$(awk -F'\t' -v l="$lane" 'NR>1 && $1==l {print $7; exit}' "$manifest")
+            fi
+            if [ -n "$logcol" ]; then
+              dirname "$logcol"
+            else
+              printf '%s/%s\n' "$lanes_root" "$lane"
+            fi
+          }
+
+          # Terminal marker -> two lines: status, then marker path. BLOCKED wins
+          # over DONE when both exist: never credit a lane that claimed blocked.
+          marker_for() {
+            local d="$1" m
+            for m in BLOCKED.md BLOCKED.json; do
+              if [ -f "$d/$m" ]; then printf 'blocked\n%s\n' "$d/$m"; return 0; fi
+            done
+            for m in DONE.json DONE.md; do
+              if [ -f "$d/$m" ]; then printf 'resolved\n%s\n' "$d/$m"; return 0; fi
+            done
+            return 0
+          }
+
+          lane_ids=()
+          lane_titles=()
+          lane_status=()
+          lane_marker=()
+          while IFS=$'\t' read -r id title; do
+            if [ -z "$id" ]; then continue; fi
+            lane_ids+=("$id")
+            lane_titles+=("$title")
+            lane_status+=("")
+            lane_marker+=("")
+          done <<< "$rows"
+
+          total=${#lane_ids[@]}
+          deadline=$(( $(date +%s) + timeout_s ))
+          echo "Awaiting $total lane(s); polling every ${poll_s}s; deadline in ${timeout_s}s." >&2
+
+          while :; do
+            pending=0
+            i=0
+            while [ "$i" -lt "$total" ]; do
+              if [ -z "${lane_status[$i]}" ]; then
+                d=$(lane_dir_for "${lane_ids[$i]}")
+                hit=$(marker_for "$d")
+                if [ -n "$hit" ]; then
+                  lane_status[$i]=$(printf '%s\n' "$hit" | sed -n '1p')
+                  lane_marker[$i]=$(printf '%s\n' "$hit" | sed -n '2p')
+                  echo "lane ${lane_ids[$i]} -> ${lane_status[$i]} (${lane_marker[$i]})" >&2
+                else
+                  pending=$((pending + 1))
+                fi
+              fi
+              i=$((i + 1))
+            done
+            if [ "$pending" -eq 0 ]; then break; fi
+            now=$(date +%s)
+            if [ "$now" -ge "$deadline" ]; then
+              echo "deadline reached with $pending lane(s) still running — they are reported BLOCKED, never fabricated as done." >&2
+              break
+            fi
+            # Never nap past the deadline: the reported deadline must be the real one.
+            nap=$poll_s
+            remaining=$((deadline - now))
+            if [ "$remaining" -lt "$nap" ]; then nap=$remaining; fi
+            sleep "$nap"
+          done
+
+          # ---- emit executed_items in the shape merge-lanes consumes ----------
+          echo "EXECUTED ITEMS (completion read from each lane's terminal marker and"
+          echo "branch tip — never from liveness, never from a self-report):"
+          echo
+          i=0
+          resolved_n=0
+          blocked_n=0
+          while [ "$i" -lt "$total" ]; do
+            id="${lane_ids[$i]}"
+            title="${lane_titles[$i]}"
+            status="${lane_status[$i]}"
+            marker="${lane_marker[$i]}"
+            branch="lane/$id"
+            downgrade=""
+            if [ -z "$status" ]; then
+              status="blocked"
+              downgrade="no terminal marker: still running at the ${timeout_s}s deadline"
+            fi
+
+            tip=$(git -C "$repo" rev-parse --verify --quiet "$branch" 2>/dev/null || true)
+            base=""
+            if [ -f "$manifest" ]; then
+              base=$(awk -F'\t' -v l="$id" 'NR>1 && $1==l {print $4; exit}' "$manifest")
+            fi
+
+            if [ -z "$tip" ]; then
+              commit="no commit (branch $branch does not exist)"
+              if [ "$status" = "resolved" ]; then
+                status="blocked"
+                downgrade="marker claims done but branch $branch does not exist (pillar 2: a self-report is never proof)"
+              fi
+            elif [ -n "$base" ] && [ "$tip" = "$base" ]; then
+              commit="no commit (branch tip still equals its base $base — nothing was committed)"
+              if [ "$status" = "resolved" ]; then
+                status="blocked"
+                downgrade="marker claims done but the branch tip is still its base — an inherited-from-fork tip is the #1 false signal (pillar 2)"
+              fi
+            else
+              commit="$tip"
+            fi
+
+            if [ -n "$marker" ] && [ -f "$marker" ]; then
+              note=$(head -c 1500 "$marker" | tr -d '\r')
+            else
+              note="(no terminal marker was written)"
+            fi
+
+            printf -- '- item: %s\n' "$id"
+            printf -- '  title: %s\n' "${title:-(no title)}"
+            printf -- '  status: %s\n' "$status"
+            printf -- '  branch: %s\n' "$branch"
+            printf -- '  commit: %s\n' "$commit"
+            printf -- '  marker: %s\n' "${marker:-none}"
+            if [ -n "$downgrade" ]; then
+              printf -- '  downgraded: %s\n' "$downgrade"
+            fi
+            printf -- '  not-proven note (verbatim from the marker, truncated):\n'
+            printf '%s\n' "$note" | sed 's/^/    | /'
+            echo
+
+            if [ "$status" = "resolved" ]; then
+              resolved_n=$((resolved_n + 1))
+            else
+              blocked_n=$((blocked_n + 1))
+            fi
+            i=$((i + 1))
+          done
+
+          echo "SUMMARY: $resolved_n resolved with a real commit, $blocked_n blocked, of $total authorized item(s)."
 
   # ===========================================================================
   # S3 merge — merge the authorized, completed lanes to main.
@@ -397,13 +804,18 @@ stages:
 
           WITHIN-CWD: operate only on the repo at {{target_repo}} (inside cwd).
           Merge ONLY the commits produced by the executed items below — each item
-          that resolved with a real commit. Do NOT merge blocked/unresolved items
-          or sweep in unrelated working-tree changes. Completion is judged from
-          git artifacts (commits, DONE.md), NEVER from a self-report or pane
-          liveness; check provenance (an inherited-from-fork commit is the #1
-          false signal) before crediting a lane.
+          whose `status: resolved` carries a real `commit:` SHA on its `branch:`
+          (`lane/<item id>`, produced by an external tmux /goal lane). An item
+          whose `commit:` reads "no commit (...)" has nothing to merge: skip it
+          and say why. Do NOT merge blocked/unresolved items or sweep in
+          unrelated working-tree changes. Completion is judged from git artifacts
+          (commits, DONE.md), NEVER from a self-report or pane liveness; check
+          provenance (an inherited-from-fork commit is the #1 false signal)
+          before crediting a lane.
 
-          Executed items (with their commit SHAs / blocked status):
+          Executed items (one block per authorized item — id, title, status,
+          branch, commit, marker path, any downgrade, and the honest not-proven
+          note read verbatim from the lane's terminal marker):
           {{executed_items}}
 
           Output the merge result: which item commits merged to main (with the
@@ -584,11 +996,14 @@ stages:
           - the four persisted gate records under {{wave_dir}} as the wave's
             owner-decision audit trail (priority-kill, irreversible-ops,
             human-device-verify, ratify-changes);
-          - the NAMED RESIDUAL (owner-decided scope): true parallel worktree lane
-            custody is DEFERRED to an external orchestrator (ten-lane-highway /
-            goal-batch); this wave executed items via bounded in-session foreach,
-            not durable multi-session lane custody. State it as a residual, not a
-            silent omission.
+          - the NAMED RESIDUAL (owner-decided scope): this wave executed every
+            authorized item as an external tmux /goal lane — its own worktree,
+            its own branch, its own session — and read completion back from each
+            lane's terminal marker and branch tip; it ran no lane work in
+            session. The residual is that the LAUNCHER/ORCHESTRATOR itself lives
+            OUTSIDE this bundle: the recipe declares the seam and reads the
+            result, but does not own lane scheduling, refill-on-drain, or
+            cross-session reclaim. State it as a residual, not a silent omission.
           - any item left blocked/unresolved, with its cause (a missing artifact
             is a real result — never report a clean wave that did nothing).
 
