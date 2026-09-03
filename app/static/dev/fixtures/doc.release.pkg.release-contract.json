@@ -1,0 +1,30 @@
+{
+  "path": "AMPLIFIER-PACKAGING / contracts/release.v1.md",
+  "title": "Release Contract",
+  "updated": "Updated Sep 3, 2026 by bkrabach",
+  "state": "gap",
+  "sections": [
+    ["Purpose", "<p>Define what must be true before a release candidate can be cut.</p>"],
+    ["Gates", "<ul><li>Conformance ledger has no open VIOLATION rows.</li><li>Every frozen contract's hash matches its SYNC row.</li><li>Release evidence is attached to the tag.</li></ul>"]
+  ],
+  "raw": "# Release Contract\n\n## Purpose\n\nDefine what must be true before a release candidate can be cut.\n\n## Gates\n\n- Conformance ledger has no open VIOLATION rows.\n- Every frozen contract's hash matches its SYNC row.\n- Release evidence is attached to the tag.\n",
+  "changes": [
+    { "id": "c1", "section": "Gates", "before": "Conformance is green.", "now": "Conformance ledger has no open VIOLATION rows.", "source": "release: name the exact gate" }
+  ],
+  "proposals": [
+    {
+      "id": "#7",
+      "title": "Allow a release cut with OPEN-PINNED rows",
+      "source": "Manager session",
+      "why": "Two rows are pinned on an upstream fix that will not land before the cut.",
+      "recommendation": "Ratify with edits",
+      "tradeoffs": ["Unblocks the cut today", "Weakens the gate unless the pin has an expiry"],
+      "evidence": ["Upstream issue is dated after the cut", "Both rows have a named owner"],
+      "unchanged": "VIOLATION rows still block a cut.",
+      "file": "contracts/release-pinned-candidate.md"
+    }
+  ],
+  "history": [
+    { "id": "now", "label": "Current", "date": "Sep 3 · 10:10", "note": "One proposal is waiting on your word.", "sha": "21c1d39" }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "path": "AMPLIFIER-RUNTIME / docs/VISION.md",
+  "title": "Runtime Reliability Vision",
+  "updated": "Updated Sep 1, 2026 by bkrabach",
+  "state": "draft",
+  "sections": [
+    ["Purpose", "<p>Reduce the reliability gaps that cost people trust, without changing the public contract.</p>"],
+    ["What good looks like", "<p>A failure is visible, attributable, and reproducible within one working session.</p>"]
+  ],
+  "raw": "# Runtime Reliability Vision\n\n## Purpose\n\nReduce the reliability gaps that cost people trust, without changing the public contract.\n\n## What good looks like\n\nA failure is visible, attributable, and reproducible within one working session.\n",
+  "changes": [],
+  "proposals": [],
+  "history": [
+    { "id": "now", "label": "Current", "date": "Sep 1 · 12:00", "note": "Draft: no ledger yet.", "sha": "eeee029" }
+  ]
+}

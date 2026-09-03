@@ -1,0 +1,272 @@
+{
+  "results": [
+    {
+      "check": "[1280] console open on boot",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[1280] terminal tab degrades to 'terminal viewer not loaded'",
+      "ok": true,
+      "detail": "terminal viewer not loadedSession hw:hw__converge__manager i"
+    },
+    {
+      "check": "[1280] console input is disabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[1280] read-only note visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[1280] console Context tab shows the manager's own objective",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[1280] no horizontal overflow on console-open",
+      "ok": true,
+      "detail": "scrollW=1280 clientW=1280 rightMost=1280 (topbar)"
+    },
+    {
+      "check": "[1280] boots into Direction with a fetched document",
+      "ok": true,
+      "detail": "docTitle='Amplifier Core Vision'"
+    },
+    {
+      "check": "[1280] document body rendered from the API",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[1280] no horizontal overflow on direction-read",
+      "ok": true,
+      "detail": "scrollW=1280 clientW=1280 rightMost=1280 (topbar)"
+    },
+    {
+      "check": "[1280] review sheet renders the fetched proposal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[1280] no horizontal overflow on direction-review",
+      "ok": true,
+      "detail": "scrollW=1280 clientW=1280 rightMost=1280 (topbar)"
+    },
+    {
+      "check": "[1280] operation lanes fetched",
+      "ok": true,
+      "detail": "6 lane cards"
+    },
+    {
+      "check": "[1280] waves fetched",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[1280] no horizontal overflow on operation",
+      "ok": true,
+      "detail": "scrollW=1280 clientW=1280 rightMost=1280 (topbar)"
+    },
+    {
+      "check": "[1280] console closes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[1280] closed console stays closed across a workspace switch",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[1280] console reopens",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[1280] reopened console stays open across a workspace switch",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[1280] home lists every manager from /api/boot",
+      "ok": true,
+      "detail": "3 cards"
+    },
+    {
+      "check": "[1280] no horizontal overflow on home",
+      "ok": true,
+      "detail": "scrollW=1280 clientW=1280 rightMost=1280 (topbar)"
+    },
+    {
+      "check": "[1280] selecting a manager from home returns to the workspace",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[1280] no console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] console open on boot",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] terminal tab degrades to 'terminal viewer not loaded'",
+      "ok": true,
+      "detail": "terminal viewer not loadedSession hw:hw__converge__manager i"
+    },
+    {
+      "check": "[390] console input is disabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] read-only note visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] console Context tab shows the manager's own objective",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] no horizontal overflow on console-open",
+      "ok": true,
+      "detail": "scrollW=390 clientW=390 rightMost=390 (topbar)"
+    },
+    {
+      "check": "[390] boots into Direction with a fetched document",
+      "ok": true,
+      "detail": "docTitle='Amplifier Core Vision'"
+    },
+    {
+      "check": "[390] document body rendered from the API",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] no horizontal overflow on direction-read",
+      "ok": true,
+      "detail": "scrollW=390 clientW=390 rightMost=390 (topbar)"
+    },
+    {
+      "check": "[390] review sheet renders the fetched proposal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] no horizontal overflow on direction-review",
+      "ok": true,
+      "detail": "scrollW=390 clientW=390 rightMost=390 (topbar)"
+    },
+    {
+      "check": "[390] operation lanes fetched",
+      "ok": true,
+      "detail": "6 lane cards"
+    },
+    {
+      "check": "[390] waves fetched",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] no horizontal overflow on operation",
+      "ok": true,
+      "detail": "scrollW=390 clientW=390 rightMost=390 (topbar)"
+    },
+    {
+      "check": "[390] console closes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] closed console stays closed across a workspace switch",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] console reopens",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] reopened console stays open across a workspace switch",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] home lists every manager from /api/boot",
+      "ok": true,
+      "detail": "3 cards"
+    },
+    {
+      "check": "[390] no horizontal overflow on home",
+      "ok": true,
+      "detail": "scrollW=390 clientW=390 rightMost=390 (topbar)"
+    },
+    {
+      "check": "[390] selecting a manager from home returns to the workspace",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "[390] no console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "four decision buttons each POST /api/managers/{mid}/decision",
+      "ok": true,
+      "detail": "4 POSTs: ['POST http://127.0.0.1:8799/api/managers/converge/decision', 'POST http://127.0.0.1:8799/api/managers/converge/decision', 'POST http://127.0.0.1:8799/api/managers/converge/decision', 'POST http://127.0.0.1:8799/api/managers/converge/decision']"
+    },
+    {
+      "check": "no console errors during decisions",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "Fill lanes POSTs /steer",
+      "ok": true,
+      "detail": "['steer']"
+    },
+    {
+      "check": "Steer dialog POSTs /steer",
+      "ok": true,
+      "detail": "['steer', 'steer']"
+    },
+    {
+      "check": "Timeline opens with fetched entries",
+      "ok": true,
+      "detail": "4 entries"
+    },
+    {
+      "check": "Feedback dialog POSTs /feedback",
+      "ok": true,
+      "detail": "['steer', 'steer', 'feedback']"
+    },
+    {
+      "check": "no console errors during actions",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "failures": [],
+  "screenshots": [
+    "console-open-1280.png",
+    "console-open-390.png",
+    "direction-read-1280.png",
+    "direction-read-390.png",
+    "direction-review-1280.png",
+    "direction-review-390.png",
+    "home-1280.png",
+    "home-390.png",
+    "operation-1280.png",
+    "operation-390.png"
+  ]
+}

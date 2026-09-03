@@ -1,0 +1,7 @@
+[2026-09-03T07:53:13] POST /api/managers/converge/decision {"repoId": "core", "docId": "vision", "proposalId": "#42", "decision": "ratified", "note": ""}
+[2026-09-03T07:53:13] POST /api/managers/converge/decision {"repoId": "core", "docId": "vision", "proposalId": "#42", "decision": "declined", "note": ""}
+[2026-09-03T07:53:13] POST /api/managers/converge/decision {"repoId": "core", "docId": "vision", "proposalId": "#42", "decision": "later", "note": ""}
+[2026-09-03T07:53:13] POST /api/managers/converge/decision {"repoId": "core", "docId": "vision", "proposalId": "#42", "decision": "ratified-with-edits", "note": "Say 'observable by default' rather than 'observable'."}
+[2026-09-03T07:53:14] POST /api/managers/converge/steer {"fill": true}
+[2026-09-03T07:53:15] POST /api/managers/converge/steer {"objective": "Have a convincing stakeholder demo ready by noon.", "lanes": 8, "note": "Hold the noon deadline."}
+[2026-09-03T07:53:16] POST /api/managers/converge/feedback {"text": "The lane cards wrap oddly on my phone.", "context": "Amplifier Converge \u00b7 Amplifier Core Vision"}

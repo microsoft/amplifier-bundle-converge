@@ -1,0 +1,28 @@
+{
+  "id": "release",
+  "name": "Amplifier release",
+  "status": "waiting",
+  "statusLabel": "Waiting on you",
+  "age": "18m",
+  "summary": "Surface contract amendment is blocking the release cut.",
+  "objective": "Cut the Amplifier release candidate with the agreed surface contract.",
+  "deadline": "Today, 4:00 PM",
+  "strategy": "2 waves",
+  "lanesMax": 8,
+  "lanesActive": 4,
+  "needs": 1,
+  "repos": 4,
+  "projects": 1,
+  "strategyNarrative": "Resolve the one direction decision first. Then finish packaging, conformance, and release evidence.",
+  "tmux": "",
+  "repositories": [
+    {
+      "id": "pkg",
+      "name": "AMPLIFIER-PACKAGING",
+      "path": "/home/bkrabach/dev/amplifier-packaging",
+      "docs": [
+        { "id": "release-contract", "title": "Release Contract", "fullTitle": "Release Contract", "state": "gap" }
+      ]
+    }
+  ]
+}

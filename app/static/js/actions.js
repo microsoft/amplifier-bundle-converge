@@ -121,11 +121,11 @@ export function openSteer() {
       kind: 'primary',
       action: async () => {
         const objective = $('steerObjective').value.trim() || m.objective;
-        const lanes = Number($('steerLanes').value) || m.lanesMax;
+        const laneWidth = Number($('steerLanes').value) || m.lanesMax;
         const note = $('steerNote').value.trim();
         closeDialog();
         try {
-          await api.steer(state.managerId, { objective, lanes, note });
+          await api.steer(state.managerId, { objective, lanes: laneWidth, note });
           toast('Steering updated.');
           await hooks.reloadManager();
         } catch (err) {

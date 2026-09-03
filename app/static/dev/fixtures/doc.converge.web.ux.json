@@ -1,0 +1,17 @@
+{
+  "path": "AMPLIFIER-APP-WEB / contracts/ux.v1.md",
+  "title": "UX Contract",
+  "updated": "Updated Sep 3, 2026 by bkrabach",
+  "state": "gap",
+  "sections": [
+    ["Purpose", "<p>Say what the steward should be able to do without being told how the machinery works.</p>"],
+    ["Plain words", "<p>Surface vocabulary is plain state words. Paths, commit ids, and session names live behind a Details fold.</p>"],
+    ["Not yet kept", "<p>The mobile sheet layout for the manager console is specified here but is not yet verified on a real phone.</p>"]
+  ],
+  "raw": "# UX Contract\n\n## Purpose\n\nSay what the steward should be able to do without being told how the machinery works.\n\n## Plain words\n\nSurface vocabulary is plain state words. Paths, commit ids, and session names live behind a Details fold.\n\n## Not yet kept\n\nThe mobile sheet layout for the manager console is specified here but is not yet verified on a real phone.\n",
+  "changes": [],
+  "proposals": [],
+  "history": [
+    { "id": "now", "label": "Current", "date": "Sep 3 · 08:15", "note": "One clause is not yet kept: the mobile console sheet.", "sha": "5cf4208" }
+  ]
+}

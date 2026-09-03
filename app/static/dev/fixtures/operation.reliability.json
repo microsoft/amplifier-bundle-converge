@@ -1,0 +1,8 @@
+{
+  "waves": [],
+  "lanes": [],
+  "timeline": [],
+  "returnBrief": [],
+  "throughput": { "derived": 0, "resolved": 0, "verified": 0, "reopened": 0, "spark": [] },
+  "confidence": { "pct": 0, "kept": 0, "notyet": 0, "broken": 0 }
+}

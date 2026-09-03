@@ -214,6 +214,9 @@
   .status-word { display:none; }
   .top-actions { gap:4px; }
   .icon-label-button { display:none; }
+  /* The console is a sheet at this width and its only other control is inside it —
+     keep the one toggle that can bring it back. */
+  #consoleToggle { display:flex; }
   .attention-pill::after { content:""; }
   .workspace-tab { min-width:120px; }
   .session-card { min-width:170px; }
