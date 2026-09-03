@@ -18,6 +18,7 @@ provisions its declared pyyaml dependency).
 """
 
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -30,7 +31,7 @@ BAD = KIT / "fixtures" / "sample-bad"
 
 # Declared in run.py as un-judgeable from files. Pinned here so a rule cannot
 # be moved into SKIP to dodge a failure without this test going red.
-EXPECTED_SKIPS = {"2", "3"}
+EXPECTED_SKIPS = {"3b", "6b"}
 
 
 def _uv() -> str:
@@ -75,19 +76,22 @@ def test_bad_repo_fails_named_rules():
     assert report["verdict"] == "FAIL", report
     assert code == 1
     failed = {r["rule"] for r in report["results"] if r["status"] == "FAIL"}
-    assert failed == {"1a", "1b", "1c", "1d", "1e", "4a", "4b"}, failed
+    assert failed == {"1a", "1b", "2a", "2b", "3a", "4", "5", "6a", "7a", "7b"}, failed
 
 
 def test_bad_failures_carry_readable_detail():
     _, report = run_kit(BAD)
     rules = by_rule(report)
     assert "context/awareness.md" in rules["1a"]["detail"]
-    assert "foundation:" in rules["1b"]["detail"]
-    assert "anchors" in rules["1c"]["detail"].lower()
-    assert "bundle.md" in rules["1d"]["detail"]
-    assert "stray-step.yaml" in rules["1e"]["detail"]
-    assert "candidate" in rules["4a"]["detail"].lower()
-    assert "FROZEN" in rules["4b"]["detail"]
+    assert "anchors" in rules["1b"]["detail"].lower()
+    assert "foundation:" in rules["2a"]["detail"]
+    assert "stray-step.yaml" in rules["2b"]["detail"]
+    assert "rulebook" in rules["3a"]["detail"]
+    assert "host requirement" in rules["4"]["detail"].lower()
+    assert "--app" in rules["5"]["detail"]
+    assert "bundle.md" in rules["6a"]["detail"]
+    assert "candidate" in rules["7a"]["detail"].lower()
+    assert "FROZEN" in rules["7b"]["detail"]
 
 
 # --------------------------------------------------------------------------- #
@@ -134,6 +138,56 @@ def test_no_rule_is_ever_fabricated():
         for r in report["results"]:
             assert r["status"] in {"PASS", "FAIL", "SKIP"}, r
             assert r["detail"].strip(), f"rule {r['rule']} reports no detail"
+
+
+# --------------------------------------------------------------------------- #
+# The Core-clause anchor, and what it buys                                    #
+# --------------------------------------------------------------------------- #
+CONTRACT = REPO / "contracts" / "composition.v1.md"
+
+
+def core_clause_numbers():
+    """Every numbered clause under '## Core (the teeth)' in the contract."""
+    body = CONTRACT.read_text(encoding="utf-8").split("## Core (the teeth)")[1]
+    body = body.split("\n## ")[0]
+    return {int(m.group(1)) for m in re.finditer(r"(?m)^(\d+)\.\s", body)}
+
+
+def test_every_rule_id_is_a_core_clause_number():
+    """A rule id is <clause>[letter], and <clause> is a Core clause that exists.
+
+    This is the anchor the steward ratified on 2026-09-03: a failing rule names
+    the clause it breaks. An id pointing at a clause the contract does not have
+    would send a reader looking for a promise that is not there.
+    """
+    clauses = core_clause_numbers()
+    _, report = run_kit(GOOD)
+    for r in report["results"]:
+        m = re.fullmatch(r"(\d+)([a-z])?", r["rule"])
+        assert m, f"rule id {r['rule']!r} is not <clause>[letter]"
+        assert int(m.group(1)) in clauses, (
+            f"rule {r['rule']} names Core clause {m.group(1)}, which "
+            f"{CONTRACT.name} does not have (it has {sorted(clauses)})"
+        )
+        assert r["clause"] == int(m.group(1)), (
+            f"rule {r['rule']} reports clause {r['clause']}, which its id contradicts"
+        )
+
+
+def test_every_core_clause_has_a_row():
+    """Every Core clause of the contract is judged by at least one rule.
+
+    This is what the Core-clause anchor buys and the bullet anchor could not:
+    under the bullets there was no row to be missing, so a clause could go
+    unchecked invisibly. A clause added to the contract later fails here.
+    """
+    _, report = run_kit(GOOD)
+    covered = {r["clause"] for r in report["results"]}
+    missing = sorted(core_clause_numbers() - covered)
+    assert not missing, (
+        f"Core clause(s) {missing} of {CONTRACT.name} have no rule row — "
+        f"the kit judges {sorted(covered)}"
+    )
 
 
 # --------------------------------------------------------------------------- #

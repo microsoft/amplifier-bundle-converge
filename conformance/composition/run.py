@@ -4,15 +4,24 @@
 # ///
 """composition.v1 conformance kit — the runnable definition of "this repo composes leanly".
 
-Point it at a repository ROOT. It mechanically asserts the conformance list of
-``contracts/composition.v1.md`` — the four bullets under "Conformance kit
-asserts" — over the files that repository actually loads.
+Point it at a repository ROOT. It mechanically asserts the promises of
+``contracts/composition.v1.md`` — the seven **Core** clauses — over the files
+that repository actually loads.
 
-Rule numbering follows the contract's bullet order. Where one bullet names
-several independent promises, the kit emits one row per promise, lettered
-inside the bullet (1a, 1b, ...), so a failure names the exact promise rather
-than a whole paragraph. Bullets that need a LIVE Amplifier session to judge
-are reported SKIP with the reason — never a fabricated PASS.
+Rule numbering follows the contract's **Core clause** numbers, as documents.v1
+clause 5 asks: rule 6a judges Core 6, so a failing rule names the clause it
+breaks. Where one clause carries several independent promises, the kit emits
+one row per promise, lettered inside the clause (1a, 1b, ...), so a failure
+names the exact promise rather than a whole paragraph. Every Core clause has a
+row, and the self-test fails if one does not — a clause added later cannot go
+unchecked. Promises that need a LIVE Amplifier session to judge are reported
+SKIP with the reason — never a fabricated PASS.
+
+The kit was numbered to the contract's *Conformance kit asserts* bullets until
+2026-09-03. The steward ratified the Core-clause anchor that day (see
+``docs/workflow/owner-ratifications-2026-09-03.md``, call 2), because the bullet
+anchor could not show a clause going unchecked: four bullets covered seven
+clauses, and Core 3, 4 and 5 had no row at all.
 
 Usage
 -----
@@ -43,35 +52,41 @@ except ImportError:  # pragma: no cover - surfaced loudly, never silently faked
 
 
 # --------------------------------------------------------------------------- #
-# the rule table — numbered to contracts/composition.v1.md "Conformance kit    #
-# asserts". `bullet` is the contract bullet; `id` is the row.                  #
+# the rule table — numbered to contracts/composition.v1.md's **Core** clauses.  #
+# `clause` is the Core clause the row judges; `id` is the row's short name.     #
 # --------------------------------------------------------------------------- #
 RULES = [
     ("1a", 1, "no_heavy_package_reference",
      "no reference to the heavy foundation package in anything loaded"),
-    ("1b", 1, "no_heavy_helper_in_steps",
-     "no automated step names a heavy-package helper"),
-    ("1c", 1, "lean_base_named",
+    ("1b", 1, "lean_base_named",
      "the lean base is named where Converge assembles"),
-    ("1d", 1, "no_session_wide_tool_stripping",
-     "no session-wide tool-stripping setting anywhere"),
-    ("1e", 1, "steps_are_declared",
+    ("2a", 2, "no_heavy_helper_in_steps",
+     "no automated step names a heavy-package helper"),
+    ("2b", 2, "steps_are_declared",
      "every automated step file is one the bundle declares"),
-    ("2", 2, "session_reaches_helpers",
+    ("3a", 3, "helpers_carry_the_local_rulebook",
+     "every one of Converge's own helpers carries the small local rulebook, and borrows nothing else"),
+    ("3b", 3, "session_reaches_helpers",
      "a Converge session reaches a lean-base helper and one of Converge's own"),
-    ("3", 3, "unrelated_session_keeps_tools",
+    ("4", 4, "host_requirement_in_readme",
+     "the host requirement is one sentence in the README"),
+    ("5", 5, "work_queue_on_both_install_paths",
+     "the shared work queue rides on both install paths"),
+    ("6a", 6, "no_session_wide_tool_stripping",
+     "no session-wide tool-stripping setting anywhere"),
+    ("6b", 6, "unrelated_session_keeps_tools",
      "a helper in an unrelated session keeps its shell, delegation, and skills tools"),
-    ("4a", 4, "guard_admits_both_proposal_names",
+    ("7a", 7, "guard_admits_both_proposal_names",
      "the guard admits a proposal beside a locked contract, under either name"),
-    ("4b", 4, "guard_recognizes_locked_marker",
+    ("7b", 7, "guard_recognizes_locked_marker",
      "the guard's locked-marker test recognizes an H1-parenthetical status"),
 ]
 
 # Rows that cannot be judged from files alone. Declared here so the self-test
 # can assert the SKIP set is exactly this — a rule may not drift into SKIP.
 UNFIXTURABLE = {
-    "2": "needs a live Amplifier session; this kit reads files only",
-    "3": "needs two live Amplifier sessions (Converge plus unrelated work) side by side",
+    "3b": "needs a live Amplifier session; this kit reads files only",
+    "6b": "needs two live Amplifier sessions (Converge plus unrelated work) side by side",
 }
 
 # The heavy package this contract forbids, and the lean base it requires.
@@ -87,17 +102,50 @@ PROPOSAL_PATHS = [
 # The status form documents.v1 Core 6 fixes: status lives in the H1 parenthetical.
 LOCKED_H1 = "# Composition Contract — v1 (FROZEN 2026-09-02)"
 
+# Core 3: "Its own helpers carry a small local rulebook — stop honestly when a
+# thing cannot be proven; sign commits; cite locations — and borrow nothing
+# else." The rulebook is a file the helpers name; the three rules are its
+# sections. A helper that names no rulebook behaves differently on every host,
+# which is the drift this catches.
+RULEBOOK_RULES = [
+    ("stop honestly when a thing cannot be proven", re.compile(r"stop honestly", re.I)),
+    ("cite locations", re.compile(r"cite locations?", re.I)),
+    ("sign commits", re.compile(r"sign commits?", re.I)),
+]
+#: An `@namespace:path` mention inside one of Converge's own helper files.
+MENTION_RE = re.compile(r"@([A-Za-z0-9_-]+):([\w./-]+)")
+
+# Core 4: "The host requirement is one sentence in the README. Steps can use
+# only helpers present in the session they run in; Converge needs its own full
+# setup or a host on the same lean base." One sentence must carry all three
+# halves — a README that names the host without saying why leaves a reader to
+# guess whether their own session can run the steps.
+HOST_SENTENCE_TESTS = [
+    ("names the host", re.compile(r"\bhost\b", re.I)),
+    ("says a step's helpers come only from the session it runs in",
+     re.compile(r"only\s+(?:from|in|helpers?\s+present\s+in)\s+the\s+session"
+                r"|helpers?\s+only\s+from\s+the\s+session"
+                r"|only\s+helpers?\s+present\s+in\s+the\s+session", re.I)),
+    ("names the lean base", re.compile(r"anchors|lean\s+base", re.I)),
+]
+
+# Core 5: "The shared work queue rides on both install paths." The two paths are
+# the root bundle (`bundle.md`) and the standalone behavior that `--app`
+# installs, so the queue must be named in BOTH — a queue on one path only means
+# the contract checker can file work on one install and not the other.
+WORK_QUEUE_RE = re.compile(r"work-tracker")
+
 LOADED_DIRS = ["behaviors", "context"]
 LOADED_FILES = ["bundle.md"]
 
 
 def _result(rid, status, detail, **extra):
-    bullet = next(r[1] for r in RULES if r[0] == rid)
+    clause = next(r[1] for r in RULES if r[0] == rid)
     name = next(r[2] for r in RULES if r[0] == rid)
     desc = next(r[3] for r in RULES if r[0] == rid)
     out = {
         "rule": rid,
-        "bullet": bullet,
+        "clause": clause,
         "id": name,
         "name": desc,
         "status": status,
@@ -234,7 +282,7 @@ def _rel(root: Path, p: Path) -> str:
 
 
 # --------------------------------------------------------------------------- #
-# bullet 1 — a lean base, and no side effects                                  #
+# clauses 1 and 2 — a lean base, and steps that reach only its helpers        #
 # --------------------------------------------------------------------------- #
 def check_no_heavy_reference(root: Path):
     hits = []
@@ -262,7 +310,7 @@ def check_no_heavy_reference(root: Path):
 def check_no_heavy_helper_in_steps(root: Path):
     recipes = recipe_files(root)
     if not recipes:
-        return _result("1b", "PASS", "no automated steps present to check")
+        return _result("2a", "PASS", "no automated steps present to check")
     hits = []
     for p in recipes:
         try:
@@ -278,12 +326,12 @@ def check_no_heavy_helper_in_steps(root: Path):
     if hits:
         where = ", ".join(f"{h['file']}:{h['line']} ({h['ref']})" for h in hits[:5])
         return _result(
-            "1b", "FAIL",
+            "2a", "FAIL",
             f"{len(hits)} automated step(s) name a heavy-package helper: {where}",
             hits=hits,
         )
     return _result(
-        "1b", "PASS",
+        "2a", "PASS",
         f"no 'foundation:' helper named across {len(recipes)} automated step file(s)",
     )
 
@@ -291,7 +339,7 @@ def check_no_heavy_helper_in_steps(root: Path):
 def check_lean_base_named(root: Path):
     meta, err = load_bundle_frontmatter(root)
     if err:
-        return _result("1c", "FAIL", err)
+        return _result("1b", "FAIL", err)
     includes = meta.get("includes") or []
     uris = []
     if isinstance(includes, list):
@@ -303,11 +351,11 @@ def check_lean_base_named(root: Path):
     matched = [u for u in uris if LEAN_BASE_RE.search(u)]
     if not matched:
         return _result(
-            "1c", "FAIL",
+            "1b", "FAIL",
             f"bundle.md includes no lean-base (anchors) URI; saw {len(uris)} include(s): {uris}",
             includes=uris,
         )
-    return _result("1c", "PASS", f"lean base named in bundle.md includes: {matched[0]}")
+    return _result("1b", "PASS", f"lean base named in bundle.md includes: {matched[0]}")
 
 
 def check_no_tool_stripping(root: Path):
@@ -317,25 +365,25 @@ def check_no_tool_stripping(root: Path):
     offenders = []
     meta, err = load_bundle_frontmatter(root)
     if err:
-        return _result("1d", "FAIL", err)
+        return _result("6a", "FAIL", err)
     if "spawn" in meta:
         offenders.append({"file": "bundle.md", "key": "spawn"})
     for p in behavior_files(root):
         try:
             doc = yaml.safe_load(p.read_text(encoding="utf-8", errors="replace"))
         except yaml.YAMLError as e:
-            return _result("1d", "FAIL", f"{_rel(root, p)} is not valid YAML: {e}")
+            return _result("6a", "FAIL", f"{_rel(root, p)} is not valid YAML: {e}")
         if isinstance(doc, dict) and "spawn" in doc:
             offenders.append({"file": _rel(root, p), "key": "spawn"})
     if offenders:
         where = ", ".join(o["file"] for o in offenders)
         return _result(
-            "1d", "FAIL",
+            "6a", "FAIL",
             f"session-wide spawn policy present in: {where}",
             offenders=offenders,
         )
     n = 1 + len(behavior_files(root))
-    return _result("1d", "PASS", f"no top-level 'spawn:' key in {n} composed file(s)")
+    return _result("6a", "PASS", f"no top-level 'spawn:' key in {n} composed file(s)")
 
 
 def check_steps_are_declared(root: Path):
@@ -344,10 +392,10 @@ def check_steps_are_declared(root: Path):
     accident. Keeps the step surface exactly what the bundle says it is."""
     recipes = recipe_files(root)
     if not recipes:
-        return _result("1e", "PASS", "no automated steps present to declare")
+        return _result("2b", "PASS", "no automated steps present to declare")
     f = root / "bundle.md"
     if not f.is_file():
-        return _result("1e", "FAIL", "no bundle.md at the repository root")
+        return _result("2b", "FAIL", "no bundle.md at the repository root")
     declared_text = f.read_text(encoding="utf-8", errors="replace")
     steps = []
     for p in recipes:
@@ -358,20 +406,216 @@ def check_steps_are_declared(root: Path):
     missing = [s for s in steps if s["status"] == "FAIL"]
     if missing:
         return _result(
-            "1e", "FAIL",
+            "2b", "FAIL",
             f"{len(missing)} of {len(steps)} automated step(s) undeclared: "
             + ", ".join(s["step"] for s in missing[:5]),
             steps=steps,
         )
     return _result(
-        "1e", "PASS",
+        "2b", "PASS",
         f"all {len(steps)} automated step file(s) are declared in bundle.md",
         steps=steps,
     )
 
 
 # --------------------------------------------------------------------------- #
-# bullet 4 — the guard                                                         #
+# clause 3 — its own helpers, and their local rulebook                         #
+# --------------------------------------------------------------------------- #
+def helper_files(root: Path):
+    """The repository's own helper definitions."""
+    d = root / "agents"
+    if not d.is_dir():
+        return []
+    return sorted(p for p in d.rglob("*.md") if p.is_file())
+
+
+def check_helpers_carry_the_rulebook(root: Path):
+    """Core 3: "Its own helpers carry a small local rulebook … and borrow
+    nothing else."
+
+    Three things are readable from the tree: every helper NAMES a rulebook, the
+    rulebook it names EXISTS, and that rulebook states the three rules the
+    clause enumerates. "Borrows nothing else" is read as: a helper mentions no
+    other bundle's context — a preamble borrowed from elsewhere is one that can
+    change under the helper's feet, so the helper stops behaving the same on
+    every host.
+    """
+    helpers = helper_files(root)
+    if not helpers:
+        return _result("3a", "FAIL",
+                       "no helper of its own under agents/ — nothing carries a local rulebook")
+    meta, _ = load_bundle_frontmatter(root)
+    own = ((meta or {}).get("bundle") or {}).get("name") if isinstance(meta, dict) else None
+    rows, rulebooks, borrowed = [], set(), []
+    for p in helpers:
+        text = p.read_text(encoding="utf-8", errors="replace")
+        carried, near_misses = [], []
+        for ns, path in MENTION_RE.findall(text):
+            if own and ns != own:
+                borrowed.append({"file": _rel(root, p), "mention": f"@{ns}:{path}"})
+                continue
+            f = root / path
+            if not f.is_file():
+                continue
+            body = f.read_text(encoding="utf-8", errors="replace")
+            absent = [label for label, rx in RULEBOOK_RULES if not rx.search(body)]
+            # A helper names several documents; the RULEBOOK is the one stating
+            # the rules clause 3 enumerates. The others are domain reading and
+            # are not judged here — reporting them would be a fabricated finding.
+            if absent:
+                near_misses.append({"file": path, "absent": absent})
+            else:
+                carried.append(path)
+        rows.append({"helper": _rel(root, p),
+                     "status": "PASS" if carried else "FAIL",
+                     "detail": (f"carries {carried[0]}" if carried
+                                else "names no local file stating the three rules clause 3 lists"),
+                     "closest": near_misses[:3]})
+        rulebooks.update(carried)
+    problems = [r for r in rows if r["status"] == "FAIL"]
+    if problems:
+        where = "; ".join(
+            f"{r['helper']} ({'closest: ' + r['closest'][0]['file'] + ' lacks '
+                              + str(r['closest'][0]['absent']) if r['closest'] else 'names no local document'})"
+            for r in problems[:3])
+        return _result("3a", "FAIL",
+                       f"{len(problems)} of {len(helpers)} helper(s) carry no local rulebook: {where}",
+                       helpers=rows)
+    if borrowed:
+        where = ", ".join(f"{b['file']} → {b['mention']}" for b in borrowed[:4])
+        return _result("3a", "FAIL",
+                       f"{len(borrowed)} helper mention(s) borrow another bundle's context: {where}",
+                       helpers=rows, borrowed=borrowed)
+    return _result("3a", "PASS",
+                   f"all {len(helpers)} helper(s) carry a local rulebook "
+                   f"({', '.join(sorted(rulebooks))}) stating all "
+                   f"{len(RULEBOOK_RULES)} rules clause 3 names, and borrow nothing else",
+                   helpers=rows, rulebooks=sorted(rulebooks))
+
+
+# --------------------------------------------------------------------------- #
+# clause 4 — the host requirement                                              #
+# --------------------------------------------------------------------------- #
+def readme_sentences(root: Path):
+    """(sentences, error) for the repository README, one string per sentence.
+
+    Block-quote markers and line wrapping are removed first: the clause asks
+    for one sentence, and a sentence that happens to be wrapped over three
+    lines, or set as a blockquote, is still one sentence.
+    """
+    f = root / "README.md"
+    if not f.is_file():
+        return None, "no README.md at the repository root — the host requirement is stated nowhere"
+    text = f.read_text(encoding="utf-8", errors="replace")
+    lines = [re.sub(r"^\s*>\s?", "", ln) for ln in text.splitlines()]
+    flat = re.sub(r"\s+", " ", " ".join(lines))
+    return [s.strip() for s in re.split(r"(?<=[.!?])\s+", flat) if s.strip()], None
+
+
+def check_host_requirement(root: Path):
+    """Core 4: "The host requirement is one sentence in the README."
+
+    Judged as the clause states it: ONE sentence must carry all three halves —
+    the host, the fact that a step resolves helpers only from the session it
+    runs in, and the lean base. Spread across three paragraphs the requirement
+    is technically present and practically unreadable, which is the failure
+    this catches.
+    """
+    sentences, err = readme_sentences(root)
+    if err:
+        return _result("4", "FAIL", err)
+    best, best_hits = None, []
+    for s in sentences:
+        hits = [label for label, rx in HOST_SENTENCE_TESTS if rx.search(s)]
+        if len(hits) > len(best_hits):
+            best, best_hits = s, hits
+        if len(hits) == len(HOST_SENTENCE_TESTS):
+            return _result(
+                "4", "PASS",
+                f"README.md states the host requirement in one sentence: {s[:150]!r}",
+                sentence=s,
+            )
+    absent = [label for label, _ in HOST_SENTENCE_TESTS if label not in best_hits]
+    if best is None:
+        return _result(
+            "4", "FAIL",
+            f"no sentence in README.md ({len(sentences)} read) carries any half of the "
+            f"host requirement; all three are missing: {absent}",
+            closest=None, absent=absent,
+        )
+    return _result(
+        "4", "FAIL",
+        f"no single sentence in README.md states the host requirement — the closest "
+        f"({best[:90]!r}) says nothing about: {absent}",
+        closest=best, absent=absent,
+    )
+
+
+# --------------------------------------------------------------------------- #
+# clause 5 — the shared work queue, on both install paths                       #
+# --------------------------------------------------------------------------- #
+def _include_uris(doc) -> list:
+    out = []
+    includes = (doc or {}).get("includes") or []
+    if isinstance(includes, list):
+        for inc in includes:
+            if isinstance(inc, dict) and isinstance(inc.get("bundle"), str):
+                out.append(inc["bundle"])
+            elif isinstance(inc, str):
+                out.append(inc)
+    return out
+
+
+def check_work_queue_on_both_paths(root: Path):
+    """Core 5: "The shared work queue rides on both install paths."
+
+    Path one is the root bundle (`bundle.md`); path two is the standalone
+    behavior a host session installs on its own. The queue must be named on
+    BOTH — named on one only, the contract checker can file work after one
+    install and silently cannot after the other.
+    """
+    paths = []
+    meta, err = load_bundle_frontmatter(root)
+    if err:
+        return _result("5", "FAIL", err)
+    root_uris = [u for u in _include_uris(meta) if WORK_QUEUE_RE.search(u)]
+    paths.append({"path": "bundle.md (the root install)", "status": "PASS" if root_uris else "FAIL",
+                  "detail": (f"names the work queue: {root_uris[0]}" if root_uris
+                             else "no include names the shared work queue")})
+    behavior_hits = []
+    for p in behavior_files(root):
+        try:
+            doc = yaml.safe_load(p.read_text(encoding="utf-8", errors="replace"))
+        except yaml.YAMLError as e:
+            return _result("5", "FAIL", f"{_rel(root, p)} is not valid YAML: {e}")
+        if not isinstance(doc, dict):
+            continue
+        for u in _include_uris(doc):
+            if WORK_QUEUE_RE.search(u):
+                behavior_hits.append({"file": _rel(root, p), "uri": u})
+    paths.append({"path": "the standalone behavior (the --app install)",
+                  "status": "PASS" if behavior_hits else "FAIL",
+                  "detail": (f"{behavior_hits[0]['file']} names the work queue: "
+                             f"{behavior_hits[0]['uri']}" if behavior_hits
+                             else "no behavior includes the shared work queue")})
+    missing = [p for p in paths if p["status"] == "FAIL"]
+    if missing:
+        return _result(
+            "5", "FAIL",
+            "the shared work queue does not ride on "
+            + "; ".join(f"{m['path']} — {m['detail']}" for m in missing),
+            paths=paths,
+        )
+    return _result(
+        "5", "PASS",
+        "the shared work queue rides on both install paths "
+        f"(bundle.md and {behavior_hits[0]['file']})",
+        paths=paths,
+    )
+
+
+# --------------------------------------------------------------------------- #
+# clause 7 — the guard                                                         #
 # --------------------------------------------------------------------------- #
 def guard_configs(root: Path):
     """Every hooks-candidate-guard config block found across the behaviors."""
@@ -393,7 +637,7 @@ def check_guard_admits_both(root: Path):
     guards = guard_configs(root)
     if not guards:
         return _result(
-            "4a", "FAIL",
+            "7a", "FAIL",
             "no hooks-candidate-guard config found in behaviors/ — nothing guards a locked contract",
         )
     rows = []
@@ -414,12 +658,12 @@ def check_guard_admits_both(root: Path):
     if failed:
         names = ", ".join(f"{r['key']} rejects {r['proposal']}" for r in failed[:4])
         return _result(
-            "4a", "FAIL",
+            "7a", "FAIL",
             f"{len(failed)} of {len(rows)} proposal-name check(s) rejected: {names}",
             checks=rows,
         )
     return _result(
-        "4a", "PASS",
+        "7a", "PASS",
         f"both proposal names admitted by every guard glob list ({len(rows)} checks)",
         checks=rows,
     )
@@ -429,7 +673,7 @@ def check_guard_recognizes_locked_marker(root: Path):
     guards = guard_configs(root)
     if not guards:
         return _result(
-            "4b", "FAIL",
+            "7b", "FAIL",
             "no hooks-candidate-guard config found in behaviors/ — nothing guards a locked contract",
         )
     rows = []
@@ -464,12 +708,12 @@ def check_guard_recognizes_locked_marker(root: Path):
     failed = [r for r in rows if r["status"] == "FAIL"]
     if failed:
         return _result(
-            "4b", "FAIL",
+            "7b", "FAIL",
             "; ".join(f"{r['where']}: {r['detail']}" for r in failed[:3]),
             checks=rows,
         )
     return _result(
-        "4b", "PASS",
+        "7b", "PASS",
         f"locked-marker test recognizes the H1-parenthetical form ({len(rows)} guard config(s))",
         checks=rows,
     )
@@ -480,15 +724,18 @@ def check_guard_recognizes_locked_marker(root: Path):
 # --------------------------------------------------------------------------- #
 def run_conformance(root: Path) -> dict:
     results = [
-        check_no_heavy_reference(root),
-        check_no_heavy_helper_in_steps(root),
-        check_lean_base_named(root),
-        check_no_tool_stripping(root),
-        check_steps_are_declared(root),
-        _skip("2"),
-        _skip("3"),
-        check_guard_admits_both(root),
-        check_guard_recognizes_locked_marker(root),
+        check_no_heavy_reference(root),        # 1a
+        check_lean_base_named(root),           # 1b
+        check_no_heavy_helper_in_steps(root),  # 2a
+        check_steps_are_declared(root),        # 2b
+        check_helpers_carry_the_rulebook(root),  # 3a
+        _skip("3b"),
+        check_host_requirement(root),          # 4
+        check_work_queue_on_both_paths(root),  # 5
+        check_no_tool_stripping(root),         # 6a
+        _skip("6b"),
+        check_guard_admits_both(root),         # 7a
+        check_guard_recognizes_locked_marker(root),  # 7b
     ]
     summary = {
         "pass": sum(r["status"] == "PASS" for r in results),
@@ -508,7 +755,7 @@ def run_conformance(root: Path) -> dict:
 def print_human_summary(report: dict) -> None:
     w = sys.stderr.write
     w(f"\ncomposition.v1 conformance — {report['target']}\n")
-    w(f"asserts: {report['contract']} (\"Conformance kit asserts\")\n")
+    w(f"asserts: {report['contract']} (\"Core (the teeth)\", clause by clause)\n")
     w("-" * 74 + "\n")
     for r in report["results"]:
         w(f"  [{r['status']:4}] {r['rule']:3} {r['id']}: {r['detail']}\n")

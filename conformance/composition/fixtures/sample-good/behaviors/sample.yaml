@@ -6,6 +6,13 @@ bundle:
     proposal beside a locked contract under BOTH names and to recognize a
     locked contract whose status lives in the H1 parenthetical.
 
+includes:
+  # The shared work queue on the `--app` install path (composition.v1 Core 5).
+  # Behavior-includes-behavior, the standard pattern: this file is the
+  # standalone install target, so the queue has to be named HERE as well as in
+  # bundle.md or filing work works on one install path and not the other.
+  - bundle: git+https://github.com/microsoft/amplifier-work-tracker@main#subdirectory=behaviors/work-tracker.yaml
+
 hooks:
   - module: hooks-candidate-guard
     source: ../modules/hooks-candidate-guard
