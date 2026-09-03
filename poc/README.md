@@ -3,11 +3,10 @@
     uv run poc/serve.py --repo . --port 8098
 
 Open <http://127.0.0.1:8098/>. It installs as an app from the browser's own
-install button, and nothing is ever fetched from anywhere else.
-
-Two places — **Direction** and **Operation** — and a **Manager Console** pane that
-is not a third place: it stays open as you move between them. On a phone it rises
-from the bottom; on a desktop it docks to the right.
+install button, and nothing is ever fetched from anywhere else. Two places —
+**Direction** and **Operation** — and a **Manager Console** pane that is not a
+third place: it stays open as you move between them. On a phone it rises from
+the bottom; on a desktop it docks to the right.
 
 ## What is real, and what is not
 
@@ -18,7 +17,7 @@ between a document's last two saved versions, sentence by sentence; the proposal
 waiting for your word.
 
 Made up for this proof of concept, and labelled as such on screen: today's
-strategy, the plan in waves, and how sure the manager session has been over time.
+strategy, the plan in waves, how sure the manager session has been over time.
 Diagrams inside a document are shown as their source, not drawn.
 
 The four things you can do — answer with a word, ask for a proposal, drop
@@ -34,10 +33,8 @@ pane can be seen and sized. The real one attaches to the session the manager
 session already runs in; its interface — `attach`, `send`, `sessions` — and the
 two things it must get right are written out in that file.
 
-    python3 poc/verify.py --url http://127.0.0.1:8098
-
-drives a real browser at 390 and 1280, writes `screenshots/`, and fails on
-sideways overflow, on a browser error, or if the console pane does not survive
-the switch between places. `vendor/` holds xterm.js (MIT), unmodified.
+`python3 poc/verify.py --url http://127.0.0.1:8098` drives a real browser at 390
+and 1280, writes `screenshots/`, and fails on sideways overflow, on a browser
+error, or if the pane does not survive the switch. `vendor/` holds xterm.js (MIT).
 
 **This implementation may be thrown away. The contracts are the keeper.**
