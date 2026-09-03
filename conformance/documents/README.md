@@ -298,3 +298,4 @@ Three tests are load-bearing:
   what they observe and refuse to rule. The `composition` and `surface` kits
   remain numbered to the bullets — they are outside this change, and rule 5b
   names them.
+| 14 | Right-sized: one domain component per contract (50–100 lines, one who-builds, one kit) | SKIP — size is checked by rule 2; componentization is a judgment the steward makes; see docs/RIGHT-SIZING.md | — |
