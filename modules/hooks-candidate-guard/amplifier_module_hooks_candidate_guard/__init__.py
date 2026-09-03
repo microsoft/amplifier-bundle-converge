@@ -3,8 +3,10 @@
 Registers a single handler on ``tool:pre`` (priority 5, low = early --
 HOOKS_API.md "Parameters -> priority") that denies a direct write/edit/patch
 (or a bash write-laundering attempt) targeting a FROZEN contract file or
-``VISION.md``. Amendments must go through a ``CANDIDATE-<topic>.md`` sibling
-and owner ratification (see the module README and
+``VISION.md``. Amendments must go through a sibling proposal file -- named
+``<contract>.vN-candidate.md`` (contracts/documents.v1 clause 8) or the legacy
+``CANDIDATE-<topic>.md`` (PROTOCOL.md §5), both admitted -- and owner
+ratification (see the module README and
 ``docs/design/hooks-candidate-guard-spec.md`` for the full design).
 
 All the actual decision logic lives in ``guard.py`` as pure, coordinator-free

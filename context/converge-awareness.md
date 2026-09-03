@@ -35,12 +35,15 @@ of the ask:
 `@converge:docs/LEDGER-FORMAT.md` (starter ledger convention). Quote or point;
 never paraphrase them into drift.
 
-**Status:** increments 1–4 shipped — the agent roster is complete. Knowledge
-layer + `converge:reconciler` (ratchet) + `hooks-candidate-guard` (on by
-default, structurally enforcing PROTOCOL.md §5) + `converge:negotiator`
-(Phase 1 NEGOTIATE: evidence → decision-level minutes; returns needs,
-read-only) + `converge:amendment-drafter` (authors `CANDIDATE-<topic>.md` and
-stops; the guard escape hatch's upstream author). All three phase-loop recipes
-(`@converge:recipes/seed-reconcile.yaml`, `encode.yaml`, `full-wave.yaml`) ship
-in `recipes/` and are live-verified (spec of record: mechanism-spec §4)
-in mechanism-spec §4. The orchestration mode is deferred by decision.
+**Status:** the agent roster is complete. Knowledge layer +
+`converge:reconciler` (ratchet) + `hooks-candidate-guard` (on by default,
+structurally enforcing PROTOCOL.md §5) + `converge:negotiator` (Phase 1
+NEGOTIATE: evidence → decision-level minutes; returns needs, read-only) +
+`converge:amendment-drafter` (authors a proposal beside a locked contract and
+stops; the guard escape hatch's upstream author). One recipe ships in
+`recipes/`: `@converge:recipes/seed-reconcile.yaml`, the ratchet loop (spec of
+record: mechanism-spec §4.2). The orchestration mode is deferred by decision.
+
+**Recipes reach only what the session already has.** A recipe step can use only
+helpers present in the session it runs in, so run `seed-reconcile` from a
+Converge session or from a host on the same lean base (`anchors`).
