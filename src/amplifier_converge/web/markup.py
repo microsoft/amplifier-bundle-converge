@@ -17,8 +17,32 @@ HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
 LIST_ITEM = re.compile(r"^\s*(?:[-*]|\d+[.)])\s+(.*)$")
 
 
+#: The class that marks words the app is *quoting* rather than saying.
+#:
+#: A work item's title, a lane's own note, a sentence out of a contract: the
+#: app displays them but did not write them, and their vocabulary is the
+#: project's business — documents.v1 governs them, and its kit checks them.
+#: `doc` is the marker the shipped surface.v1 kit already reads for exactly
+#: this reason ("scanning it here would report a contract's vocabulary as an
+#: app defect"), so quoting through this class is what makes the boundary
+#: checkable rather than a matter of opinion. It is never used for the app's
+#: own copy — a separate test reads every string literal in this package to
+#: keep that honest.
+QUOTED = "doc quote"
+
+
 def esc(text: object) -> str:
     return html.escape(str(text), quote=True)
+
+
+def quoted(text: object) -> str:
+    """Words borrowed from the project, marked as borrowed."""
+    return f'<span class="{QUOTED}">{esc(text)}</span>'
+
+
+def quoted_markup(rendered: str) -> str:
+    """The same, for text already turned into inline markup."""
+    return f'<span class="{QUOTED}">{rendered}</span>'
 
 
 def inline(text: str) -> str:

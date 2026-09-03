@@ -16,19 +16,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ..home import cache_dir, ensure
+from ..words import surface_word
 from . import Reading
 
 CLI = "amplifier-work-tracker"
 
 #: Plain state words (documents.v1 clause 10), mapped from the queue's own.
-STATE_WORDS = {
-    "open": "Truly ready",
-    "held": "Working",
-    "blocked": "Waiting on you",
-    "deferred": "Waiting on you",
-    "resolved": "Done",
-    "intake": "Waiting on you",
-}
+#: The mapping itself lives in `amplifier_converge.words` — one map for the
+#: whole app — and this is the queue's slice of it, named for readability.
+QUEUE_STATUSES = ("open", "held", "blocked", "deferred", "resolved", "intake")
+STATE_WORDS = {status: surface_word(status) for status in QUEUE_STATUSES}
 
 
 @dataclass(frozen=True)
@@ -41,7 +38,7 @@ class WorkItem:
 
     @property
     def state_word(self) -> str:
-        return STATE_WORDS.get(self.status, "Can't check")
+        return surface_word(self.status)
 
     @property
     def truly_ready(self) -> bool:

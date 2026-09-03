@@ -17,6 +17,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ..words import UNKNOWN, surface_word
 from . import Reading
 
 #: How long a lane may go without writing before we stop calling it Working.
@@ -47,17 +48,18 @@ class Lane:
 
     @property
     def liveness(self) -> str:
+        """State in words, every one of them read from the vocabulary map."""
         if self.finished:
-            return "Done"
+            return surface_word("done")
         if self.blocked:
-            return "Stuck"
+            return surface_word("stuck")
         if self.seconds_since_write is None:
-            return "Can't check"
+            return UNKNOWN
         if self.seconds_since_write < QUIET_AFTER_SECONDS:
-            return "Working"
+            return surface_word("working")
         if self.seconds_since_write < SILENT_AFTER_SECONDS:
-            return f"Quiet {_minutes(self.seconds_since_write)}"
-        return "Silent — may have died"
+            return f"{surface_word('quiet')} {_minutes(self.seconds_since_write)}"
+        return surface_word("silent")
 
     @property
     def running(self) -> bool:

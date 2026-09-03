@@ -158,8 +158,11 @@ code{font-family:var(--mono);font-size:.92em}
 table{width:100%;max-width:100%;border-collapse:collapse;display:block;overflow-x:auto}
 th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--rule-soft);font-size:14px}
 
+/* ---- quoted: words the page shows but did not write ---- */
+.quote{color:inherit}
+
 /* ---- what changed ---- */
-.diff li{padding:8px 12px;border-radius:9px;margin-top:6px;font-size:14.5px}
+.diff li, .doc.diff li{padding:8px 12px;border-radius:9px;margin-top:6px;font-size:14.5px;line-height:1.5}
 .diff .added{background:#EEF4EC;border-left:3px solid var(--moss)}
 .diff .removed{background:#F7EEEB;border-left:3px solid var(--brick);text-decoration:line-through;color:var(--ink-2)}
 

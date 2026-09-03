@@ -37,6 +37,10 @@ class Proposal:
     evidence: str
     not_change: str
     url: str = ""
+    #: Exactly where it is kept — a path, or a pull request number. A path is
+    #: technical detail, so it is shown behind a Details fold and never in the
+    #: sentence a steward decides on (documents.v1 clause 11).
+    where: str = ""
     complete: bool = True
     missing: tuple[str, ...] = ()
 
@@ -62,7 +66,16 @@ def _section(text: str, names: tuple[str, ...]) -> str:
     return ""
 
 
-def parse_proposal(text: str, key: str, title: str, origin: str, origin_detail: str, target: str, url: str = "") -> Proposal:
+def parse_proposal(
+    text: str,
+    key: str,
+    title: str,
+    origin: str,
+    origin_detail: str,
+    target: str,
+    url: str = "",
+    where: str = "",
+) -> Proposal:
     found: dict[str, str] = {}
     missing: list[str] = []
     for field, names in PART_HEADINGS:
@@ -82,6 +95,7 @@ def parse_proposal(text: str, key: str, title: str, origin: str, origin_detail: 
         evidence=found["evidence"],
         not_change=found["not_change"],
         url=url,
+        where=where,
         complete=not missing,
         missing=tuple(missing),
     )
@@ -112,8 +126,9 @@ def _local_proposals(repo: Path) -> list[Proposal]:
                     key=f"file:{path.relative_to(repo)}",
                     title=first_line,
                     origin="this project",
-                    origin_detail=f"proposed here, as {path.relative_to(repo)}",
+                    origin_detail="proposed here, in this project",
                     target=target,
+                    where=f"It is kept at {path.relative_to(repo)}.",
                 )
             )
     return out
@@ -188,6 +203,7 @@ def _github_proposals(repo: Path) -> tuple[list[Proposal], str]:
                 origin="a teammate",
                 origin_detail=f"{author} opened pull request #{row.get('number')}",
                 target=", ".join(touching),
+                where=f"It changes {', '.join(touching)}.",
                 url=row.get("url", ""),
             )
         )
