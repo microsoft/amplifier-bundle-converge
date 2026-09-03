@@ -1,5 +1,11 @@
 # Implementation Spec — `hooks-candidate-guard` (converge increment 2)
 
+> **Snapshot — 2026-08-30.** A design-time record of what was intended then, kept
+> as history. The guard has since shipped and moved on; the built module's own
+> `modules/hooks-candidate-guard/README.md` is the current description of its
+> contract, config surface, and documented non-coverage. Where this document and
+> that README disagree, the README wins.
+
 **Status:** READY FOR BUILD. Complete enough for `modular-builder` to implement
 without further design decisions. Every mechanism choice below is settled and,
 where it depended on the kernel, cited to the authoritative contract.

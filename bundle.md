@@ -65,19 +65,20 @@ honest between waves and refuses silent drift in either direction.
 
 ## What this bundle provides
 
-- **`converge:protocol-authority`** — THE carrier of the ratified protocol.
+- **`converge:protocol-authority`** — THE carrier of the ratified rules.
   Delegate any *interpretive* question ("does this conform? / am I allowed?"):
-  the stack, the phases, the lifecycle, the Freeze Bar, the amendment protocol,
-  the owner attention budget. It holds the full `docs/PROTOCOL.md` so the root
+  the layers and which governs which, the loop, the four conditions for locking
+  a document, how a locked document changes by proposal, and the four calls that
+  reach the intent steward. It holds the full `docs/PROTOCOL.md` so the root
   session doesn't have to.
 - **`converge:reconciler`** — the **ratchet**. SEED and standing RECONCILE:
   derives clause-granular ledger rows from a repo's locked contracts, runs the
   repo's own conformance kit, detects bidirectional drift, and files
   GAP/VIOLATION rows with tracker refs. The one mutating agent; never
-  synchronously interrupts the owner. Carries `docs/LEDGER-FORMAT.md`.
+  synchronously interrupts the intent steward. Carries `docs/LEDGER-FORMAT.md`.
 - **`converge:negotiator`** — Phase 1 NEGOTIATE. Turns investigation evidence
   into decision-level minutes: options, a recommendation, and the one decision
-  the owner must make. Returns needs; never re-routes; read-only.
+  the intent steward must make. Returns needs; never re-routes; read-only.
 - **`converge:proposal-drafter`** — authors a proposal beside a locked contract
   and stops. Never edits the locked file, never self-ratifies.
 - **Skills** (load on demand for a *procedural* "how do I…" ask):
@@ -89,7 +90,7 @@ honest between waves and refuses silent drift in either direction.
 - **`hooks-candidate-guard`** — the ratchet's teeth. A `tool:pre` hook, on by
   default, that structurally denies a direct write/edit/patch (or a bash
   write-laundering attempt) targeting a locked contract file or `VISION.md`.
-  Amendments land only via a ratified proposal sibling. See
+  Changes land only via a ratified proposal beside it. See
   `modules/hooks-candidate-guard/README.md` for the full contract, the
   config surface, and documented non-coverage.
 - **Recipe** — one, `@converge:recipes/seed-reconcile.yaml`: SEED + standing
@@ -111,4 +112,5 @@ to them rather than restating them.
 **Live**: 4 agents (protocol-authority, reconciler, negotiator,
 proposal-drafter), 5 skills, candidate-guard hook, 1 recipe (seed-reconcile).
 
-See `README.md` for build history. Spec of record: `docs/design/mechanism-spec.md`.
+See `README.md` for what ships and where everything lives.
+`docs/design/mechanism-spec.md` is a dated design snapshot, read as history.
