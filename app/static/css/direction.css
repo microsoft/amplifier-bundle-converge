@@ -28,6 +28,7 @@
 .state-badge { padding:3px 7px; border-radius:999px; font-weight:800; font-size:10px; text-transform:uppercase; letter-spacing:.04em; }
 .state-badge.kept { color:#128353; background:#e8f8f0; }
 .state-badge.gap { color:#9b640d; background:#fff4d7; }
+.state-badge.draft { color:#4a5568; background:#eef2f8; }
 .round-button { width:36px; height:36px; border-radius:50%; border:1px solid var(--line); background:#fff; color:#758196; font-size:20px; }
 .round-button[aria-pressed="true"] { color:#6d4df4; background:#f1edff; }
 .mode-tabs { display:flex; border-bottom:1px solid var(--line); gap:4px; }

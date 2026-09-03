@@ -1,0 +1,25 @@
+{
+  "name": "Amplifier Converge",
+  "short_name": "Converge",
+  "description": "Direction and Operation for your manager sessions.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0a1020",
+  "background_color": "#eef2f8",
+  "icons": [
+    {
+      "src": "/branding/pwa/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/branding/pwa/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
