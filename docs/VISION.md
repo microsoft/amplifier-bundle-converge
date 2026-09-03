@@ -14,7 +14,7 @@ You define that in two documents. A **vision** — the project as it will be whe
 
 The work unfolds over time, and you are present throughout. Long stretches run unattended; the decisions that need you arrive exactly when they need you and never otherwise; nothing is called done until it has been seen working. The vision and contracts mature as the work does — you need not get everything right on day one. The direction is grown, not declared.
 
-Those same documents are where people align with one another. A teammate's proposal to change a contract and the manager session's proposal look and behave the same: what changes, the evidence for it, what does *not* change. You ratify or decline with a word, and the words you ratify are the words every session then obeys. One text, two audiences — an unbroken **through-line** from human agreement to AI guardrail.
+Those same documents are where people align with one another — Git is the protocol, Converge is the lens. A teammate's proposal to change a contract and the manager session's proposal look and behave the same: what changes, the evidence for it, what does *not* change. You ratify or decline with a word, and the words you ratify are the words every session then obeys. One text, two audiences — an unbroken **through-line** from human agreement to AI guardrail.
 
 ---
 
@@ -34,7 +34,7 @@ Those same documents are where people align with one another. A teammate's propo
 
 7. **The manager session runs the whole operation.** It owns the queue; plans what to build next and in what order, and shows you that plan with its reasons; briefs and launches worker sessions in **lanes** — each a separate, independent session in its own copy of the code, never a sub-agent tucked inside the manager session itself; fills the lanes with work that cannot collide; notices silence; judges completion by a check it re-runs itself, never by a worker session's account or a marker file; integrates, verifies, and re-checks the contracts; and writes you a brief in plain sentences for your return. Its governing strategy is to **maximize the useful work that proceeds without you**, within the limits you set — objective, budget, lane count — so that when something must wait for your word, everything else keeps moving. Each worker session's piece ends one of three ways: done with proof; stuck, with the cause; needs your judgment.
 
-8. **The app has two places.** **Direction** — the vision and contracts as one experience: what changed since you last read, whether each contract is kept, your questions on any paragraph, every proposal awaiting you. **Operation** — the manager session at work: your return brief, the plan, what is running against what waits on you, lanes running against lanes intended, evidence you can inspect, your limits, a place to drop feedback, every manager session you run. At most five things ask for your word at once. You can do exactly four things: answer with a word, raise or lower a priority, drop feedback, steer. The app holds no data of its own and shows only the project's truth; whatever you can do in it, the manager session can do too. It begins as a companion web page beside your project, your conversation with the manager session still in your usual place; in time the whole experience, that conversation included, lives in the app.
+8. **The app has two places, one console, and one anchor.** Its anchor is a **manager session** — one may span several repositories — and its home is the list of manager sessions you run, sorted by which one needs you. **Direction** — the vision and contracts as one experience: read, see what changed since you last read, review any proposal (your manager session's, a teammate's, a pull request's — all shown alike), ask an agent for a proposal on a paragraph, restore from history. **Operation** — the manager session at work: your return brief, today's strategy, the plan in waves and lanes, how confident it is and why, evidence you can inspect, your limits, a place to drop feedback. The **Manager Console** is not a third place: a pane that stays open beside either, carrying your live conversation with the manager session. At most five things ask for your word at once, and you can do exactly five things: answer with a word, raise or lower a priority, drop feedback, steer, ask. The app holds no data of its own; whatever you can do in it, the manager session can do too. It is one experience with many bodies — browser and installable web app first, then native on phones and desktops — governed by one experience contract, each platform keeping the behaviors and expressing them in its own idiom.
 
 9. **Rules are enforced, not aspired to.** No one — person or AI — can edit a locked contract in place; the system refuses. Where enforcement is not yet possible, we say so rather than pretend.
 
@@ -48,11 +48,11 @@ Those same documents are where people align with one another. A teammate's propo
 
 ## What Converge deliberately does not do
 
-Own any project's vision, contracts, work, or results · ratify anything · invent contracts where none is needed · make the four kinds of call for you · claim enforcement it lacks · reduce the manager session to a rigid pipeline (automation only where the work is truly mechanical) · own the tooling worker sessions run on · alter the tools of other work in your session · become another issue tracker, monitoring console, notification stream, or code-review tool · promise one-shot magic or pursue autonomy for its own sake · depend on a heavyweight base · keep history in documents meant to stay current.
+Own any project's vision, contracts, work, or results · ratify anything · let manager sessions talk to each other directly (people collaborate through GitHub; manager sessions read and write there) · invent contracts where none is needed · make the four kinds of call for you · claim enforcement it lacks · reduce the manager session to a rigid pipeline (automation only where the work is truly mechanical) · own the tooling worker sessions run on · alter the tools of other work in your session · become another issue tracker, monitoring console, notification stream, or code-review tool · promise one-shot magic or pursue autonomy for its own sake · depend on a heavyweight base · keep history in documents meant to stay current.
 
 ## Not yet true
 
-Worker sessions on a remote service · the manager conversation inside the app · a protocol for manager sessions coordinating with one another · enforced per-role tool limits (an upstream request) · the one-install turnkey check for the operation half, which is not yet green.
+Worker sessions on a remote service · the manager conversation inside the app · enforced per-role tool limits (an upstream request) · the one-install turnkey check for the operation half, which is not yet green.
 
 ## What we have seen
 
@@ -61,8 +61,9 @@ The method end to end in isolated environments — a 6-for-6 evaluation, the gua
 ## Reading order
 
 `docs/PROTOCOL.md` → `README.md` → `docs/ANNOUNCEMENT.md` → `docs/design/mechanism-spec.md` → the presentation. The rules stay always-true; design records carry snapshot labels.
-**Governing contracts:** `composition.v1` · `operation.v1` · `surface.v1` · `documents.v1`
+**Governing contracts:** `composition.v1` · `operation.v1` · `documents.v1` · the experience family — `experience.v1` (umbrella) with `experience-direction`, `experience-operation`, `experience-console`, `experience-collaboration`, and one `platform-*.v1` per body (`surface.v1` is superseded by this family)
 
 ## Changelog
 
+- **2026-09-03 — v1 (DRAFT), amended.** Principle 8 rewritten from the owner's experience brief: manager-session anchor, Manager Console, the fifth write (ask), one experience across browser/PWA/native under one umbrella contract. Manager-to-manager talk moved from "not yet" to "deliberately does not."
 - **2026-09-02 — v1 (DRAFT).** From the ratified rules, this project's own decision record, four rounds of alignment through the release announcement, and the measured record of the method in daily use.
