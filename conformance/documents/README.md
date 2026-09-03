@@ -263,7 +263,7 @@ Three tests are load-bearing:
   Rule 11 split into **11a** (the document half, unchanged) and **11b** (the
   app half), because "behind a Details fold in the app" is not a document and
   this kit never opens the app — 11b SKIPs and names `conformance/surface`
-  rule 5 as the place that does assert it.
+  rule 8c as the place that does assert it.
 
   *What did not change.* Rules **5b**, **9b** and **10b** were already honest
   SKIPs carrying their measurement, and stay as they are. `sample-bad` gained

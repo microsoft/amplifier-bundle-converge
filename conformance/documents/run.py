@@ -153,7 +153,7 @@ UNFIXTURABLE = {
             "documents, and an app is markup and behaviour. It is asserted "
             "where it can be seen, by conformance/surface against surface.v1 "
             "clause 8 (\"Technical detail waits behind a Details fold\"), whose "
-            "rule 5 scans the app's own words. Passing it here on a document "
+            "rule 8c scans the app's own words. Passing it here on a document "
             "scan would be a claim about a file this kit never opened. Rule 11a "
             "checks the document half."),
     "10b": ("both mechanical whole-vocabulary signals were measured against this "
