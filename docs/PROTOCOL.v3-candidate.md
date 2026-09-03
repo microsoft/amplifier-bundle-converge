@@ -1,4 +1,4 @@
-# Protocol v3 — the plain-language pass (PROPOSAL, NOT RATIFIED)
+# PROTOCOL — v3 candidate (RATIFIED 2026-09-03 — owner word "ok, all lgtm, continue"; see docs/workflow/owner-ratifications-2026-09-03.md; applied to PROTOCOL.md by the proposal path)
 
 target: docs/PROTOCOL.md
 
