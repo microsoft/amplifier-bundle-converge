@@ -86,7 +86,7 @@ honest between waves and refuses silent drift in either direction.
   - `proposing-a-change` — how to author a proposal beside a locked contract
   - `freeze-bar` — the four-condition DRAFT → locked checklist
   - `ledger-disposition` — the ledger disposition vocabulary + row schema
-  - `lane-brief` — honesty gate, file-ownership split, provenance discipline
+  - `lane-brief` — honesty gate, file-ownership split, real lanes (never in-session sub-agents), evidence the evaluator can see
 - **`hooks-candidate-guard`** — the ratchet's teeth. A `tool:pre` hook, on by
   default, that structurally denies a direct write/edit/patch (or a bash
   write-laundering attempt) targeting a locked contract file or `VISION.md`.
