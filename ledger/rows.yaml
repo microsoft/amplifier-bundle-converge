@@ -4,6 +4,9 @@
 # REVISED 2026-09-02, same day, after an independent cross-check by
 # converge:reconciler and three protocol rulings from converge:protocol-authority
 # — see "WHAT THE CROSS-CHECK CHANGED" below.
+# RECONCILED 2026-09-02, same day again, against repo @ c5fe505 — see
+# "THE SECOND RECONCILE" below. THIS LEDGER DESCRIBES c5fe505. Main moves
+# hourly; a ledger that chases it converges on nothing. Re-read on merge.
 #
 # WHAT THIS REPO OWES
 # -------------------
@@ -83,24 +86,33 @@
 #      a SOUNDNESS hole rather than a stylistic one, and it is the strongest
 #      evidence this seed produced for LEDGER-FORMAT v1's promotion trigger.
 #
-# ONE BORROWED DISPOSITION, DECLARED
-# ----------------------------------
-# CVG-050 and CVG-060 use OPEN-PINNED off-definition. PROTOCOL.md §3.3 has no
-# state for "a sound, discriminating check exists but there is no subject to
-# check" (CVG-050) — CONFORMS would claim a pass that never ran, GAP would file
-# work nobody owes (which operation.v1 Core 1 forbids), NOT-ASSERTABLE would tell
-# a reader not to build a check that is already built. OPEN-PINNED is borrowed
-# for its CONSEQUENCE — "ledger row, revisited at negotiation" — not its
-# definition, and its mandatory `justification` carries the disclosure.
-# Ruled by converge:protocol-authority 2026-09-02, which also ruled: do NOT
-# propose a seventh disposition on this evidence. PROMOTION TRIGGER: the second
-# vacuous-subject row, or the first reader who misreads one as an undecided call.
+# ONE BORROWED DISPOSITION, DECLARED — AND ALREADY RETIRED
+# ---------------------------------------------------------
+# CVG-050 used OPEN-PINNED off-definition for a few hours. PROTOCOL.md §3.3 has
+# no state for "a sound, discriminating check exists but there is no subject to
+# check" — CONFORMS would claim a pass that never ran, GAP would file work nobody
+# owes (which operation.v1 Core 1 forbids), NOT-ASSERTABLE would tell a reader not
+# to build a check that is already built. OPEN-PINNED was borrowed for its
+# CONSEQUENCE ("revisited at negotiation"), not its definition, with the borrowing
+# disclosed in the row. converge:protocol-authority ruled that reading, and ruled
+# AGAINST proposing a seventh disposition on one row's evidence; promotion trigger
+# named as "the second vacuous-subject row, or the first reader who misreads one
+# as an undecided call."
+# Neither has happened. The row's own re-read trigger fired instead — a proposal
+# landed, the check ran, and CVG-050 is a plain CONFORMS. No row borrows the word
+# today; the three remaining OPEN-PINNED rows (CVG-044, CVG-046, CVG-060) all fit
+# its definition: an undecided call whose current behaviour is pinned by a check.
+# The note stays for the next one.
 #
 # ALL FOUR CONTRACTS ARE (DRAFT) TODAY. None is locked. Two consequences:
 #   - The Freeze Bar has not been run against any of them; CONFORMS here means
 #     "this draft clause is kept today", not "a frozen clause is kept".
-#   - `VIOLATION` is defined against a frozen clause. CVG-037 uses it anyway;
-#     see that row for the ruling that permits it.
+#   - `VIOLATION` is defined against a frozen clause. NO ROW CARRIES IT NOW.
+#     CVG-037 did for part of today, and the ruling that permitted it —
+#     draft-vs-locked governs the REMEDY, not the OBSERVATION — is recorded in
+#     that row for the next time one is needed. It stopped being a violation
+#     because its SUBJECT was replaced by a shipping app, not because anyone
+#     fixed it; CVG-066 carries the unfixed half.
 #
 # WHAT THE CROSS-CHECK CHANGED (2026-09-02, hours after the seed)
 # ---------------------------------------------------------------
@@ -124,10 +136,48 @@
 # rather than quietly repaired, because a silent repair is the thing this
 # document exists to refuse.
 #
+# THE SECOND RECONCILE (2026-09-02, hours after the revision)
+# -----------------------------------------------------------
+# Between the revision and this line, seven lane merges landed on main. Merging
+# them in, the ledger's own tripwire reported 13 rows whose checks no longer met
+# their expectation — every one of them moving BACK TOWARD SPEC. That is drift
+# too (LEDGER-FORMAT §3): silently enjoying it is the same failure as silently
+# regressing, so each was re-derived rather than quietly satisfied.
+#
+#   the companion page shipped (05b3f09)   11 surface rows re-derived; 9 flipped
+#                                          GAP -> CONFORMS against the app's own
+#                                          116 passing tests, which I ran
+#   the turnkey harness shipped (efbe453)  CVG-010's cause changed from "does not
+#                                          exist" to "exists, ran, RED both modes"
+#   the owner return log appeared (e659c3a) CVG-020's probe asserted its ABSENCE
+#   a proposal landed (f5d63c3)            CVG-050's vacuous subject resolved;
+#                                          OPEN-PINNED -> CONFORMS
+#
+# Two disciplines held through it, and both cost something:
+#   - NO ROW FLIPPED ON ANOTHER LANE'S SELF-REPORT. The turnkey's RESULT.md
+#     records six passing steps in observed mode against a real wave, several of
+#     which map cleanly onto operation clauses. None of them flipped a row,
+#     because this session did not re-run that wave. RESULT.md is cited as
+#     recorded context throughout the operation section and nowhere as evidence.
+#     Re-running observed mode is what would let those rows move.
+#   - A VIOLATION DID NOT GET FIXED; ITS SUBJECT CHANGED. CVG-037 was VIOLATION
+#     against the verified mockup because no app existed. The app then shipped
+#     and passes its own test for that clause. Rather than let the red vanish,
+#     the row records the substitution and the unfixed half became CVG-066.
+#
+# KNOWN IN-FLIGHT, NOT YET IN THIS TREE — re-read these rows on the next merge:
+# converge-8om and converge-bmp have both been resolved on unmerged lanes
+# (commit 2d60f92). They renumber the documents kit's rules to Core clauses 1..13
+# and add rules 9a, 10a and 11 — which would move CVG-051, CVG-052 and CVG-053
+# off GAP, and would break CVG-052/CVG-053's pinned rule-id list by design. They
+# also add contracts/documents.v2-candidate.md, which proposes wording for the
+# two questions CVG-044 and CVG-046 pin open. None of that is in c5fe505, so none
+# of it is asserted here.
+#
 # ROW COUNTS BY CONTRACT (full tally at the foot of this file)
 #   composition.v1   9 rows      operation.v1   15 rows
-#   surface.v1      12 rows      documents.v1   24 rows
-#   + CVG-000 SYNC   1                                     = 61 rows total
+#   surface.v1      13 rows      documents.v1   24 rows
+#   + CVG-000 SYNC   1                                     = 62 rows total
 #
 # Ids are stable forever, never renumbered, never reused. Rows added by the
 # cross-check revision take fresh ids (CVG-009, CVG-056..CVG-065) rather than
@@ -443,26 +493,31 @@
   disposition: GAP
   assertion:
     kind: absence
-    ref: 'if [ ! -e conformance/operation ] && [ -z "$(find evaluations -iname "*turnkey*" 2>/dev/null)" ]; then echo NO-TURNKEY-KIT; else echo TURNKEY-KIT-APPEARED; fi'
+    ref: 'if [ -f evaluations/turnkey/run.py ] && grep -q "Verdict: RED" evaluations/turnkey/RESULT.md; then echo TURNKEY-EXISTS-AND-IS-RED; else echo TURNKEY-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "NO-TURNKEY-KIT"
+      stdout_contains: "TURNKEY-EXISTS-AND-IS-RED"
   notes: >
-    RAN 2026-09-02 → NO-TURNKEY-KIT. The contract names its own kit twice — line
-    6, "the turnkey run in `evaluations/` is this contract's conformance kit",
-    and the Conformance list's "**Turnkey:** fresh environment → one install →
-    start a project, derive from a sample gap, run two lanes, tend, judge,
-    integrate, re-check, brief → green." Neither exists. What DOES live in
-    `evaluations/` is `evaluations/ratchet/` — an eval of converge:reconciler and
-    recipes/seed-reconcile.yaml against three planted fixture scenarios. A real
-    harness, but not the turnkey run this contract names, and it does not
-    exercise a manager session end to end.
-    CAUSE, PLAINLY: the turnkey run has never been green because it has never
-    been run — it does not exist yet. converge-qtp is building it now.
-    FIXED BY THE CROSS-CHECK: the seed's ref asserted the absence of
-    `conformance/operation/`, a path the contract never names — so building the
-    turnkey where the contract SAYS (`evaluations/`) would have left this
-    reporting ABSENT forever. It now watches both places.
+    RAN 2026-09-02 → TURNKEY-EXISTS-AND-IS-RED. THE CAUSE CHANGED THIS SESSION and
+    the change is recorded rather than absorbed. At seed the harness did not exist
+    at all. It does now (commit efbe453, converge-qtp): `evaluations/turnkey/run.py`,
+    with fixtures, profiles and 30 of its own tests. I ran its self-check myself —
+    `uv run evaluations/turnkey/run.py --self-check` → VERDICT PASS, 16 of 16
+    assertions behave as specified — so the harness is real, not a stub.
+    ITS RECORDED VERDICT IS RED, BOTH MODES: `evaluations/turnkey/RESULT.md`,
+    "**Verdict: RED.** Both modes, exit 1" — observed mode 6 pass · 2 fail · 1 skip,
+    driven mode 3 pass · 6 fail · 0 fail-free. So the contract's own sentence,
+    "**Red today** — this is the work list", is now a measured statement rather
+    than an admission.
+    I DID NOT RE-RUN THE WAVE ITSELF. RESULT.md is another lane's transcript, and
+    this ledger does not credit a lane's self-report as evidence (see the header).
+    It is cited below as recorded context, never as a pass, and no operation row
+    below flips on it. Re-running the observed mode is what would let them flip.
+    THE HARNESS'S OWN NAMED LIMIT, worth carrying: in driven mode it "drives the
+    environment, not the wave" — it stands up a container, installs, starts a
+    project and seeds a gap, then judges whatever happened. Steps (e)–(i) fail
+    there because no manager session runs. That limit is the contract's red gate
+    restated honestly, not a harness defect.
     THIS ROW IS THE ROOT OF THE 13 CLAUSE GAPS BELOW (CVG-011..CVG-023). They
     share one cause, so they share one tracker item rather than 13 near-duplicate
     ones — which is what operation.v1 Core 4 itself demands of any report intake.
@@ -702,21 +757,26 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 10 - " modes/converge-manager.md && [ ! -f docs/workflow/OWNER-RETURN-LOG.md ]; then echo MODE-ENCODES-CLAUSE-10-BUT-NO-RETURN-LOG; else echo STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 10 - " modes/converge-manager.md && [ -f docs/workflow/OWNER-RETURN-LOG.md ]; then echo "MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=$(grep -c "^## " docs/workflow/OWNER-RETURN-LOG.md)"; else echo STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-10-BUT-NO-RETURN-LOG"
+      stdout_contains: "MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=4"
   proves: >
-    Two facts at once: the mode encodes this clause, AND the log it names is
-    absent. Either changing flips the row — which is correct, because both are
-    part of this clause's state today.
+    That the mode encodes this clause and the log it names now exists with four
+    briefs in it. NOT that a brief exists for EVERY return, which is what the
+    clause requires and what nothing counts.
   notes: >
-    RAN 2026-09-02 → MODE-ENCODES-CLAUSE-10-BUT-NO-RETURN-LOG. Sharper than the
-    sibling rows: the brief's own named home, docs/workflow/OWNER-RETURN-LOG.md,
-    DOES NOT EXIST. context/manager/return-brief.md names that path and says the
-    brief is written to the log before the message is sent, so a context reset
-    between the two loses nothing — but there is no log to write to. converge-o1z's
-    resolution flagged this as a residual outside its file ownership.
+    RAN 2026-09-02 → MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=4. DRIFT BACK TOWARD
+    SPEC, RECORDED: at seed this row's probe asserted the log's ABSENCE, and it was
+    right — docs/workflow/OWNER-RETURN-LOG.md did not exist anywhere, and the
+    turnkey harness's step (i) failed on exactly that, calling it "the single
+    largest gap this harness found: … the one artifact the steward is supposed to
+    actually read does not exist." The log was then created (commit e659c3a) and
+    now carries four dated briefs. Silent movement back toward spec is drift too
+    (LEDGER-FORMAT §3), so the probe was re-pointed rather than quietly satisfied.
+    STILL GAP: four briefs in a log is not "a brief on every return". Nothing
+    counts returns, and the turnkey's recorded step (i) is now stale — re-running
+    it is what would settle this row.
   work: converge-qtp
 
 - id: CVG-021
@@ -843,23 +903,19 @@
     quote: |
       **Two places and a short list.** *Direction* — the vision and contracts as
       one experience. *Operation* — the manager session at work as one experience.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
-    kind: absence
-    ref: 'test -z "$(find . -name index.html -not -path "./conformance/*" -not -path "./.git/*")" && echo NO-COMPANION-PAGE || echo COMPANION-PAGE-EXISTS'
-    expect:
-      exit: 0
-      stdout_contains: "NO-COMPANION-PAGE"
+    kind: indexed
+    ref: tests/test_two_places_and_the_strip.py + tests/test_answering_shortens_the_list.py
   notes: >
-    RAN 2026-09-02 → NO-COMPANION-PAGE. `uv run conformance/surface/run.py .` →
-    "error: no companion page at . (looked for a file, or index.html in a
-    directory)". Against the verified mockup the kit reports rule 1a PASS ("5
-    places, 5 navigation target(s), all resolving") and 1b PASS ("answering marks
-    the card and decrements #needCount"). The clause's "at most five things" has
-    no rule anywhere.
-    THIS REF WAS THE CROSS-CHECK'S HEADLINE FINDING — see WHAT THE CROSS-CHECK
-    CHANGED. Unquoted, it printed NO-COMPANION-PAGE even with a page present.
-  work: converge-2qh
+    RAN 2026-09-02 `uv run --extra web --with pytest --with httpx pytest tests/ -q`
+    → 116 passed. test_the_two_places_are_reachable_from_every_page asserts both
+    places are reachable from `/`, `/direction` and `/operation`;
+    test_the_short_list_never_shows_more_than_five asserts the strip's cap
+    (MAX_ITEMS == 5); test_an_empty_list_reads_as_good_news asserts the clause's
+    "Nothing needing you is said aloud, as good news"; and
+    test_answering_shortens_the_list covers the shortening.
+    FLIPPED FROM GAP THIS SESSION — see the header's SECOND RECONCILE note.
 
 - id: CVG-031
   title: decisions arrive worked out
@@ -869,18 +925,16 @@
     quote: |
       **Decisions arrive worked out.** What · why now · the recommendation · at
       most two trade-offs · the word to answer with.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
-    kind: absence
-    ref: 'test -z "$(find . -name index.html -not -path "./conformance/*" -not -path "./.git/*")" && echo NO-COMPANION-PAGE || echo COMPANION-PAGE-EXISTS'
-    expect:
-      exit: 0
-      stdout_contains: "NO-COMPANION-PAGE"
+    kind: indexed
+    ref: tests/test_two_places_and_the_strip.py (test_every_decision_arrives_worked_out)
   notes: >
-    RAN 2026-09-02 → NO-COMPANION-PAGE. No kit rule covers the anatomy of a
-    decision card; unasserted even against the mockup. This clause's other half —
-    the ratification record — is CVG-056.
-  work: converge-2qh
+    RAN 2026-09-02 → 116 passed. The test walks every decision the strip builds
+    and asserts each carries the parts this clause enumerates. Its file docstring
+    names the clause: "Surface.v1 clauses 1, 2, 5, 6 and 7". This clause's other
+    half — the dated ratification record — is CVG-056, also now green.
+    FLIPPED FROM GAP THIS SESSION.
 
 - id: CVG-032
   title: exactly four writes
@@ -892,21 +946,17 @@
       declined · later, which re-ranks and never dismisses) · raise or lower a
       priority, with a note · drop feedback (text, screenshot, voice) for the
       manager session to interpret · steer
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
-    kind: absence
-    ref: 'test -z "$(find . -name index.html -not -path "./conformance/*" -not -path "./.git/*")" && echo NO-COMPANION-PAGE || echo COMPANION-PAGE-EXISTS'
-    expect:
-      exit: 0
-      stdout_contains: "NO-COMPANION-PAGE"
+    kind: indexed
+    ref: tests/test_four_writes.py + tests/test_the_writes_land.py
   notes: >
-    RAN 2026-09-02 → NO-COMPANION-PAGE. Against the verified mockup the kit
-    reports rule 3a PASS ("all four write paths present") and rule 3b SKIP — "the
-    mapping from a write path to a named manager-session operation lives in the
-    running system, not the markup; the app is not built yet (converge-2qh)". The
-    clause's second sentence ("Each is an operation the manager session can
-    perform the same way") is therefore unasserted even in the mockup.
-  work: converge-2qh
+    RAN 2026-09-02 → 116 passed. test_four_writes.py's docstring names the clause
+    and its second half: "exactly four writes, each a manager-session operation".
+    test_the_writes_land.py checks each of the four "where it actually lands" —
+    which is the half the surface conformance kit had to SKIP against the mockup
+    ("the mapping … lives in the running system, not the markup").
+    FLIPPED FROM GAP THIS SESSION.
 
 - id: CVG-033
   title: no data of its own
@@ -916,18 +966,16 @@
     quote: |
       **No data of its own.** It shows the project's documents, code record, work
       queue, lanes, return log, and pending decisions. No second copy of the truth.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
-    kind: absence
-    ref: 'test -z "$(find . -name index.html -not -path "./conformance/*" -not -path "./.git/*")" && echo NO-COMPANION-PAGE || echo COMPANION-PAGE-EXISTS'
-    expect:
-      exit: 0
-      stdout_contains: "NO-COMPANION-PAGE"
+    kind: indexed
+    ref: tests/test_owns_no_state.py
   notes: >
-    RAN 2026-09-02 → NO-COMPANION-PAGE. No kit rule covers this clause; a static
-    scan of markup cannot see where data came from. When the app exists this is a
-    live-harness assertion, not a file scan.
-  work: converge-2qh
+    RAN 2026-09-02 → 116 passed. The file exists for this clause alone; its
+    docstring reads "Surface.v1 clause 4: no data of its own." This is the clause
+    the ledger flagged as unassertable by a static markup scan — it needed the
+    running app, and now has it.
+    FLIPPED FROM GAP THIS SESSION.
 
 - id: CVG-034
   title: proposals look the same whoever proposed
@@ -938,19 +986,15 @@
       **Proposals look the same whoever proposed.** A manager session's draft and
       a teammate's pull request: what changes, sentence by sentence · the evidence
       · what does not change · your questions pinned to paragraphs.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
-    kind: absence
-    ref: 'test -z "$(find . -name index.html -not -path "./conformance/*" -not -path "./.git/*")" && echo NO-COMPANION-PAGE || echo COMPANION-PAGE-EXISTS'
-    expect:
-      exit: 0
-      stdout_contains: "NO-COMPANION-PAGE"
+    kind: indexed
+    ref: tests/test_two_places_and_the_strip.py (test_both_kinds_of_proposal_are_read_the_same_way, test_a_proposal_missing_its_evidence_is_named_as_such, test_a_question_can_be_attached_to_a_paragraph)
   notes: >
-    RAN 2026-09-02 → NO-COMPANION-PAGE. No surface kit rule covers it. The
-    three-part shape it refers to IS asserted on the document side by documents
-    kit rule 3 (see CVG-050) — but that is the file's anatomy, not the app's
-    rendering of it.
-  work: converge-2qh
+    RAN 2026-09-02 → 116 passed. Three tests, one per part of the clause: both
+    kinds read the same way, a proposal missing its evidence is named as such
+    (rather than passing quietly), and a question can be pinned to a paragraph.
+    FLIPPED FROM GAP THIS SESSION.
 
 - id: CVG-035
   title: what changed since you last read this
@@ -960,20 +1004,16 @@
     quote: |
       **What changed since you last read this,** on every document, sentence by
       sentence — so a rewrite is checkable without rereading.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
-    kind: absence
-    ref: 'test -z "$(find . -name index.html -not -path "./conformance/*" -not -path "./.git/*")" && echo NO-COMPANION-PAGE || echo COMPANION-PAGE-EXISTS'
-    expect:
-      exit: 0
-      stdout_contains: "NO-COMPANION-PAGE"
+    kind: indexed
+    ref: tests/test_two_places_and_the_strip.py (test_what_changed_shows_removed_sentences_not_only_added, test_a_hard_wrapped_sentence_is_reported_whole, test_what_changed_says_so_plainly_before_you_have_read_anything)
   notes: >
-    RAN 2026-09-02 → NO-COMPANION-PAGE. Against the verified mockup the kit
-    reports rule 1e PASS — "the diff view toggles and carries 1 removal(s)
-    alongside 5 addition(s)". The kit is deliberate about why removals matter:
-    "Additions alone cannot answer 'was anything dropped?', which is the whole
-    reason the view exists." Not asserted: "on every document".
-  work: converge-2qh
+    RAN 2026-09-02 → 116 passed. Removals are asserted, not just additions —
+    additions alone cannot answer "was anything dropped?". A hard-wrapped sentence
+    is reported whole, which is the sentence-by-sentence half. And the
+    never-read-before case says so plainly rather than showing an empty diff.
+    FLIPPED FROM GAP THIS SESSION.
 
 - id: CVG-036
   title: locking is gated — the control is live only when all four conditions are met
@@ -983,65 +1023,81 @@
     quote: |
       **Locking is gated.** The four conditions are shown; the control is live only
       when all four are met. The app never locks on its own.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
-    kind: absence
-    ref: 'test -z "$(find . -name index.html -not -path "./conformance/*" -not -path "./.git/*")" && echo NO-COMPANION-PAGE || echo COMPANION-PAGE-EXISTS'
-    expect:
-      exit: 0
-      stdout_contains: "NO-COMPANION-PAGE"
+    kind: indexed
+    ref: tests/test_two_places_and_the_strip.py (test_the_lock_control_is_off_until_all_four_are_green)
   notes: >
-    RAN 2026-09-02 → NO-COMPANION-PAGE. Against the verified mockup the kit
-    reports rule 1d PASS — "four conditions stated, 1 not yet green, and the lock
-    control carries `disabled`" — genuinely discriminating (the sample-bad fixture
-    fails it). This is the mockup's strongest row, and it still says nothing about
-    a page this repo ships.
-  work: converge-2qh
+    RAN 2026-09-02 → 116 passed. The same promise the surface kit's rule 1d checks
+    structurally, now checked against the running app.
+    FLIPPED FROM GAP THIS SESSION.
 
 - id: CVG-037
-  title: plain words — internal vocabulary appears outside a Details fold
+  title: technical detail waits behind a Details fold
   contract:
     file: contracts/surface.v1.md
     clause: "Core 8"
     quote: |
       Technical detail waits behind a Details fold. The app surfaces; it does not
       interrupt.
-  disposition: VIOLATION
+  disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/surface/run.py (rule 5), run against the pinned subject below
+    ref: tests/test_two_places_and_the_strip.py (test_technical_words_stay_behind_a_details_fold)
   subject:                     # DECLARED DEVIATION 3 — out-of-repo, see header
     path: /home/bkrabach/dev/vision-focused-team-ci/ai_working/converge-ux-mockups/index.html
     repo: vision-focused-team-ci@32743b1
     sha256: d0843f40c8fb96f0e7918dc230f1ca2f9e9082343f83d3dd77f77550c873d88f
     note: >
-      Read-only reference, outside this repository. LEDGER-FORMAT §4 pins contract
-      files and is silent on an out-of-repo artifact a row's assertion depends on.
-      Pinned HERE and not in CVG-000 because a change to this file requires
-      re-reading THIS ROW, not a full-ledger re-review. A mismatch in EITHER
-      direction — the two terms fixed, or more added — invalidates this row's
-      reading. Without this pin the ledger's single red row is the one row nobody
-      can reproduce from a clone.
+      Kept pinned although this row no longer asserts against it. The mockup was
+      this row's subject while the app did not exist; the finding recorded below
+      is measured against these exact bytes and would be unreproducible without
+      the pin.
+  proves: >
+    That the app puts technical detail behind a Details fold. NOT that the app's
+    own words avoid internal vocabulary — nothing scans the shipped app for that.
+    See CVG-066.
   notes: >
-    RAN 2026-09-02 `uv run conformance/surface/run.py <pinned subject>` → rule 5
-    FAIL: "2 internal term(s) outside a Details fold: bundle, recipe". Overall
-    verdict FAIL (7 pass / 1 fail / 2 skip). The rule scopes out text inside a
-    `<details>` fold and inside a rendered project document, and skips a term
-    sitting inside a longer hyphenated token — so this is the app's OWN words, not
-    a contract's prose misread as an app defect.
-    WHY VIOLATION AGAINST A DRAFT CLAUSE — RULED 2026-09-02
-    (converge:protocol-authority): the DRAFT/FROZEN distinction governs the
-    REMEDY, not the OBSERVATION. §3.3's VIOLATION consequence has two branches —
-    "tracker item, or CANDIDATE amendment if evidence says the clause is wrong" —
-    and only the second is frozen-only (§5). The observation half, "implementation
-    contradicts a clause", is a measured fact about the world regardless of the
-    contract's lifecycle state, and §3.3's closing paragraph speaks generally of
-    the "spec↔implementation relationship", not of frozen clauses only. The stretch
-    is also SELF-RESOLVING: the moment surface.v1 freezes with this unfixed,
-    VIOLATION becomes literally correct, and no future re-read has to undo anything.
-    WHAT THIS ROW COSTS: it is the standing FREEZE-BAR BLOCKER for surface.v1
-    under §5 condition 3 ("At least one real implementation passes it").
-  work: converge-y7s
+    RAN 2026-09-02 → 116 passed, including
+    test_technical_words_stay_behind_a_details_fold.
+    THIS ROW WAS VIOLATION EARLIER TODAY, AND THE CHANGE IS RECORDED RATHER THAN
+    ENJOYED. Its subject was the verified mockup, because no app existed; the
+    surface kit's rule 5 FAILed against it — "2 internal term(s) outside a Details
+    fold: bundle, recipe" (verdict FAIL, 7 pass / 1 fail / 2 skip), and that
+    remains true of the pinned bytes. The companion page then shipped (commit
+    05b3f09), making the app the reference implementation the contract names, and
+    the app's own test for this clause passes. So the VIOLATION did not get FIXED
+    — the SUBJECT changed underneath it. The unfixed half is now CVG-066, and
+    converge-y7s is still open and held against the app's own surface vocabulary.
+    The protocol-authority ruling that permitted VIOLATION against a DRAFT clause
+    (draft-vs-locked governs the remedy, not the observation) stands on the record
+    for the next time one is needed.
+
+- id: CVG-066
+  title: no scan of the shipped app's own words for internal vocabulary
+  contract:
+    file: contracts/surface.v1.md
+    clause: "Conformance kit asserts, bullet 5"
+    quote: "No internal vocabulary outside Details folds."
+  disposition: GAP
+  assertion:
+    kind: absence
+    ref: 'test -z "$(grep -rl "conformance/surface" tests/ 2>/dev/null)" && echo NO-VOCABULARY-SCAN-AGAINST-THE-APP || echo VOCABULARY-SCAN-WIRED'
+    expect:
+      exit: 0
+      stdout_contains: "NO-VOCABULARY-SCAN-AGAINST-THE-APP"
+  notes: >
+    RAN 2026-09-02 → NO-VOCABULARY-SCAN-AGAINST-THE-APP. The surface kit's rule 5
+    is the check for this bullet and it reads an HTML file or a directory holding
+    index.html; the shipped app is server-rendered
+    (test_pages_are_server_rendered_with_no_script_at_all) and nothing wires the
+    two together. So the one rule that finds real defects of this kind does not
+    run against the thing that ships. Measured against the pinned mockup it still
+    FAILs on two terms (see CVG-037), and converge-y7s is open and held on exactly
+    this for the app.
+    ADDED THIS SESSION, when the app's arrival turned CVG-037 from a violation
+    into a conformance — leaving the violation's actual subject unwatched.
+  work: converge-fmz
 
 - id: CVG-038
   title: the whole operation in view
@@ -1055,17 +1111,18 @@
   disposition: GAP
   assertion:
     kind: absence
-    ref: 'test -z "$(find . -name index.html -not -path "./conformance/*" -not -path "./.git/*")" && echo NO-COMPANION-PAGE || echo COMPANION-PAGE-EXISTS'
+    ref: 'ls tests/ | grep -qi "operation_in_view\|whole_operation" && echo CLAUSE-9-HAS-A-TEST || echo NO-TEST-FILE-FOR-CLAUSE-9'
     expect:
       exit: 0
-      stdout_contains: "NO-COMPANION-PAGE"
+      stdout_contains: "NO-TEST-FILE-FOR-CLAUSE-9"
   notes: >
-    RAN 2026-09-02 → NO-COMPANION-PAGE. Against the verified mockup the kit
-    reports rule 1c PASS — "answering the repair card routes data-effect=\"fill\"
-    to fillLanes, which updates #gauge and #gaugeLabel" — the wiring that turns
-    detection into repair. The clause's other listed views (the plan in order with
-    reasons, each lane's state with drill-in, "tell all") have no rule.
-  work: converge-2qh
+    RAN 2026-09-02 → NO-TEST-FILE-FOR-CLAUSE-9. The app ships with a test file per
+    clause for 1, 2, 3, 4, 5, 6, 7 and 10 — and none for 9, the longest clause in
+    the contract (seven listed views plus "tell all"). The strip and the lock
+    control are covered; the operation board's gauge, the plan in order with
+    reasons, per-lane drill-in and the limits are not. This is the one surface
+    clause the app's arrival did not turn green.
+  work: converge-fmz
 
 - id: CVG-039
   title: phone first, companion first
@@ -1075,21 +1132,20 @@
     quote: |
       **Phone first, companion first.** Large targets, one-handed answers. The
       first release ships inside the bundle as a simple web page
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
-    kind: absence
-    ref: 'test -z "$(find . -name index.html -not -path "./conformance/*" -not -path "./.git/*")" && echo NO-COMPANION-PAGE || echo COMPANION-PAGE-EXISTS'
-    expect:
-      exit: 0
-      stdout_contains: "NO-COMPANION-PAGE"
+    kind: indexed
+    ref: tests/test_renders_at_both_widths.py
   notes: >
-    RAN 2026-09-02 → NO-COMPANION-PAGE. THIS ROW IS THE ROOT OF THE ELEVEN SURFACE
-    GAPS: the clause says the first release ships INSIDE THE BUNDLE, and nothing
-    ships. The kit's rule 2 ("Renders at 390 and 1280 pixels with nothing cut off
-    and no console errors") reports SKIP with the reason "needs a live browser
-    render at two widths; the app is not built yet (converge-2qh)" — never a
-    fabricated PASS.
-  work: converge-2qh
+    RAN 2026-09-02 → 116 passed. The file's docstring names both the clause and
+    the kit assert it operationalizes: "Surface.v1 clause 10 and the kit's
+    'renders at 390 and 1280 with nothing cut off'" — the assert the kit itself had
+    to SKIP for want of a browser. test_pages_are_server_rendered_with_no_script_at_all
+    is what makes that checkable without one.
+    THE ROOT OF THE ELEVEN SURFACE GAPS IS GONE: this clause says the first release
+    ships inside the bundle, and as of commit 05b3f09 it does —
+    src/amplifier_converge/web/, reachable as `amplifier-converge`.
+    FLIPPED FROM GAP THIS SESSION.
 
 - id: CVG-056
   title: every answer lands in the dated ratification record
@@ -1097,22 +1153,16 @@
     file: contracts/surface.v1.md
     clause: "Core 2"
     quote: "every answer is written to a dated ratification record."
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
-    kind: absence
-    ref: 'test -z "$(find . -name index.html -not -path "./conformance/*" -not -path "./.git/*")" && echo NO-COMPANION-PAGE || echo COMPANION-PAGE-EXISTS'
-    expect:
-      exit: 0
-      stdout_contains: "NO-COMPANION-PAGE"
+    kind: indexed
+    ref: tests/test_answering_shortens_the_list.py + tests/test_the_writes_land.py
   notes: >
-    RAN 2026-09-02 → NO-COMPANION-PAGE. Against the verified mockup the kit
-    reports rule 4 PASS — "answering writes the word and what it answered into
-    #filedList". The kit is honest about its reach: it "checks that an answer has
-    somewhere to land; that the record is durable and dated is part of the running
-    system."
-    ADDED BY THE CROSS-CHECK: this clause-half had a discriminating rule that
-    already passes, and no row. It is the same split convention CVG-045/046 uses.
-  work: converge-2qh
+    RAN 2026-09-02 → 116 passed. The test answers with a word and then reads back
+    `docs/workflow/owner-ratifications-*.md` — the dated record, by that name, on
+    disk. test_the_writes_land.py asserts the word itself lands in the text. The
+    file exists in this repo today: docs/workflow/owner-ratifications-2026-09-02.md.
+    FLIPPED FROM GAP THIS SESSION.
 
 - id: CVG-057
   title: the plain state words the app must speak
@@ -1124,18 +1174,25 @@
       *Working · Quiet · Silent — may have died* for lanes.
   disposition: GAP
   assertion:
-    kind: absence
-    ref: 'test -z "$(find . -name index.html -not -path "./conformance/*" -not -path "./.git/*")" && echo NO-COMPANION-PAGE || echo COMPANION-PAGE-EXISTS'
+    kind: probe
+    ref: 'n=$(grep -rho "Kept\|Not yet\|Broken\|Pinned open\|Can.t check\|Quiet\|may have died" $(ls tests/*.py | grep -v test_install_check) | sort -u | wc -l); echo "STATE-WORDS-ASSERTED=$n-OF-8"'
     expect:
       exit: 0
-      stdout_contains: "NO-COMPANION-PAGE"
+      stdout_contains: "STATE-WORDS-ASSERTED=1-OF-8"
   notes: >
-    RAN 2026-09-02 → NO-COMPANION-PAGE. Surface kit rule 5 scans for INTERNAL
-    terms that must be absent (CVG-037); no rule checks that the REQUIRED state
-    words are present and used. This is the app-side twin of CVG-052, which does
-    get a row on the document side.
-    ADDED BY THE CROSS-CHECK: Core 8's first half had no row at all.
-  work: converge-2qh
+    RAN 2026-09-02 → STATE-WORDS-ASSERTED=1-OF-8. One of the eight required words
+    appears in an assertion anywhere in the app's own tests
+    (tests/test_two_places_and_the_strip.py:72, `assert "Not yet" in html`).
+    tests/test_install_check.py is excluded from the scan on purpose: it contains
+    the word "Broken" as a fixture's name, not as a state word the app speaks, and
+    counting it would inflate this row by one — a false positive the count would
+    otherwise carry silently. The
+    contract requires the app to speak both vocabularies — five words for
+    contracts, three for lanes. The count is the pin: it flips in either direction,
+    so adding assertions moves this row and so does losing the one that exists.
+    Its sibling — internal words that must be ABSENT — is CVG-066; this row is the
+    required words that must be PRESENT.
+  work: converge-fmz
 
 # ─────────────────────────────────────────────────────────────────────────────
 # documents.v1 — 24 rows for 13 clauses.  Eleven clauses are split because their
@@ -1499,27 +1556,29 @@
       **A proposal is `<contract>.vN-candidate.md`** and has three parts in order:
       the exact change, sentence by sentence; the evidence (a cost paid or a
       failure caught — preference is not evidence); what does **not** change.
-  disposition: OPEN-PINNED
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: conformance/documents/run.py (rule 3)
-  justification: >
-    RAN 2026-09-02 → rule 3 SKIP: "no '*.vN-candidate.md' proposal present in the
-    target — nothing to judge". The RULE exists and is proven discriminating
-    against the kit's own fixtures (sample-good carries
-    contracts/sample.v1-candidate.md; sample-bad carries a broken one). What is
-    absent is a SUBJECT: this repo holds no proposal today. NOT A DEBT ANYONE
-    OWES — filing work here would mean filing "write a proposal nobody needs",
-    which operation.v1 Core 1 forbids.
-    OPEN-PINNED IS BORROWED, NOT FITTED — DISCLOSED: PROTOCOL.md §3.3 has no
-    disposition for a sound check with no subject; OPEN-PINNED is used for its
-    consequence ("ledger row, revisited at negotiation"), not its definition —
-    there is no undecided call here, and a SKIPping rule asserts nothing. Ruled by
-    converge:protocol-authority 2026-09-02, which also ruled against proposing a
-    seventh disposition on this evidence. See the header's borrowed-disposition
-    note for the promotion trigger.
-    RE-READ TRIGGER: converge-e8u is drafting a PROTOCOL v3 candidate through
-    exactly this path; when it lands, this row has a subject.
+  notes: >
+    RAN 2026-09-02 → rule 3 PASS: "all 1 proposal(s) carry the three parts in
+    order". The subject is docs/PROTOCOL.v3-candidate.md (commit f5d63c3,
+    converge-e8u).
+    THE VACUOUS-SUBJECT STATE RESOLVED ITSELF WITHIN HOURS, AND THAT IS THE
+    INTERESTING PART. At seed this row was OPEN-PINNED with a disclosed borrowing:
+    PROTOCOL.md §3.3 has no disposition for "a sound, discriminating check exists
+    but there is no subject to check", so OPEN-PINNED was used for its consequence
+    ("revisited at negotiation") rather than its definition. The row named its own
+    re-read trigger — "converge-e8u is drafting a PROTOCOL v3 candidate through
+    exactly this path; when it lands, this row has a subject" — and that is
+    precisely what happened. The trigger fired, the check ran for real, and the
+    row is now a plain CONFORMS.
+    WHAT THAT MEANS FOR THE BORROWING: converge:protocol-authority ruled against
+    proposing a seventh disposition on one row's evidence, and set the promotion
+    trigger at "the second vacuous-subject row, or the first reader who misreads
+    one as an undecided call." This row is no longer evidence for either — it
+    resolved before anyone had to decide. The borrowing survives only in CVG-060,
+    and the header's note stands for the next one.
 
 - id: CVG-051
   title: a work item names its contract, defines done, and quotes its source
@@ -1699,26 +1758,39 @@
 #   contract          rows   CONFORMS  GAP  VIOLATION  OPEN-PINNED  NOT-ASSERTABLE
 #   composition.v1       9          7    2          0            0               0
 #   operation.v1        15          1   14          0            0               0
-#   surface.v1          12          0   11          1            0               0
-#   documents.v1        24          9    9          0            4               2
+#   surface.v1          13         10    3          0            0               0
+#   documents.v1        24         10    9          0            3               2
 #   ─────────────────────────────────────────────────────────────────────────────
-#   totals              60         17   36          1            4               2
+#   totals              61         28   28          0            3               2
 #   + CVG-000 SYNC       1
-#   TOTAL               61
+#   TOTAL               62
 #
-# In the steward's words (documents.v1 Core 10): 17 Kept · 36 Not yet ·
-# 1 Broken · 4 Pinned open · 2 Can't check.
+# In the steward's words (documents.v1 Core 10): 28 Kept · 28 Not yet ·
+# 0 Broken · 3 Pinned open · 2 Can't check.
 #
-# Tracker refs carried by red rows: converge-qtp (16) · converge-2qh (11) ·
-# converge-nht (6) · converge-8om (3) · converge-y7s (1) · converge-lnt (1) ·
-# converge-bmp (1). CVG-007 carries `stale_open` (not `work`) for three items
-# that call a now-passing clause broken — see that row.
+# WHERE THE WEIGHT SITS, IN ONE LINE EACH:
+#   composition.v1  the healthy one — 7 of 9 kept, each by a kit rule or a
+#                   command that fails when the fact stops being true.
+#   surface.v1      transformed today. The companion page shipped mid-session
+#                   and took 9 rows from "not yet" to "kept" in one commit.
+#   documents.v1    10 kept, and the 9 not-yet are all the same shape: a rule
+#                   that asserts the first sentence of its clause and stops.
+#   operation.v1    14 of 15 not yet, and the contract says why in its own
+#                   words. Its kit now EXISTS and is RED — which is progress:
+#                   at seed it did not exist to be red.
+#
+# The two 28s are a coincidence of one day's arithmetic, not a milestone.
+#
+# Tracker refs carried by red rows: converge-qtp (16) · converge-nht (6) ·
+# converge-fmz (3) · converge-8om (3) · converge-lnt (1) · converge-bmp (1).
+# CVG-007 carries `stale_open` (not `work`) for three items that call a
+# now-passing clause broken — see that row.
 #
 # COVERAGE TRIPWIRES (LEDGER-FORMAT §6), state at seed:
 #   1. Every REQUIRED clause of every FROZEN contract cited by ≥1 row —
 #      VACUOUSLY TRUE: no contract is FROZEN yet. Every Core clause of all four
 #      DRAFT contracts is nonetheless cited by ≥1 row (7+13+10+13 = 43 clauses,
-#      60 non-SYNC rows).
+#      61 non-SYNC rows).
 #   2. Every ledgered divergence/amendment cited by ≥1 row — none exist yet
 #      (no DIVERGED rows; DIVERGED is illegal for self-governed contracts, and
 #      all four of these are ours).
