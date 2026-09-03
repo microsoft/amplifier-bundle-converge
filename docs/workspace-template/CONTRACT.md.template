@@ -1,0 +1,79 @@
+<!--
+  CONTRACT.md.template — the shape every contract follows.
+  Copy to contracts/<name>.v1.md, replace every <placeholder>, delete this
+  comment. Fifty to a hundred lines when finished; if it runs longer, it is
+  two contracts. Written so a colleague who has never opened a code editor
+  can read it and know what it means.
+-->
+
+# <Name> Contract — v1 (DRAFT)
+
+**Who builds against this:** <two to six lines naming the people and the systems
+that would be surprised by a silent change to this text. Name roles, not job
+titles. Name the reference implementation if there is one, and say what serves
+as its check.>
+
+## Purpose
+
+<A short paragraph. What goes wrong without this contract, and what is true
+because of it. No history, no status, no plan — just the reason this promise
+exists. Three or four sentences.>
+
+## Core (the teeth)
+
+<Numbered clauses, each one a rule someone could break. Lead with the rule as a
+fact, in bold, then one to three plain lines of why or of what it means for the
+reader. Keep the numbering stable: the conformance kit's rule table matches
+these numbers, so renumbering breaks the check.>
+
+1. **<The rule, stated as a fact.>** <One to three plain lines: why this is the
+   rule, or what it means for the person reading.>
+2. **<The next rule.>** <Why.>
+3. **<The next rule.>** <Why.>
+
+## What v1 deliberately does NOT freeze
+
+<Things you considered and chose to leave open. Each one names the trigger that
+would promote it into the teeth — an event, not a date. This section is how a
+reader knows the silence is deliberate.>
+
+- <The open thing> — promoted when <the observable trigger>.
+- <The open thing> — promoted when <the observable trigger>.
+
+## Conformance kit asserts
+
+<What a machine checks, or — where a machine cannot — what a named person
+checks, recorded by name and date. One line per assertion, phrased as the
+observation, not the tooling. If an assertion cannot be checked yet, say so
+here; it reports "Can't check", never a pass.>
+
+- <Observable assertion.>
+- <Observable assertion.>
+
+## Reserved / open questions (NOT frozen)
+
+<Questions genuinely still open. Nothing here is law, and no one may build
+against it. Delete the section if there are none.>
+
+- <The open question.>
+
+<!--
+  CHANGELOG — add this section only once the contract has been amended.
+  Until then it does not exist. One entry per ratification, newest first.
+
+  ## Changelog
+
+  - **v1.1 — <date>** — <what changed, in one sentence>. Evidence:
+    <the cost paid or the failure caught>. Ratified by <the intent steward>.
+-->
+
+<!--
+  BEFORE YOU ASK FOR A LOCK, all four must be true:
+    1. It says what it means.
+    2. It carries a real example of right and wrong.
+    3. It can be checked against reality.
+    4. The intent steward has read it and agreed.
+  Only the steward locks it, and locking is the only thing that changes
+  "(DRAFT)" to "(FROZEN <date>)". After that the text changes only through a
+  <contract>.vN-candidate.md proposal — the pre-push scan refuses anything else.
+-->
