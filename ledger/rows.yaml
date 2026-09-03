@@ -1796,13 +1796,25 @@
 #      all four of these are ours).
 #   3. Every quote verifies against contract bytes; every assertion ref resolves
 #      AND MEETS ITS `expect`; every GAP/VIOLATION row carries a live work ref —
-#      verified at seed; commands recorded in this lane's commit messages.
-#      NOT YET MECHANIZED: these three tripwires have no runner in this repo, so
-#      re-running them today means re-running the seed's own commands by hand.
-#      That is this ledger's largest remaining weakness. It is why the
-#      cross-check's finding — 13 of ~32 refs unable to fail — survived the
-#      seed's own verification pass, which checked only that refs RESOLVED.
-#      `assertion.expect` is what a future tripwire runner should enforce.
+#      NOW MECHANIZED — `ledger/checks/verify.py`, the home LEDGER-FORMAT §1
+#      names. One command from the repo root:
+#
+#          uv run --with pyyaml ledger/checks/verify.py
+#
+#      Exit 0 when every tripwire holds, 1 when any fails, naming which. It runs
+#      each executable ref and requires it to MEET ITS `expect` — not merely
+#      resolve. That distinction is the whole point: the seed's own verification
+#      checked only that refs RESOLVED, and passed while 13 of ~32 could not fail
+#      at all. A ref with no usable `expect` is failed as a command, not accepted
+#      as an assertion.
+#      PROVEN DISCRIMINATING 2026-09-02, four ways, in a scratch copy: a typo in
+#      a quote → "60/61 quotes verify … CVG-012 QUOTE NOT FOUND"; an `expect`
+#      key renamed → "CVG-004 no usable expect"; a GAP row's `work` ref deleted →
+#      "all 28 GAP/VIOLATION rows carry a work ref" FAIL; a clause's only row
+#      removed → "surface.v1.md 10 Core clauses, cited 9/10 MISSING ['Core 4']".
+#      WHAT IT STILL CANNOT DO, and no runner here can: judge whether a row READS
+#      its clause correctly (§8), or whether an `indexed` test still asserts what
+#      it claims. Those need the re-review a SYNC mismatch triggers.
 #
 # NEGATIVE CONTROL, RUN 2026-09-02 — a rule nobody can break proves nothing, so
 # seven representative rows were broken on purpose in a scratch copy of this tree
