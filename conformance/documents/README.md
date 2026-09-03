@@ -87,6 +87,7 @@ the contract and quietly go unchecked.
 | 12c | Core 12: "… **a contracts README (anatomy, index, freeze bar, how to propose), an `AGENTS.md` addendum (converge toward the vision; never edit a locked contract; propose instead; where the ledger is; how to run conformance)** … and a pre-push scan that refuses edits to locked contracts." | Rule 12a asserts those files exist; existence is not the promise. This asserts each file **contains** what clause 12 enumerates for it, topic by topic, and names any topic a file is silent about. `PINS.md` is deliberately absent here: the clause asks it for "hard facts every lane reads first", which enumerates no topic a scan could look for, so only its presence is asserted. |
 | 13a | Core 13: "Converge is self-hosting … **its own repository passes the same kit**." | Judges `CONTRACT.md.template` and `VISION.md.template` **as the documents they produce** — the leading HTML instruction comment (which the copier is told to delete) is stripped first. Requires the template to produce line 3 and all five sections, and the vision template to produce a Changelog. |
 | 13b | Core 13: "… **its protocol authority checks documents against it** …" | **SKIP** — a claim about a running agent's behaviour in a live session, not about anything in the tree; the same class of promise the composition kit SKIPs as "needs a live Amplifier session". Row 13a checks the half that is a file. |
+| 14 | Core 14: "**One contract is one domain component**" | **SKIP** — size is already judged by rule 2; whether a contract is one domain component is the steward's judgment, not a machine's; see `docs/RIGHT-SIZING.md` | — |
 
 ### The SKIPs are honest, and pinned
 
@@ -298,4 +299,3 @@ Three tests are load-bearing:
   what they observe and refuse to rule. The `composition` and `surface` kits
   remain numbered to the bullets — they are outside this change, and rule 5b
   names them.
-| 14 | Right-sized: one domain component per contract (50–100 lines, one who-builds, one kit) | SKIP — size is checked by rule 2; componentization is a judgment the steward makes; see docs/RIGHT-SIZING.md | — |
