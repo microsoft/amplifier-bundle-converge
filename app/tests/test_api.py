@@ -159,6 +159,7 @@ def project(tmp_path: Path) -> dict:
     batch = tmp_path / "hw-demo"
     (batch / "lanes" / "w1-alpha").mkdir(parents=True)
     (batch / "lanes" / "w2-beta").mkdir(parents=True)
+    (batch / "lanes" / "w1-gamma").mkdir(parents=True)
     (batch / "goals").mkdir()
     (batch / ".width").write_text("4\n", encoding="utf-8")
     (batch / "HIGHWAY.md").write_text(HIGHWAY, encoding="utf-8")
@@ -166,11 +167,21 @@ def project(tmp_path: Path) -> dict:
     (batch / "manifest.tsv").write_text(
         MANIFEST_HEAD
         + f"w1-alpha\t{batch}/lanes/w1-alpha/demo-repo\tlane/w1-alpha\tdeadbee\thw__hw-demo__w1-alpha\t{batch}/goals/w1-alpha.md\t{batch}/lanes/w1-alpha/lane.log\t2026-09-01T10:00:00Z\n"
-        + f"w2-beta\t{batch}/lanes/w2-beta/demo-repo\tlane/w2-beta\tdeadbee\thw__hw-demo__w2-beta\t{batch}/goals/w2-beta.md\t{batch}/lanes/w2-beta/lane.log\t2026-09-01T11:00:00Z\n",
+        + f"w2-beta\t{batch}/lanes/w2-beta/demo-repo\tlane/w2-beta\tdeadbee\thw__hw-demo__w2-beta\t{batch}/goals/w2-beta.md\t{batch}/lanes/w2-beta/lane.log\t2026-09-01T11:00:00Z\n"
+        + f"w1-gamma\t{batch}/lanes/w1-gamma/demo-repo\tlane/w1-gamma\tdeadbee\thw__hw-demo__w1-gamma\t{batch}/goals/w1-gamma.md\t{batch}/lanes/w1-gamma/lane.log\t2026-09-01T12:00:00Z\n",
         encoding="utf-8",
     )
     (batch / "lanes" / "w1-alpha" / "lane.log").write_text("working\n", encoding="utf-8")
     (batch / "lanes" / "w2-beta" / "lane.log").write_text("working\n", encoding="utf-8")
+    (batch / "lanes" / "w1-gamma" / "lane.log").write_text("stopped\n", encoding="utf-8")
+    (batch / "lanes" / "w1-gamma" / "BLOCKED.md").write_text(
+        "# Lane w1-gamma — BLOCKED\n\n"
+        "**Date:** 2026-09-01\n"
+        "**Branch:** `lane/w1-gamma` (2 commits, nothing merged)\n"
+        "**Outcome:** B) BLOCKED. Not A. The device cannot be reached from this host, so the\n"
+        "one acceptance item that needs it cannot be proved.\n",
+        encoding="utf-8",
+    )
     (batch / "lanes" / "w2-beta" / "DONE.json").write_text(
         json.dumps({"status": "success", "summary": "Beta landed. Nothing residual."}), encoding="utf-8"
     )
@@ -335,6 +346,11 @@ def test_operation_reads_waves_lanes_and_the_return_brief(client: TestClient) ->
     assert lanes["w1-alpha"]["tmux"] == {"socket": "test-socket-that-does-not-exist", "session": "hw__hw-demo__w1-alpha"}
     assert lanes["w2-beta"]["status"] == "done"
     assert lanes["w2-beta"]["evidence"] == "Beta landed."
+    # A stopped lane says why, from its own marker — never from the date or
+    # the branch line above the reason.
+    assert lanes["w1-gamma"]["status"] == "stuck"
+    assert lanes["w1-gamma"]["statusLabel"] == "Stuck"
+    assert lanes["w1-gamma"]["evidence"].startswith("The device cannot be reached from this host")
 
     assert payload["timeline"][0][0] == "2026-09-02"  # newest first
     assert payload["returnBrief"][0].startswith("Every item landed")

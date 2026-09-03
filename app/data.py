@@ -319,13 +319,63 @@ def lane_evidence(mc: ManagerConfig, lane: LaneRow) -> str:
             text = blocked.read_text(encoding="utf-8")
         except OSError:
             return "stopped, reason recorded"
-        # A blocked marker opens with bold metadata fields. The reason is the
-        # first sentence that is prose, not a field.
-        for line in sentences(text):
-            if not re.match(r"^\*\*[^*]+:?\*\*\s*\S*$", line.strip()):
-                return line
-        return "stopped, reason recorded"
+        return blocked_reason(text)
     return ""
+
+
+def blocked_reason(text: str) -> str:
+    """The sentence a stopped lane leads with, out of its own marker file.
+
+    A marker opens with a heading and bold metadata fields — a date, a branch —
+    and none of those is a reason. The named fields that ARE a reason are
+    preferred; failing those, the first paragraph of plain prose. Lines are
+    rejoined into paragraphs first, so the answer is a whole sentence rather
+    than the fragment that happened to fit one line.
+    """
+    named = ("outcome", "cause", "reason", "why", "blocked")
+    fields: list[tuple[str, list[str]]] = []
+    prose: list[list[str]] = []
+    label = ""
+    run: list[str] = []
+
+    def close() -> None:
+        nonlocal label, run
+        if run:
+            (fields if label else prose).append((label, run) if label else run)  # type: ignore[arg-type]
+        label, run = "", []
+
+    for line in (text or "").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("#", ">", "|", "```")):
+            close()
+            continue
+        match = re.match(r"^\*\*([^*]+?):?\*\*:?\s*(.*)$", stripped)
+        if match:
+            close()
+            label = match.group(1).strip().lower()
+            run = [match.group(2)] if match.group(2) else []
+            continue
+        run.append(stripped)
+    close()
+
+    def first(paragraph: list[str]) -> str:
+        for piece in _SENTENCE.split(" ".join(word for word in paragraph if word)):
+            piece = piece.strip()
+            if len(piece) >= 20:
+                return piece
+        return ""
+
+    for wanted in named:
+        for name, paragraph in fields:
+            if name.startswith(wanted):
+                found = first(paragraph)
+                if found:
+                    return found
+    for paragraph in prose:
+        found = first(paragraph)
+        if found:
+            return found
+    return "stopped, reason recorded"
 
 
 def lane_merged(mc: ManagerConfig, lane: LaneRow, merge_subjects: str) -> bool:
@@ -967,6 +1017,7 @@ def _lane_board(text: str) -> dict[str, str]:
 __all__ = [
     "LaneRow",
     "age_words",
+    "blocked_reason",
     "changes_for",
     "confidence",
     "doc_id",
