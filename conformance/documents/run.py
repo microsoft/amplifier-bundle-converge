@@ -52,6 +52,8 @@ RULES = [
      "a reader who is not an engineer reads these and looks nothing up"),
     ("2", 2, 1, "contract_length",
      "one contract is about one screen — 50 to 100 lines"),
+    ("2b", 2, 1, "vision_fits_two_screens",
+     "a vision fits two screens — twice a contract's one-screen maximum"),
     ("3", 3, 1, "contract_line3_names_who",
      "line 3 of every contract begins '**Who builds against this:**'"),
     ("4", 4, 1, "contract_section_order",
@@ -64,12 +66,16 @@ RULES = [
      "every Core clause carries plain lines of why after its bold lead"),
     ("6", 6, 1, "contract_status_only_in_h1",
      "status lives in the H1 parenthetical and nowhere else"),
+    ("6b", 6, 1, "no_progress_words_as_status",
+     "neither vision nor contract carries kept / broken / in-progress"),
     ("7a", 7, 2, "vision_not_written_as_a_plan",
      "the vision is written as though already true, not as a roadmap"),
     ("7b", 7, 2, "vision_dated_changelog",
      "the vision carries a dated changelog"),
     ("7c", 7, 2, "vision_present_tense_reading",
      "the vision reads in the present tense throughout"),
+    ("7d", 7, 2, "changelog_entries_carry_evidence",
+     "each dated changelog entry carries the evidence behind it"),
     ("8", 8, 3, "proposal_has_three_parts",
      "every proposal has the three parts, in order"),
     ("9a", 9, 4, "work_item_names_a_contract",
@@ -88,15 +94,40 @@ RULES = [
      "a converged repository carries the participant kit"),
     ("12b", 12, 5, "workspace_template_complete",
      "the shipped workspace template carries every participant-kit file"),
-    ("13", 13, 6, "shipped_templates_carry_the_anatomy",
+    ("12c", 12, 5, "participant_kit_carries_its_content",
+     "each participant-kit file carries the content clause 12 names for it"),
+    ("13a", 13, 6, "shipped_templates_carry_the_anatomy",
      "Converge's own templates produce the anatomy they check for"),
+    ("13b", 13, 6, "protocol_authority_checks_documents",
+     "Converge's protocol authority checks documents against this anatomy"),
 ]
 
 # Rows no file scan can judge. Pinned by the self-test so a rule may not drift
 # into SKIP to dodge a failure.
 UNFIXTURABLE = {
-    "1": ("needs a named human reader and a date; no file scan can stand in for a "
-          "person reporting what they had to look up"),
+    "1": ("needs a named human reader and a date; no file scan can stand in for "
+          "a person reporting what they had to look up. This covers both halves "
+          "of clause 1: that anyone who has never opened a code editor can read "
+          "it, and that terms of art are defined at first use or not used — "
+          "whether a term needed defining is a judgment about the reader, not "
+          "about the text."),
+    "7d": ("measured against this repository's only dated entry, which reads "
+           "\"From the ratified rules, this project's own decision record, four "
+           "rounds of alignment through the release announcement, and the "
+           "measured record of the method in daily use.\" That entry plainly "
+           "carries its evidence — in prose, naming four sources — and a "
+           "literal test (a link, a path, a command, a commit id, or a quoted "
+           "span) fails 1 of 1. Telling evidence-in-prose from an assertion "
+           "with none is the same judgment rule 9b could not make mechanically, "
+           "and for the same reason. Rule 7b checks the part that is mechanical "
+           "— that the changelog exists and its entries are dated."),
+    "13b": ("clause 13 makes three promises and only two are files. That the "
+            "protocol authority CHECKS documents against this anatomy is a "
+            "claim about a running agent's behaviour in a live session, not "
+            "about anything in the tree — the same class of promise the "
+            "composition kit SKIPs as \"needs a live Amplifier session\". "
+            "Rule 13a checks the half that is a file: that the shipped "
+            "templates produce the anatomy they check for."),
     "5b": ("which numbering clause 5 means — the Core clauses or the "
            "Conformance-asserts bullets — is an open question filed for the "
            "steward (see contracts/documents.v2-candidate.md). This kit is "
@@ -146,6 +177,48 @@ OPTIONAL_SECTIONS = ["Changelog"]
 
 WHO_MARKER = "**Who builds against this:**"
 MIN_LINES, MAX_LINES = 50, 100
+# documents.v1 Core 2: "One contract ... about one screen. Fifty to a hundred
+# lines. A vision fits two screens." The unit is the contract's own, one
+# sentence earlier -- a screen is MAX_LINES -- so two screens is twice it. The
+# clause sets no floor for a vision, and neither does this rule.
+VISION_MAX_LINES = 2 * MAX_LINES
+
+# documents.v1 Core 6, second sentence: "Neither vision nor contract carries
+# kept / broken / in-progress." Matched only in STATUS POSITION -- inside a
+# parenthetical stamp, or after a **Status:** field -- never as loose prose.
+# Clause 6 is itself the sentence that names those words, and rule 10b already
+# measured that a bare prose scan lands on it. A document may say "kept"; what
+# clause 6 forbids is a document wearing it as a status.
+PROGRESS_STATUS_RE = re.compile(
+    r"\((?:kept|broken|in[-\s]progress|not yet|done)\)"
+    r"|\*\*Status:\*\*\s*\**\s*(?:kept|broken|in[-\s]progress|not yet|done)\b",
+    re.IGNORECASE,
+)
+
+# documents.v1 Core 12 names, per file, what the participant kit must CONTAIN.
+# Rule 12a asserts the four files exist; this is the content half. PINS.md is
+# absent on purpose: the clause asks it for "hard facts every lane reads
+# first", which enumerates no topic a scan could look for, so only its
+# presence is asserted (12a) and this is said plainly in the kit README.
+PARTICIPANT_KIT_CONTENT = [
+    ("docs/CONTRACTS-README.md", [
+        ("anatomy", re.compile(r"anatomy", re.I)),
+        ("an index of the contracts", re.compile(r"\bindex\b|contracts/[\w.-]+\.v\d+\.md|##\s+The \w+ contracts", re.I)),
+        ("the freeze bar", re.compile(r"freeze bar|\bfreezes?\b|\blocks?\b|\blocked\b", re.I)),
+        ("how to propose", re.compile(r"how to propose|propose a change|\bpropose\b", re.I)),
+    ]),
+    ("AGENTS.md", [
+        ("converge toward the vision", re.compile(r"converge toward|\bvision\b", re.I)),
+        ("never edit a locked contract", re.compile(r"never edit a locked|locked contract", re.I)),
+        ("propose instead", re.compile(r"\bpropos\w+", re.I)),
+        ("where the ledger is", re.compile(r"\bledger\b", re.I)),
+        ("how to run conformance", re.compile(r"conformance", re.I)),
+    ]),
+    (".githooks/pre-push", [
+        ("that it refuses", re.compile(r"refus\w+|reject\w*|\bdenies?\b", re.I)),
+        ("what it refuses — a locked contract", re.compile(r"lock\w*|frozen", re.I)),
+    ]),
+]
 
 # A status token. Case-sensitive on purpose: "(NOT frozen)" in a section
 # heading is prose, not a status stamp.
@@ -547,6 +620,84 @@ def _roll(rid, rows, what):
     return _result(rid, "PASS", f"all {len(rows)} {what}", files=rows)
 
 
+def check_vision_length(root: Path):
+    """Core 2, second sentence: "A vision fits two screens."
+
+    A vision that has to be scrolled through is a vision nobody rereads, and
+    an unread vision governs nothing. The unit is the contract's own: clause 2
+    calls one screen fifty to a hundred lines, so two screens is
+    VISION_MAX_LINES. Only a ceiling -- the clause sets no floor for a vision.
+    """
+    p = vision_file(root)
+    if p is None:
+        return _result("2b", "SKIP",
+                       "no docs/VISION.md or VISION.md in the target -- nothing to judge",
+                       reason="no vision in the target")
+    n = len(p.read_text(encoding="utf-8", errors="replace").splitlines())
+    if n > VISION_MAX_LINES:
+        return _result("2b", "FAIL",
+                       f"{_rel(root, p)} is {n} lines -- past two screens "
+                       f"({VISION_MAX_LINES})", lines=n)
+    return _result("2b", "PASS",
+                   f"{_rel(root, p)} is {n} lines -- inside two screens "
+                   f"({VISION_MAX_LINES})", lines=n)
+
+
+def check_no_progress_words_as_status(root: Path):
+    """Core 6, second sentence: "Neither vision nor contract carries kept /
+    broken / in-progress; that lives in the contract check."
+
+    Scans the vision as well as every contract -- the clause names both, and
+    rule 6 reads only contracts. Matched in status position only; see
+    PROGRESS_STATUS_RE for why a prose scan would be a false-positive machine.
+    """
+    docs = _state_word_documents(root)
+    if not docs:
+        return _result("6b", "SKIP",
+                       "no contract and no vision in the target -- nothing to judge",
+                       reason="no contract and no vision in the target")
+    rows = []
+    for p in docs:
+        hits = []
+        for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            m = PROGRESS_STATUS_RE.search(strip_inline_code(line))
+            if m:
+                hits.append({"line": i, "text": m.group(0)[:40]})
+        if hits:
+            where = ", ".join(f"{h['line']} ({h['text']})" for h in hits[:5])
+            rows.append({"file": _rel(root, p), "status": "FAIL",
+                         "detail": f"a progress word worn as a status at line(s) {where}",
+                         "hits": hits})
+        else:
+            rows.append({"file": _rel(root, p), "status": "PASS",
+                         "detail": "carries no progress word as a status"})
+    return _roll("6b", rows, "document(s) leave progress out of their status")
+
+
+def check_participant_kit_content(root: Path):
+    """Core 12's content half: what each participant-kit file must CONTAIN.
+
+    Rule 12a asserts the four files exist. Existence is not the promise --
+    clause 12 enumerates, per file, what a colleague or a non-Amplifier agent
+    must be able to find there without the bundle.
+    """
+    rows = []
+    for rel, topics in PARTICIPANT_KIT_CONTENT:
+        f = root / rel
+        if not f.is_file():
+            rows.append({"file": rel, "status": "FAIL",
+                         "detail": "missing -- rule 12a names it too"})
+            continue
+        text = f.read_text(encoding="utf-8", errors="replace")
+        absent = [name for name, rx in topics if not rx.search(text)]
+        rows.append({"file": rel,
+                     "status": "FAIL" if absent else "PASS",
+                     "detail": (f"says nothing about: {absent}" if absent
+                                else f"covers all {len(topics)} topic(s) clause 12 names"),
+                     "topics_absent": absent})
+    return _roll("12c", rows, "participant-kit file(s) carry what clause 12 asks of them")
+
+
 # --------------------------------------------------------------------------- #
 # clause 7 — the vision                                                        #
 # --------------------------------------------------------------------------- #
@@ -692,7 +843,7 @@ def check_templates_carry_anatomy(root: Path):
         rows.append({"file": _rel(root, vt), "status": "PASS" if ok else "FAIL",
                      "detail": ("produces a Changelog section" if ok
                                 else "produces no Changelog section")})
-    return _roll("13", rows, "shipped template(s) carry the anatomy they check for")
+    return _roll("13a", rows, "shipped template(s) carry the anatomy they check for")
 
 
 # --------------------------------------------------------------------------- #
@@ -997,15 +1148,18 @@ def run_conformance(root: Path, work_items: Path = None) -> dict:
     results = [
         _skip("1"),
         check_length(root),
+        check_vision_length(root),
         check_line3(root),
         check_section_order(root),
         check_clauses_bold_led(root),
         check_clause_numbers_match_rule_table(root),
         check_clauses_carry_their_why(root),
         check_status_only_in_h1(root),
+        check_no_progress_words_as_status(root),
         check_vision_not_a_plan(root),
         check_vision_changelog(root),
         _skip("7c"),
+        _skip("7d"),
         check_proposals(root),
         check_work_items(root, work_items),
         _skip("9b"),
@@ -1015,7 +1169,9 @@ def run_conformance(root: Path, work_items: Path = None) -> dict:
         _skip("11b"),
         check_participant_kit(root),
         check_workspace_template(root),
+        check_participant_kit_content(root),
         check_templates_carry_anatomy(root),
+        _skip("13b"),
     ]
     summary = {
         "pass": sum(r["status"] == "PASS" for r in results),

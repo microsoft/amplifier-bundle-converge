@@ -29,7 +29,7 @@ BAD = KIT / "fixtures" / "sample-bad"
 # Declared in run.py as un-judgeable from files. Both fixtures carry a proposal
 # and a work-item export, so rules 8 and 9 are checkable in both and are NOT in
 # this set.
-EXPECTED_SKIPS = {"1", "5b", "7c", "9b", "10b", "11b"}
+EXPECTED_SKIPS = {"1", "5b", "7c", "7d", "9b", "10b", "11b", "13b"}
 
 # documents.v1 Core clauses. Every one must be answered by at least one row.
 CORE_CLAUSES = set(range(1, 14))
@@ -74,8 +74,8 @@ def test_bad_repo_fails_named_rules():
     assert report["verdict"] == "FAIL", report
     assert code == 1
     failed = {r["rule"] for r in report["results"] if r["status"] == "FAIL"}
-    assert failed == {"2", "3", "4", "5a", "5c", "6", "7a", "7b", "8", "9a",
-                      "10a", "11a", "12a", "12b", "13"}, failed
+    assert failed == {"2", "2b", "3", "4", "5a", "5c", "6", "6b", "7a", "7b",
+                      "8", "9a", "10a", "11a", "12a", "12b", "12c", "13a"}, failed
 
 
 def test_bad_failures_carry_readable_detail():
@@ -94,6 +94,8 @@ def test_bad_failures_carry_readable_detail():
     assert "machine state word" in rules["9a"]["detail"]
     assert "CONFORMS" in rules["10a"]["detail"]
     assert "among the teeth" in rules["11a"]["detail"]
+    assert "past two screens" in rules["2b"]["detail"]
+    assert "worn as a status" in rules["6b"]["detail"]
     assert "AGENTS.md" in rules["12a"]["detail"]
 
 
@@ -145,7 +147,7 @@ def test_absent_evidence_skips_rather_than_passing(tmp_path=None):
         assert rules["9a"]["status"] == "SKIP", rules["9a"]
         assert "work-item export" in rules["9a"]["reason"], rules["9a"]
         # Same discipline for the contract rules when there are no contracts.
-        for rule in ("2", "3", "4", "5a", "5c", "6"):
+        for rule in ("2", "2b", "3", "4", "5a", "5c", "6", "6b"):
             assert rules[rule]["status"] == "SKIP", rules[rule]
             assert rules[rule].get("reason", "").strip(), rules[rule]
 
@@ -165,7 +167,7 @@ def test_template_is_judged_as_the_document_it_produces():
     """A template opens with an HTML comment telling the copier to delete it.
     Judging line 3 of the raw file would be a fabricated finding."""
     _, report = run_kit(GOOD)
-    assert by_rule(report)["13"]["status"] == "PASS", by_rule(report)["13"]
+    assert by_rule(report)["13a"]["status"] == "PASS", by_rule(report)["13a"]
 
 
 # --------------------------------------------------------------------------- #
@@ -339,6 +341,109 @@ def test_rule_11_is_split_and_the_app_half_says_where_it_is_checked():
     assert row["status"] == "SKIP", row
     assert "surface" in row["reason"], row
     assert by_rule(report)["11a"]["clause"] == row["clause"] == 11
+
+
+# --------------------------------------------------------------------------- #
+# The six ledger rows this kit was reported for (CVG-058/059/061/063/064/065)  #
+# --------------------------------------------------------------------------- #
+# Each names a documents.v1 Core clause whose promise the kit did not assert.
+# Every one must now be answered by a row -- a real PASS/FAIL, or a SKIP with
+# a reason. A clause answered by nothing is exactly what those rows recorded.
+LEDGER_ROWS_UNDER_REPAIR = {
+    "CVG-058": (1, "terms of art are defined at first use or not used"),
+    "CVG-059": (2, "a vision fits two screens"),
+    "CVG-061": (6, "neither vision nor contract carries kept / broken / in-progress"),
+    "CVG-063": (7, "changelog entries carry evidence"),
+    "CVG-064": (12, "what each participant-kit file must contain"),
+    "CVG-065": (13, "the protocol authority checks documents against this anatomy"),
+}
+
+
+def test_every_reported_ledger_row_has_an_answering_row():
+    _, report = run_kit(GOOD)
+    rows = report["results"]
+    for ledger_id, (clause, promise) in LEDGER_ROWS_UNDER_REPAIR.items():
+        answering = [r for r in rows if r["clause"] == clause]
+        assert answering, f"{ledger_id} (Core {clause}, {promise!r}) has no row"
+        for r in answering:
+            assert r["status"] in {"PASS", "FAIL", "SKIP"}, r
+            if r["status"] == "SKIP":
+                assert r.get("reason", "").strip(), (
+                    f"{ledger_id}: rule {r['rule']} SKIPs with no reason"
+                )
+
+
+def test_the_vision_is_now_scanned_not_only_the_contracts():
+    """CVG-059 and CVG-061 both said the same thing: the vision went unread.
+
+    Rules 2b and 6b must both name the vision file, on a target that has one.
+    """
+    _, report = run_kit(GOOD)
+    rules = by_rule(report)
+    assert "VISION.md" in rules["2b"]["detail"], rules["2b"]
+    scanned = {f["file"] for f in rules["6b"]["files"]}
+    assert any("VISION.md" in f for f in scanned), scanned
+
+
+def test_rule_12c_catches_a_kit_file_that_exists_but_says_nothing():
+    """CVG-064: presence was all that was checked.
+
+    sample-bad has no participant kit at all, so its 12c failure only proves
+    the missing-file path. This builds a target where the four files EXIST and
+    are empty of what clause 12 asks for -- 12a passes, 12c must not.
+    """
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        (root / "contracts").mkdir()
+        (root / "docs").mkdir()
+        (root / ".githooks").mkdir()
+        (root / "AGENTS.md").write_text("# Agents\n\nBe nice to the codebase.\n")
+        (root / "PINS.md").write_text("# Pins\n\nNothing pinned.\n")
+        (root / "docs" / "CONTRACTS-README.md").write_text("# Contracts\n\nThey exist.\n")
+        (root / ".githooks" / "pre-push").write_text("#!/bin/sh\nexit 0\n")
+        _, report = run_kit(root)
+        rules = by_rule(report)
+        assert rules["12a"]["status"] == "PASS", rules["12a"]
+        assert rules["12c"]["status"] == "FAIL", rules["12c"]
+        assert "says nothing about" in rules["12c"]["detail"], rules["12c"]
+
+
+def test_a_changelog_entry_is_not_failed_for_citing_its_evidence_in_prose():
+    """CVG-063 asked for entry content to be inspected. Measured, a literal
+    evidence test fails this repository's only entry, which does carry its
+    evidence -- in prose. So 7d SKIPs with that measurement rather than
+    manufacturing a failure, and 7b still checks the mechanical half."""
+    _, report = run_kit(REPO)
+    rules = by_rule(report)
+    assert rules["7d"]["status"] == "SKIP", rules["7d"]
+    assert "1 of 1" in rules["7d"]["reason"], rules["7d"]
+    assert rules["7b"]["status"] == "PASS", rules["7b"]
+
+
+def test_a_progress_word_in_prose_is_not_read_as_a_status():
+    """documents.v1 clause 6 is itself the sentence naming "kept / broken /
+    in-progress". Rule 6b matches status position only, so this repository --
+    which contains that very sentence -- must stay green."""
+    _, report = run_kit(REPO)
+    assert by_rule(report)["6b"]["status"] == "PASS", by_rule(report)["6b"]
+
+
+def test_a_changelog_entry_naming_a_version_is_not_a_second_status():
+    """This repository's vision changelog carries "- **2026-09-02 - v1
+    (DRAFT).**" A status stamp outside the H1 is what clause 6 forbids, but a
+    changelog entry recording which version it described is history, not a
+    second source of truth for what the document is now. Rule 6b does not
+    reach into the changelog, and rule 6 reads contracts. Neither fabricates
+    that finding."""
+    _, report = run_kit(REPO)
+    rules = by_rule(report)
+    assert rules["6"]["status"] == "PASS", rules["6"]
+    assert rules["6b"]["status"] == "PASS", rules["6b"]
+    vision = (REPO / "docs" / "VISION.md").read_text(encoding="utf-8")
+    assert "(DRAFT)" in vision.split("## Changelog", 1)[1], (
+        "the case this test guards is gone; re-check whether 6b should widen"
+    )
 
 
 # --------------------------------------------------------------------------- #
