@@ -482,3 +482,46 @@ def test_the_change_routes_refuse_a_stranger(project, monkeypatch) -> None:
     assert stranger.post(f"{DOC}/changes/abc/keep", json={"kept": True}).status_code == 401
     assert stranger.post(f"{DOC}/changes/abc/edit", json={"text": "x"}).status_code == 401
     assert stranger.post(f"{DOC}/changes/abc/restore").status_code == 401
+
+
+# --------------------------------------------------------------------------
+# 7. the edges that fail quietly if nobody looks
+# --------------------------------------------------------------------------
+
+
+def test_a_hash_inside_a_code_fence_is_code_and_not_a_heading() -> None:
+    text = "# Title\n\n## Real Section\n\n```bash\n# not a heading\n```\n\nA sentence.\n"
+    found = changes.heading_paths(text)
+    lines = text.splitlines()
+    assert found[lines.index("A sentence.") + 1] == "Real Section"
+
+
+def test_the_sentence_is_reworded_where_the_steward_was_looking(client: TestClient, project) -> None:
+    # The same sentence twice in one document: the card's own line must win,
+    # not whichever copy comes first in the file.
+    doc = project["repo"] / "docs" / "VISION.md"
+    doc.write_text(doc.read_text(encoding="utf-8").replace("## Principles", f"{INSERTED}\n\n## Principles"), encoding="utf-8")
+    _git(project["repo"], "commit", "-q", "-m", "vision: say it twice", "--", "docs/VISION.md")
+    client.post(f"{DOC}/read")
+    whole = json.loads(project["state"].read_text(encoding="utf-8"))
+    del whole["stewards"][GOOD_USER]["read"]["fixture-repo/vision"]
+    project["state"].write_text(json.dumps(whole), encoding="utf-8")
+
+    card = next(r for r in _changes(client) if r["now"] == INSERTED)
+    answer = client.post(f"{DOC}/changes/{card['id']}/edit", json={"text": "The second copy is the one that moved."})
+    assert answer.status_code == 200, answer.text
+    lines = doc.read_text(encoding="utf-8").splitlines()
+    assert lines.count(INSERTED) == 1, "the untouched copy is still there"
+    assert "The second copy is the one that moved." in lines
+
+
+def test_an_edit_refuses_to_sweep_up_an_uncommitted_change(client: TestClient, project) -> None:
+    doc = project["repo"] / "docs" / "VISION.md"
+    card = next(r for r in _changes(client) if r["kind"] == "changed")
+    doc.write_text(doc.read_text(encoding="utf-8") + "\nSomething nobody asked for.\n", encoding="utf-8")
+
+    answer = client.post(f"{DOC}/changes/{card['id']}/edit", json={"text": "Anything at all."})
+    assert answer.status_code == 400
+    assert "uncommitted" in answer.json()["error"]
+    assert "Something nobody asked for." in doc.read_text(encoding="utf-8"), "the file is left exactly as it was"
+    assert "Anything at all." not in doc.read_text(encoding="utf-8")

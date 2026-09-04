@@ -266,19 +266,24 @@ def _reword(text: str, *, now: str, anchor: int, replacement: str) -> tuple[str,
 
     A sentence is found by its own words rather than by a line number, because
     the line number is only true for the diff that produced it and the words
-    are true for the file. When there is no sentence to find — the card is a
-    removal being put back — the hunk's own anchor says where it belongs.
+    are true for the file. The hunk's line is still tried first, so a sentence
+    that happens to appear twice is changed where the steward was looking at
+    it rather than wherever it happens to appear first. When there is no
+    sentence to find — the card is a removal being put back — the anchor is
+    all there is, and it says where it belongs.
     """
     lines = (text or "").split("\n")
     if now:
-        for index, line in enumerate(lines):
-            if now in line:
-                made = line.replace(now, replacement, 1)
-                if made.strip():
-                    lines[index] = made
-                else:
-                    del lines[index]
-                return "\n".join(lines), ""
+        at = anchor - 1
+        order = [at] if 0 <= at < len(lines) and now in lines[at] else []
+        order += [index for index in range(len(lines)) if index != at and now in lines[index]]
+        for index in order:
+            made = lines[index].replace(now, replacement, 1)
+            if made.strip():
+                lines[index] = made
+            else:
+                del lines[index]
+            return "\n".join(lines), ""
         return "", "that sentence is no longer in the file as it was written"
     if not replacement.strip():
         return "", "there is nothing to write"
@@ -393,6 +398,17 @@ def apply_change(
             "path": str(target),
             "file": target.relative_to(repo).as_posix(),
             "said": f"{path.name} is {lock}. Your wording is waiting in {target.name} for an answer.",
+        }
+
+    # The commit below names this one path, which means it would carry any
+    # other uncommitted edit to the same file along with the steward's
+    # sentence. Refusing is the honest answer: their word should be their word
+    # and nothing else's.
+    dirty = _git(repo, "status", "--porcelain", "--", rel)[1].strip()
+    if dirty:
+        return {
+            "ok": False,
+            "error": f"{rel} has uncommitted changes, so this edit would carry them too. Commit or discard them first.",
         }
 
     try:

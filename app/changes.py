@@ -86,8 +86,17 @@ def heading_paths(text: str) -> dict[int, str]:
     lines = (text or "").splitlines()
     stack: list[tuple[int, str]] = []
     item = ""
+    fenced = False
     found: dict[int, str] = {}
     for index, line in enumerate(lines, start=1):
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            found[index] = _path_of(stack, item)
+            continue
+        if fenced:
+            # A `# comment` inside a code fence is code, not a heading.
+            found[index] = _path_of(stack, item)
+            continue
         head = HEADING.match(line)
         if head:
             level = len(head.group(1))
