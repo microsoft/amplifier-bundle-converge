@@ -146,7 +146,15 @@ function wire() {
   $('closeTimelineButton').addEventListener('click', () => $('timelineCard').classList.add('hidden'));
   $('fillLanesButton').addEventListener('click', fillLanes);
   qsa('[data-console-tab]').forEach((btn) => btn.addEventListener('click', () => { state.consoleTab = btn.dataset.consoleTab; renderConsole(); }));
-  $('consoleForm').addEventListener('submit', (e) => { e.preventDefault(); toast('The console is read-only in this version.'); });
+  // No submit handler for #consoleForm here, on purpose (converge-gf0). The one
+  // that used to sit on this line toasted that the console could not be typed
+  // into. That sentence has been false since converge-tfu -- the app takes
+  // keystrokes, `POST /api/tmux/{socket}/{session}/keys` answers them, and
+  // `render/console.js` owns BOTH ways a line is sent: Enter in the field and
+  // the send button, each calling `preventDefault()` before its own `sendLine()`.
+  // The toast was unreachable only by that accident of event ordering; a second,
+  // differently-behaved submit path is exactly what would have made it misfire,
+  // so the fix is to have no second path rather than a truer one.
   $('modalBackdrop').addEventListener('click', closeDialog);
   $('appDialog').addEventListener('close', () => $('modalBackdrop').classList.add('hidden'));
   $('consoleContextTitle').addEventListener('click', showManagerConsole);
