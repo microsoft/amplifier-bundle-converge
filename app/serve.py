@@ -687,6 +687,16 @@ def create_app(
 
             pass
 
+        try:
+
+            from app import feedback_voice as _fv
+
+            app.include_router(_fv.router)
+
+        except ImportError:
+
+            pass
+
     except ImportError:
         pass
 
