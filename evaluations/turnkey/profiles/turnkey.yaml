@@ -27,9 +27,12 @@
 # ---- OUT-OF-BAND STATE THIS PROFILE REQUIRES (it is NOT self-contained) ------
 # Named here rather than discovered at 3am:
 #
-#   1. Network egress to github.com for the amplifier CLI, the work queue and
-#      the converge bundle -- or a mirror plus `url_rewrites`, as
-#      ../../ratchet/profiles/ratchet.yaml does.
+#   1. Network egress to github.com for the amplifier CLI and the work queue.
+#      The converge bundle itself is NOT taken from github: `url_rewrites`
+#      below redirects it to a Gitea mirror, exactly as
+#      ../../ratchet/profiles/ratchet.yaml does, so the run installs a mirror
+#      whose HEAD was proven equal to origin/main before launch rather than
+#      whatever github happens to be serving mid-run.
 #   2. ANTHROPIC_API_KEY (and optionally ANTHROPIC_BASE_URL) in the launch
 #      environment, forwarded by the passthrough block below. Lanes are agent
 #      sessions; no key means no lanes.
@@ -38,9 +41,14 @@
 #      queue's own supervisor is run detached instead -- the work-tracker
 #      `doctor` contract treats a foregrounded `serve` as equivalent to the
 #      managed service.
+#   4. GITEA_URL / GITEA_TOKEN passed as `--var` at launch (run.sh reads them
+#      from the environment or ~/.amplifier/keys.env and refuses to launch
+#      without them). GITEA_URL must be reachable FROM INSIDE the container;
+#      `http://localhost:<port>` works because launch rewrites localhost ->
+#      host-gateway for --var values.
 #
 # ---- LAUNCH -----------------------------------------------------------------
-#   uv run evaluations/turnkey/run.py --env dtu --project turnkey
+#   ./evaluations/turnkey/run.sh --env dtu --project turnkey
 #
 # The harness launches this itself, registers the instance in the infra ledger
 # BEFORE the container exists, and destroys it in a `finally` block. It refuses
@@ -48,8 +56,8 @@
 # outlives the run is worse than a step the run could not perform.
 #
 # ---- HONEST STATUS ----------------------------------------------------------
-# This profile has NOT been verified end to end. See ../RESULT.md for what was
-# actually run and what was not. The readiness gates below are written to fail
+# See ../RESULT.md for what this profile actually did the last time it ran,
+# step by step, red included. The readiness gates below are written to fail
 # LOUDLY rather than let a half-provisioned container look ready -- a container
 # that boots but cannot start a lane would turn the turnkey gate green for the
 # wrong reason, which is the one outcome worse than red.
@@ -63,6 +71,22 @@ description: >
 
 base:
   image: ubuntu:24.04
+
+# --- Install the converge bundle from the Gitea mirror rather than github.
+#     The install COMMAND stays byte-identical to the one README.md documents
+#     (that is what step (b) measures); this rule is what makes the bytes it
+#     fetches the mirror's, whose HEAD run.sh proves equal to origin/main
+#     before anything launches. boundary match-mode so the admin credential
+#     scopes to exactly this repo and never leaks to a sibling path.
+url_rewrites:
+  auth:
+    username: admin
+    token_var: GITEA_TOKEN
+  allow_uv_github_fast_path: false
+  default_match_mode: boundary
+  rules:
+    - match: github.com/microsoft/amplifier-bundle-converge
+      target: ${GITEA_URL}/admin/amplifier-bundle-converge
 
 passthrough:
   allow_external: true
@@ -120,12 +144,22 @@ provision:
       [ "$ok" = 1 ] || { echo "FATAL: the shared queue server never came up:"; tail -40 /var/log/awt-serve.log; exit 1; }
       echo "queue backend up"
 
-    # -- THE one documented install (README.md's first `amplifier bundle add`)
-    #    The harness re-runs this itself as step (b) into a throwaway home, so
-    #    that step measures the install rather than assuming it. Doing it here
-    #    too means the container is usable even if step (b) is skipped.
-    - amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main --app
-    - amplifier bundle use converge
+    # -- THE one documented install: README.md's FIRST `amplifier bundle add`
+    #    line, byte for byte. `--app` composes converge onto the session that
+    #    is already there, which is the whole turnkey claim -- so there is no
+    #    `bundle use` after it, deliberately: switching to the root bundle
+    #    afterwards would silently test the OTHER install path.
+    #
+    #    The harness re-runs this same command itself as step (b) into a
+    #    throwaway AMPLIFIER_HOME, so that step measures the install rather
+    #    than assuming it. Doing it here too means the container's own default
+    #    session -- the one the manager wave runs in -- has converge composed.
+    - amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml --app
+
+    # -- a git identity, so a lane's own commits are possible at all ----------
+    - git config --global user.email turnkey@converge.invalid
+    - git config --global user.name  "Converge turnkey"
+    - git config --global init.defaultBranch main
 
     - mkdir -p /workspace
     - amplifier --version
@@ -134,7 +168,16 @@ readiness:
   - name: amplifier-installed
     command: amplifier --version
   - name: converge-composed
-    command: amplifier bundle list | grep -qi converge
+    # COMPOSED, not merely discoverable. A bundle can appear in `bundle list`
+    # and still contribute nothing to a session (discovery != composition,
+    # behaviors/converge.yaml's own agents: comment). An agent named
+    # `converge:*` in the session's agent list is the composed side answering.
+    command: amplifier agents list | grep -q 'converge:'
+    # Deliberately NOT a readiness gate: whether the converge-manager MODE
+    # reached the session. There is no `amplifier modes` command to ask, and a
+    # probe that cannot fail would be a fabricated pass. The wave driver asks
+    # the manager session itself to report its active mode, and records the
+    # answer as evidence -- which is a check that can, and did, come back no.
   - name: queue-healthy
     # `instances` reads the project list out of the shared server, so a clean
     # exit proves both the CLI and its backend.
@@ -153,10 +196,15 @@ readiness:
     # Clause 5's second half. A container without a working multiplexer cannot
     # give a lane its own terminal session, and this must fail the launch
     # rather than surface later as a mysterious lane assertion failure.
+    #
+    # On the `hw` socket specifically -- that is the socket the lane launcher
+    # uses (HIGHWAY_TMUX_SOCKET defaults to `hw`), and it is the socket the
+    # harness samples from outside the manager session. A probe on the default
+    # socket would prove tmux works somewhere other than where it must.
     command: >
-      tmux kill-session -t probe 2>/dev/null;
-      tmux new-session -d -s probe -c /tmp 'sleep 30' &&
-      tmux list-sessions | grep -q probe &&
-      tmux kill-session -t probe
+      tmux -L hw kill-session -t probe 2>/dev/null;
+      tmux -L hw new-session -d -s probe -c /tmp 'sleep 30' &&
+      tmux -L hw list-sessions | grep -q probe &&
+      tmux -L hw kill-session -t probe
   - name: provider-smoke
     command: 'amplifier run "Say exactly: turnkey-ready"'

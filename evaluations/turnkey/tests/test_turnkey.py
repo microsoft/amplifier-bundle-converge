@@ -325,3 +325,122 @@ def test_a_skip_always_carries_a_reason():
             head = chunk[:200]
             if head.lstrip().startswith("SKIP") or "\n            SKIP" in head:
                 assert "reason=" in chunk[:600], f"{name} builds a SKIP with no reason"
+
+
+# ---------------------------------------------------------------------------
+# clause 5, in the present tense — two lanes seen running AT ONCE, from outside
+# ---------------------------------------------------------------------------
+#
+# Every other lane assertion reads what a lane LEFT BEHIND, and everything a
+# lane leaves behind can be produced by a session that never left itself. These
+# cover the one reading that cannot: the container's own live session list and
+# git's own live worktree list, sampled while the manager session was working.
+
+
+BOTH = {"at": "T0", "sessions": ["hw__b__one", "hw__b__two"],
+        "worktrees": [{"branch": "lane/one"}, {"branch": "lane/two"}]}
+
+
+def test_two_lanes_live_at_once_is_the_concurrency_evidence():
+    assert run.assert_lanes_observed_live([BOTH])["verdict"] == run.PASS
+
+
+def test_sessions_in_one_sample_and_worktrees_in_another_are_not_concurrent():
+    """The conjunction is per-sample on purpose: two facts are not two lanes."""
+    apart = [
+        {"at": "T1", "sessions": ["hw__b__one", "hw__b__two"], "worktrees": []},
+        {"at": "T2", "sessions": [],
+         "worktrees": [{"branch": "lane/one"}, {"branch": "lane/two"}]},
+    ]
+    verdict = run.assert_lanes_observed_live(apart)
+    assert verdict["verdict"] == run.FAIL
+    assert "at once" in verdict["why"]
+
+
+def test_a_non_lane_session_does_not_count_toward_width():
+    noise = [{"at": "T3", "sessions": ["probe", "0", "hw__b__one"],
+              "worktrees": [{"branch": "lane/one"}, {"branch": "lane/two"}]}]
+    assert run.assert_lanes_observed_live(noise)["verdict"] == run.FAIL
+
+
+def test_a_non_lane_branch_does_not_count_toward_width():
+    noise = [{"at": "T4", "sessions": ["hw__b__one", "hw__b__two"],
+              "worktrees": [{"branch": "lane/one"}, {"branch": "main"}]}]
+    assert run.assert_lanes_observed_live(noise)["verdict"] == run.FAIL
+
+
+def test_no_samples_is_a_skip_with_a_reason_never_a_pass():
+    verdict = run.assert_lanes_observed_live([])
+    assert verdict["verdict"] == run.SKIP
+    assert verdict["why"]
+
+
+def test_width_is_honoured():
+    assert run.assert_lanes_observed_live([BOTH], width=3)["verdict"] == run.FAIL
+
+
+# ---------------------------------------------------------------------------
+# the objective handed to the manager session
+# ---------------------------------------------------------------------------
+
+
+OBJECTIVE_FIELDS = {
+    "fixture_repo": "/workspace/lumen-fixture", "project": "turnkey", "width": "2",
+    "deadline_minutes": "60", "check_command": "python3 check.py .",
+    "launcher": "/usr/local/launch_lane.sh", "batch_dir": "/workspace/turnkey-batch",
+    "tmux_socket": "hw", "return_log": "docs/workflow/OWNER-RETURN-LOG.md",
+}
+
+
+def test_the_objective_the_repository_ships_can_actually_be_composed():
+    """A field the harness cannot fill must be caught here, not at 3am in a DTU."""
+    text, why = run.objective_text(TURNKEY / "manager-objective.md", OBJECTIVE_FIELDS)
+    assert why is None, why
+    assert "{" not in text.replace("{}", "")
+    assert "/workspace/lumen-fixture" in text
+
+
+def test_the_objectives_editorial_preamble_is_never_sent():
+    text, _ = run.objective_text(TURNKEY / "manager-objective.md", OBJECTIVE_FIELDS)
+    assert "This file is what the turnkey harness hands" not in text
+
+
+def test_a_missing_field_is_named_rather_than_formatted_into_nonsense(tmp_path):
+    draft = tmp_path / "objective.md"
+    draft.write_text("preamble\n---\nwork in {nowhere}\n", encoding="utf-8")
+    text, why = run.objective_text(draft, OBJECTIVE_FIELDS)
+    assert text == ""
+    assert "{nowhere}" in why
+
+
+# ---------------------------------------------------------------------------
+# the lane socket — a reading that looks at the wrong socket reports no lanes
+# ---------------------------------------------------------------------------
+
+
+class _FakeEnv(run.Env):
+    """An environment where only the `-L hw` socket has anything on it."""
+
+    def __init__(self):
+        self.argvs = []
+
+    def run(self, argv, cwd=None, timeout=120.0, env=None):
+        self.argvs.append(argv)
+        if argv[:3] == ["tmux", "-L", "hw"]:
+            return run.Ran(0, "hw__b__one\t/w/lanes/one\n", "", argv=argv)
+        return run.Ran(1, "", "no server running", argv=argv)
+
+
+def test_lanes_on_the_launchers_socket_are_seen():
+    """The launcher uses `-L hw`; a default-socket-only reading sees nothing."""
+    env = _FakeEnv()
+    panes = run.read_tmux_panes(env)
+    assert [p["session"] for p in panes] == ["hw__b__one"]
+    assert panes[0]["socket"] == "hw"
+
+
+def test_both_sockets_are_actually_asked():
+    env = _FakeEnv()
+    run.read_tmux_panes(env)
+    assert any("-L" not in a for a in env.argvs)
+    assert any(a[:3] == ["tmux", "-L", "hw"] for a in env.argvs)
