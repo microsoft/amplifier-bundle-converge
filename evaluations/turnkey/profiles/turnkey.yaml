@@ -168,11 +168,22 @@ readiness:
   - name: amplifier-installed
     command: amplifier --version
   - name: converge-composed
-    # COMPOSED, not merely discoverable. A bundle can appear in `bundle list`
-    # and still contribute nothing to a session (discovery != composition,
-    # behaviors/converge.yaml's own agents: comment). An agent named
-    # `converge:*` in the session's agent list is the composed side answering.
-    command: amplifier agents list | grep -q 'converge:'
+    # COMPOSED, not merely present on disk. A bundle can be registered and
+    # still contribute nothing to a session (discovery != composition --
+    # behaviors/converge.yaml's own agents: comment).
+    #
+    # Two readings, both of which can come back no:
+    #   `bundle list` must show a converge row in the APP column -- that is the
+    #   `--app` install having landed in the app layer at all;
+    #   `agents list` must show converge-behavior [on] -- that is the composed
+    #   agent-bundle set, the session's own view, saying it is active.
+    #
+    # `amplifier agents show <name>` is deliberately NOT used: measured on this
+    # host, it exits 0 and prints an [on] line for an agent that does not
+    # exist, so it can never fail and would be a fabricated pass.
+    command: >
+      amplifier bundle list | grep -i converge | grep -q app &&
+      amplifier agents list | grep -E '\[on\][[:space:]]+converge' | grep -q .
     # Deliberately NOT a readiness gate: whether the converge-manager MODE
     # reached the session. There is no `amplifier modes` command to ask, and a
     # probe that cannot fail would be a fabricated pass. The wave driver asks
