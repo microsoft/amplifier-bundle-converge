@@ -11,3 +11,14 @@
 .dialog-content textarea { min-height:120px; resize:vertical; }
 .dialog-field { margin-bottom:14px; }
 .dialog-field label { display:block; font-weight:750; font-size:12px; margin-bottom:6px; }
+
+/* The voice note field (converge-rj1). Two shapes, never both: a Record button
+   with a state line beside it where the browser can record, and a plain
+   sentence where it cannot -- served over plain http on the LAN, no browser
+   will hand over a microphone, so that sentence is the ordinary case here and
+   is styled as prose rather than as an error. The file input is always drawn:
+   recording is the convenience, attaching is the floor. */
+.voice-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+.voice-record { flex:0 0 auto; }
+.voice-state { flex:1 1 12rem; min-width:0; font-size:12px; color:#667085; }
+.voice-unavailable { margin:0 0 8px; font-size:12px; line-height:1.5; color:#667085; }
