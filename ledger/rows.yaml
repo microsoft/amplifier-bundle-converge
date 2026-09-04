@@ -754,7 +754,7 @@
   contract:
     file: contracts/operation.v1.md
     clause: "Conformance kit asserts, Turnkey"
-    quote: "**Red today** — this is the work list."
+    quote: "**First green 2026-09-04 — nine of nine steps, twice, in fresh containers, with a manager session that was not the integrator (`evaluations/turnkey/RESULT.md`); it re-runs on every merge.**"
   disposition: CONFORMS
   assertion:
     kind: absence
