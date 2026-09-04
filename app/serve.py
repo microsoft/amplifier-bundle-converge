@@ -533,6 +533,17 @@ def create_app(
         from . import tmux_view  # type: ignore
 
         app.include_router(tmux_view.router)
+
+        try:
+
+            from app import collab as _collab
+
+            app.include_router(_collab.router)
+
+        except ImportError:
+
+            pass
+
     except ImportError:
         pass
 
