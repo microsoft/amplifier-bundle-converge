@@ -1,0 +1,63 @@
+{
+  "base": "/home/bkrabach/dev/hw-converge/lanes/w8-umbrella-kits/amplifier-bundle-converge/conformance/experience/fixtures/sample-bad",
+  "captured": "fixture",
+  "manager": "m1",
+  "note": "the same promises with nothing behind them: a third place, two writes missing and one no contract names, seven things asking at once, the machine's own words on the surface, and a family half unwritten",
+  "routes": [
+    {
+      "route": "/",
+      "file": "index.html",
+      "kind": "html"
+    },
+    {
+      "route": "/openapi.json",
+      "file": "openapi.json",
+      "kind": "openapi"
+    },
+    {
+      "route": "/api/boot",
+      "file": "api__boot.json",
+      "kind": "json"
+    },
+    {
+      "route": "/api/managers/m1",
+      "file": "api__managers__m1.json",
+      "kind": "json"
+    },
+    {
+      "route": "/api/managers/m1/operation",
+      "file": "api__managers__m1__operation.json",
+      "kind": "json"
+    },
+    {
+      "route": "/api/needs/m1",
+      "file": "api__needs__m1.json",
+      "kind": "json"
+    },
+    {
+      "route": "/api/managers/m1/docs/r1/vision",
+      "file": "api__managers__m1__docs__r1__vision.json",
+      "kind": "json"
+    },
+    {
+      "route": "/static/js/main.js",
+      "file": "static__js__main.js",
+      "kind": "js"
+    },
+    {
+      "route": "/static/js/actions.js",
+      "file": "static__js__actions.js",
+      "kind": "js"
+    },
+    {
+      "route": "/static/js/render/home.js",
+      "file": "static__js__render__home.js",
+      "kind": "js"
+    },
+    {
+      "route": "/static/css/shell.css",
+      "file": "static__css__shell.css",
+      "kind": "css"
+    }
+  ]
+}

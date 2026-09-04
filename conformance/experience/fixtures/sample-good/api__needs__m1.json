@@ -1,0 +1,29 @@
+[
+ {
+  "kind": "proposal",
+  "title": "Proposal 1",
+  "where": {
+   "repoId": "r1",
+   "docId": "vision"
+  },
+  "since": "2026-09-04T09:00:00+00:00"
+ },
+ {
+  "kind": "proposal",
+  "title": "Proposal 2",
+  "where": {
+   "repoId": "r1",
+   "docId": "vision"
+  },
+  "since": "2026-09-04T09:00:00+00:00"
+ },
+ {
+  "kind": "proposal",
+  "title": "Proposal 3",
+  "where": {
+   "repoId": "r1",
+   "docId": "vision"
+  },
+  "since": "2026-09-04T09:00:00+00:00"
+ }
+]

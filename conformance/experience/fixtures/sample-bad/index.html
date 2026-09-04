@@ -1,0 +1,29 @@
+<!doctype html><html><head><title>Converge</title>
+<link rel="stylesheet" href="/static/css/shell.css"></head><body>
+<div id="app" class="app-shell">
+<header class="topbar">
+  <div id="workspaceSwitch" class="workspace-switch" role="tablist" aria-label="Workspace view">
+    <button class="workspace-tab active" id="directionTab" role="tab" type="button">Direction</button>
+    <button class="workspace-tab" id="operationTab" role="tab" type="button">Operation</button>
+    <button class="workspace-tab" id="consoleTab" role="tab" type="button">Console</button>
+  </div>
+</header>
+<div class="body-grid"><main class="workspace">
+  <section id="homeView" class="view home-view hidden" aria-label="All manager sessions">
+    <div id="homeSessionGrid"></div>
+  </section>
+  <section id="directionView" class="view direction-view" aria-label="Direction">
+    <p class="lane-note">This lane is STALE and its last worker is DEAD.</p>
+    <div class="review-actions">
+      <button data-decision="ratified" type="button">Ratified</button>
+    </div>
+    <aside class="manager-console" id="managerConsole" aria-label="Manager Console">
+      <div id="consoleBody" class="console-body"></div>
+    </aside>
+  </section>
+  <section id="operationView" class="view operation-view hidden" aria-label="Operation">
+    <button id="feedbackButton" type="button">Feedback</button>
+    <div class="dialog-field"><label for="feedbackText">Feedback</label><textarea id="feedbackText"></textarea></div>
+  </section>
+</main></div></div>
+<script src="/static/js/main.js"></script></body></html>

@@ -1,0 +1,27 @@
+{
+ "waves": [
+  {
+   "id": "w1",
+   "label": "Wave 1",
+   "title": "",
+   "phase": "DONE",
+   "cls": "done",
+   "progress": 100,
+   "items": []
+  }
+ ],
+ "lanes": [
+  {
+   "id": "w1-kit",
+   "status": "running",
+   "statusLabel": "RUNNING",
+   "wave": "",
+   "title": "build the kit",
+   "worker": "w1-kit",
+   "age": "20m",
+   "evidence": ""
+  }
+ ],
+ "timeline": [],
+ "returnBrief": []
+}
