@@ -3682,7 +3682,7 @@
     wrong answer this clause names.
   work: converge-f1l
 - id: CVG-114
-  title: "this umbrella governs a family — and it names two contracts that do not exist"
+  title: "this umbrella governs a family — and two of the contracts it names do not exist"
   contract:
     file: contracts/experience.v1.md
     clause: "Core 15"
@@ -3691,17 +3691,21 @@
       `experience-direction.v1` · `experience-operation.v1` ·
       `experience-console.v1` · `experience-collaboration.v1`; the idioms of one
       body by one `platform-*.v1` — `platform-browser.v1` and
+      `platform-web-app.v1` first, then one per native body.
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'for f in contracts/platform-browser.v1.md contracts/platform-web-app.v1.md; do [ -f $f ] && echo PRESENT || echo ABSENT; done | paste -sd, - | sed ''s/^/CLAUSE-15-NAMED-PLATFORM-CONTRACTS: /'''
+    ref: 'python3 ledger/checks/clause_named_contracts.py contracts/experience.v1.md 15'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-15-NAMED-PLATFORM-CONTRACTS: ABSENT,ABSENT"
+      stdout_contains: "CLAUSE-15-NAMED-CONTRACTS NAMED=6 PRESENT=4 MISSING=platform-browser.v1,platform-web-app.v1"
   proves: >
-    That both platform contracts this clause names by name are absent from
-    `contracts/`. It proves the umbrella and the family disagree about the
-    family's membership; it does not decide which of them is wrong.
+    That of the six contracts clause 15 names by name, four exist in
+    `contracts/` and two do not — read out of the clause itself, not out of this
+    row. It proves the umbrella and the folder disagree about the family's
+    membership; it does not decide which of them is wrong. The clause's own
+    `platform-*.v1` is a glob describing the family's shape, not a name, and is
+    not counted.
   notes: >
     Measured 2026-09-03 (converge-pq2) against the app running at
     127.0.0.1:8788. What exists instead is one `platform-web.v1`, covering the
@@ -3709,6 +3713,38 @@
     install seam. Both readings are defensible and both were ratified in the
     same pass, which is why this is filed rather than fixed: a ratified clause
     changes by proposal. converge-d3n carries the decision.
+    RE-DERIVED 2026-09-04 (converge-oye) — THE PROBE NOW READS THE CLAUSE INSTEAD
+    OF NAMING THE FILES. The first probe hard-coded `platform-browser.v1` and
+    `platform-web-app.v1` and asserted they were ABSENT. That is true today and
+    would stay true forever — including after an amendment that stops mentioning
+    either name, at which point this row would go on passing while asserting the
+    absence of two names no document holds. A row that passes for a reason nobody
+    holds is a stale check, not a kept clause. `ledger/checks/clause_named_contracts.py`
+    extracts clause 15 from the contract, collects every backticked `<name>.vN` in
+    it, and checks each against `contracts/`, so the row moves when the clause
+    moves, in either direction.
+    RAN 2026-09-04 → CLAUSE-15-NAMED-CONTRACTS NAMED=6 PRESENT=4
+    MISSING=platform-browser.v1,platform-web-app.v1. Four controls beside it, each
+    run: the candidate's wording in a temp copy (clause names `platform-web.v1`)
+    → NAMED=5 PRESENT=5 MISSING=none, so ratification flips this row green rather
+    than leaving it passing on a dead assertion; a clause naming a contract nobody
+    wrote (`platform-hologram.v1`) → caught, PRESENT=4 with the invented name in
+    MISSING; clause 14, which names no contract → NAMED=0, so the extraction is
+    reading the clause it was asked for and not the whole file; clause 99 →
+    CLAUSE-99-NOT-FOUND-REREAD-THIS-ROW, so a renumbered contract reaches a person
+    rather than passing as an empty green.
+    THE STEWARD HAS NOT ANSWERED YET, AND THIS ROW DOES NOT PRETEND OTHERWISE.
+    `contracts/experience.v1-candidate.md` was filed on 2026-09-04 (commit ba83e65)
+    proposing that clause 15 name `platform-web.v1`; there is no ratification
+    record for it, converge-d3n is BLOCKED on that call, and clause 15 on disk and
+    on main still reads exactly as quoted above. So the quote is verbatim from the
+    text the steward has actually ratified — the umbrella as content-ratified
+    2026-09-03 — and the SYNC row's hash for `contracts/experience.v1.md` matches
+    the file on disk unchanged (nothing in `contracts/` was touched by this lane).
+    Whichever word lands, this row now tells the truth without being edited again:
+    *ratified* flips the count to 5/5 and fails the `expect` above, which is the
+    re-review the SYNC row exists to force; *declined* leaves the count at 6/4 and
+    the row red for the reason it has always been red.
   work: converge-d3n
 
 # ────────────────────────────────────────────────────────────────────────────
