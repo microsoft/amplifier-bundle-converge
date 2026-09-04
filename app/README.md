@@ -114,6 +114,23 @@ proposed them. A session that fails, times out, is missing, or reports anything
 but success does not lose the ask: the proposal is still written from the
 steward's own words and names what went wrong.
 
-The terminal pane is **read-only in this version** — it shows a lane's tmux
-session and takes no keystrokes. Its router (`app/tmux_view.py`) is optional:
-when it is absent, the rest of the app runs unchanged.
+## The console: the manager session, not a chat about it
+
+The terminal pane **is the manager's own session** — what you type there is
+what that session receives, sent as code points to
+`POST /api/tmux/{socket}/{session}/keys`, never a summary the app relays. So
+the word `Enter` typed into it is five letters, not the Return key. Nothing is
+echoed into the pane by the app: the next capture of the pane is what appears,
+so the screen can only ever show what the session itself did with the line.
+
+The keyboard belongs to the manager's own session and to nothing else. Watching
+a lane reuses the same pane, and that pane takes no keystrokes — the contract
+promises the console carries the manager conversation and says nothing about
+typing into somebody else's worker. When there is no session on the other end
+the controls go quiet and the footer says why. Either way the footer says the
+same thing about what this is: **not a chat**. It is not a conversation built
+into the app, in this version or any planned one.
+
+Its router (`app/tmux_view.py`) is optional: when it is absent, the rest of the
+app runs unchanged — and with it absent there is no path for a keystroke, which
+`app/tests/test_console_input.py` asserts rather than assumes.

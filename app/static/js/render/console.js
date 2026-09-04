@@ -97,9 +97,13 @@ function setTyping(live) {
   }
   if (c.send) c.send.disabled = !live;
   if (c.note) {
+    // Both states say "not a chat", because that is true of both. What changes
+    // is WHY you cannot type right now — and it is never "this version is
+    // read-only": the app has taken keystrokes since converge-tfu. Saying so
+    // would send a steward looking for a feature that is already here.
     c.note.textContent = live
       ? 'not a chat — this pane is the manager session itself'
-      : 'read-only in this version';
+      : 'not a chat — no manager session on the other end to type into';
   }
 }
 
