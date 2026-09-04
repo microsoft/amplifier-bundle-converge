@@ -444,3 +444,56 @@ def test_both_sockets_are_actually_asked():
     run.read_tmux_panes(env)
     assert any("-L" not in a for a in env.argvs)
     assert any(a[:3] == ["tmux", "-L", "hw"] for a in env.argvs)
+
+
+# ---------------------------------------------------------------------------
+# a finished wave tidies up — and a tidy repository is not an empty one
+# ---------------------------------------------------------------------------
+
+
+CLEANED_LANE = run.Lane("units-fix", "/w/batch/lanes/units-fix/repo", "lane/units-fix",
+                        "base0000", "hw__batch__units-fix")
+WHILE_RUNNING = [{"at": "T0", "sessions": ["hw__batch__units-fix"],
+                  "worktrees": [{"branch": "lane/units-fix"}]}]
+
+
+def test_a_merged_and_cleaned_up_lane_is_ended_not_a_fabrication():
+    """The measured regression: two real merged lanes reported as 'no lanes'."""
+    verdict = run.assert_lane_is_real(CLEANED_LANE, [], [], WHILE_RUNNING)
+    assert verdict["state"] == run.ENDED
+    assert verdict["ok"] is True
+    assert verdict["observed_running"]["at"] == "T0"
+
+
+def test_a_lane_never_seen_running_and_with_no_worktree_is_still_not_a_lane():
+    assert run.assert_lane_is_real(CLEANED_LANE, [], [], [])["state"] == run.NOT_A_LANE
+
+
+def test_half_an_observation_does_not_resurrect_a_lane():
+    """Session seen but its worktree never was: that is not the clause-5 bar."""
+    half = [{"at": "T0", "sessions": ["hw__batch__units-fix"], "worktrees": []}]
+    assert run.assert_lane_is_real(CLEANED_LANE, [], [], half)["state"] == run.NOT_A_LANE
+
+
+def test_another_lanes_observation_does_not_vouch_for_this_one():
+    other = [{"at": "T0", "sessions": ["hw__batch__index-fix"],
+              "worktrees": [{"branch": "lane/index-fix"}]}]
+    assert run.assert_lane_is_real(CLEANED_LANE, [], [], other)["state"] == run.NOT_A_LANE
+
+
+# ---------------------------------------------------------------------------
+# a dated brief is dated whether or not a time follows the date
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("heading", ["## 2026-09-04T04:01Z", "## 2026-09-04",
+                                     "on 2026-09-04, at last"])
+def test_an_iso_timestamp_counts_as_a_dated_entry(heading):
+    import re
+    pattern = re.compile(r"\b20\d{2}-\d{2}-\d{2}(?![-\d])")
+    assert pattern.search(heading), heading
+
+
+def test_the_brief_check_actually_uses_that_pattern():
+    import inspect
+    assert r"(?![-\d])" in inspect.getsource(run.step_brief)

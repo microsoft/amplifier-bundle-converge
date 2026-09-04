@@ -550,7 +550,32 @@ UNPROVEN = "unproven"
 NOT_A_LANE = "not_a_lane"
 
 
-def assert_lane_is_real(lane: Lane, worktrees: list[dict], panes: list[dict]) -> dict:
+def _observed_as_lane(lane: Lane, observations: list[dict]) -> dict | None:
+    """Was this lane seen with BOTH halves, in one reading, while it ran?
+
+    A finished wave tidies up after itself: the manager merges the branches and
+    removes the worktrees, and the terminal sessions exit with the lanes. After
+    that, git and the multiplexer are telling the truth when they say there is
+    nothing there — but "nothing there NOW" is not "never was", and treating
+    the two the same condemns every successfully completed wave as having run
+    no lanes at all. (Measured: the first wave this harness drove did exactly
+    that, and the harness called two real, merged lanes 'no lanes found'.)
+
+    So a reading taken WHILE the wave ran is admitted as evidence — but only a
+    reading that carries both halves at once for this lane, which is the same
+    bar `assert_lane_is_real` applies in the present tense.
+    """
+    for sample in observations or []:
+        if lane.tmux and lane.tmux not in sample.get("sessions", []):
+            continue
+        branches = [w.get("branch") for w in sample.get("worktrees", [])]
+        if lane.branch and lane.branch in branches:
+            return {"at": sample.get("at"), "session": lane.tmux, "branch": lane.branch}
+    return None
+
+
+def assert_lane_is_real(lane: Lane, worktrees: list[dict], panes: list[dict],
+                        observations: list[dict] | None = None) -> dict:
     """One lane is real iff it has its OWN worktree AND its OWN terminal session.
 
     operation.v1 clause 5: "A lane is a worker session's own working copy,
@@ -580,6 +605,22 @@ def assert_lane_is_real(lane: Lane, worktrees: list[dict], panes: list[dict]) ->
          if w["path"].rstrip("/") == lane.worktree.rstrip("/")),
         None,
     )
+    seen_running = _observed_as_lane(lane, observations or [])
+    if registered is None and seen_running:
+        # Cleaned up after a finished wave, but caught in the act earlier.
+        return {
+            "lane": lane.name, "state": ENDED, "ok": True,
+            "worktree": lane.worktree, "branch": lane.branch,
+            "worktree_registered": False, "terminal_sessions": [],
+            "recorded_terminal": lane.tmux,
+            "observed_running": seen_running,
+            "findings": [
+                f"no worktree registered at {lane.worktree} now, but at "
+                f"{seen_running['at']} this lane's worktree ({lane.branch}) and its "
+                f"terminal session ({lane.tmux}) were both live in one reading taken "
+                "from outside the manager session; it ran and was cleaned up after"
+            ],
+        }
     if registered is None:
         findings.append(f"no worktree registered at {lane.worktree}")
     elif registered.get("branch") and lane.branch and registered["branch"] != lane.branch:
@@ -621,6 +662,7 @@ def assert_lane_is_real(lane: Lane, worktrees: list[dict], panes: list[dict]) ->
         "worktree_registered": registered is not None,
         "terminal_sessions": sessions,
         "recorded_terminal": lane.tmux,
+        "observed_running": seen_running,
         "findings": findings,
     }
 
@@ -1127,20 +1169,26 @@ def step_derived(ctx: Context) -> Result:
             f"The sample gap could not be put into the environment: {seeding['why']}",
             evidence={"seeding": seeding},
         )
-    fixture_state = _fixture_gap_state(ctx)
+    fixture_now = _fixture_gap_state(ctx)
+    # "Were the gaps really there?" is a question about the fixture BEFORE the
+    # wave. When a wave ran, that reading was taken at seed time and is the
+    # only honest basis; the current reading answers a different question and
+    # is reported beside it, never in place of it.
+    planted = (ctx.wave or {}).get("fixture_before") or fixture_now
+    planted_when = "before the wave" if (ctx.wave or {}).get("fixture_before") else "now"
     items, error = read_tracker_items(ctx.env, ctx.project)
     if error:
         return Result(SKIP, "The queue did not answer.", reason=error)
 
-    if ctx.mode == DRIVEN and fixture_state:
+    if ctx.mode == DRIVEN and planted:
         expected = set(ctx.answer_key.get("expected_red_rules_before", []))
-        actual = set(fixture_state.get("red_rules", []))
+        actual = set(planted.get("red_rules", []))
         if expected and expected != actual:
             return Result(
                 FAIL,
-                "The fixture is not in its planted state: expected rules "
-                f"{sorted(expected)} red, found {sorted(actual)}.",
-                evidence={"fixture": fixture_state},
+                f"The fixture was not in its planted state ({planted_when}): expected "
+                f"rules {sorted(expected)} red, found {sorted(actual)}.",
+                evidence={"fixture_planted": planted, "fixture_now": fixture_now},
             )
 
     # Clause 1: every item must NAME its contract and SAY what done looks like.
@@ -1185,7 +1233,9 @@ def step_derived(ctx: Context) -> Result:
             offenders.append(record)
 
     weakly = [s for s in sampled if s["basis"] == "weak"]
-    evidence = {"seeding": seeding, "fixture": fixture_state, "sampled": len(sampled),
+    evidence = {"seeding": seeding, "fixture_planted": planted,
+                "fixture_planted_read": planted_when, "fixture_now": fixture_now,
+                "sampled": len(sampled),
                 "contracts_in_repo": contracts,
                 "named_only_by_bare_stem": weakly,
                 "without_contract_or_done": offenders}
@@ -1222,8 +1272,11 @@ def step_derived(ctx: Context) -> Result:
             f"; {len(weakly)} name it only by a bare stem rather than a versioned "
             "reference, which is recorded but not counted against them"
         )
-    if fixture_state:
-        detail += f"; the fixture's own kit reports rules {fixture_state.get('red_rules')} red"
+    if planted:
+        detail += (f"; the fixture's own kit reported rules "
+                   f"{planted.get('red_rules')} red {planted_when}")
+    if fixture_now and fixture_now is not planted:
+        detail += f" and reports {fixture_now.get('red_rules')} red now"
     return Result(PASS, detail + ".", evidence=evidence)
 
 
@@ -1237,14 +1290,25 @@ def step_lanes(ctx: Context) -> Result:
     panes = read_tmux_panes(ctx.env)
     lanes = (read_manifest(ctx.env, ctx.wave_workspace)
              or lanes_from_worktrees(worktrees, panes))
-    lanes = [ln for ln in lanes if ctx.env.exists(ln.worktree)]
+    samples = (ctx.wave or {}).get("samples", [])
+    # A lane whose worktree is gone is NOT dropped here. A finished wave
+    # removes its worktrees after merging, and discarding those rows turned a
+    # completed two-lane wave into "no lanes found" (measured, run C). Such a
+    # lane is kept and judged by assert_lane_is_real, which can place it from
+    # a reading taken while it ran; only a lane with neither a worktree nor an
+    # observation is dropped, and it is counted so the drop is never silent.
+    kept, vanished = [], []
+    for lane in lanes:
+        if ctx.env.exists(lane.worktree) or _observed_as_lane(lane, samples):
+            kept.append(lane)
+        else:
+            vanished.append(lane.name)
+    lanes = kept
 
     # Concurrency, read while the wave was still running (the wave driver's
     # samples). Everything else in this step reads what a lane LEFT; this is
     # the only reading that could only have been true in the present tense.
-    observed = assert_lanes_observed_live(
-        (ctx.wave or {}).get("samples", []), ctx.width
-    )
+    observed = assert_lanes_observed_live(samples, ctx.width)
 
     if not lanes:
         return Result(
@@ -1254,10 +1318,11 @@ def step_lanes(ctx: Context) -> Result:
             "to running the work in-session.",
             evidence={"repo_read": ctx.wave_repo, "workspace_read": ctx.wave_workspace,
                       "worktrees": len(worktrees), "terminal_panes": len(panes),
+                      "dropped_no_worktree_no_observation": vanished,
                       "observed_live": observed},
         )
 
-    reality = [assert_lane_is_real(ln, worktrees, panes) for ln in lanes]
+    reality = [assert_lane_is_real(ln, worktrees, panes, samples) for ln in lanes]
     distinct = assert_lanes_are_distinct(lanes)
     real = [r for r in reality if r["ok"]]
     impostors = [r for r in reality if r["state"] == NOT_A_LANE]
@@ -1282,6 +1347,7 @@ def step_lanes(ctx: Context) -> Result:
         "repo_read": ctx.wave_repo,
         "workspace_read": ctx.wave_workspace,
         "lane_source": lanes[0].source,
+        "dropped_no_worktree_no_observation": vanished,
         "lanes": [{"name": ln.name, "worktree": ln.worktree, "branch": ln.branch,
                    "terminal": ln.tmux} for ln in lanes],
         "lane_reality": reality,
@@ -1479,7 +1545,10 @@ def step_brief(ctx: Context) -> Result:
     lowered = text.lower()
     present = [part for part in BRIEF_PARTS if part in lowered]
     missing = [part for part in BRIEF_PARTS if part not in lowered]
-    dated = bool(re.search(r"\b20\d{2}-\d{2}-\d{2}\b", text))
+    # `\b` after the day rejects an ISO-8601 timestamp -- 2026-09-04T04:01Z has
+    # a word character where the boundary must be, so a perfectly dated brief
+    # read as undated (measured, run C). A date followed by a time is a date.
+    dated = bool(re.search(r"\b20\d{2}-\d{2}-\d{2}(?![-\d])", text))
     sentences = [
         ln.strip() for ln in text.splitlines()
         if ln.strip().endswith(".") and len(ln.strip().split()) >= 6
@@ -1693,6 +1762,13 @@ def drive_wave(ctx: Context, objective: Path, deadline_s: float,
     if not seeding.get("seeded"):
         record["why"] = f"the fixture could not be seeded: {seeding.get('why')}"
         return record
+
+    # The planted state, read BEFORE a manager session exists to change it.
+    # Step (e) asserts the gaps were really there; once the wave has closed
+    # them, that assertion can only be made against this reading. Taking it
+    # afterwards is how the harness accused its own successful wave of
+    # arriving at a fixture that was never red (measured, run C).
+    record["fixture_before"] = _fixture_gap_state(ctx)
 
     launcher = resolve_launcher(ctx.env)
     record["launcher"] = launcher

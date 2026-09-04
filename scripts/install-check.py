@@ -200,12 +200,39 @@ def check_work_queue_service(ctx: Context) -> Result:
             "The managed service is installed and active; pass --project NAME to also prove a live query.",
             {"managed_service_active": True, "live_query": False},
         )
+
+    # Not managed, no project named — but the promise this check makes is
+    # REACHABILITY ("without a reachable queue service no claim or heartbeat
+    # can be recorded"), and a managed unit is one way to be reachable, not
+    # the only way. `instances` reads the project list out of the shared
+    # server, so a clean exit proves a server is answering right now without
+    # needing any project to exist yet.
+    #
+    # This is not a loosening to make a red go green. It is the same
+    # distinction work-tracker's own status draws between "nothing is running"
+    # and "something is running that we did not install" — the second is
+    # usable as-is. Measured: a container whose queue runs detached (systemd
+    # --user is unavailable to root there) served a whole wave — claims,
+    # custody and resolutions — while this check called it missing.
+    reachable = run_command(ctx, ["amplifier-work-tracker", "instances"])
+    if reachable.ok:
+        return Result(
+            OK,
+            "No managed service, but a queue server is answering "
+            "(`amplifier-work-tracker instances` succeeded), so claims and "
+            "heartbeats can be recorded. It is unmanaged: nothing will restart "
+            "it after a reboot.",
+            {"managed_service_active": False, "managed_service_installed": installed,
+             "reachable_unmanaged": True, "live_query": False},
+        )
     return Result(
         MISSING,
         "The managed service is not active"
         + (" (it is installed)." if installed else " and not installed.")
-        + " No --project was given, so no live query could confirm another server.",
-        {"managed_service_active": False, "live_query": False},
+        + " No --project was given, and no unmanaged server answered either: "
+        + (first_line(reachable.text) or reachable.failure or f"exit {reachable.code}"),
+        {"managed_service_active": False, "reachable_unmanaged": False,
+         "live_query": False},
     )
 
 
