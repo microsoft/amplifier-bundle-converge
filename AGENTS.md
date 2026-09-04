@@ -20,7 +20,7 @@ is and how to change one).
 
 ## 1. Converge toward the vision and the contracts
 
-`docs/VISION.md` says where this project is going. The four contracts in
+`docs/VISION.md` says where this project is going. The contracts in
 `contracts/` say what must be true along the way. Everything you do moves the
 repository toward them.
 
@@ -58,8 +58,9 @@ session. `PINS.md` records exactly what each one checks, including where they
 currently disagree. **If a guard refuses you, do not work around it.** The
 refusal is the rule working. If the guard is wrong, file that as work.
 
-All four contracts are `(DRAFT)` today, so neither guard is currently blocking
-anything. The rule still holds — write proposals, not edits, the moment one locks.
+Every contract in `contracts/` is `(DRAFT)` today, so neither guard is currently
+blocking anything. The rule still holds — write proposals, not edits, the moment
+one locks.
 
 ## 3. Where the contract check lives
 
@@ -68,19 +69,22 @@ whether that clause is currently *Kept · Not yet · Broken · Pinned open · Ca
 check*. Its format is `docs/LEDGER-FORMAT.md`. It is derived from the contracts,
 never hand-edited into agreement with the code.
 
-Run the check for one contract:
+**Both the ledger and the kits exist, and both run today.** A claim that a
+contract is kept is checkable here — so check it, and paste what you saw. An
+unchecked claim is still an opinion and must be labelled as one.
 
 ```
-python conformance/<contract>/run.py
+uv run --with pyyaml ledger/checks/verify.py     # the ledger's own self-checks
+uv run conformance/documents/run.py .            # a kit that reads the repository
 ```
+
+`conformance/README.md` names every kit, what it judges, and how to run it —
+the repository-reading kits take a path, the experience kits take the running
+app's URL. Read it before you run one.
 
 The documents kit's rule 9a reads the work queue, which is not a file in this tree — refresh its export with `uv run scripts/export-work-items.py --project converge --out docs/work-items.json` before you trust that rule's verdict.
 
-**Neither the ledger nor the kits exist yet** — they are the next wave of work.
-Until they do, a claim that a contract is kept is an opinion, and must be
-labelled as one.
-
-Rules for the check itself, once it exists:
+Rules for the check itself:
 
 - **A check that cannot run reports "Can't check", never a pass.** Where a rule
   cannot yet be enforced, say so rather than pretend.

@@ -9,14 +9,23 @@ line here is wrong, sessions act on it anyway — fix it the moment it drifts.
 |---|---|
 | Vision | `docs/VISION.md` |
 | The full protocol (rules behind the vision) | `docs/PROTOCOL.md` |
-| Contracts | `contracts/{documents,operation,surface,composition}.v1.md` |
+| Contracts | `contracts/*.v1.md` — fourteen today (`ls contracts/`) |
 | Contracts README | `docs/CONTRACTS-README.md` |
 | Standing rules for sessions | `AGENTS.md` |
 | Participant kit for other repositories | `docs/workspace-template/` |
 | Ledger format | `docs/LEDGER-FORMAT.md` |
-| Conformance ledger | `ledger/rows.yaml` — **not seeded yet** |
-| Conformance kits | `conformance/<contract>/run.py` — **not built yet** |
+| Conformance ledger | `ledger/rows.yaml` — seeded; self-check with `uv run --with pyyaml ledger/checks/verify.py` |
+| Conformance kits | `conformance/<contract>/run.py` — `conformance/README.md` names each one and how to run it |
 | Integration branch | `main` |
+
+Measured on this tree, 2026-09-04:
+
+```
+$ uv run --with pyyaml ledger/checks/verify.py
+ALL LEDGER SELF-CHECKS PASS                    (175 rows, 14 contracts, exit 0)
+$ uv run conformance/documents/run.py .
+VERDICT: PASS  (pass=18 fail=0 skip=9)
+```
 
 ## Naming
 
@@ -25,7 +34,7 @@ line here is wrong, sessions act on it anyway — fix it the moment it drifts.
   `contracts/documents.v2-candidate.md`.
 - A locked contract carries `(FROZEN <date>)` in its first heading line; a draft
   carries `(DRAFT)`. Status appears nowhere else in the file.
-- All four contracts are `(DRAFT)` today. None is locked.
+- Every contract in `contracts/` is `(DRAFT)` today. None is locked.
 
 ## The pre-push guard
 
