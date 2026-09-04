@@ -376,34 +376,34 @@
   kind: sync
   pins:
     - file: contracts/composition.v1.md
-      sha256: f9b6e5ed54b07a031af8beec12d8181d977fea9b0abbe0c861544442b1af2dba
+      sha256: 8e0a02822c815f8231828d5a6a6678c0827aa338ac32dc9707a66c46090c1c87
     - file: contracts/documents.v1.md
       sha256: 856026df5e3e56bf5f92080b3a81371462ffffb6d75be171d576cf62778234ea
     - file: contracts/operation.v1.md
-      sha256: 30b5a11a6d82937b0d0880916db428ffd6927e82433cdf9c94656eab7ff850bc
+      sha256: afc3541d7d3c04afa88f6875c0e25929a879885c76b794d03df3ff42ae5ec5ab
     - file: contracts/surface.v1.md
-      sha256: ed3c65c803f9f167ed05f0d67e060c8da1d83b219eb3618f75a5a7069344e0de
+      sha256: b4d3f3838637ec6d7781735a59db2bf7386ea66c265dce1122a77513e514741d
     # The experience family, ratified DRAFT 2026-09-03. Pinned by converge-pq2.
     - file: contracts/experience.v1.md
-      sha256: d6ebe7c7723778be84603fb8078522aaf379ee7b4229179d84ef5d5c38f4fc14
+      sha256: 155450bae4e2035a358e346d4227635fc07a70f8a9434fb8cf65368c7bee987e
     - file: contracts/experience-direction.v1.md
-      sha256: a1768a4b9231e05ca3951d096cc6bda288aaf7afa69f3bfff7eeba7a4f44a194
+      sha256: 3be94a533934781ea63c0300b0e82c9038f0b9b71cfb1c35fe8225db0ef60a07
     - file: contracts/experience-operation.v1.md
-      sha256: 7e9a3626bec538e5587404e4d29d01dcc2e2144a9a2699048fd3c2d9d833f3e9
+      sha256: 800ab514ba093e215f4c7db286096feaad7655d8a4741612e830002089a252b4
     - file: contracts/experience-console.v1.md
-      sha256: bdc6e89faf04af0c47b595b857404a1fbaf4da0c282c7794b229d9a5a3664239
+      sha256: 11c2314132a6cb9a150fd4d4f163677fd6e657fb97c0a8b5d83d0e371fadd134
     - file: contracts/experience-collaboration.v1.md
-      sha256: ec6384a875c3e6fec233076f88f8942f3e829881af6f70c797c5f0ae83b0315b
+      sha256: 09a59ed9f486f23824c45ede18282eb92e572fc311f6e57d1cd1098a70f4e868
     - file: contracts/platform-web.v1.md
-      sha256: 179285607abf8990d19b3345ad5b87f22994729f904544949192ddaa1cf0b076
+      sha256: a7afe69a5c976ceebee50ed015f673448c5eece19a9986d69c0b5209c73a5e67
     - file: contracts/platform-ios.v1.md
-      sha256: b024e030ac5d84cd3ca7c4f948433896c924e6a2e5ee21a1bed667eb570cfda3
+      sha256: 46b3842c18a314997e33bbdccfe14081a2c82d6613cfe54ca9246bc101c7f43a
     - file: contracts/platform-android.v1.md
-      sha256: 47040a45ecbfd3d523db32d6a18bd6502424cb5cea24176894b8ed2be24616e8
+      sha256: 1bdd6a2ef68eb8d660d9d966ad235c66b71f8852c276809b367c3b86b456bc39
     - file: contracts/platform-macos.v1.md
-      sha256: e543dd9f6c66f120d6ef50b726ad6723134d2e1531eec336776c9dd21289a631
+      sha256: c5cf732a7732cddd653d459c98b3627796fbaa48bc136abe02dc5cc7925911a2
     - file: contracts/platform-windows.v1.md
-      sha256: 8459e971b141ffb607f2c318bad70a37ebff12ff867d3cda5e247310c262b8b1
+      sha256: e1b6f33ce7b814eb0f40023327cb02fa433891831ccce552686bce14613a2d6a
   assertion:
     kind: probe
     ref: 'sha256sum contracts/*.md'
@@ -459,6 +459,8 @@
 # composition.v1 — 9 rows.  The healthy one: 7 of 9 CONFORM, each by a kit rule
 # or a command that fails when the fact stops being true.
 # ─────────────────────────────────────────────────────────────────────────────
+  notes: |
+    RAN 2026-09-04 → re-pinned after commit 19a3d7b, whose diff against every contract is line 1 only (the H1 status parenthetical recording the steward's given words); no clause text moved, so no row's disposition can have changed. Re-review satisfied by `git diff 19a3d7b~1 19a3d7b -- contracts/` (14 files, 14 insertions, 14 deletions).
 
 - id: CVG-001
   title: lean base, never the heavy package
