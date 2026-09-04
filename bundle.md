@@ -45,6 +45,15 @@ includes:
 # candidate-guard hook remains the structural enforcement that matters. Do NOT
 # reintroduce a session-wide spawn policy here — per-role spawn tool policy is an
 # upstream feature request.
+#
+# Absence HERE is not the same as absence on a user's machine. Measured
+# 2026-09-04 (converge-w3v): this file was clean, the kit's rules 6a and 6b both
+# PASSed, and a published fork of this same bundle — app-installed on the same
+# host — was stripping tool-bash, tool-delegate and tool-skills from every
+# spawned helper in every session on it, unrelated work included. Rule 6c of
+# conformance/composition/ is the standing check for that case: it composes the
+# neighbour's session the way the HOST does, and names the installed entry that
+# carries the policy.
 ---
 
 # Converge
