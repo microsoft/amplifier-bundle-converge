@@ -33,6 +33,11 @@
           <button id="rawToggle" class="tiny-button" type="button" aria-pressed="false">Raw</button>
           <button id="copyRendered" class="tiny-button" type="button">Copy</button>
           <button id="downloadDoc" class="tiny-button" type="button">Download</button>
+          <!-- Ask at document scope. The paragraph-scoped one sits beside each
+               paragraph in the Reading view; every-document scope is chosen in
+               the dialog this opens. Wired in render/direction.js, not main.js,
+               because that is the module that owns the Direction controls. -->
+          <button id="askButton" class="tiny-button" type="button" data-ask data-ask-scope="document">Ask…</button>
         </div>
       </div>
 
