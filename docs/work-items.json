@@ -182,7 +182,7 @@
   {
     "id": "converge-ck8",
     "title": "W7 honest debts: 9a items, stale ledger expectations, lane-brief 'residual is not a blocker', announcement locked/frozen re-check",
-    "status": "held",
+    "status": "resolved",
     "description": "Contract: documents.v1 §9–10, operation.v1 §5, the announcement. Four resolved queue items still use machine state words in their acceptance (documents kit 9a); ledger rows CVG-051 and CVG-061 carry expectations two merges stale; two lanes this week wrote BLOCKED although every deliverable was verified because a criterion was satisfiable only outside their ownership — lane-brief needs the rule 'a criterion outside your ownership is recorded as a residual, and the outcome is A' stated where the evaluator reads it; docs/ANNOUNCEMENT.md and README must use 'locked' consistently after PROTOCOL v3.",
     "acceptance": "GIVEN the documents kit WHEN run with --work-items THEN rule 9a PASS; GIVEN verify.py THEN CVG-051/CVG-061 re-derived with RAN lines and exit 0; GIVEN skills/lane-brief/SKILL.md and docs/workspace-template/GOAL-FILE.md.template THEN the residual-not-blocker rule is present in the 'Done means' section; GIVEN grep THEN zero 'frozen' in ANNOUNCEMENT.md/README.md outside a parenthetical.",
     "design": null,
