@@ -1,0 +1,12 @@
+{
+ "user": "a-reader",
+ "managers": [
+  {
+   "id": "m1",
+   "name": "Example",
+   "status": "working",
+   "statusLabel": "Working",
+   "needs": 1
+  }
+ ]
+}

@@ -1,0 +1,38 @@
+{
+ "waves": [
+  {
+   "id": "w1",
+   "label": "Wave 1",
+   "title": "Prove the umbrella is checkable",
+   "phase": "Working",
+   "cls": "run",
+   "progress": 40,
+   "items": []
+  },
+  {
+   "id": "w2",
+   "label": "Wave 2",
+   "title": "Place every behavior",
+   "phase": "Done",
+   "cls": "done",
+   "progress": 100,
+   "items": []
+  }
+ ],
+ "lanes": [
+  {
+   "id": "w1-kit",
+   "status": "working",
+   "statusLabel": "Working",
+   "wave": "Wave 1",
+   "title": "build the kit",
+   "worker": "w1-kit",
+   "age": "20m",
+   "evidence": "3 commits"
+  }
+ ],
+ "timeline": [],
+ "returnBrief": [
+  "You were away 20m."
+ ]
+}

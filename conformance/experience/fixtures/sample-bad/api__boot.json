@@ -1,0 +1,17 @@
+{
+ "user": "a-steward",
+ "managers": [
+  {
+   "id": "m1",
+   "name": "Example",
+   "status": "running",
+   "statusLabel": "RUNNING",
+   "summary": "",
+   "needs": 7,
+   "lanesActive": 3,
+   "lanesMax": 4,
+   "repos": 1,
+   "projects": 1
+  }
+ ]
+}

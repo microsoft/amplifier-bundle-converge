@@ -1,0 +1,83 @@
+{
+ "openapi": "3.1.0",
+ "paths": {
+  "/": {
+   "get": {
+    "summary": "/"
+   }
+  },
+  "/api/boot": {
+   "get": {
+    "summary": "/api/boot"
+   }
+  },
+  "/api/managers/{mid}": {
+   "get": {
+    "summary": "/api/managers/{mid}"
+   }
+  },
+  "/api/managers/{mid}/operation": {
+   "get": {
+    "summary": "/api/managers/{mid}/operation"
+   }
+  },
+  "/api/managers/{mid}/docs/{repo}/{doc}": {
+   "get": {
+    "summary": "/api/managers/{mid}/docs/{repo}/{doc}"
+   }
+  },
+  "/api/needs/{mid}": {
+   "get": {
+    "summary": "/api/needs/{mid}"
+   }
+  },
+  "/api/managers/{mid}/decision": {
+   "post": {
+    "summary": "/api/managers/{mid}/decision"
+   }
+  },
+  "/api/managers/{mid}/priority": {
+   "post": {
+    "summary": "/api/managers/{mid}/priority"
+   }
+  },
+  "/api/managers/{mid}/feedback": {
+   "post": {
+    "summary": "/api/managers/{mid}/feedback"
+   }
+  },
+  "/api/managers/{mid}/steer": {
+   "post": {
+    "summary": "/api/managers/{mid}/steer"
+   }
+  },
+  "/api/managers/{mid}/ask": {
+   "post": {
+    "summary": "/api/managers/{mid}/ask"
+   }
+  },
+  "/login": {
+   "get": {
+    "summary": "/login"
+   },
+   "post": {
+    "summary": "/login"
+   }
+  },
+  "/logout": {
+   "post": {
+    "summary": "/logout"
+   }
+  },
+  "/api/tmux/{socket}/{session}": {
+   "get": {
+    "summary": "/api/tmux/{socket}/{session}"
+   }
+  },
+  "/api/tmux/{socket}/{session}/keys": {
+   "post": {
+    "summary": "/api/tmux/{socket}/{session}/keys"
+   }
+  }
+ }
+}

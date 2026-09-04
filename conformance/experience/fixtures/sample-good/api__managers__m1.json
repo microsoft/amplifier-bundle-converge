@@ -1,0 +1,30 @@
+{
+ "id": "m1",
+ "name": "Example",
+ "status": "working",
+ "statusLabel": "Working",
+ "summary": "Two lanes landed; one is waiting on your word.",
+ "repositories": [
+  {
+   "id": "r1",
+   "name": "Repo one",
+   "path": "/tmp/r1",
+   "docs": [
+    {
+     "id": "vision",
+     "title": "Vision",
+     "state": "draft",
+     "standing": "Not yet",
+     "path": "docs/VISION.md"
+    },
+    {
+     "id": "experience",
+     "title": "Experience",
+     "state": "draft",
+     "standing": "Kept",
+     "path": "contracts/experience.v1.md"
+    }
+   ]
+  }
+ ]
+}
