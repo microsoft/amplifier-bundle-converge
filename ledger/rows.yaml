@@ -380,7 +380,7 @@
     - file: contracts/documents.v1.md
       sha256: 856026df5e3e56bf5f92080b3a81371462ffffb6d75be171d576cf62778234ea
     - file: contracts/operation.v1.md
-      sha256: afc3541d7d3c04afa88f6875c0e25929a879885c76b794d03df3ff42ae5ec5ab
+      sha256: db74407c8c792e9bda473f6e74132919983a5544b5f9419df10cdbfd0a2f6064
     - file: contracts/surface.v1.md
       sha256: b4d3f3838637ec6d7781735a59db2bf7386ea66c265dce1122a77513e514741d
     # The experience family, ratified DRAFT 2026-09-03. Pinned by converge-pq2.
@@ -460,6 +460,7 @@
 # or a command that fails when the fact stops being true.
 # ─────────────────────────────────────────────────────────────────────────────
   notes: |
+    RAN 2026-09-04 → operation.v1 re-pinned after the ratified turnkey sentence (Conformance-kit-asserts section + changelog row; `git diff` shows no Core clause changed).
     RAN 2026-09-04 → re-pinned after commit 19a3d7b, whose diff against every contract is line 1 only (the H1 status parenthetical recording the steward's given words); no clause text moved, so no row's disposition can have changed. Re-review satisfied by `git diff 19a3d7b~1 19a3d7b -- contracts/` (14 files, 14 insertions, 14 deletions).
 
 - id: CVG-001
@@ -753,7 +754,7 @@
   contract:
     file: contracts/operation.v1.md
     clause: "Conformance kit asserts, Turnkey"
-    quote: "**Red today** — this is the work list."
+    quote: "**First green 2026-09-04 — nine of nine steps, twice, in fresh containers, with a manager session that was not the integrator (`evaluations/turnkey/RESULT.md`); it re-runs on every merge.**"
   disposition: CONFORMS
   assertion:
     kind: absence

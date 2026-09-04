@@ -74,7 +74,7 @@ service for provenance. One install verifies each and names what is missing.
 
 - **Turnkey:** fresh environment → one install → start a project, derive from a
   sample gap, run two lanes, tend, judge, integrate, re-check, brief → green.
-  **Red today** — this is the work list.
+  **First green 2026-09-04** — nine of nine steps, twice, in fresh containers, with a manager session that was not the integrator (`evaluations/turnkey/RESULT.md`); it re-runs on every merge.
 - Every lane has a terminal session and working copy on disk; in-session
   sub-agents never hold work items.
 - Lanes are filled only with disjoint items; adjacent items appear as one lane.
@@ -89,3 +89,9 @@ service for provenance. One install verifies each and names what is missing.
 - The remote-lane interface shape.
 - A namespace for Converge's own worker helpers, should the standard ones prove
   insufficient.
+
+## Changelog
+
+| Date | Change | Evidence |
+|---|---|---|
+| 2026-09-04 | Turnkey sentence: red → first green recorded (owner word "ratified") | evaluations/turnkey/RESULT.md GREEN 9·0·0 ×2; docs/workflow/owner-ratifications-2026-09-03.md round 4 |

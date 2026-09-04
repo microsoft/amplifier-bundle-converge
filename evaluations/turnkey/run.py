@@ -90,6 +90,60 @@ RETURN_LOG = "docs/workflow/OWNER-RETURN-LOG.md"
 # The five parts of a brief, in order (operation.v1 clause 10).
 BRIEF_PARTS = ["time away", "finished", "stuck", "needs you", "quietly broken"]
 
+# A part is present in an ENTRY when a line of that entry OPENS with the part's
+# own label -- the labelled form `modes/converge-manager.md` clause 10 requires
+# (`**Time away.** ...`), a list item carrying it, or the bare label closed by
+# its punctuation. Asking whether the five words appear ANYWHERE in the file is
+# the defect this shape replaces: a header, a footnote, or a paragraph that
+# happens to use them passed the old check with no brief in the file at all.
+# Prose mentioning a word in passing does not match: the label must open a line
+# AND be closed by a bold marker or by `.`/`:`/em-dash.
+_PART_LABELS = [
+    ("time away", r"time[ \t]+away"),
+    ("finished", r"finished"),
+    ("stuck", r"stuck"),
+    ("needs you", r"needs[ \t]+you"),
+    ("quietly broken", r"(?:anything[ \t]+)?quietly[ \t]+broken"),
+]
+
+
+def _part_pattern(label: str) -> re.Pattern:
+    return re.compile(
+        r"^[ \t]*(?:(?:[-*+>]|\d+[.)])[ \t]*)*"           # a list marker or quote, if any
+        r"(?:"
+        r"(?:\*\*|__)[ \t]*" + label + r"[ \t]*[.:\u2014]?[ \t]*(?:\*\*|__)"  # **Label.**
+        r"|" + label + r"[ \t]*[.:\u2014]"                # Label. / Label: / Label --
+        r")",
+        re.IGNORECASE | re.MULTILINE,
+    )
+
+
+BRIEF_PART_PATTERNS = [(name, _part_pattern(pat)) for name, pat in _PART_LABELS]
+
+# An entry heading. `\b` after the day rejects an ISO-8601 timestamp's own
+# hyphens -- 2026-09-04T04:01Z has a word character where the boundary must be,
+# so a perfectly dated brief read as undated (measured, run C). A date followed
+# by a time is a date.
+ENTRY_DATE = re.compile(r"\b20\d{2}-\d{2}-\d{2}(?![-\d])")
+
+# A STAMPED return: the heading the manager session writes the moment the
+# steward's message arrives (`## <date> <HH:MM> - ...`). The stamp is the record
+# that a return happened; the five parts under it are the brief. Counting the
+# two against each other is the only way to see a return that never got one.
+RETURN_STAMP = re.compile(r"^#{2,}[ \t]+(20\d{2}-\d{2}-\d{2})[ \tT]+(\d{2}:\d{2})")
+
+# An entry begins at a dated heading of any depth BELOW the file's own title.
+# `#{2,}` on purpose: the title is `# Owner return log`, and treating it as an
+# entry is precisely how the file's header came to count as a brief.
+ENTRY_HEADING = re.compile(r"^#{2,}[ \t]")
+
+# A line that is a table row or a heading is not a plain sentence. A leading
+# list marker is stripped rather than disqualifying: `- **Stuck.** nothing
+# stopped.` is a sentence written as a list item, and a rule that scored it zero
+# would fabricate a red against a correctly written brief.
+_NOT_A_SENTENCE = re.compile(r"^[|#]")
+_LEADING_MARKER = re.compile(r"^(?:[-*+]|\d+\.)[ \t]+")
+
 # The terminal-session socket the lane launcher uses (HIGHWAY_TMUX_SOCKET's own
 # default). A lane started by the launcher is invisible to a bare `tmux
 # list-panes -a`, which reads the DEFAULT socket only -- so every reading here
@@ -1588,8 +1642,68 @@ def step_rechecked(ctx: Context) -> Result:
     )
 
 
+def plain_sentences(text: str) -> list[str]:
+    """The lines of `text` a person would read as sentences.
+
+    A table row and a heading are not sentences. A leading list marker is
+    stripped rather than disqualifying the line behind it.
+    """
+    out = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or _NOT_A_SENTENCE.match(line):
+            continue
+        line = _LEADING_MARKER.sub("", line).strip()
+        if line.endswith(".") and len(line.split()) >= 6:
+            out.append(line)
+    return out
+
+
+def parse_return_log(text: str) -> list[dict]:
+    """Split a return log into its dated entries, one dict each.
+
+    An entry begins at a DATED heading and runs to the next one. Everything
+    before the first dated heading is the file's own header and belongs to no
+    entry: a header that carries the five words is not a brief, and reading the
+    whole file for them let exactly that pass. An undated heading inside an
+    entry (`### Technical detail`) stays part of the entry it sits in, so a
+    brief written with subsections is not silently truncated.
+
+    Each entry reports whether it is STAMPED (a heading carrying a clock time,
+    which is the record that a return happened) and which of the five parts are
+    written under it.
+    """
+    entries: list[dict] = []
+    current: dict | None = None
+    for line in text.splitlines():
+        if ENTRY_HEADING.match(line) and ENTRY_DATE.search(line):
+            current = {
+                "heading": line.lstrip("#").strip(),
+                "stamped": bool(RETURN_STAMP.match(line)),
+                "lines": [],
+            }
+            entries.append(current)
+        elif current is not None:
+            current["lines"].append(line)
+
+    for entry in entries:
+        body = "\n".join(entry.pop("lines"))
+        entry["parts_present"] = [n for n, p in BRIEF_PART_PATTERNS if p.search(body)]
+        entry["parts_missing"] = [n for n, p in BRIEF_PART_PATTERNS if not p.search(body)]
+        entry["complete"] = not entry["parts_missing"]
+        entry["plain_sentences"] = len(plain_sentences(body))
+    return entries
+
+
 def step_brief(ctx: Context) -> Result:
-    """(i) A plain-sentence return brief produced."""
+    """(i) A plain-sentence return brief produced.
+
+    Judged on ONE entry -- the newest, which is the return this run produced --
+    and never on the file as a whole. Two numbers are reported beside it: how
+    many returns are stamped in the log, and how many of those carry a complete
+    brief. Clause 10 is "a brief on every return", so a stamped return with a
+    part missing under it is the failure the count exists to catch.
+    """
     # The brief belongs to the repository the wave operated on. In driven mode
     # that is the fixture, not the bundle checkout; both are looked in, and the
     # one that answered is named, so a brief is never credited to the wrong repo.
@@ -1608,41 +1722,62 @@ def step_brief(ctx: Context) -> Result:
             "convention names this exact path.",
             evidence={"expected_paths": candidates},
         )
-    lowered = text.lower()
-    present = [part for part in BRIEF_PARTS if part in lowered]
-    missing = [part for part in BRIEF_PARTS if part not in lowered]
-    # `\b` after the day rejects an ISO-8601 timestamp -- 2026-09-04T04:01Z has
-    # a word character where the boundary must be, so a perfectly dated brief
-    # read as undated (measured, run C). A date followed by a time is a date.
-    dated = bool(re.search(r"\b20\d{2}-\d{2}-\d{2}(?![-\d])", text))
-    sentences = [
-        ln.strip() for ln in text.splitlines()
-        if ln.strip().endswith(".") and len(ln.strip().split()) >= 6
-        and not ln.strip().startswith(("|", "#", "-", "*"))
-    ]
-    evidence = {"path": where, "bytes": len(text), "parts_present": present,
-                "parts_missing": missing, "dated": dated,
-                "plain_sentences": len(sentences)}
-    if missing:
+
+    entries = parse_return_log(text)
+    returns = [e for e in entries if e["stamped"]]
+    briefs = [e for e in entries if e["complete"]]
+    unbriefed = [e for e in returns if not e["complete"]]
+    evidence = {
+        "path": where, "bytes": len(text), "dated_entries": len(entries),
+        "stamped_returns": len(returns), "complete_briefs": len(briefs),
+        "unbriefed_returns": [{"heading": e["heading"], "missing": e["parts_missing"]}
+                              for e in unbriefed],
+        "judged": entries[-1] if entries else None,
+    }
+    if not entries:
         return Result(
             FAIL,
-            f"The brief at {where} is missing {len(missing)} of the five required "
-            f"parts: {', '.join(missing)}.",
+            f"The log at {where} has no dated entry, so no return has been briefed "
+            "in it. The file's own header is not a brief, whatever words it carries.",
             evidence=evidence,
         )
-    if not dated:
-        return Result(FAIL, f"The brief at {where} carries no dated entry.", evidence=evidence)
-    if len(sentences) < 3:
+
+    if unbriefed:
+        first = unbriefed[0]
         return Result(
             FAIL,
-            f"The brief at {where} has {len(sentences)} plain sentences; a brief is "
-            "written in sentences, not a status table.",
+            f"{len(unbriefed)} of {len(returns)} stamped return(s) in {where} carry "
+            f"no complete brief. '{first['heading']}' is missing "
+            f"{len(first['parts_missing'])} of the five parts: "
+            f"{', '.join(first['parts_missing'])}.",
+            evidence=evidence,
+        )
+
+    judged = entries[-1]
+    if judged["parts_missing"]:
+        return Result(
+            FAIL,
+            f"The newest entry in {where} ('{judged['heading']}') is missing "
+            f"{len(judged['parts_missing'])} of the five required parts: "
+            f"{', '.join(judged['parts_missing'])}. Counted in the log: dated "
+            f"entries {len(entries)}, stamped returns {len(returns)}, complete "
+            f"briefs {len(briefs)}.",
+            evidence=evidence,
+        )
+    if judged["plain_sentences"] < 3:
+        return Result(
+            FAIL,
+            f"The newest entry in {where} ('{judged['heading']}') has "
+            f"{judged['plain_sentences']} plain sentences; a brief is written in "
+            "sentences, not a status table.",
             evidence=evidence,
         )
     return Result(
         PASS,
-        f"A dated return brief is at {where} with all five parts and "
-        f"{len(sentences)} plain sentences.",
+        f"The newest entry in {where} ('{judged['heading']}') carries all five "
+        f"parts and {judged['plain_sentences']} plain sentences; "
+        f"{len(returns)} stamped return(s) in the log and "
+        f"{len(briefs)} complete brief(s).",
         evidence=evidence,
     )
 
@@ -2051,6 +2186,37 @@ def self_check() -> dict:
                   )["verdict"] == FAIL))
     cases.append(("no samples is a skip, never a pass",
                   assert_lanes_observed_live([])["verdict"] == SKIP))
+
+    # clause 10 -- the five parts belong to ONE entry, and a stamped return
+    # with no brief under it is the thing a file-wide read could never see.
+    five = ("**Time away.** You were gone two hours and one wave ran in it.\n"
+            "**Finished.** Both lanes merged and I re-ran the kit myself.\n"
+            "**Stuck.** Nothing stopped; every lane returned with evidence.\n"
+            "**Needs you.** Nothing needs you, and no call waits on your word.\n"
+            "**Anything quietly broken.** Nothing broke that you did not know.\n")
+    header_only = ("# Owner return log\n\nEvery entry names five parts: time away, "
+                   "finished, stuck, needs you, and anything quietly broken, "
+                   "newest last, each one dated 2026-09-04 or before.\n")
+    briefed = "## 2026-09-04 04:01 - the gate went green\n" + five
+    holed = "\n".join(ln for ln in briefed.splitlines()
+                      if not ln.startswith("**Stuck.")) + "\n"
+    cases.append(("a header carrying the five words is not an entry, so not a brief",
+                  parse_return_log(header_only) == []))
+    cases.append(("one entry with all five parts is a brief, and a stamped return",
+                  parse_return_log(briefed)[0]["complete"] is True
+                  and parse_return_log(briefed)[0]["stamped"] is True))
+    cases.append(("a stamped return missing one part names that part",
+                  parse_return_log(holed)[0]["parts_missing"] == ["stuck"]))
+    cases.append(("the five words spread across separate entries do not combine",
+                  not any(e["complete"] for e in parse_return_log(
+                      "## 2026-09-01 - one\ntime away: two hours and no more.\n"
+                      "## 2026-09-02 - two\nfinished: the lane merged, nothing else.\n"
+                      "## 2026-09-03 - three\nstuck: nothing stopped in this wave.\n"
+                      "## 2026-09-04 - four\nneeds you: nothing needs you today.\n"
+                      "## 2026-09-05 - five\nquietly broken: nothing broke at all.\n"))))
+    cases.append(("an unprompted brief keeps a date-only heading and is not a return",
+                  parse_return_log("## 2026-09-04 - a wave landed\n" + five)[0]["stamped"]
+                  is False))
 
     failed = [name for name, ok in cases if not ok]
     return {

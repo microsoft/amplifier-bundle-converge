@@ -303,4 +303,6 @@ def _run_manual_notice() -> None:  # pragma: no cover - convenience
 
 if __name__ == "__main__":  # pragma: no cover
     _run_manual_notice()
-    print(asyncio.run(tv.list_sessions(SOCKET)))
+    # One frame of one named session.  There is deliberately no way to ask
+    # "what else is on this socket" — see tmux_view's module docstring.
+    print(asyncio.run(tv.CaptureCache().get(SOCKET, "marker")).as_dict()["state"])

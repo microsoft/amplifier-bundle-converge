@@ -1,4 +1,4 @@
-"""Read-only tmux viewer API for the Converge companion app.
+"""tmux pane API for the Converge companion app: one pane read, one pane write.
 
 Field guide: ai-context/BROWSER-TMUX-VIEWER.md — that document is the law here.
 The rules it imposes, and where they live in this file:
@@ -21,7 +21,21 @@ The rules it imposes, and where they live in this file:
   alt-screen TUI scrolls its title row out of view.  ``_split_capture``.
 * Do **not** pass ``-a``: measured, it returns a blank alt screen.
 
-Read-only in this version: there is no send-keys endpoint and no write path.
+The write path (``send_keys``, ``POST /{socket}/{session}/keys``) obeys the same
+rules and adds two of its own, because a mistargeted *write* cannot be undone by
+looking away:
+
+* **Keys are sent as code points, never as key names.**  ``tmux send-keys -H``
+  takes hexadecimal Unicode code points, so a steward who types the word
+  ``Enter`` sends five letters, not the Return key, and a line beginning with
+  ``-`` can never be read as a tmux option.  ``_keys_argv``.
+* **The write is bounded** like the capture is: ``MAX_KEYS`` code points per
+  call, and the response says when it truncated.
+
+There is **no session-listing route**.  ``experience-console.v1`` clause 10 says
+the console shows one manager session's own work and reaches nothing else; a
+route that enumerates every session on a socket is that reach, whether or not a
+client calls it, so it does not exist here.
 """
 
 from __future__ import annotations
@@ -30,11 +44,12 @@ import asyncio
 import os
 import shutil
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Query
+from pydantic import BaseModel, Field
 
 # --------------------------------------------------------------------------
 # constants
@@ -46,6 +61,11 @@ TICK_MS = 750
 #: Capture bound (field guide §4: bound everything you write).
 MAX_LINES = 2000
 DEFAULT_LINES = 200
+
+#: Write bound, in Unicode code points, for one send.  Same reason as MAX_LINES:
+#: everything that crosses this boundary is bounded, and the response says so
+#: rather than silently dropping the tail.
+MAX_KEYS = 4096
 
 #: Metadata read.  Chained into the *same* tmux invocation as the capture so
 #: geometry and text describe the same tick.
@@ -370,17 +390,66 @@ CACHE = CaptureCache()
 
 
 # --------------------------------------------------------------------------
-# sessions listing
+# the write: what you type is what the session receives
 # --------------------------------------------------------------------------
 
-_LIST_FORMAT = "#{session_name}\t#{pane_current_path}\t#{session_activity}\t#{socket_path}"
+#: What the Return key sends.  Named rather than inlined, because the whole
+#: point of ``-H`` is that no *word* is ever looked up as a key.
+CR = "0d"
 
 
-async def list_sessions(socket: str) -> dict[str, Any]:
-    argv = ["tmux", *_socket_args(socket), "list-sessions", "-F", _LIST_FORMAT]
-    sessions: list[dict[str, Any]] = []
-    error = ""
-    socket_path = ""
+def _keys_argv(socket: str, session: str, keys: str, enter: bool) -> list[str]:
+    """The exact argv of one send (also printed as evidence by the tests).
+
+    ``-H`` takes hexadecimal Unicode **code points**, so nothing in the payload
+    is parsed: not as a tmux key name (``Enter``, ``C-c``, ``Up``), and not as a
+    tmux option (a line starting with ``-``).  A character the steward typed is
+    the character the session receives, and control bytes — Ctrl-C as ``03``,
+    Escape as ``1b`` — cross the same way as letters do.
+
+    The target is the same exact-match ``=<name>:`` the capture uses.  That
+    matters more here: ``-t colo`` resolving to the session ``colors`` would
+    read the wrong pane, but *write* to it.
+    """
+    points = [f"{ord(ch):02x}" for ch in keys[:MAX_KEYS]]
+    if enter:
+        points.append(CR)
+    return ["tmux", *_socket_args(socket), "send-keys", "-H", "-t", _target(session), *points]
+
+
+async def send_keys(socket: str, session: str, keys: str, enter: bool = False) -> dict[str, Any]:
+    """Send *keys* to one pinned pane and report, honestly, what happened.
+
+    Four states, the same four the read has and for the same reason: ``ok`` is
+    the only one that means the session received it.  A send to a session that
+    is gone is ``ended``, never a silent success — the difference between "your
+    line landed" and "there was nobody there" is the whole value of the answer.
+    """
+    truncated = len(keys) > MAX_KEYS
+    sent = keys[:MAX_KEYS]
+    answer: dict[str, Any] = {
+        "sent": False,
+        "state": "failed",
+        # Identity echo, exactly as a frame does it: the client can prove the
+        # line it typed went to the session it was looking at.
+        "socket": socket,
+        "session": session,
+        "keys": len(sent),
+        "enter": bool(enter),
+        "truncated": truncated,
+        "at": _now_iso(),
+        "detail": "",
+        # We resolved the socket from configuration and ignored the ambient
+        # one; say so on a write especially, so an operator can tell which
+        # server just received keystrokes.
+        "ambient_tmux_ignored": ambient_tmux_ignored(),
+    }
+
+    if not sent and not enter:
+        answer["detail"] = "nothing to send"
+        return answer
+
+    argv = _keys_argv(socket, session, sent, bool(enter))
     try:
         proc = await asyncio.create_subprocess_exec(
             *argv,
@@ -388,47 +457,27 @@ async def list_sessions(socket: str) -> dict[str, Any]:
             stderr=asyncio.subprocess.PIPE,
             env=_env(),
         )
-        out_b, err_b = await proc.communicate()
+        _, err_b = await proc.communicate()
         returncode = proc.returncode or 0
     except FileNotFoundError:
-        returncode, out_b, err_b = 127, b"", b"tmux not found on PATH"
+        answer["detail"] = "tmux not found on PATH"
+        return answer
+    except OSError as exc:  # pragma: no cover - defensive
+        answer["detail"] = f"tmux could not be run: {exc}"
+        return answer
 
+    stderr = err_b.decode("utf-8", "replace").strip()
     if returncode != 0:
-        # No server on this socket is a normal, honest answer: zero sessions.
-        error = err_b.decode("utf-8", "replace").strip()
-    else:
-        for line in out_b.decode("utf-8", "replace").splitlines():
-            if not line.strip():
-                continue
-            parts = line.split("\t")
-            while len(parts) < 4:
-                parts.append("")
-            name, cwd, activity, sock_path = parts[0], parts[1], parts[2], parts[3]
-            socket_path = socket_path or sock_path
-            last_activity = ""
-            try:
-                last_activity = datetime.fromtimestamp(int(activity), tz=timezone.utc).isoformat()
-            except (TypeError, ValueError):
-                last_activity = activity
-            sessions.append(
-                {
-                    "name": name,
-                    "socket": socket,
-                    "cwd": cwd,
-                    "last_activity": last_activity,
-                }
-            )
+        low = stderr.lower()
+        answer["state"] = "ended" if any(m in low for m in _GONE_MARKERS) else "failed"
+        answer["detail"] = stderr or f"tmux exited {returncode}"
+        return answer
 
-    return {
-        "socket": socket,
-        "socket_path": socket_path,
-        "sessions": sessions,
-        "count": len(sessions),
-        # We resolved the socket from configuration and ignored the ambient
-        # one; say so, so an operator knows which server this is.
-        "ambient_tmux_ignored": ambient_tmux_ignored(),
-        "error": error,
-    }
+    answer["sent"] = True
+    answer["state"] = "ok"
+    if truncated:
+        answer["detail"] = f"bounded at {MAX_KEYS} code points; the tail was not sent"
+    return answer
 
 
 # --------------------------------------------------------------------------
@@ -438,10 +487,11 @@ async def list_sessions(socket: str) -> dict[str, Any]:
 router = APIRouter(prefix="/api/tmux", tags=["tmux"])
 
 
-@router.get("/sessions")
-async def get_sessions(socket: str = Query("hw")) -> dict[str, Any]:
-    """Live sessions on an explicit socket, plus the ambient socket we ignored."""
-    return await list_sessions(socket)
+class KeysIn(BaseModel):
+    """One line, or one keystroke, on its way to a pinned pane."""
+
+    keys: str = Field("", description="Literal text; every character is sent as its own code point.")
+    enter: bool = Field(False, description="Also send Return after the text.")
 
 
 @router.get("/{socket}/{session}")
@@ -457,3 +507,15 @@ async def get_session(
     """
     frame = await CACHE.get(socket, session, lines)
     return frame.as_dict()
+
+
+@router.post("/{socket}/{session}/keys")
+async def post_keys(socket: str, session: str, body: KeysIn) -> dict[str, Any]:
+    """Carry a keystroke to the session named in the path, and say what happened.
+
+    This is what makes the console *be* the session rather than a picture of it
+    (``experience-console.v1`` Core 3): the characters go to the running pane,
+    and the next capture shows them because the pane itself echoed them — the
+    app never paints a line it was told about.
+    """
+    return await send_keys(socket, session, body.keys, body.enter)

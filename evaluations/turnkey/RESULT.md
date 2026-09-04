@@ -318,3 +318,122 @@ The convention names five parts in an order, three of four briefs produced them,
 and a rule tuned until the run passes measures nothing. An over-strict rule
 fabricates a failure exactly as badly as a loose one fabricates a pass — and the
 three harness defects above were all the first kind.
+
+---
+
+## Amendment, 2026-09-04 — step (i) now reads one entry, not the whole file
+
+**What was wrong.** Step (i) lowercased the whole return log and asked whether
+each of the five words appeared anywhere in it. Dates and sentence counts were
+file-wide too. So any prose satisfied it: a header, a footnote, or an unrelated
+paragraph made the step green with no brief in the file at all. It also could
+not see an unbriefed return, which is the whole of what clause 10 asks —
+*a brief on every return*.
+
+**What it does now.** The log is split into entries at each dated heading.
+Everything before the first one is the file's own header and belongs to no
+entry. Within an entry, a part counts only when a line *opens* with its label —
+the labelled form `modes/converge-manager.md` clause 10 requires
+(`**Time away.** …`), a list item carrying it, or the bare label closed by its
+punctuation. The verdict rests on the newest entry, which is the return this run
+produced. Beside it the step reports two numbers that can now be compared:
+stamped returns (`## <date> <HH:MM> — …`) and complete briefs. A stamped return
+with a part missing under it fails and names the part.
+
+**Measured, both readings over the same logs.** The old `step_brief` was
+restored from git into a temp tree (`git show HEAD:evaluations/turnkey/run.py`)
+and run beside the new one:
+
+```
+| log under test                                                  | before | after |
+|-----------------------------------------------------------------|--------|-------|
+| a header alone, no entry at all                                 |  PASS  | FAIL  |
+| the five words spread across five entries, none of them a brief |  PASS  | FAIL  |
+| one stamped return, all five parts                              |  FAIL  | PASS  |
+| one stamped return, Stuck folded away                           |  FAIL  | FAIL  |
+| two stamped returns, the second never briefed                   |  FAIL  | FAIL  |
+| this repository's own log, as it stands                         |  FAIL  | FAIL  |
+```
+
+The first two rows are the falsifier the work item named, and it was real. On a
+header with no entry under it at all, the old check said, verbatim:
+
+```
+[PASS] A dated return brief is at .../OWNER-RETURN-LOG.md with all five parts
+       and 3 plain sentences.
+       parts_present: ['time away','finished','stuck','needs you','quietly broken']
+```
+
+Row 3 is the second half of the same defect, and it is the kind that fabricates
+a red. A brief written exactly as clause 10 now mandates — five sentences, each
+opening with its bold label — scored **0 plain sentences** under the old rule,
+because that rule discarded every line beginning with `*`. The step would have
+failed the one form the mode requires. Sentence counting now strips a leading
+list or emphasis marker instead of disqualifying the line behind it.
+
+Caught the same way, before it could fabricate a red of its own:
+`context/manager/return-brief.md` (as it stands on `main` after
+`lane/w8-brief-convention`) prints the five parts as a **numbered** list —
+`1. **Time away.** …` — so a manager copying the shape it was shown writes
+numbered items. The first draft of this check accepted `-`, `*`, `+` and `>` as
+list markers and would have found none of the five. It accepts `1.` and `1)`
+now, and a parametrized test runs the whole brief through four markers.
+
+What the new readings say, in the step's own words:
+
+```
+[FAIL] a header alone: The log has no dated entry, so no return has been briefed
+       in it. The file's own header is not a brief, whatever words it carries.
+       entries=0 stamped_returns=0 complete_briefs=0
+[FAIL] Stuck folded away: 1 of 1 stamped return(s) carry no complete brief.
+       '2026-09-04 04:01 - the gate went green' is missing 1 of the five parts: stuck.
+       entries=1 stamped_returns=1 complete_briefs=0
+[FAIL] the second return never briefed: 1 of 2 stamped return(s) carry no complete
+       brief. '2026-09-04 09:30 - they came back again' is missing 5 of the five
+       parts: time away, finished, stuck, needs you, quietly broken.
+       entries=2 stamped_returns=2 complete_briefs=1
+[PASS] one stamped return, all five parts: The newest entry carries all five parts
+       and 5 plain sentences; 1 stamped return(s) in the log and 1 complete brief(s).
+```
+
+**This repository's own log still reads red, and now for the right reason.**
+Nine entries, `stamped_returns=0`, `complete_briefs=0`: the nine briefs predate
+the stamp and are written as single paragraphs, so no entry carries the five
+labelled parts. Before, it read red because two of the five words happened not
+to appear anywhere in the file while nine well-written briefs said "nothing
+stopped" in their own words. Same colour, exact reason. The check was not tuned
+until the repository passed.
+
+**Not re-run in a container.** This is a change to how one step judges text it
+is handed, so it is proven where it can be proven exactly: 19 self-test cases,
+five of them one per part. Eighteen of the nineteen fail against the pre-fix
+`run.py` in a control tree (18 failed, 57 passed); the nineteenth — a missing
+log file is a failure — is the one behaviour that did not change. A driven run
+would now hold a fixture manager session to the labelled form its mode already
+requires; that has not been observed yet and is not claimed here.
+
+```
+$ uv run --with pytest pytest evaluations/turnkey -q
+........................................................................ [100%]
+75 passed in 0.18s
+
+$ uv run evaluations/turnkey/run.py --self-check
+verdict: PASS | passed: 29 | failed: []
+   True a header carrying the five words is not an entry, so not a brief
+   True one entry with all five parts is a brief, and a stamped return
+   True a stamped return missing one part names that part
+   True the five words spread across separate entries do not combine
+   True an unprompted brief keeps a date-only heading and is not a return
+```
+
+Five of those cases are new: the environment-free self-check carries the same
+two named failures as the pytest suite, so `--self-check` alone still proves
+this step can go red. It stood at 24 cases and 57 tests when this file recorded
+the green run above; it is 29 and 75 now.
+
+**Handoff, not done here.** `ledger/rows.yaml` CVG-020 records that "nothing
+counts returns", so a brief count has no denominator. Step (i) now produces that
+denominator — `stamped_returns` and `complete_briefs`, in its evidence, on every
+run. Repointing the row is `converge-4xg`'s job and the ledger is not this
+lane's to edit. The same row's note still cites the self-check as "16 of 16",
+which was already stale before this change and is now 29.

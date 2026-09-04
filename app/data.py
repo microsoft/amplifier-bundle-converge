@@ -250,10 +250,22 @@ def wave_label(key: str) -> str:
 WORKING_SECONDS = 5 * 60
 QUIET_SECONDS = 25 * 60
 
-STATE_WORD = {
+#: The only words a LANE may be shown in — `experience.v1` Core 6, quoted by
+#: `experience-operation.v1` Core 8. All three are readings of one thing: is
+#: this lane still doing anything? A lane that has reported back is no longer
+#: answering that question at all, which is why it is carried apart (see
+#: `OUTCOME_WORD`) rather than told in a word this vocabulary does not have.
+LANE_WORD = {
     "working": "Working",
     "quiet": "Quiet",
     "silent": "Silent — may have died",
+}
+
+#: What a lane that has reported back produced, told in the WORK words of
+#: `experience.v1` Core 6 — because that is what these two states are: work
+#: finished, and work stopped. Neither is a lane word, and neither is shown as
+#: one.
+OUTCOME_WORD = {
     "done": "Done",
     "stuck": "Stuck",
 }
@@ -301,12 +313,22 @@ def lane_title(mc: ManagerConfig, lane: LaneRow) -> str:
 
 
 def lane_evidence(mc: ManagerConfig, lane: LaneRow) -> str:
+    """What the lane actually produced — `experience-operation.v1` Core 8.
+
+    Commits first, then the marker a lane leaves when it reports back. A lane
+    that has just started has neither, and the honest answer there is what this
+    reading found rather than a claim about what exists: a branch that cannot
+    be counted may be a branch that is not there yet, and saying "0 commits"
+    would be asserting more than was read. When even the log is missing the
+    answer is empty, so a lane with no trace at all is reported as one instead
+    of being papered over with a sentence.
+    """
     repo = mc.repo
     if repo and lane.branch:
         count = git(repo, "rev-list", "--count", f"main..{lane.branch}").strip()
         if count.isdigit():
             return f"{count} commits"
-    _home, _log, done, blocked = lane_paths(mc, lane)
+    _home, log, done, blocked = lane_paths(mc, lane)
     if done.is_file():
         try:
             payload = json.loads(done.read_text(encoding="utf-8"))
@@ -319,6 +341,8 @@ def lane_evidence(mc: ManagerConfig, lane: LaneRow) -> str:
         except OSError:
             return "stopped, reason recorded"
         return blocked_reason(text)
+    if log.is_file():
+        return f"no commits found yet · {log.name}"
     return ""
 
 
@@ -869,9 +893,14 @@ def doc_payload(repo: Path, path: Path, *, since: str = "", kept: set[str] | Non
     }
 
 
-def throughput(mc: ManagerConfig, merged: int, reopened: int) -> dict:
-    """Work done, from the tracker when it is there, from the batch otherwise."""
-    made = {"derived": 0, "resolved": 0, "verified": merged, "reopened": reopened, "spark": [], "available": False}
+def tracker_counts(mc: ManagerConfig) -> dict:
+    """The work queue's own counts, one entry per status word it prints.
+
+    Read once and handed to everything that needs a number out of it, so a
+    single reading of the queue stands behind the flow measures and the two
+    queue numbers rather than two readings that can disagree.
+    """
+    made: dict[str, int] = {}
     if not mc.tracker_project:
         return made
     out = run(["amplifier-work-tracker", "status", "--project", mc.tracker_project], timeout=12.0)
@@ -883,20 +912,63 @@ def throughput(mc: ManagerConfig, merged: int, reopened: int) -> dict:
         if not digits:
             continue
         key = name.strip().upper()
-        if key == "TOTAL":
-            made["derived"] = int(digits.group())
-        elif key == "RESOLVED":
-            made["resolved"] = int(digits.group())
+        made[key] = int(digits.group())
+    return made
+
+
+def throughput(counts: dict, merged: int, reopened: int) -> dict:
+    """Whether work is moving — the five measures `experience-operation.v1`
+    Core 5 names, and no sixth.
+
+    Derived · resolved · verified · reopened · stuck. Stuck is the queue's own
+    blocked count: work that has stopped moving. It says nothing about whether
+    reality is moving toward the agreement, which is a separate reading and the
+    one that counts (Core 5 again) — the two are never summed.
+    """
+    made = {
+        "derived": 0,
+        "resolved": 0,
+        "verified": merged,
+        "reopened": reopened,
+        "stuck": 0,
+        "spark": [],
+        "available": False,
+    }
+    if not counts:
+        return made
+    made["derived"] = counts.get("TOTAL", 0)
+    made["resolved"] = counts.get("RESOLVED", 0)
+    made["stuck"] = counts.get("BLOCKED", 0)
     made["available"] = True
     return made
 
 
+def queue_reading(counts: dict) -> dict:
+    """Work truly ready — the first of Core 7's two numbers.
+
+    The second, work waiting on you, is the manager card's own `needs` count
+    and is not copied here: one truth, one place. A surface shows them side by
+    side, which is what the clause asks for.
+    """
+    return {"trulyReady": counts.get("READY", 0), "available": bool(counts)}
+
+
 def operation_payload(mc: ManagerConfig) -> dict:
+    """The manager session at work.
+
+    Lanes arrive in two lists, because a lane is in one of two situations and
+    they are read in different words. `lanes` are the lanes at work — each one
+    told in a lane word (`LANE_WORD`), which answers "is this still doing
+    anything?". `reported` are the lanes that have already come back, told in
+    the work words `OUTCOME_WORD` — finished, or stopped. Every lane appears in
+    exactly one of the two, and both carry the evidence the lane produced.
+    """
     lanes = manifest_lanes(mc)
     live = tmux_sessions(mc.tmux_socket)
     merge_log = git(mc.repo, "log", "--merges", "--format=%s", "-n", "400") if mc.repo else ""
 
     lane_items: list[dict] = []
+    reported_items: list[dict] = []
     by_wave: dict[str, list[tuple[str, int]]] = {}
     wave_live: dict[str, bool] = {}
     merged_count = 0
@@ -907,19 +979,24 @@ def operation_payload(mc: ManagerConfig) -> dict:
         merged_count += 1 if is_merged else 0
         by_wave.setdefault(key, []).append((one.name, 1 if is_merged else 0))
         wave_live[key] = wave_live.get(key, False) or (one.tmux in live)
-        lane_items.append(
-            {
-                "id": one.name,
-                "status": state,
-                "statusLabel": STATE_WORD[state],
-                "title": lane_title(mc, one),
-                "worker": f"{one.name} · {one.branch}" if one.branch else one.name,
-                "wave": wave_label(key),
-                "age": age_words(age),
-                "evidence": lane_evidence(mc, one),
-                "tmux": {"socket": mc.tmux_socket, "session": one.tmux},
-            }
-        )
+        row = {
+            "id": one.name,
+            "title": lane_title(mc, one),
+            "worker": f"{one.name} · {one.branch}" if one.branch else one.name,
+            "wave": wave_label(key),
+            "age": age_words(age),
+            "evidence": lane_evidence(mc, one),
+            "live": one.tmux in live,
+            "tmux": {"socket": mc.tmux_socket, "session": one.tmux},
+        }
+        if state in LANE_WORD:
+            row["status"] = state
+            row["statusLabel"] = LANE_WORD[state]
+            lane_items.append(row)
+        else:
+            row["outcome"] = state
+            row["outcomeLabel"] = OUTCOME_WORD[state]
+            reported_items.append(row)
 
     order = list(by_wave)
     now_index = next((i for i, key in enumerate(order) if wave_live.get(key)), -1)
@@ -957,13 +1034,16 @@ def operation_payload(mc: ManagerConfig) -> dict:
     timeline = [[date, heading, first_sentence(body)] for date, heading, body in reversed(entries)]
     brief = sentences(entries[-1][2])[:6] if entries else []
     reopened = len(re.findall(r"\bREOPENED\b", highway_text(mc)))
+    counts = tracker_counts(mc)
 
     return {
         "waves": waves,
         "lanes": lane_items,
+        "reported": reported_items,
         "timeline": timeline,
         "returnBrief": brief,
-        "throughput": throughput(mc, merged_count, reopened),
+        "throughput": throughput(counts, merged_count, reopened),
+        "queue": queue_reading(counts),
         "confidence": confidence(mc.repo) if mc.repo else {"pct": 0, "kept": 0, "notyet": 0, "broken": 0, "available": False},
     }
 
@@ -985,6 +1065,8 @@ def _lane_board(text: str) -> dict[str, str]:
 
 
 __all__ = [
+    "LANE_WORD",
+    "OUTCOME_WORD",
     "LaneRow",
     "age_words",
     "blocked_reason",
@@ -1001,11 +1083,14 @@ __all__ = [
     "manifest_lanes",
     "operation_payload",
     "proposals_for",
+    "queue_reading",
     "repo_docs",
     "repo_id",
     "repositories_payload",
     "run",
     "sections_of",
+    "throughput",
     "tmux_sessions",
+    "tracker_counts",
     "_needs_items",
 ]
