@@ -724,13 +724,21 @@
     file: contracts/composition.v1.md
     clause: "Conformance kit asserts, bullet 2"
     quote: "A Converge session reaches a lean-base helper and one of Converge's own."
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'uv run conformance/composition/run.py . --json-only | python3 -c "import json,sys;r={x[\"id\"]:x[\"status\"] for x in json.load(sys.stdin)[\"results\"]};print(\"LIVE-REACHABILITY-STILL-SKIPPED\" if r[\"session_reaches_helpers\"]==\"SKIP\" else \"LIVE-REACHABILITY-NOW-\"+r[\"session_reaches_helpers\"])"'
     expect:
       exit: 0
-      stdout_contains: "LIVE-REACHABILITY-STILL-SKIPPED"
+      stdout_contains: "LIVE-REACHABILITY-NOW-PASS"
+  proves: >
+    That the composition kit's rule 3b stands up a REAL session on this
+    repository and finds it reaches both helper families — the lean base's
+    anchors:architect and Converge's own converge:negotiator. NOT that a session
+    reaches them on any other host, and not that every helper on disk is
+    reachable: the rule reads the roster the session actually composed, which is
+    the distinction no file scan can make, and it asserts one helper from each
+    family rather than all of them.
   notes: >
     RAN 2026-09-02 → LIVE-REACHABILITY-STILL-SKIPPED. Kit rule 2 reports SKIP,
     "needs a live Amplifier session; this kit reads files only". The kit's own
@@ -762,7 +770,28 @@
     never asks this question cannot answer it. converge-7ym carries the two honest
     routes — extend the turnkey, which already stands a fresh container up and
     installs into it, or write a separate session-reachability evaluation.
-  work: converge-7ym
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-wnp) AND MOVED GAP → CONFORMS. RAN →
+    LIVE-REACHABILITY-NOW-PASS.
+    THIS ROW WENT RED BEFORE IT WENT GREEN, AND THAT IS THE RATCHET WORKING.
+    The kit stopped declining and the row still pinned the decline, so
+    `uv run --with pyyaml ledger/checks/verify.py` failed with this row named —
+    drift TOWARD spec caught by the same tripwire that catches drift away from
+    it. converge-7ym filed converge-wnp rather than editing a ledger outside its
+    file ownership; this is that item.
+    WHAT THE RULE NOW READS, from the run this line was written on:
+    3b PASS — a real session on this repository reaches the lean base's
+    anchors:architect and its own converge:negotiator (roster of 12, delegation
+    tool mounted). Its structured evidence: roster_size 12, six lean-base
+    helpers composed, four of Converge's own composed, and four on disk — so
+    every helper this repository ships is reachable, not merely present.
+    NEITHER ROUTE THIS ROW PREDICTED WAS TAKEN, AND THE PREDICTION IS LEFT ABOVE
+    ON PURPOSE. It named two: extend the turnkey, or write a separate
+    session-reachability evaluation. converge-7ym did a third thing — the KIT
+    stands the session up itself, shelling out to the installed CLI's own
+    interpreter. A row that records what it expected and is then wrong is more
+    useful than one that quietly agrees with whatever happened.
+    THE `work` REF IS GONE, because a green row may not carry one.
 
 - id: CVG-009
   title: the neighbour promise — an unrelated session keeps its tools
@@ -772,13 +801,21 @@
     quote: |
       After installing Converge beside other work, a helper in an unrelated session
       keeps its shell, delegation, and skills tools.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'uv run conformance/composition/run.py . --json-only | python3 -c "import json,sys;r={x[\"id\"]:x[\"status\"] for x in json.load(sys.stdin)[\"results\"]};print(\"NEIGHBOUR-CHECK-STILL-SKIPPED\" if r[\"unrelated_session_keeps_tools\"]==\"SKIP\" else \"NEIGHBOUR-CHECK-NOW-\"+r[\"unrelated_session_keeps_tools\"])"'
     expect:
       exit: 0
-      stdout_contains: "NEIGHBOUR-CHECK-STILL-SKIPPED"
+      stdout_contains: "NEIGHBOUR-CHECK-NOW-PASS"
+  proves: >
+    That the composition kit's rule 6b stands up an UNRELATED session twice —
+    once on the lean base alone as a control, once per install path with this
+    repository installed beside it — and finds the spawned helper keeps its
+    shell, delegation and skills tools in every treatment. NOT that no bundle
+    anywhere strips them: this reading is of THIS repository's two install
+    paths. A different Converge bundle on the same host can and did break the
+    same promise (converge-w3v), and this row would stay green through it.
   notes: >
     RAN 2026-09-02 → NEIGHBOUR-CHECK-STILL-SKIPPED. Kit rule 3 reports SKIP,
     "needs two live Amplifier sessions (Converge plus unrelated work) side by
@@ -805,7 +842,28 @@
     re-taken by nothing in the two days since. The rule is enforced statically
     (CVG-006 asserts the absence of a `spawn:` key); the harm it prevents is not
     re-measured. A static absence is a good guard and a poor witness.
-  work: converge-7ym
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-wnp) AND MOVED GAP → CONFORMS. RAN →
+    NEIGHBOUR-CHECK-NOW-PASS.
+    THE POOR WITNESS HAS BEEN REPLACED BY A MEASUREMENT, WHICH IS EXACTLY WHAT
+    THE PARAGRAPH ABOVE ASKED FOR. The 2026-09-02 hand measurement behind
+    PINS.md's standing rule is now re-taken on every run of the kit.
+    WHAT THE RULE NOW READS, from the run this line was written on:
+    6b PASS — across 2 install path(s), an unrelated session's spawned helper
+    keeps shell, delegation, skills (tool-bash, tool-delegate, tool-skills),
+    control and treatment measured side by side. Both install paths this
+    repository declares (bundle.md and behaviors/converge.yaml) were measured,
+    each with `lost: []`.
+    THE CONTROL IS WHY THE GREEN MEANS ANYTHING. Without a baseline the rule
+    would report green whenever the tools were ALREADY gone, or blame this
+    repository for a policy it did not set. On this run the control's own
+    `spawn_policy` read null and it carried all three promised tools.
+    WHAT THIS ROW STILL DOES NOT WITNESS, AND IT IS NOT SMALL: converge-7ym's
+    own control run found a DIFFERENT, published Converge bundle app-installed
+    on this host stripping those three tools from every spawned helper
+    (converge-w3v, still open). This row asserts THIS repository's install
+    paths; it is not a statement about the machine.
+    THE `work` REF IS GONE, because a green row may not carry one.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # operation.v1 — 15 rows.  The contract names its own gate "**Red today** —
