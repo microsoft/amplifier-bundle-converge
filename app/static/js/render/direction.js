@@ -6,15 +6,31 @@
 // what is on disk. That is why no handler in this file reports an outcome of
 // its own: every one of them hands off to actions.js, which makes the request
 // and then says what the server actually did.
+//
+// The Reading view holds to the same rule. Editing a draft in place goes to
+// the same document-saving write the Changes view uses, and it is offered on a
+// paragraph only where that write can still land — the lock itself is read by
+// the server, never guessed here. Ask is the one control on this screen whose
+// route the app does not answer yet: it fails out loud and names the work
+// (converge-ddt) rather than looking like it did something.
 import { $, qsa, state, data, escapeHtml, currentRepo, currentDoc, readBookmark } from '../state.js';
 import { hooks } from '../refresh.js';
-import { handleDecision, keepChange, saveChangeEdit, restoreChange, markAllRead } from '../actions.js';
+import { handleDecision, keepChange, saveChangeEdit, restoreChange, markAllRead, editDoc, reconcile, openAsk } from '../actions.js';
 
 const DECISION_BUTTONS = [
   ['ratified', 'Ratify', 'primary-button'],
   ['ratified-with-edits', 'Ratify with edits', 'outline-button'],
   ['declined', 'Decline', 'outline-button'],
   ['later', 'Later', 'outline-button'],
+];
+
+// The three choices experience-direction.v1 §10 names when two writes collide.
+// They are offered together or not at all: a steward who is only allowed to
+// keep their own wording has not been offered a choice.
+const RECONCILE_CHOICES = [
+  ['use-combined', 'Use combined', 'primary-button'],
+  ['keep-mine', 'Keep mine', 'outline-button'],
+  ['review-both', 'Review both', 'outline-button'],
 ];
 
 const STATE_LABEL = { kept: 'Kept', gap: 'Not yet', draft: 'Draft' };
@@ -50,21 +66,88 @@ export function renderRepoTree() {
   }));
 }
 
+// A card's section is a path — "Principles › 8" — and a rendered section is
+// its own heading, so the top of the path is what marks the section changed.
+function sectionHead(card) {
+  return String(card.section || '').split(' › ')[0];
+}
+
+function shorten(text, limit = 64) {
+  const one = String(text || '').replace(/\s+/g, ' ').trim();
+  return one.length > limit ? `${one.slice(0, limit - 1)}…` : one;
+}
+
+// experience-direction.v1 §10: while a person is editing, the section is shown
+// softly and a collision is met with a choice rather than a lost sentence.
+// What is honest here today: the soft marking and the three choices are real,
+// and the presence is this browser's own. There is no channel that carries a
+// second person's editing, which is why the fold below says so instead of
+// implying a company that is not there. The channel is converge-wmh.
+function editPanel(doc, card) {
+  const lock = doc.locked || '';
+  const clash = state.collision && String(state.collision.section) === String(card.section) ? state.collision : null;
+  return `<div class="change-edit" data-editing="${escapeHtml(card.id)}">
+      <p class="muted lock-note">You are editing this section. It is shown softly while you write — that is the presence, so a change landing underneath you is offered as a choice rather than applied over you.${lock ? ` This document is ${escapeHtml(lock)}, so saving writes a proposal beside it and the document itself is not touched.` : ''}</p>
+      <label for="read-edit-${escapeHtml(card.id)}">The wording you want instead</label>
+      <textarea id="read-edit-${escapeHtml(card.id)}" rows="3">${escapeHtml(card.now || card.before)}</textarea>
+      ${clash ? collisionPanel(clash) : ''}
+      <div class="change-edit-actions">
+        <button class="outline-button" data-edit="cancel" type="button">Cancel</button>
+        <button class="primary-button" data-edit="save" data-change-id="${escapeHtml(card.id)}" type="button">${lock ? 'Propose this wording' : 'Save'}</button>
+      </div>
+      <details><summary class="muted">Details</summary><p class="muted">Presence is this browser only: the app carries no signal for someone else editing the same section, and the manager session is not told to queue. Filed as converge-wmh.</p></details>
+    </div>`;
+}
+
+function collisionPanel(clash) {
+  return `<div class="changes-banner">
+      <div><strong>This moved while you were writing.</strong>
+        <span class="muted">The document now says “${escapeHtml(shorten(clash.theirs) || 'something this reading no longer shows')}”. You wrote “${escapeHtml(shorten(clash.mine))}”. Nothing has been written yet.</span></div>
+      <div class="changes-banner-actions">
+        ${RECONCILE_CHOICES.map(([value, label, cls]) => `<button class="${cls}" data-reconcile="${value}" type="button">${label}</button>`).join('')}
+      </div>
+    </div>`;
+}
+
+// §5: editing is offered exactly where it is legal. What is legal is decided
+// by the server — `app/writes.py` reads the document's own H1 — and what is
+// possible is the sentences the document-saving write can still find, which
+// is exactly this reading's own change cards. A section with none of those
+// gets no edit control rather than one that would refuse.
+function sectionFooter(doc, title, mine) {
+  const open = mine.find((c) => String(c.id) === String(state.editingChangeId)) || null;
+  if (open) return editPanel(doc, open);
+  const lock = doc.locked || '';
+  const edits = mine.map((c) => `<button class="outline-button" data-edit="open" data-change-id="${escapeHtml(c.id)}" type="button" title="${escapeHtml(c.now || c.before)}">${lock ? 'Propose wording for' : 'Edit'} “${escapeHtml(shorten(c.now || c.before, 40))}”</button>`).join('');
+  return `<div class="change-actions">
+      <button class="outline-button" data-ask data-ask-scope="paragraph" data-ask-section="${escapeHtml(title)}" type="button">Ask about this paragraph</button>
+      ${edits}
+    </div>`;
+}
+
 export function renderRead() {
   const doc = data.doc;
   if (!doc) return '<p class="muted">Loading document…</p>';
   if (state.raw) return `<pre class="raw-view">${escapeHtml(doc.raw || '')}</pre>`;
-  // A card's section is a path — "Principles › 8" — and a rendered section is
-  // its own heading, so the top of the path is what marks the section changed.
-  const changedSections = new Set((doc.changes || []).map((c) => String(c.section || '').split(' › ')[0]));
-  const sectionHtml = (doc.sections || []).map(([title, content]) => `
-      <section class="${changedSections.has(title) ? 'marked-change' : ''}">
+  const cards = doc.changes || [];
+  const changedSections = new Set(cards.map(sectionHead));
+  const sectionHtml = (doc.sections || []).map(([title, content]) => {
+    const mine = cards.filter((c) => sectionHead(c) === title);
+    const editing = mine.some((c) => String(c.id) === String(state.editingChangeId));
+    return `
+      <section class="${changedSections.has(title) ? 'marked-change' : ''}${editing ? ' is-editing' : ''}">
         <h2>${escapeHtml(title)}</h2>
         ${content}
-      </section>`).join('');
-  const changeCount = (doc.changes || []).length;
+        ${sectionFooter(doc, title, mine)}
+      </section>`;
+  }).join('');
+  const changeCount = cards.length;
   const proposalCount = (doc.proposals || []).length;
-  const banner = `<div class="since-banner"><div><strong>Since the last ratified version:</strong> ${plural(changeCount, 'sentence')} changed · ${plural(proposalCount, 'proposal')} open</div><button type="button" data-inline-mode="changes">Show highlights</button></div>`;
+  const lock = doc.locked || '';
+  const editable = lock
+    ? `This document is ${escapeHtml(lock)}, so a wording you write here becomes a proposal beside it.`
+    : `${plural(changeCount, 'sentence')} can be edited here; saving commits it in your name.`;
+  const banner = `<div class="since-banner"><div><strong>Since the last ratified version:</strong> ${plural(changeCount, 'sentence')} changed · ${plural(proposalCount, 'proposal')} open<br><span class="muted">${editable}</span></div><button type="button" data-inline-mode="changes">Show highlights</button></div>`;
   return banner + (sectionHtml || '<p class="muted">This document has no sections yet.</p>');
 }
 
@@ -261,6 +344,36 @@ export function attachDocumentModeHandlers() {
         break;
     }
   }));
+  // Editing a draft in place: open, cancel, or save. Save is the only one of
+  // the three that leaves the browser, and it goes straight to the document
+  // write — there is no staging step between the button and the file.
+  qsa('[data-edit]').forEach((btn) => btn.addEventListener('click', () => {
+    const what = btn.dataset.edit;
+    if (what === 'open') {
+      state.editingChangeId = btn.dataset.changeId;
+      state.collision = null;
+      renderDirection();
+      return;
+    }
+    if (what === 'cancel') {
+      state.editingChangeId = null;
+      state.collision = null;
+      renderDirection();
+      return;
+    }
+    const box = btn.closest('.change-edit');
+    const wording = box ? box.querySelector('textarea').value : '';
+    editDoc(btn.dataset.changeId, wording);
+  }));
+  qsa('[data-reconcile]').forEach((btn) => btn.addEventListener('click', () => reconcile(btn.dataset.reconcile)));
+  // Ask sits in the toolbar as well as beside each paragraph, and the toolbar
+  // outlives a re-render — hence the mark, so one button does not collect a
+  // listener every time the document is drawn again.
+  qsa('[data-ask]').forEach((btn) => {
+    if (btn.dataset.askWired === '1') return;
+    btn.dataset.askWired = '1';
+    btn.addEventListener('click', () => openAsk(btn.dataset.askScope || 'document', btn.dataset.askSection || ''));
+  });
   qsa('[data-decision]').forEach((btn) => btn.addEventListener('click', () =>
     handleDecision(btn.dataset.decision, btn.dataset.decisionLabel)));
   qsa('[data-history]').forEach((btn) => btn.addEventListener('click', () => {
