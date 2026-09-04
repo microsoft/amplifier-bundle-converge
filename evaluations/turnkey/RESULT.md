@@ -671,3 +671,170 @@ the same path, a plan record that only announces, a stall nobody named, a
 feedback item with no quoted source, a close that lists only what finished, a
 resolution reading "Fixed in abc1234.", and a repository whose check records
 were only ever written inside a lane.
+
+## Amendment, 2026-09-04 — two conventions, and the three readings they unblock
+
+Three of the clause readings above were not waiting on a cleverer parser. They
+were waiting on something nobody had written down, so no parser could ever find
+it: **what continued while work was parked on the steward's word** (Core 3),
+**which of the four calls a call was** (Core 11), and **who re-ran the check
+after integration** (Core 7 and Core 8).
+
+Two small conventions supply exactly those three facts and nothing else. Both
+live where a manager session reads them, not in this harness:
+
+| Convention | Where | What it makes readable |
+|---|---|---|
+| **The call stamp** — `CALL <one of four> - <what is asked>. Parked: <items>. Continued: <what kept moving>.`, one line in the plan record, at the moment of the call | `modes/converge-manager.md` clauses 3 and 11; `context/manager/wave-record.md` | Core 3 · Core 11 |
+| **The check record** — one entry per integration in `docs/workflow/CHECK-RECORD.md`, naming the merges it covers, the command re-run, and what it printed, committed by the manager session itself on the integration branch | `modes/converge-manager.md` clause 8; `docs/workflow/CHECK-RECORD.md` carries its own shape | Core 7 · Core 8 |
+
+Neither convention invents a duty. Clause 3 already says what needs the
+steward's word is parked and everything else continues; clause 8 already says
+the verification is the manager session's own. What was missing was any trace of
+either, afterwards, for somebody who was not in the session.
+
+### Core 3 now carries a live reading of this host, and it did not need a new habit
+
+Read on this host on 2026-09-04, against the W8 wave in `~/dev/hw-converge`:
+
+> **Core 3 (CVG-013) PASS:** 3 of 4 recorded park(s) name what kept moving beside
+> them (read from the entry's own `Live:` list; fewest at any one park: 1) — the
+> wave did not go idle on the steward's word, which is what this reading can say
+> and not that nothing more could have proceeded.
+
+The reading accepts the stamp **and** the looser form this workspace's manager
+sessions have been writing all along: a cycle entry saying `Parked:
+protocol-terms (steward ratify card)` beside `Live: guard-3,
+renumber-followup` records the same two facts at the same moment, and the
+reading names which form answered it. A convention that could only read its own
+stamp would have had nothing to say about eight months of waves that are sitting
+right there.
+
+**What it does not prove.** That nothing MORE could have proceeded. Nothing on
+disk records the work that was available and not launched, so this says the wave
+did not go idle on the steward's word, and no more than that. Its falsity
+condition is a park entry naming nothing continuing and giving no reason for it;
+`Continued: none, because no ready item fails to collide with it` is a different
+fact and is not failed.
+
+One measurement worth keeping: the previous reading counted **five** parks in
+this plan record where four are real. The fifth was `http://spark-1:8788` — this
+host's own name, matched by a `park` with no word boundary on it.
+
+### Core 11 is still waiting, but now on something a manager session can write
+
+> **Core 11 (CVG-021) SKIP:** 2 of 4 recorded call(s) name which of the four they
+> are (ratify: 2); the other 2 name none, so this run cannot say the calls that
+> reached the steward were the four.
+
+That is a better sentence than the one it replaces — "nothing in this run reads
+a prompt as an event" — because the observation it now awaits is one line in a
+file a manager session already writes every cycle.
+
+The classification is deliberately narrow. A stamped `CALL <word>` is read
+wherever it sits in the entry; failing that, the loose form is read from the
+**park's own sentence and nowhere else**. Read from the whole entry, a cycle
+that merged a guard fix mentioning `RATIFIED = locked` and separately parked
+something unrelated came back classified as a ratify call — measured on this
+plan record, and a classification nobody wrote and nobody could defend. A call
+stamped as something that is none of the four is a FAIL, because that is the
+defect clause 11 names.
+
+### Core 7 and Core 8: the attribution, answered on a repository built to answer it
+
+The SKIP those two carried was precise and unfixable by reading harder: the
+newest record of a check run came in through a lane merge, because both files a
+check run used to leave a trace in — `ledger/rows.yaml` and this file — are
+edited by lanes. The check record removes the confound at the source, and the
+question becomes readable.
+
+Taken on a purpose-built repository — a real `git init`, a real lane branch, a
+real `merge lane/one: wave 8`, then an integration commit — with the check
+record's newest entry written by **the integrator**:
+
+> **Core 7 (CVG-017) PASS:** step (f) PASS: a marker on an unchanged branch is
+> recorded stuck; and on the subject of the sentence — the newest entry in
+> docs/workflow/CHECK-RECORD.md (2026-09-04 12:40 — 'wave 8, two lanes merged')
+> was added by e19b170c ('check record: wave 8 re-checked after merge'), which is
+> on neither side of any lane merge, so it was the manager session's own hand and
+> not a lane's; it names the check it ran ('uv run --with pyyaml
+> ledger/checks/verify.py -> all pass'). What this does not prove is that the run
+> behind it was clean or that it covered every merge — step (h) re-runs the check
+> itself and answers that.
+
+Core 8 (CVG-018) carries the same verdict, with its own two measured halves in
+front of it (step (g) PASS, step (h) PASS).
+
+The same repository, with one thing changed — the entry appended on the lane
+branch instead, so it arrives through the merge:
+
+> **Core 8 (CVG-018) FAIL:** … the newest entry in docs/workflow/CHECK-RECORD.md
+> (2026-09-04 12:40) was added by 9d798da1, which reached this branch as the
+> second parent of 58727230 ('merge lane/one: wave 8') — a worker session wrote
+> the record of the manager session's own verification, which is the half of
+> clause 8 that says never the worker session's.
+
+**What this observation does NOT prove.** It is a fixture, not this host. It
+proves the reading answers correctly, in both directions, on a repository shaped
+the way the convention prescribes — the harness's usual bargain. It says nothing
+about whether any manager session on this host has yet written an entry, and the
+observed reading below says plainly that none has. Reproduce both with:
+
+```
+uv run --with pytest pytest evaluations/turnkey/tests/test_turnkey.py -q \
+    -k "check_record or clause"
+```
+
+On this host, today, the same step says so in its own words:
+
+> **Core 7 (CVG-017) SKIP:** … the newest record of a check run
+> (ledger/rows.yaml at 84e2a39a) came in through a lane merge, so this wave's
+> verification is unattributed here; the integrator has written 7 such record(s)
+> before, most recently a5ffbf35 — and the record the manager session writes
+> itself (docs/workflow/CHECK-RECORD.md) is not in this repository yet.
+> *Awaits:* the docs/workflow/CHECK-RECORD.md convention, and the first entry a
+> manager session writes into it after integrating a wave.
+
+That awaited observation lands the first time a manager session integrates a
+wave after this lane merges. It is one commit, and it is the manager session's
+to make.
+
+### What is still waiting, and what each one needs now
+
+| Clause | Row | Waiting on |
+|---|---|---|
+| Core 9 · stalls are decisions | CVG-019 | a lane that ends with an unchanged branch. Unchanged by this lane: the reading ran and found nothing to judge, which is the honest answer and not a pass. A deliberately stalled fixture wave is the cheapest route |
+| Core 11 · four calls reach the steward | CVG-021 | every recorded call naming which of the four it is. Two of four already do; the convention makes the rest one line each |
+| Core 7 · the manager session re-ran the check | CVG-017 | on this host: the first `docs/workflow/CHECK-RECORD.md` entry. On a fixture: answered above, both ways |
+| Core 8 · integrate, verify, re-check | CVG-018 | the same |
+
+### Why the machine-readable step block above was NOT re-pasted
+
+`ledger/checks/turnkey_step.py` keys a row on the **newest** `[STATUS] (letter)`
+line in this file, and four ledger rows currently pin the OLD readings —
+`"Core 3 (CVG-013) SKIP"`, `"Core 11 (CVG-021) SKIP"`, `"Core 7 (CVG-017) SKIP"`,
+`"Core 8 (CVG-018) SKIP"`. Pasting this run's `(j)`/`(k)` block here would flip
+all four to `CHANGED-REREAD-THIS-ROW` and take `uv run --with pyyaml
+ledger/checks/verify.py` red on `main`, because that script runs every row's ref
+and holds it to its `expect`.
+
+That is drift detection working exactly as designed — the readings genuinely
+changed — but `ledger/**` belongs to another lane, and a red `main` is not this
+lane's to leave behind. So the verdicts above are quoted in prose, which
+`turnkey_step.py` does not read, and the re-derivation is filed as work. The
+four rows and the phrases they should pin instead are named in it.
+
+```
+$ uv run --with pytest --with pyyaml pytest evaluations/turnkey -q
+136 passed
+
+$ uv run evaluations/turnkey/run.py --self-check
+verdict: PASS | passed: 71 | failed: []
+```
+
+Sixteen new self-check cases and twenty-one new tests. Every new assertion is
+exercised against evidence that must make it fail: a park with nothing
+continuing and no reason, a call stamped as none of the four, a check-record
+entry that arrived through a lane merge, an entry naming no command at all, and
+a typo fix three entries up that must not be credited with writing the newest
+one.
