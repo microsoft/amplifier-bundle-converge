@@ -22,6 +22,12 @@ Asking for a proposal is the one write that never touches a document at all,
 locked or not. It writes the same proposal file beside it, at every one of the
 three scopes, because `experience-direction.v1` clause 9 says the output of an
 ask is always a proposal — never a silent edit, and never a chat.
+
+Locking is the write that makes a document law, and it is the one that decides
+what every other write above does next: once the H1 carries `(FROZEN <date>)`,
+an edit and a restore stop touching the file and start writing proposals beside
+it. It refuses a document that already carries a locking word, and it counts
+the four Freeze Bar conditions itself rather than trusting the browser's gate.
 """
 
 from __future__ import annotations
@@ -55,6 +61,27 @@ def _safe(text: str, limit: int = 80) -> str:
     return (cleaned or "untitled")[:limit]
 
 
+def _ratification_record(repo: Path, when: datetime) -> Path:
+    """Today's ratification record, created with its header if it is new.
+
+    One file per day, in the order the words were given. Both writers that put
+    a steward's word on the record — a decision on a proposal, and locking a
+    document — land in this same file, so a reader finds every word of theirs
+    in one place rather than two.
+    """
+    day = when.strftime("%Y-%m-%d")
+    folder = Path(repo) / "docs" / "workflow"
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"owner-ratifications-{day}.md"
+    if not path.exists():
+        path.write_text(
+            f"# Owner ratifications — {day}\n\n"
+            "Each entry below is the steward's own word on one proposal, recorded when it was given.\n",
+            encoding="utf-8",
+        )
+    return path
+
+
 def record_decision(
     repo: Path,
     *,
@@ -73,16 +100,7 @@ def record_decision(
     here and a decision made there read the same afterwards.
     """
     when = when or _now()
-    day = when.strftime("%Y-%m-%d")
-    folder = Path(repo) / "docs" / "workflow"
-    folder.mkdir(parents=True, exist_ok=True)
-    path = folder / f"owner-ratifications-{day}.md"
-    if not path.exists():
-        path.write_text(
-            f"# Owner ratifications — {day}\n\n"
-            "Each entry below is the steward's own word on one proposal, recorded when it was given.\n",
-            encoding="utf-8",
-        )
+    path = _ratification_record(repo, when)
 
     word = DECISION_WORDS.get(decision, decision or "Recorded")
     heading = f"{_stamp(when)} — {word}: {doc_id} ({proposal_id or 'no proposal named'})"
@@ -827,15 +845,206 @@ def apply_change(
     }
 
 
+#: The word a draft's H1 carries, and the one a lock replaces. Capitals only,
+#: for the same reason `LOCK_WORD` is: prose about a draft is not a status.
+DRAFT_WORD = re.compile(r"\bDRAFT\b")
+
+#: How many conditions the Freeze Bar asks for. Four, and the server counts
+#: them itself rather than trusting the browser's gate: the browser can be
+#: told anything, and `experience-direction.v1` §11 says nothing locks on its
+#: own.
+LOCK_CONDITIONS = 4
+
+
+def _h1_locked(line: str, day: str) -> str:
+    """The H1 with its status turned from draft to locked.
+
+    `documents.v1` §6 puts status in the H1 parenthetical and nowhere else, so
+    that is the only thing touched. Three shapes are met in this repository and
+    each keeps whatever else the heading was saying:
+
+    * `# Demo Contract — v1 (DRAFT)` — the word is replaced in place.
+    * `# Documents Contract — v1 (DRAFT — amended 2026-09-03)` — same, and the
+      prose after it survives.
+    * `# A Title (content owner-ratified 2026-09-03)` — no draft word, so the
+      status goes to the front of the parenthetical that is already there,
+      rather than opening a second one beside it.
+
+    A heading with no parenthetical at all gets one.
+    """
+    body = line.rstrip()
+    if DRAFT_WORD.search(body):
+        return DRAFT_WORD.sub(f"FROZEN {day}", body, count=1)
+    opened = body.rfind("(")
+    if opened != -1 and body.endswith(")"):
+        return f"{body[:opened + 1]}FROZEN {day} — {body[opened + 1:]}"
+    return f"{body} (FROZEN {day})"
+
+
+def lock_document(
+    repo: Path,
+    path: Path,
+    *,
+    conditions: list[str] | tuple[str, ...] = (),
+    repo_id: str = "",
+    doc_id: str = "",
+    user: str = "",
+    when: datetime | None = None,
+) -> dict:
+    """Stamp `(FROZEN <date>)` into a document's own H1, and commit it.
+
+    The last step of `experience-direction.v1` §11, and the only one that
+    changes a file. The browser's gate decides whether the control is live;
+    this decides whether the document is locked, because the H1 is a file and
+    a browser can be told anything.
+
+    Three things it refuses, each by name: a document that already carries a
+    locking word (it is already law, and law changes by proposal — see
+    `apply_change` above), a heading with nowhere to put a status, and a
+    request that did not carry all four of the Freeze Bar's conditions.
+
+    What it leaves behind is two records of one act: the commit, authored
+    `<steward> via Converge`, and an entry in today's ratification record
+    carrying the four conditions in the steward's own words. The commit is
+    made first — a record of a lock that did not happen would be worse than
+    no record at all.
+    """
+    when = when or _now()
+    repo, path = Path(repo), Path(path)
+    rel = path.relative_to(repo).as_posix()
+    answered = [str(one).strip() for one in conditions if str(one).strip()]
+
+    lock = document_lock(path)
+    if lock:
+        return {
+            "ok": False,
+            "error": (
+                f"{rel} already carries {lock} in its first line, so it is already law. "
+                f"A locked document changes by a proposal beside it, never by locking it again."
+            ),
+            "locked": lock,
+        }
+
+    if len(answered) < LOCK_CONDITIONS:
+        return {
+            "ok": False,
+            "error": (
+                f"locking {rel} needs all four of the Freeze Bar's conditions answered, "
+                f"and {len(answered)} arrived. Nothing locks on its own."
+            ),
+        }
+
+    try:
+        original = path.read_text(encoding="utf-8")
+    except OSError:
+        return {"ok": False, "error": f"could not read {rel}"}
+
+    lines = original.split("\n")
+    heading = next((index for index, line in enumerate(lines) if line.startswith("# ")), -1)
+    if heading < 0:
+        return {
+            "ok": False,
+            "error": (
+                f"{rel} has no first heading, and documents.v1 §6 puts status in the H1 "
+                f"parenthetical and nowhere else. There is nowhere here to say it is locked."
+            ),
+        }
+
+    # The commit below names this one path, so any other uncommitted edit to
+    # the same file would ride along under the steward's name. Same refusal
+    # `apply_change` makes, for the same reason.
+    dirty = _git(repo, "status", "--porcelain", "--", rel)[1].strip()
+    if dirty:
+        return {
+            "ok": False,
+            "error": f"{rel} has uncommitted changes, so locking it would carry them too. Commit or discard them first.",
+        }
+
+    day = when.strftime("%Y-%m-%d")
+    lines[heading] = _h1_locked(lines[heading], day)
+    stamped = "\n".join(lines)
+    path.write_text(stamped, encoding="utf-8")
+
+    who = f"{user or 'A steward'} via Converge"
+    subject = f"{path.stem}: locked FROZEN {day} by {user or 'a steward'} in Converge"
+    message = subject + "\n\n" + "\n".join(f"- {one}" for one in answered) + "\n"
+    ok, _out, problem = _git(
+        repo,
+        "-c",
+        f"user.name={who}",
+        "-c",
+        f"user.email={_safe(user or 'steward')}@converge.invalid",
+        "commit",
+        "-q",
+        "-m",
+        message,
+        "--",
+        rel,
+    )
+    if not ok:
+        path.write_text(original, encoding="utf-8")
+        return {"ok": False, "error": f"the lock did not go through: {problem.strip()[:200]}"}
+    sha = _git(repo, "log", "-1", "--format=%H")[1].strip()
+
+    # Only now, with the stamp actually committed, does the record say so.
+    recorded, record_trouble = "", ""
+    try:
+        record = _ratification_record(repo, when)
+        entry = f"{_stamp(when)} — Locked: {doc_id or path.stem} (FROZEN {day})"
+        body = [
+            "",
+            f"## {entry}",
+            "",
+            "- **Decision:** Locked — this document is law from here on",
+            f"- **Document:** `{repo_id or repo.name}` · `{doc_id or path.stem}`",
+            f"- **Heading now reads:** `{lines[heading].strip()}`",
+            f"- **Committed as:** `{sha[:7]}` by {who}",
+            f"- **By:** {user or 'unknown'} · {_stamp(when)}",
+            "",
+            "**Conditions answered, verbatim:**",
+            "",
+            *[f"- {one}" for one in answered],
+            "",
+        ]
+        with record.open("a", encoding="utf-8") as out:
+            out.write("\n".join(body))
+        recorded = str(record)
+    except OSError as problem:
+        record_trouble = f"the lock is committed, but today's ratification record could not be written: {problem}"
+
+    return {
+        "ok": True,
+        "mode": "commit",
+        "locked": "FROZEN",
+        "day": day,
+        "path": str(path),
+        "file": rel,
+        "heading": lines[heading].strip(),
+        "sha": sha[:7],
+        "author": who,
+        "subject": subject,
+        "conditions": answered,
+        "recorded": recorded,
+        "recordTrouble": record_trouble,
+        "said": (
+            f"{path.name} is locked — its first line now reads {lines[heading].strip()}, committed as {sha[:7]}. "
+            f"From here it changes by a proposal beside it."
+        )
+        + (f" {record_trouble}" if record_trouble else ""),
+    }
+
+
 __all__ = [
     "ASK_SCOPES",
     "DECISION_WORDS",
     "DRAFT_TIMEOUT",
+    "LOCK_CONDITIONS",
     "LOCK_WORD",
     "apply_change",
     "candidate_path",
     "document_lock",
     "draft_with_amplifier",
+    "lock_document",
     "record_ask",
     "record_decision",
     "record_feedback",
