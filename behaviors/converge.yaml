@@ -168,3 +168,10 @@ context:
 # explicit tools: blocks); the candidate-guard hook remains the structural
 # enforcement. Do NOT reintroduce a session-wide spawn policy — per-agent
 # spawn tool policy is an upstream feature request.
+#
+# This file being clean does not make a HOST clean. Measured 2026-09-04
+# (converge-w3v): a published fork of this behavior, app-installed beside
+# unrelated work, was stripping tool-bash / tool-delegate / tool-skills from
+# every spawned helper in every session on the machine while this tree passed
+# rules 6a and 6b. conformance/composition/ rule 6c is the standing check for
+# the installed release, and names the app entry that carries the policy.

@@ -1,4 +1,4 @@
-"""The live half of the composition.v1 kit -- rules 3b and 6b.
+"""The live half of the composition.v1 kit -- rules 3b, 6b and 6c.
 
 Two of composition.v1's promises are about a RUNNING session, not about files
 on disk, and until 2026-09-04 the kit declined both: rule 3b reported "needs a
@@ -38,6 +38,21 @@ What "a real verdict" means here
   in every session). Measuring only the treatment would blame the target for
   the host's own setting, or -- worse -- report a green because the tools were
   already gone before the target arrived.
+* **6c** is the half that isolation hides. 6b composes the WORKING TREE, so it
+  reports what the next release will do; it cannot see what the release a user
+  ALREADY installed is doing, and on 2026-09-04 those disagreed: this tree was
+  clean, 6a and 6b both PASSed, and a published sibling release of the same
+  product -- app-installed on the same machine -- was stripping all three tools
+  from every spawned helper in every session on it (converge-w3v). 6c stands up
+  the unrelated session the way the HOST actually composes it (the lean base
+  plus the host's whole app-bundle list, exactly as ``runtime/config.py`` hands
+  ``get_app_bundles()`` to ``load_and_prepare_bundle``), and when that session
+  is contaminated it loads each app entry alone to name the one that carries
+  the policy.
+
+  Attribution is what keeps 6c from being a rumour. It judges this repository's
+  product only: a contaminated host whose carrier is a FOREIGN bundle is
+  reported as a SKIP naming that bundle, never as this repository's failure.
 
 When it cannot run
 ------------------
@@ -68,8 +83,16 @@ LEAN_BASE_URI = (
 LEAN_BASE_NAMESPACE = "anchors"
 
 #: Set to "0" to decline the live probes deliberately (offline, or a run that
-#: must not touch the network). Both rules then SKIP naming this variable.
+#: must not touch the network). All three live rules then SKIP naming this
+#: variable.
 ENV_TOGGLE = "AMPLIFIER_COMPOSITION_KIT_LIVE"
+
+#: Whitespace-separated bundle URIs that REPLACE the host's own app-bundle list
+#: for rule 6c. The kit's test seam, and the only way the host half can be given
+#: a negative fixture -- a rule nobody can make fail proves nothing. Unset (the
+#: normal case) means "ask the installed CLI"; set-but-empty means "a host that
+#: installs nothing", which 6c declines rather than passes.
+ENV_APP_BUNDLES = "AMPLIFIER_COMPOSITION_KIT_APP_BUNDLES"
 
 PROBE_TIMEOUT_S = 900
 
@@ -166,13 +189,26 @@ class LiveProbe:
     the same captured result, so standing up sessions is paid for once.
     """
 
-    def __init__(self, root: Path, own_agents: list, behaviors: list):
+    def __init__(self, root: Path, own_agents: list, behaviors: list,
+                 bundle_names: list | None = None):
         self.root = root.resolve()
         self.own_agents = sorted(own_agents)
         self.paths = install_paths(self.root, behaviors)
+        #: The names this repository's product answers to -- its root bundle's
+        #: name and each behavior's. Rule 6c matches them against the host's
+        #: app-bundle URIs to tell "this product's own release" from a
+        #: neighbour's bundle, so a contaminated host is never blamed on the
+        #: wrong repository.
+        self.bundle_names = sorted({n for n in (bundle_names or []) if len(n) >= 4})
         self.missing: str | None = None
         self.raw: dict = {}
         self._run()
+
+    def owns(self, uri: str) -> bool:
+        """Does this URI name this repository's product?"""
+        return any(
+            re.search(rf"\b{re.escape(n)}\b", uri, re.I) for n in self.bundle_names
+        )
 
     # -- the mechanics ----------------------------------------------------- #
     def _run(self) -> None:
@@ -192,6 +228,9 @@ class LiveProbe:
             "lean_base_uri": LEAN_BASE_URI,
             "install_paths": self.paths,
         }
+        injected = os.environ.get(ENV_APP_BUNDLES)
+        if injected is not None:
+            request["host_app_bundles"] = injected.split()
         try:
             proc = subprocess.run(  # noqa: S603
                 [str(exe), str(CHILD)],
@@ -345,11 +384,109 @@ class LiveProbe:
         ), extra
 
 
-def probe(root: Path, own_agents: list, behaviors: list) -> LiveProbe:
-    return LiveProbe(root, own_agents, behaviors)
+    # -- rule 6c ------------------------------------------------------------ #
+    def host_row(self) -> tuple:
+        """Core 6, host half: is the promise kept where this is INSTALLED?
+
+        6b composes the working tree, so it reports what the next release will
+        do to a neighbour. This asks what the release already on the host is
+        doing to one -- the question that went unasked while a published
+        sibling stripped three tools from every session on this machine.
+
+        The rule judges THIS repository's product. A host whose promise is
+        broken by a foreign bundle declines with that bundle named: blaming
+        this repository for a neighbour's setting is the same mis-attribution
+        rule 6b's control exists to prevent.
+        """
+        if self.missing:
+            return self._skip()
+        if "host_error" in self.raw:
+            err = self.raw["host_error"]
+            return "FAIL", f"the host's own session could not be composed: {err}", {
+                "host_error": err
+            }
+        h = self.raw.get("host") or {}
+        app = h.get("app_bundles") or []
+        source = h.get("app_source") or "unknown"
+        baseline = h.get("baseline") or sorted(PROMISED_TOOLS)
+        extra = {
+            "app_bundle_count": len(app),
+            "app_bundle_source": source,
+            "app_bundles_naming_this_repository": [u for u in app if self.owns(u)],
+            "host_spawn_policy": h.get("spawn"),
+            "host_helper_tools": sorted(h.get("helper_tools") or []),
+            "host_lost": h.get("lost") or [],
+            "baseline_promised_tools": baseline,
+            "attribution": h.get("attribution"),
+        }
+        if not self.bundle_names:
+            reason = (
+                "this repository declares no bundle name, so an app-installed "
+                "release of it cannot be told apart from a neighbour's bundle"
+            )
+            return "SKIP", reason, {"reason": reason, **extra}
+        if not app:
+            reason = (
+                f"this host composes no app bundles ({source}), so there is no "
+                "installed-beside-other-work state to measure"
+            )
+            return "SKIP", reason, {"reason": reason, **extra}
+        mine = extra["app_bundles_naming_this_repository"]
+        if not mine:
+            reason = (
+                f"no app bundle on this host names {self.bundle_names} "
+                f"({len(app)} installed, {source}), so this repository is not "
+                "installed beside other work here"
+            )
+            return "SKIP", reason, {"reason": reason, **extra}
+        spawn, lost = h.get("spawn"), extra["host_lost"]
+        if not spawn and not lost:
+            return "PASS", (
+                f"with {len(app)} app bundle(s) composed -- {len(mine)} of them this "
+                f"repository's -- an unrelated session's mount plan carries no "
+                f"session-wide spawn policy and its spawned helper keeps "
+                + ", ".join(f"{PROMISED_TOOLS[m]} ({m})" for m in baseline)
+            ), extra
+        carriers = [r for r in (h.get("attribution") or []) if r.get("spawn")]
+        ours = [r for r in carriers if self.owns(r["uri"])]
+        harm = (
+            "the neighbour's helper loses "
+            + ", ".join(f"{PROMISED_TOOLS[m]} ({m})" for m in lost)
+            if lost else
+            f"the host session carries a session-wide spawn policy {spawn}"
+        )
+        if ours:
+            where = "; ".join(f"{r['uri']} -> spawn {r['spawn']}" for r in ours)
+            return "FAIL", (
+                f"on this host {harm} -- carried by {len(ours)} app-installed "
+                f"release(s) of this repository: {where}"
+            ), extra
+        if carriers:
+            where = "; ".join(f"{r['uri']} -> spawn {r['spawn']}" for r in carriers)
+            reason = (
+                f"the neighbour promise IS broken on this host ({harm}), but no "
+                f"app bundle naming {self.bundle_names} carries the policy -- it "
+                f"comes from {where}, which this rule may not blame on this "
+                "repository"
+            )
+            return "SKIP", reason, {"reason": reason, **extra}
+        reason = (
+            f"the neighbour promise IS broken on this host ({harm}) and no app "
+            f"bundle of the {len(app)} installed declares a spawn policy of its "
+            "own, so the policy could not be attributed to any of them"
+        )
+        return "SKIP", reason, {"reason": reason, **extra}
+
+
+def probe(root: Path, own_agents: list, behaviors: list,
+          bundle_names: list | None = None) -> LiveProbe:
+    return LiveProbe(root, own_agents, behaviors, bundle_names)
 
 
 if __name__ == "__main__":  # pragma: no cover - a hand tool for one repo
     r = Path(sys.argv[1] if len(sys.argv) > 1 else ".")
     p = probe(r, [], [])
-    print(json.dumps({"3b": p.session_row(), "6b": p.neighbour_row()}, indent=2, default=str))
+    print(json.dumps(
+        {"3b": p.session_row(), "6b": p.neighbour_row(), "6c": p.host_row()},
+        indent=2, default=str,
+    ))

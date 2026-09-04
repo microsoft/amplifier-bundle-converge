@@ -16,13 +16,20 @@ names the exact promise rather than a whole paragraph. Every Core clause has a
 row, and the self-test fails if one does not — a clause added later cannot go
 unchecked.
 
-Two promises (rules 3b and 6b) are about a RUNNING session rather than files.
-They are judged by ``live.py``, which stands real sessions up through the
+Three promises (rules 3b, 6b and 6c) are about a RUNNING session rather than
+files. They are judged by ``live.py``, which stands real sessions up through the
 installed Amplifier — this file imports nothing from it. Where a live verdict is
 genuinely out of reach (no ``amplifier`` on PATH, an interpreter that cannot
-import the app, a probe that timed out, or the probe switched off), those two
-rows report SKIP naming the exact missing capability — never a fabricated PASS.
-They are the only two rows allowed to decline at all.
+import the app, a probe that timed out, or the probe switched off), those rows
+report SKIP naming the exact missing capability — never a fabricated PASS.
+They are the only rows allowed to decline at all.
+
+6c asks a different question from the other two: not "what does this working
+tree do to a neighbour" but "what is the release of this repository ALREADY
+INSTALLED on this host doing to one". The two answers disagreed on 2026-09-04 —
+this tree was clean, 6a and 6b both PASSed, and a published sibling release
+app-installed on the same machine was stripping shell, delegation and skills
+from every spawned helper in every session on it (converge-w3v).
 
 The kit was numbered to the contract's *Conformance kit asserts* bullets until
 2026-09-03. The steward ratified the Core-clause anchor that day (see
@@ -90,6 +97,8 @@ RULES = [
      "no session-wide tool-stripping setting anywhere"),
     ("6b", 6, "unrelated_session_keeps_tools",
      "a helper in an unrelated session keeps its shell, delegation, and skills tools"),
+    ("6c", 6, "installed_release_keeps_neighbour_tools",
+     "on a host where this repository is installed, an unrelated session's helper keeps them too"),
     ("7a", 7, "guard_admits_both_proposal_names",
      "the guard admits a proposal beside a locked contract, under either name"),
     ("7b", 7, "guard_recognizes_locked_marker",
@@ -106,6 +115,8 @@ RULES = [
 LIVE_RULES = {
     "3b": "a real session on this repository, and what it composes",
     "6b": "a real unrelated session, with and without this repository installed beside it",
+    "6c": "a real unrelated session as THIS host composes it, with the app bundles "
+          "actually installed on it",
 }
 
 # The heavy package this contract forbids, and the lean base it requires.
@@ -450,6 +461,32 @@ def helper_files(root: Path):
     return sorted(p for p in d.rglob("*.md") if p.is_file())
 
 
+def own_bundle_names(root: Path):
+    """Every name this repository's product answers to, for rule 6c.
+
+    The root bundle's name and each behavior's. An app-bundle URI on the host
+    that names one of them is a release of THIS repository; one that names none
+    is a neighbour's, and 6c may not blame a neighbour's setting on this
+    repository (the same discipline rule 6b's control enforces).
+    """
+    names = []
+    meta, err = load_bundle_frontmatter(root)
+    if not err and isinstance(meta, dict):
+        n = ((meta.get("bundle") or {}).get("name") or "").strip()
+        if n:
+            names.append(n)
+    for p in behavior_files(root):
+        try:
+            doc = yaml.safe_load(p.read_text(encoding="utf-8", errors="replace"))
+        except yaml.YAMLError:
+            continue
+        if isinstance(doc, dict):
+            n = ((doc.get("bundle") or {}).get("name") or "").strip()
+            if n:
+                names.append(n)
+    return sorted(set(names))
+
+
 def own_agent_names(root: Path):
     """The namespaced names of this repository's own helpers.
 
@@ -777,9 +814,11 @@ def check_guard_recognizes_locked_marker(root: Path):
 # driver                                                                       #
 # --------------------------------------------------------------------------- #
 def run_conformance(root: Path) -> dict:
-    # One live probe serves both live rows: standing sessions up is the
-    # expensive part, and 3b and 6b read the same captured run.
-    probe = live.probe(root, own_agent_names(root), behavior_files(root))
+    # One live probe serves every live row: standing sessions up is the
+    # expensive part, and 3b, 6b and 6c read the same captured run.
+    probe = live.probe(
+        root, own_agent_names(root), behavior_files(root), own_bundle_names(root)
+    )
     results = [
         check_no_heavy_reference(root),        # 1a
         check_lean_base_named(root),           # 1b
@@ -791,6 +830,7 @@ def run_conformance(root: Path) -> dict:
         check_work_queue_on_both_paths(root),  # 5
         check_no_tool_stripping(root),         # 6a
         _from_live("6b", probe.neighbour_row()),
+        _from_live("6c", probe.host_row()),
         check_guard_admits_both(root),         # 7a
         check_guard_recognizes_locked_marker(root),  # 7b
     ]

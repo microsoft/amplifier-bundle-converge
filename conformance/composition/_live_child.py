@@ -27,6 +27,24 @@ What it actually does, for each of the two live promises:
     stripped ``bash``, ``delegate`` and ``load_skill`` from an unrelated
     session's helper that day. Nothing here re-implements it.
 
+``host`` (composition.v1 Core 6, host half)
+    The same unrelated session AS THIS HOST ACTUALLY COMPOSES IT -- the lean
+    base with the host's whole app-bundle list composed onto it, exactly the
+    way ``runtime/config.py`` hands ``get_app_bundles()`` to
+    ``load_and_prepare_bundle`` as ``compose_behaviors``. ``neighbour`` above
+    measures what the WORKING TREE does; this measures what the RELEASE a user
+    actually installed does, and the two are not the same repository state.
+    Measured 2026-09-04 on the machine this was written on: the working tree
+    was clean and a published sibling release of the same product, installed as
+    an app bundle, was stripping all three tools from every spawned helper in
+    every session on the host (converge-w3v).
+
+    When that session is contaminated, every app entry is loaded on its own and
+    asked for its top-level ``spawn`` -- attribution, so the verdict names the
+    entry that carries the policy instead of the host in general. Loading is
+    used rather than preparing: attribution needs the composed ``spawn`` key,
+    not a module download.
+
 Modules are prepared with ``install_deps=False``. This probe measures
 COMPOSITION -- what lands in a session's mount plan -- not whether every
 module's Python package installs, and installing a whole bundle's dependency
@@ -61,16 +79,20 @@ def _tool_modules(plan: dict) -> list:
     return [t.get("module") for t in (plan.get("tools") or []) if isinstance(t, dict)]
 
 
-async def _prepare(uri: str, compose: list | None):
-    from amplifier_app_cli.lib.bundle_loader import (  # noqa: PLC0415
-        AppBundleDiscovery,
-        load_and_prepare_bundle,
-    )
+def _discovery():
+    from amplifier_app_cli.lib.bundle_loader import AppBundleDiscovery  # noqa: PLC0415
     from amplifier_app_cli.paths import get_bundle_search_paths  # noqa: PLC0415
 
-    discovery = AppBundleDiscovery(search_paths=get_bundle_search_paths())
+    return AppBundleDiscovery(search_paths=get_bundle_search_paths())
+
+
+async def _prepare(uri: str, compose: list | None):
+    from amplifier_app_cli.lib.bundle_loader import (  # noqa: PLC0415
+        load_and_prepare_bundle,
+    )
+
     return await load_and_prepare_bundle(
-        uri, discovery, compose_behaviors=compose or None, install_deps=False
+        uri, _discovery(), compose_behaviors=compose or None, install_deps=False
     )
 
 
@@ -119,6 +141,67 @@ async def _neighbour_probe(req: dict) -> dict:
     return {"control": control, "treatments": treatments}
 
 
+def _app_bundles(req: dict) -> tuple[list, str]:
+    """(the host's app-bundle list, where it came from).
+
+    Normally asked of the SHIPPED accessor, so the list can never drift from
+    what the CLI itself composes. ``host_app_bundles`` in the request replaces
+    it -- that is the kit's own test seam, and the only way the host half can
+    be given a negative fixture (a rule nobody can make fail proves nothing).
+    """
+    injected = req.get("host_app_bundles")
+    if injected is not None:
+        return list(injected), "injected (kit test seam)"
+    from amplifier_app_cli.lib.settings import get_settings  # noqa: PLC0415
+
+    return list(get_settings().get_app_bundles() or []), (
+        "the installed CLI's own get_settings().get_app_bundles()"
+    )
+
+
+async def _attribute(uris: list) -> list:
+    """Which app entries carry a session-wide ``spawn`` policy of their own.
+
+    ``load_bundle`` rather than ``_prepare``: the question is which entry
+    CONTRIBUTES the key, and ``to_mount_plan()`` answers it after the entry's
+    own includes are composed -- so a policy hidden one include deep is still
+    attributed to the entry a user would have to remove.
+    """
+    from amplifier_foundation import load_bundle  # noqa: PLC0415
+
+    registry = _discovery().registry
+    rows = []
+    for uri in uris:
+        row = {"uri": uri}
+        try:
+            bundle = await load_bundle(uri, registry=registry)
+            row["spawn"] = (bundle.to_mount_plan() or {}).get("spawn")
+        except Exception as exc:  # noqa: BLE001 - reported, never swallowed
+            row["error"] = f"{type(exc).__name__}: {exc}"
+        rows.append(row)
+    return rows
+
+
+async def _host_probe(req: dict, control_helper_tools: list | None) -> dict:
+    """Core 6, host half: the unrelated session as THIS host composes it."""
+    app, source = _app_bundles(req)
+    baseline = [
+        m for m in PROMISED
+        if control_helper_tools is None or m in control_helper_tools
+    ]
+    out = {"app_bundles": app, "app_source": source, "baseline": baseline}
+    if not app:
+        return out
+    plan = (await _prepare(req["lean_base_uri"], app)).mount_plan
+    out["spawn"] = plan.get("spawn")
+    out["session_tools"] = _tool_modules(plan)
+    out["helper_tools"] = _spawned_helper_tools(plan)
+    out["lost"] = [m for m in baseline if m not in out["helper_tools"]]
+    if out["spawn"] or out["lost"]:
+        out["attribution"] = await _attribute(app)
+    return out
+
+
 async def _run(req: dict) -> dict:
     out = {"ok": True}
     try:
@@ -129,6 +212,11 @@ async def _run(req: dict) -> dict:
         out["neighbour"] = await _neighbour_probe(req)
     except Exception as exc:  # noqa: BLE001
         out["neighbour_error"] = f"{type(exc).__name__}: {exc}"
+    try:
+        control = ((out.get("neighbour") or {}).get("control") or {}).get("helper_tools")
+        out["host"] = await _host_probe(req, control)
+    except Exception as exc:  # noqa: BLE001
+        out["host_error"] = f"{type(exc).__name__}: {exc}"
     return out
 
 
@@ -136,10 +224,12 @@ def main() -> int:
     """Read one JSON request on stdin; write one ``LIVE-RESULT`` line.
 
     Request keys:
-      root           absolute path of the target repository
-      bundle_uri     ``file://<root>/bundle.md`` -- the session under test
-      lean_base_uri  the unrelated session's bundle (the lean base)
-      install_paths  every path a user could install the target by
+      root              absolute path of the target repository
+      bundle_uri        ``file://<root>/bundle.md`` -- the session under test
+      lean_base_uri     the unrelated session's bundle (the lean base)
+      install_paths     every path a user could install the target by
+      host_app_bundles  optional; replaces the host's own app-bundle list
+                        (the kit's test seam -- absent means ask the CLI)
     """
     try:
         req = json.loads(sys.stdin.read())
