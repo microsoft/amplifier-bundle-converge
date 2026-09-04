@@ -67,6 +67,33 @@
 .lane-evidence { text-align:right; color:var(--muted); font-size:10px; }
 .lane-evidence strong { display:block; color:#314157; font-size:11px; margin-bottom:5px; }
 .watch-button { border:0; background:transparent; color:#5d46cf; padding:0; font-weight:700; font-size:10px; }
+
+/* Core 8 — the fold under a lane's claim, holding what the lane produced.
+   It spans both columns of the card so a long commit subject has the whole
+   width to break in rather than being squeezed into the evidence column. */
+.lane-produced { grid-column:1 / -1; margin-top:8px; border-top:1px solid var(--line); padding-top:7px; min-width:0; }
+.lane-produced > summary { font-size:10px; color:#5d46cf; font-weight:700; cursor:pointer; list-style:none; }
+.lane-produced > summary::-webkit-details-marker { display:none; }
+.lane-produced > summary::before { content:"▸ "; }
+.lane-produced[open] > summary::before { content:"▾ "; }
+.produced-list { margin:7px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px; min-width:0; }
+.produced-list li { min-width:0; }
+.produced-text { display:block; font-size:11px; color:#314157; overflow-wrap:anywhere; }
+.produced-source { display:block; font-size:9px; overflow-wrap:anywhere; }
+.lanes-note { font-size:11px; margin:6px 0 0; }
+
+/* Core 10 and Core 13, side by side on the page. */
+.say-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+.say-drop, .say-managers { min-width:0; }
+.say-note { font-size:11px; margin:5px 0 8px; }
+.say-drop textarea { width:100%; box-sizing:border-box; font:inherit; font-size:12px; border:1px solid var(--line); border-radius:9px; padding:8px; resize:vertical; }
+.say-drop button { margin-top:8px; }
+.managers-list { display:flex; flex-direction:column; gap:6px; margin-bottom:10px; min-width:0; }
+.manager-row { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:8px; align-items:center; background:#f8fafc; border-radius:9px; padding:8px 9px; font-size:11px; }
+.manager-row.is-here { background:#f3f0ff; }
+.manager-row-name { font-weight:750; overflow-wrap:anywhere; }
+.manager-row-word { color:var(--muted); font-size:10px; }
+.manager-row-needs { color:var(--muted); font-size:10px; white-space:nowrap; }
 .timeline-list { margin-top:13px; display:flex; flex-direction:column; gap:0; }
 .timeline-entry { display:grid; grid-template-columns:58px 14px minmax(0,1fr); gap:8px; min-height:48px; }
 .timeline-time { color:var(--muted); font-size:10px; padding-top:2px; }
@@ -90,7 +117,12 @@
   .lanes-grid { grid-template-columns:1fr; }
 }
 
+@media (max-width: 980px) {
+  .say-grid { grid-template-columns:1fr; }
+}
+
 @media (max-width: 520px) {
   .strategy-facts { grid-template-columns:1fr; }
   .confidence-content { align-items:flex-start; }
+  .manager-row { grid-template-columns:minmax(0,1fr); gap:2px; }
 }
