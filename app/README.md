@@ -194,6 +194,59 @@ proposed them. A session that fails, times out, is missing, or reports anything
 but success does not lose the ask: the proposal is still written from the
 steward's own words and names what went wrong.
 
+## From the host: pull requests, read as proposals
+
+The sixth surface (`app/collab.py`, plus the `collab.html` partial) is the host
+half of collaboration. Git is the protocol and the repository host carries the
+conversation; this panel is the lens on it. Open pull requests in each of the
+manager session's `repos` are read with the host's own command line — `gh pr
+list` for the panel, `gh pr view` for one — and laid out in **the same proposal
+shape a `*-candidate.md` file produces**, so the review anatomy is identical
+whatever the origin. Where a proposal came from is a value on it (`source`),
+never a second layout.
+
+| Route | What it does |
+|---|---|
+| `GET /api/collab/{mid}/pulls` | every open pull request across this session's repositories, as proposals (capped at 20, and the answer says the cap) |
+| `GET /api/collab/{mid}/pulls/{number}` | one pull request and the conversation on it |
+| `POST /api/collab/{mid}/pulls/{number}/comments` | a question asked here, arriving on the host as a comment |
+| `POST /api/collab/{mid}/pulls/{number}/answer` | the steward's word, recorded and returned |
+| `POST /api/collab/webhooks/host` | the door the host knocks on when something changed |
+| `GET /api/collab/{mid}/freshness` | which mechanism is keeping this panel current |
+
+**Answering writes twice, and reports both halves separately.** `app/writes.py`
+appends the word to `docs/workflow/owner-ratifications-<date>.md` — the same
+dated record every other decision lands in — and the same word is posted back to
+the pull request it came from as a comment, in the steward's own words. The
+response carries `recorded` and `returnedToOrigin` as two values, so a host that
+refuses the comment never makes the record look unwritten. The four words are
+`app/writes.py`'s four; this surface adds none.
+
+**Freshness is not the steward's job**, and the panel says which mechanism is
+carrying it rather than leaving anyone to guess: a **webhook** when the host can
+call one, **polling every 60 seconds** otherwise. Today it is polling. The
+webhook route exists and checks a shared secret from
+`~/.amplifier/converge-app.webhook-secret` (`CONVERGE_COLLAB_SECRET_FILE`
+overrides it, and with no secret file the route refuses rather than trusting the
+caller), but every `/api/` path is behind the sign-in gate in `app/serve.py`, so
+a call from the host answers 401 until that route is listed as public. A webhook
+call counts as *being told* for fifteen minutes; after that the panel says
+polling again rather than claiming a webhook it has not heard from.
+
+**Nothing about the conversation is kept here.** No pull request, comment or
+answer is stored by the app — every row is the host's own, read fresh. The only
+state is *when the host last called*, held in memory per repository, so a restart
+goes back to saying polling rather than claiming a webhook nobody has heard from.
+This is also not a channel between two manager sessions: every destination is a
+pull request on the shared host, so two stewards both running Converge still meet
+as Converge → host → Converge.
+
+**`gh` is required for this surface and this surface only.** Without it the panel
+says so in plain words — *the host command line `gh` is not installed on this
+machine, so no pull request can be read and no comment can be posted* — rather
+than showing an empty list that looks like "no open pull requests". The rest of
+the app runs unchanged.
+
 ## The console: the manager session, not a chat about it
 
 The terminal pane **is the manager's own session** — what you type there is
