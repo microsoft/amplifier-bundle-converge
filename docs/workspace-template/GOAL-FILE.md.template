@@ -47,6 +47,12 @@ right. Present tense. No steps.>
 No third outcome. If every deliverable is committed, its evidence is on disk or
 in printed output, and no stated falsifier is tripped, the outcome is A.
 
+A criterion this lane cannot satisfy from inside its own file ownership is a
+**residual, not a blocker — the outcome is still A.** Name it in `residuals`
+with what is left, who owns the path, and what a reader runs to see the
+remainder; do not reach outside the ownership split to clear it. Exit B is for a
+cause that stops every deliverable.
+
 ## Acceptance
 
 <Number them. Every item names a file path, or a command whose output this lane
