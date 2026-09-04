@@ -68,6 +68,38 @@
 #            export -- fixing four items and bringing newer ones in. The count
 #            follows the export by design; re-read on merge, never bump blind.
 # Main moves hourly; a ledger that chases it converges on nothing.
+# RE-DERIVED 2026-09-04 (converge-3rzz) -- THE MERGE THE TWO LINES ABOVE
+# PREDICTED, AND BOTH LANDED EXACTLY AS WRITTEN. The stall-fixture, closed-cite
+# and 9a-sweep lanes are on main; the gate here read the two rows they moved and
+# said so. Neither was bumped: each was re-run in this tree first.
+#   CVG-051  GAP -> CONFORMS. The sweep (converge-dgit) fixed all twelve items
+#            and refreshed the export, so rule 9a now reads: "all 177 work
+#            item(s) name a contract and define done", PASS, zero faulted. The
+#            row went RED to get here -- it pinned FAIL-ITEMS=12 -- which is the
+#            bidirectional half of LEDGER-FORMAT section 3 catching movement
+#            TOWARD spec, the direction nothing else in this repository fails
+#            loudly for. `work: converge-dgit` was DROPPED, not re-pointed: a
+#            kept promise owes nobody work. The 2026-09-04 note inside that row
+#            prescribed this outcome word for word, and the probe met it.
+#   CVG-019  STILL GAP, and its pin moved off a frozen paste onto a live
+#            reading. converge-wb0 built the stall fixture, so step (j)'s Core 9
+#            reading now answers PASS on a declared stall and FAIL on an
+#            undeclared one -- re-run here against both variants. But run against
+#            THIS host's own workspace it still says: no lane ended without
+#            commits, so no stall exists for this reading to judge. The
+#            instrument is finished; the event has not happened here. The ref
+#            left turnkey_step.py (which reads a step block converge-wb0's lane
+#            deliberately did not re-paste, so the row asserted the last paste
+#            rather than the current reading -- CVG-013's exact failure) for
+#            turnkey_clause.py, live, as CVG-013/17/18/21 already do. Controlled
+#            in both directions off a /tmp fixture; nothing in this tree touched.
+#            Cite moved converge-wb0 (resolved) -> converge-7stl, filed here for
+#            what is actually left: a real lane on this host that stalls.
+# ONE INFO LINE IS EXPECTED ON THIS TREE AND IS NOT A FAILURE. converge-7stl was
+# filed by this pass, so it is newer than the committed docs/work-items.json and
+# verify.py reports it rather than failing it -- exactly the snapshot allowance
+# the closed-cite tripwire was written with. docs/ is not this lane's to edit, so
+# the export was left alone rather than refreshed to flatter the report.
 # WHAT THE INTEGRATOR WILL SEE, MEASURED IN A SCRATCH MERGE RATHER THAN GUESSED.
 # converge-0gb branched at f718a20; main then moved 26 commits and edited
 # contracts/operation.v1.md. Merging this lane into main in a throwaway worktree
@@ -1849,16 +1881,29 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 9 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 9 (CVG-019) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-9-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS; else echo CLAUSE-9-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 9 - " modes/converge-manager.md && python3 ledger/checks/turnkey_clause.py CVG-019 SKIP "no lane ended without commits, so no stall exists for this reading to judge" | grep -q "ASSERTS-THIS"; then echo CLAUSE-9-READING-ANSWERS-BOTH-WAYS-AND-THIS-HOST-HAS-STILL-NEVER-STALLED; else echo CLAUSE-9-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-9-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS"
+      stdout_contains: "CLAUSE-9-READING-ANSWERS-BOTH-WAYS-AND-THIS-HOST-HAS-STILL-NEVER-STALLED"
   proves: >
-    That the mode still encodes this clause, AND that step (j)'s reading of it
-    RAN and found nothing to judge — no lane ended without commits, so no stall
-    existed for the reading to judge. NOT that a stall would be declared stuck
-    rather than retried. An empty denominator is not a pass, and the difference
-    between the two is exactly what this row exists to hold open.
+    That the mode still encodes this clause, AND that step (j)'s reading of it,
+    taken LIVE against this host's own manager workspace rather than read out of
+    a pasted step block, still declines — no lane ended without commits, so no
+    stall exists for it to judge. The reading itself is finished now: run
+    against converge-wb0's fixture it answers PASS on a declared stall and FAIL
+    on an undeclared one, and this row's own negative control (below) fired in
+    both directions. So what is missing is no longer an instrument. It is an
+    event on THIS host.
+    THREE THINGS A PASS ON THAT FIXTURE WOULD STILL NOT PROVE, and this row does
+    not claim any of them: not that the cause a record gives is the real or an
+    adequate one — the reading shows the words it found and a reader judges
+    them; not that the lane had not already been retried before it was declared,
+    because clause 9's "across iterations" needs a count of attempts and nothing
+    on disk records one; and not that a manager session on this host would
+    declare a stall at all, which is the observation this row is actually
+    waiting on.
+    An empty denominator is not a pass, and the difference between the two is
+    exactly what this row exists to hold open.
   notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-9. See CVG-010.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-9. The
@@ -1907,8 +1952,59 @@
     here, because a dead cite on most of them is a signal the row itself has
     moved — several cite resolutions claiming the work is done against the very
     clause the row calls red, so the honest move is to re-run each probe rather
-    than swap a ref. Filed as converge-g82 with the full list."
-  work: converge-wb0
+    than swap a ref. Filed as converge-g82 with the full list.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-3rzz, the reconcile after the stall-fixture
+    and 9a-sweep lanes landed). STILL GAP, AND THE PIN MOVED OFF A FROZEN PASTE
+    ONTO A LIVE READING. RAN →
+    CLAUSE-9-READING-ANSWERS-BOTH-WAYS-AND-THIS-HOST-HAS-STILL-NEVER-STALLED.
+    WHAT MOVED. converge-wb0 landed evaluations/turnkey/fixtures/stall_wave.py:
+    a wave, in observed mode, whose second lane really stops with an unchanged
+    branch. Re-run live by this pass against both variants of it, step (j)'s
+    Core 9 reading answers in both directions and names the lane and the record
+    every time:
+      PASS — 1 lane(s) stopped with an unchanged branch and each is named in a
+      record that says it stopped — lumen-index: 'cycle 2: lumen-index is stuck
+      and is not being relaunched.'; this reads that the stop was written down,
+      not whether the cause it gives is the real one.
+      FAIL — 1 lane(s) stopped with an unchanged branch and were not declared
+      stuck: lumen-index — named, but no record says the lane stopped; the newest
+      one naming lumen-index reads 'cycle 1: launched lumen-units and lumen-index
+      at width 2, ...', which is a mention and not a declaration.
+    WHAT DID NOT MOVE, AND WHY THE ROW IS STILL RED. Run against THIS host's own
+    manager workspace on the same day: Core 9 (CVG-019) SKIP: no lane ended
+    without commits, so no stall exists for this reading to judge — the reading
+    ran and found nothing. Every wave here has produced commits. A fixture proves
+    the reading can tell a declared stall from a mention; it says nothing about
+    whether a manager session HERE declares its own. The instrument is finished;
+    the observation is not.
+    THE OLD PIN WAS THE WRONG ONE AND CONVERGE-WB0'S LANE SAID SO. This row read
+    turnkey_step.py against the newest step block in evaluations/turnkey/
+    RESULT.md, and that lane deliberately did NOT re-paste the block, precisely
+    so this row would not flip to CHANGED-REREAD-THIS-ROW while nobody owned
+    fixing it. The consequence is the hazard turnkey_clause.py exists to end: the
+    row asserted the last paste rather than the current reading, exactly as
+    CVG-013 did for a day while the harness had started answering PASS. The ref
+    now takes the reading live, the same route CVG-013 · CVG-017 · CVG-018 ·
+    CVG-021 use. The mode-file half is unchanged.
+    NEGATIVE-CONTROLLED 2026-09-04, and the control fired in BOTH directions. The
+    fixture was seeded in /tmp (nothing in this tree touched) and the probe run
+    with CONVERGE_MANAGER_WORKSPACE pointed at it:
+      declared variant → the live verdict is PASS, not SKIP → the probe prints
+      CLAUSE-9-STATE-CHANGED-REREAD-THIS-ROW;
+      hidden variant   → the live verdict is FAIL, not SKIP → same.
+    A wrong fragment against this host's own reading also flips it. So this row
+    goes red the day a real lane here stalls, in either direction — which is the
+    event that would close it, and the reason the pin is worth having.
+    THE `work` REF MOVED converge-wb0 → converge-7stl. converge-wb0 is RESOLVED
+    — it built the fixture — and this file's own rule is that a closed item may
+    not stay cited as the thing that will fix a red row; verify.py has enforced
+    that by machine since converge-0gb, and this is the failure it reported.
+    converge-7stl is the successor for what is actually left: a real lane on this
+    host ending with an unchanged branch, so the reading has this host's own
+    habit to judge rather than a fixture's. converge-rp7, which asked for exactly
+    this re-derivation, is closed by this pass."
+  work: converge-7stl
 
 - id: CVG-020
   title: a brief on every return — returns and briefs are countable now, and there are none of either
@@ -3325,41 +3421,38 @@
     and the header's note stands for the next one.
 
 - id: CVG-051
-  title: a work item names its contract and defines done — the mechanical half, which cannot run here
+  title: a work item names its contract and defines done — the mechanical half, now kept across the whole export
   contract:
     file: contracts/documents.v1.md
     clause: "Core 9"
     quote: "**A work item names its contract** in one line, defines done in plain words,"
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"work_item_names_a_contract\"][0];n=len([f for f in r.get(\"files\",[]) if f[\"status\"]==\"FAIL\"]);print(\"WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT\" if r[\"status\"]==\"SKIP\" and \"no work-item export\" in r.get(\"reason\",\"\") else \"WORK-ITEM-CHECK-NOW-RUNS-\"+r[\"status\"]+\"-ITEMS=\"+str(n))"'
     expect:
       exit: 0
-      stdout_contains: "WORK-ITEM-CHECK-NOW-RUNS-FAIL-ITEMS=12"
+      stdout_contains: "WORK-ITEM-CHECK-NOW-RUNS-PASS-ITEMS=0"
   proves: >
-    That rule 9a RUNS against this repository's exported queue, returns
-    FAIL, and
-    fails on exactly twelve items. It proves the promise is broken, not
-    merely
-    unchecked -- and it pins HOW broken, so the row moves when the breakage
-    does, in
-    either direction.
-    THE COUNT IS PART OF THE PIN, DELIBERATELY. The verdict word alone could
-    not
-    tell 2-of-42 from 12-of-151: the queue can get healthier or worse by a
-    factor of
-    six and go on reporting the same word. It also makes the row's own bump
-    falsifiable -- a count changed without a run is caught by verify.py
-    running the
-    ref.
-    NOT that the twelve are the same twelve tomorrow, and not that the other
-    139 are
-    well written -- rule 9a reads two mechanical things (does line one name
-    a
-    contract that exists, is done defined in plain words), never whether the
-    item is
-    worth doing.
+    That rule 9a RUNS against this repository's exported queue and finds
+    nothing to fault: all 177 exported items name a contract that exists in
+    contracts/, and define done without a machine state word. The promise is
+    kept, and kept measurably -- not merely unchecked.
+    THE COUNT IS STILL PART OF THE PIN, AND NOW IT PINS A ZERO. The verdict
+    word alone could not tell 2-of-42 from 12-of-151, and it equally cannot
+    tell 0-of-177 from a PASS on an export of three. Pinning the count both
+    ways makes the row's own bump falsifiable -- a number changed without a
+    run is caught by verify.py running the ref -- and makes the row red the
+    day ONE badly-formed item is exported, which is the whole reason a green
+    row here is worth anything.
+    NOT that the live queue is clean, only the export committed in this tree
+    at docs/work-items.json. Items are filed and corrected hourly; this row
+    follows the export by design, and an export refresh that brings in a
+    faulty item flips it. And NOT that the 177 are well written -- rule 9a
+    reads two mechanical things (does line one name a contract that exists,
+    is done defined in plain words), never whether the item is worth doing.
+    The other half of clause 9 -- whether an item quotes the feedback or gap
+    it came from -- is CVG-069's, and no machine here judges it.
   notes: >
     RAN 2026-09-03 (converge-njn) → rule 9a (`work_item_names_a_contract`) SKIP,
     "no work-item export at docs/work-items.json and none named with
@@ -3490,7 +3583,38 @@
     main's newer export. Two items for one sweep is the duplicate this
     ledger's own cite rule exists to prevent, so rreh was marked superseded
     by dgit and this row points at the one that is held.
-  work: converge-dgit
+    ────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-3rzz, the reconcile after the sweep
+    landed). GAP -> CONFORMS. RAN -> WORK-ITEM-CHECK-NOW-RUNS-PASS-ITEMS=0.
+    Rule 9a's own words, this tree, this commit: "all 177 work item(s) name a
+    contract and define done", status PASS, zero faulted files.
+    THE ROW WENT GREEN BY MOVEMENT TOWARD SPEC, WHICH IS WHY IT WENT RED
+    FIRST. The row pinned FAIL-ITEMS=12 and the sweep (converge-dgit, landed
+    at 5b97e15 with a refreshed export) fixed all twelve, so verify.py failed
+    the row on its own expect -- the bidirectional half of LEDGER-FORMAT
+    section 3, working exactly as written. Nothing was bumped from a diff:
+    the ref was re-run here and the count read off its output.
+    THIS IS THE OUTCOME THE 2026-09-04 NOTE ABOVE PRESCRIBED, WORD FOR WORD.
+    That note told the integrator: run the probe; if it says PASS-ITEMS=0,
+    clause 9's mechanical half is kept -- re-derive to CONFORMS, drop the
+    work ref (a green row carries none), and close the item whose acceptance
+    was "rule 9a reports PASS". The probe says PASS-ITEMS=0. So: the
+    disposition moved, and `work: converge-dgit` was DROPPED rather than
+    re-pointed. converge-dgit is resolved as of this pass, and a green row
+    that carried it would trip the ledger's own no-work-ref-on-CONFORMS rule
+    as well as the closed-cite tripwire; neither would be the real reason to
+    drop it, which is simply that nobody is owed work on a kept promise.
+    THE TERM-OF-ART QUESTION IS SETTLED IN PRACTICE, NOT DECIDED. converge-a5r
+    carried the honest question inside the old failures -- whether clause 9's
+    "plain words" admits a ledger term of art like NOT-ASSERTABLE for an item
+    ABOUT the ledger. It is resolved, and the sweep answered it by rewording
+    rather than by ratifying an exception: converge-f1l now says "can't
+    check" where it said NOT-ASSERTABLE. No amendment was needed and none was
+    made. If a future item argues the term of art belongs, that is a
+    documents.v1 question and a CANDIDATE, not a quiet re-word of this row.
+    WHAT WOULD MOVE THIS ROW BACK. One exported item whose first line names
+    no contract in contracts/, or whose done is written in a machine state
+    word. The count is the tripwire: 0 is pinned, so 1 is red.
 - id: CVG-069
   title: a work item quotes the feedback or gap it came from — telling a quotation from a cited filename needs a reader
   contract:
