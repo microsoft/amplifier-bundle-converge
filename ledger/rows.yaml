@@ -1021,9 +1021,9 @@
     ref: 'if grep -q "^## Clause 10 - " modes/converge-manager.md && [ -f docs/workflow/OWNER-RETURN-LOG.md ]; then echo "MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=$(grep -c "^## " docs/workflow/OWNER-RETURN-LOG.md)"; else echo STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=8"
+      stdout_contains: "MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=9"
   proves: >
-    That the mode encodes this clause and the log it names now exists with eight
+    That the mode encodes this clause and the log it names now exists with nine
     briefs in it. NOT that a brief exists for EVERY return, which is what the
     clause requires and what nothing counts.
   notes: >
@@ -1042,7 +1042,27 @@
     count is the pin, so it flipped, which is the row working — four more returns
     were briefed. The reading is unchanged: a count of briefs still cannot say
     whether one exists per return. Re-pinned at 8.
-  work: converge-qtp
+    RAN 2026-09-04 (converge-nf4, the reconcile after wave 7) →
+    MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=9. BRIEFS=8 → 9: one more return was
+    briefed, "2026-09-04 — the turnkey gate went green, and a manager session that
+    was not me ran the wave". The count is the pin, so it flipped again; that is
+    the row working, not a row to bump. Re-pinned at 9.
+    STILL GAP, AND THE REASON HAS NOT MOVED AT ALL. Nine briefs against an unknown
+    number of returns is a number with no denominator. Nothing in this repository
+    records that a return HAPPENED, so no probe can compare briefs to returns —
+    which is the whole of what "a brief on every return" asks. Half this clause
+    (the log exists, the mode encodes it) is kept and measured; the ratio is not
+    assertable by any check that could be written against the tree as it stands.
+    THE `work` REF MOVED converge-qtp → converge-823. converge-qtp is RESOLVED —
+    the turnkey harness landed and its gate went green in wave 7 — and this
+    ledger's own rule is that a closed item may not stay cited as the thing that
+    will fix a red row. converge-823 carries the two honest ways to close this
+    one: record returns so the ratio becomes checkable, or have the steward ratify
+    that the clause is kept by the mode's standing instruction plus the log.
+    (Fourteen OTHER rows still cite converge-qtp. Re-pointing them without running
+    their probes would be the blind bump this file forbids, so they are filed for
+    a live re-derivation as converge-0gb rather than edited here.)
+  work: converge-823
 
 - id: CVG-021
   title: four calls reach the steward
@@ -1344,29 +1364,59 @@
     for the next time one is needed.
 
 - id: CVG-066
-  title: the app's own words are no longer scanned — the kit that scanned them is retired
+  title: the app's own words, judged by the shipped kit — rule 8c passes on every page, read from the kit's retired home
   contract:
     file: contracts/surface.v1.md
     clause: "Conformance kit asserts, bullet 5"
     quote: "No internal vocabulary outside Details folds."
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'if uv run --extra web --with pytest --with httpx pytest "tests/test_plain_words_on_the_surface.py::test_the_shipped_kit_reports_rule_8c_pass_on_every_page" -q >/dev/null 2>&1; then echo SURFACE-RULE-8C-PASSES-ON-EVERY-APP-PAGE; else echo SURFACE-RULE-8C-NOT-ASSERTED-AGAINST-THE-APP; fi'
     expect:
       exit: 0
-      stdout_contains: "SURFACE-RULE-8C-NOT-ASSERTED-AGAINST-THE-APP"
+      stdout_contains: "SURFACE-RULE-8C-PASSES-ON-EVERY-APP-PAGE"
   proves: >
-    That the wiring which used to carry this promise DOES NOT RUN any more. The
-    probe asserts the gap itself, so it flips green-ward the moment the caller is
-    re-pointed or the scan finds a new home — which is what converge-h5k decides.
-    THE READING THIS ROW CARRIED UNTIL 2026-09-03, KEPT FOR THE RECORD —
-    That the SHIPPED kit — `conformance/surface/run.py`, imported from where it
-    lives and not reimplemented — reports rule 8c PASS on the HTML of every page
-    the app declares, rendered against a project deliberately written in the
-    machinery's own words. It is the kit's verdict, not a test's opinion of the
-    kit. NOT that the pinned mockup passes: it still does not (CVG-037).
+    That the SHIPPED kit — now `conformance/_superseded/surface/run.py`, imported
+    from where it lives and not reimplemented — reports rule 8c PASS on the HTML
+    of every page the app declares, rendered against a project deliberately
+    written in the machinery's own words. It is the kit's verdict, not a test's
+    opinion of the kit. NOT that the pinned mockup passes: it still does not
+    (CVG-037). And NOT that a LIVE kit carries this scan — the kit that carries
+    it is retired, which is a fact about where the assertion lives, recorded
+    below, not a gap in the assertion itself.
+    THE READING THIS ROW CARRIED FOR ONE DAY, 2026-09-03 to 2026-09-04, KEPT FOR
+    THE RECORD — That the wiring which used to carry this promise DOES NOT RUN
+    any more. The probe asserted the gap itself, so that it would flip green-ward
+    the moment the caller was re-pointed or the scan found a new home. It flipped.
   notes: >
+    RE-DERIVED 2026-09-04 (converge-nf4, the reconcile after wave 7) AND MOVED
+    GAP → CONFORMS. RAN → SURFACE-RULE-8C-PASSES-ON-EVERY-APP-PAGE. Behind it:
+    `pytest tests/test_plain_words_on_the_surface.py -q` → 9 passed, the same
+    nine the move to `_superseded/` broke a day ago (3 passed, 6 errors, measured
+    in converge-h5k).
+    THIS IS THE ROW FLIPPING BACK, WHICH IS WHAT ITS PROBE WAS BUILT TO DO. The
+    yesterday's probe asserted the gap on purpose, so that closing it would go
+    red. Option 1 of the two converge-h5k names landed in the wave-7 integration
+    commit c80e6ab: `tests/test_plain_words_on_the_surface.py:404` now reads
+    `conformance/_superseded/surface/run.py`. One line, all nine tests restored,
+    and the file's own docstring names what it reads as retired. Nothing was
+    bumped: the disposition follows the run.
+    THE `work` REF IS GONE, because a CONFORMS row may not carry one — a tracker
+    ref on a green row implies red. converge-h5k IS STILL OPEN and its acceptance
+    is now met verbatim ("… THEN it passes — either reading the kit from
+    `conformance/_superseded/surface/run.py`, or …"). Whoever holds `tests/`
+    should close it; this lane cannot, holding converge-nf4.
+    WHAT IS TRUE AND UNCOMFORTABLE ANYWAY: the assertion lives in a retired kit.
+    `surface.v1` was superseded by the experience family, and none of the three
+    experience kits carries a vocabulary rule, because `experience.v1` Core 6's
+    "no machine vocabulary outside a Details fold" belongs to the umbrella, which
+    has no kit (converge-f1l). So this clause is kept — measurably, on every page
+    — by machinery that is deliberately out of the live suite. That is a fact
+    about the kit's home, not about the app's words, and it is CVG-06x's job to
+    say so rather than to punish the app for it. converge-f1l is where the scan
+    finds a live home.
+    ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-03 (converge-pq2) AND MOVED CONFORMS → GAP. THE RATCHET
     CAUGHT THE LANE THAT WAS WRITING IT. `surface.v1` was superseded by the
     experience family, so the same lane that seeded the family's ledger also
@@ -1422,8 +1472,6 @@
     SURFACE-RULE-8C-*. Every "rule 5" ABOVE this line is a dated record of a run
     made under the earlier table; the row those lines name is the one numbered
     8c today.
-
-  work: converge-h5k
 - id: CVG-038
   title: the whole operation in view
   contract:
@@ -2083,14 +2131,21 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"work_item_names_a_contract\"][0];print(\"WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT\" if r[\"status\"]==\"SKIP\" and \"no work-item export\" in r[\"reason\"] else \"WORK-ITEM-CHECK-NOW-RUNS-\"+r[\"status\"])"'
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"work_item_names_a_contract\"][0];n=len([f for f in r.get(\"files\",[]) if f[\"status\"]==\"FAIL\"]);print(\"WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT\" if r[\"status\"]==\"SKIP\" and \"no work-item export\" in r.get(\"reason\",\"\") else \"WORK-ITEM-CHECK-NOW-RUNS-\"+r[\"status\"]+\"-ITEMS=\"+str(n))"'
     expect:
       exit: 0
-      stdout_contains: "WORK-ITEM-CHECK-NOW-RUNS-FAIL"
+      stdout_contains: "WORK-ITEM-CHECK-NOW-RUNS-FAIL-ITEMS=2"
   proves: >
-    That rule 9a now RUNS and returns FAIL against this repository's exported
-    queue. It proves the promise is broken, not merely unchecked — which is a
-    stronger thing than this row could say yesterday.
+    That rule 9a RUNS against this repository's exported queue, returns FAIL, and
+    fails on exactly two items. It proves the promise is broken, not merely
+    unchecked — and it now pins HOW broken, so the row moves when the breakage
+    does, in either direction.
+    THE COUNT IS PART OF THE PIN, DELIBERATELY. The verdict word alone could not
+    tell 9-of-42 from 2-of-65: the queue got healthier by a factor of six and this
+    row would have gone on quietly reporting FAIL, which is drift toward spec
+    going unrecorded (LEDGER-FORMAT §3). Fixing the last two flips this row to
+    PASS-ITEMS=0 and forces the re-read that turns it green; a new item that names
+    no contract flips it the other way. Either way it cannot be silently enjoyed.
     THE READING THIS ROW USED TO CARRY, KEPT FOR THE RECORD —
     Only that rule 9a is present, mechanical, and still has nothing to read in
     this tree. It proves NOTHING about whether this repository's work items name
@@ -2153,6 +2208,57 @@
     most are items ABOUT the ledger, whose definition of done genuinely is a
     disposition. Whether clause 9's "plain words" admits a term of art is a
     documents.v1 question, not nine edits — the item says so rather than assuming.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-nf4, the reconcile after wave 7) →
+    WORK-ITEM-CHECK-NOW-RUNS-FAIL-ITEMS=2. Rule 9a's own words:
+    "2 of 65 work failed — converge-c4s: names no contract that exists in
+    contracts/; converge-f1l: defines done with machine state word(s)
+    ['NOT-ASSERTABLE'], not in plain words".
+    THE ROW'S EXPECTATION WAS MET AND THE ROW WAS STILL WRONG. Wave 7 refreshed
+    the export (commit c80e6ab) and the queue moved 9-of-42 failing to 2-of-65 —
+    a real improvement, invisible to this row, because the old expectation pinned
+    only the word FAIL. verify.py reported [OK] for it in the same run that
+    failed three other rows. That is the quiet half of bidirectional drift: not a
+    red row that should be green, but a red row whose reading has gone stale
+    under an expectation too loose to notice. The probe was tightened rather than
+    the note rewritten — a comment cannot flip.
+    STILL GAP. Two items still fail, and they are two different kinds of failure:
+    converge-c4s (a rendered-viewport bug found in the app) names no contract at
+    all, which is the plain form of the breach; converge-f1l defines done with
+    NOT-ASSERTABLE, which is a ledger item using the ledger's vocabulary — the
+    exact term-of-art question converge-a5r already carries and declines to
+    settle by editing nine items.
+    converge-a5r IS STILL THE RIGHT CITE, AND ITS OWN TEXT IS NOW STALE. It is
+    open, its acceptance is unchanged and still correct ("rule 9a reports PASS …
+    or documents.v1 clause 9 carries a ratified sentence saying when a term of
+    art is allowed"), but its description enumerates the nine failures of
+    2026-09-03. Seven of those nine are gone. Whoever takes it should re-run the
+    kit rather than work from the list in the item.
+    NEGATIVE-CONTROLLED 2026-09-04, in a scratch export, both offenders corrected
+    (converge-c4s given a contract line, converge-f1l's NOT-ASSERTABLE reworded)
+    and the kit re-run against it with --work-items:
+    WORK-ITEM-CHECK-NOW-RUNS-PASS-ITEMS=0, "all 65 work item(s) name a contract
+    and define done". The committed export was not touched.
+    THE CONTROL WAS NOT HYPOTHETICAL, AND THIS ROW WILL GO RED ON MERGE. SAY SO
+    HERE RATHER THAN LET IT SURPRISE THE INTEGRATOR. This lane branched from
+    c80e6ab; main has since moved to 0e5e942, "export refreshed — 9a PASS". Run
+    against main's own export, read out of git and handed to the kit with
+    --work-items (2026-09-04, read-only, nothing in this tree changed):
+    WORK-ITEM-CHECK-NOW-RUNS-PASS-ITEMS=0, "all 66 work item(s) name a contract
+    and define done". Both offenders were really fixed, not excused —
+    converge-c4s gained "Contract: experience-console.v1 …", and converge-f1l's
+    acceptance now says "can't check" where it said NOT-ASSERTABLE, which is the
+    steward's plain word for the same verdict.
+    WHY THIS ROW STILL SAYS 2 ANYWAY. A row asserts what its own tree can run.
+    Pinning PASS-ITEMS=0 here would be pinning a state this working tree does not
+    have — verify.py would fail on it immediately, and the pin would be a claim
+    made from a diff rather than from a run. So the row records what was measured
+    (2 of 65) and this note records what is coming.
+    WHAT THE INTEGRATOR SHOULD DO, once these land together: run the probe. If it
+    says PASS-ITEMS=0, clause 9's mechanical half is kept — re-derive this row to
+    CONFORMS, drop the `work` ref (a green row carries none), and close
+    converge-a5r, whose acceptance ("rule 9a reports PASS") is then met. If it
+    says anything else, re-read rather than assume; the number is the point.
   work: converge-a5r
 
 - id: CVG-069
@@ -2482,6 +2588,39 @@
     MOVED BY converge-jc9, on this run and not on that item's mapping.
 
 # ─────────────────────────────────────────────────────────────────────────────
+# STATE AS OF 2026-09-04, PRINTED BY THE RUN (converge-nf4, the reconcile after
+# wave 7):
+#
+#   TOTAL (non-SYNC)  174 rows   CONFORMS=65 · GAP=49 · VIOLATION=0 ·
+#                                OPEN-PINNED=1 · NOT-ASSERTABLE=59
+#   + CVG-000 SYNC      1
+#   TOTAL             175
+#
+#   In the steward's words (documents.v1 Core 10): 65 Kept · 49 Not yet ·
+#   0 Broken · 1 Pinned open · 59 Can't check.
+#
+# EVERYTHING BELOW THIS BLOCK IS A DATED RECORD OF 2026-09-03 AND IS THREE WAVES
+# BEHIND: it describes 64 rows across four contracts, where the file now carries
+# 175 across fourteen — the experience family and the five platform contracts
+# arrived after it was written. It is kept rather than corrected, because this
+# block's own standing rule is to re-print from the run and never adjust the
+# numbers by hand, and because the narrative below is true of the day it names.
+#
+# WHAT THIS PASS ITSELF MOVED — one row: CVG-066 GAP → CONFORMS, the surface
+# vocabulary scan, after wave 7 re-pointed its test at the retired kit's new
+# home. Three more rows were re-derived without changing disposition: CVG-020
+# (briefs 8 → 9, still GAP because nothing counts returns), CVG-051 (rule 9a
+# 9-of-42 failing → 2-of-65, still GAP, probe tightened to pin the count so the
+# next such improvement cannot pass unnoticed), CVG-186 (CONFORMS held; the
+# probe was rebuilt so a local `git` commit is not read as a manager round trip).
+# STILL WRONG, FILED RATHER THAN QUIETLY LEFT: fifteen red rows cite a RESOLVED
+# tracker item as the thing that will fix them — fourteen converge-qtp, one
+# converge-fmz — filed as converge-0gb, because re-pointing them without running
+# their probes is the blind bump this file forbids. Nothing in verify.py catches
+# a cite that has closed; this is the third time the rule has had to be enforced
+# by hand.
+#
+# ──────────────────────────────────────────────────────────────────────────────
 # TALLY — 64 rows, the clause 9 split 2026-09-03 (converge-njn).
 # Printed by `uv run --with pyyaml ledger/checks/verify.py`, not counted by hand.
 #
@@ -3949,14 +4088,15 @@
   disposition: CONFORMS
   assertion:
     kind: absence
-    ref: 'if grep -nE "subprocess|tmux|send_keys|httpx|requests\." app/writes.py | grep -q .; then echo WRITES-GO-THROUGH-THE-MANAGER; else echo WRITES-GO-STRAIGHT-TO-THE-REPOSITORY; fi'
+    ref: 'if grep -nE "tmux|send_keys|httpx|requests\.|urllib|socket\." app/writes.py | grep -q .; then echo WRITES-REACH-A-SESSION-OR-THE-NETWORK; elif [ "$(grep -cE "subprocess\.run\(" app/writes.py)" != "1" ] || [ "$(grep -cE "\[\"git\", \*args\]" app/writes.py)" != "1" ]; then echo WRITES-START-A-PROCESS-THAT-IS-NOT-GIT; else echo WRITES-GO-STRAIGHT-TO-THE-REPOSITORY-GIT-ONLY; fi'
     expect:
       exit: 0
-      stdout_contains: "WRITES-GO-STRAIGHT-TO-THE-REPOSITORY"
+      stdout_contains: "WRITES-GO-STRAIGHT-TO-THE-REPOSITORY-GIT-ONLY"
   proves: >
     That the app's write path reaches no manager session at all - app/writes.py
-    starts no subprocess, speaks no tmux, sends no keys and makes no outbound
-    call. It speaks only to the filesystem.
+    speaks no tmux, sends no keys, makes no outbound call, and starts exactly one
+    process, which is git, in the steward's own repository. It speaks to the
+    filesystem and to the repository, and to nothing else.
     THE PROBE IS READ AGAINST CODE, NOT PROSE. Its first form matched the word
     'manager' anywhere in the file and reported WRITES-GO-THROUGH-THE-MANAGER on
     two sentences of documentation explaining that the manager session is what
@@ -3964,10 +4104,47 @@
     half. Its second half - 'the manager session learns of it as an event and
     folds it into its next turn' - is a claim about a running agent, and nothing
     here checks it.
+    WHAT THE PROBE CANNOT SAY, NAMED SO IT IS NOT MISTAKEN FOR MORE: it reads
+    app/writes.py and only app/writes.py. A hot path opened from a route handler
+    or a data module would not be seen here. This row asserts the writer, which
+    is where every write in the app is funnelled today.
   notes: >
     Measured 2026-09-03 (converge-pq2). A decision appends to
     docs/workflow/owner-ratifications-<date>.md; feedback writes
     .converge/feedback/<ts>.md; a steer rewrites .width. No round trip.
+    RE-DERIVED 2026-09-04 (converge-nf4, the reconcile after wave 7). STAYS
+    CONFORMS; THE PROBE WAS REBUILT BECAUSE ITS PROXY WENT STALE, NOT ITS
+    SUBJECT. The old probe read a bare `subprocess` anywhere in the file as
+    proof of a manager round trip. Wave 7's Changes view (converge-f5f) gave
+    Edit and Restore real writes, and a real write to a governed document is a
+    git commit - so app/writes.py grew `import subprocess` and one call site,
+    and the probe printed WRITES-GO-THROUGH-THE-MANAGER about a local `git`.
+    A row that cannot tell git from a manager session is not asserting this
+    clause; it is asserting the absence of a word.
+    WHAT app/writes.py ACTUALLY DOES, read before judging (467 lines, read-only).
+    One subprocess call site: `_git()` at line 248, `subprocess.run(["git",
+    *args], cwd=repo, ...)`. Its three callers are all inside `apply_change()`:
+    `git status --porcelain -- <file>` (refuse the edit if the file is already
+    dirty, so the steward's sentence carries nothing else), `git -c user.name=…
+    commit -q -m <subject> -- <file>` (the draft's rewording, in the steward's
+    name, reverted in-process if the commit fails), and `git log -1 --format=%H`
+    (the sha to show back). A LOCKED document is never touched at all: it gets
+    `<doc-stem>.vN-candidate.md` written beside it, which is the proposal
+    mechanism `documents.v1` §8 requires. No tmux, no send_keys, no httpx, no
+    requests, no urllib, no socket - grep count 0 for all six.
+    SO THE CLAUSE IS MORE KEPT THAN IT WAS, NOT LESS. "A write made in the app
+    goes through the ordinary repository and proposal mechanism directly" is now
+    literal: the repository half is a git commit into the repository, the
+    proposal half is a candidate file beside the locked document. The manager
+    session is in neither path.
+    THE NEW PROBE PINS THREE THINGS AND WAS NEGATIVE-CONTROLLED 2026-09-04 on a
+    scratch copy, each break observed to fire and then restored: a session or
+    network mechanism appearing (added `tmux send_keys` ->
+    WRITES-REACH-A-SESSION-OR-THE-NETWORK); a second process appearing (added a
+    `subprocess.run(["amplifier", "run"])` ->
+    WRITES-START-A-PROCESS-THAT-IS-NOT-GIT); and the one process ceasing to be
+    git (argv changed to `[BINARY, *args]` -> the same marker). Restored ->
+    WRITES-GO-STRAIGHT-TO-THE-REPOSITORY-GIT-ONLY.
 - id: CVG-187
   title: "one steward per manager session"
   contract:
