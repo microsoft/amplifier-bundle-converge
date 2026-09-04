@@ -3483,7 +3483,14 @@
     are filed and corrected daily, so a bump without a run would be exactly
     the drift this ledger's standing rule exists to catch. Re-run, then
     bump.
-  work: converge-rreh
+    THE CITE MOVED converge-rreh -> converge-dgit BEFORE THIS LANE CLOSED.
+    This pass filed converge-rreh for the twelve; a live lane was already
+    holding converge-dgit, "Documents 9a sweep: thirteen wave-8 items name
+    no contract or use machine words" -- the same failure counted against
+    main's newer export. Two items for one sweep is the duplicate this
+    ledger's own cite rule exists to prevent, so rreh was marked superseded
+    by dgit and this row points at the one that is held.
+  work: converge-dgit
 - id: CVG-069
   title: a work item quotes the feedback or gap it came from — telling a quotation from a cited filename needs a reader
   contract:
