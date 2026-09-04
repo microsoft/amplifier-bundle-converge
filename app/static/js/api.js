@@ -51,6 +51,16 @@ export const api = {
     post(`${docBase(mid, repoId, docId)}/changes/${encodeURIComponent(changeId)}/edit`, { text }),
   restoreChange: (mid, repoId, docId, changeId) =>
     post(`${docBase(mid, repoId, docId)}/changes/${encodeURIComponent(changeId)}/restore`, {}),
+  // Presence (§10) — who has an editor open on which section, right now.
+  // Courtesy only: none of these three refuses anything, and there is no route
+  // here that could. The beat both refreshes and releases (an empty section is
+  // goodbye), so a browser cannot forget to say it is done.
+  presenceBeat: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/presence`, payload),
+  presenceHere: (mid, repoId, docId) =>
+    request(`/api/managers/${encodeURIComponent(mid)}/presence`
+      + `?repoId=${encodeURIComponent(repoId)}&docId=${encodeURIComponent(docId)}`),
+  // The manager session's half: ask before writing, and be told to wait.
+  presenceQueue: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/presence/queue`, payload),
   // Ask — the fifth write the umbrella names. One route for all three scopes,
   // because the scope is a fact about the request rather than a different
   // request. What should come back is a proposal to review.
