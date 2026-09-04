@@ -17,6 +17,8 @@ The stamped heading is the record that a return happened; the five sentences und
 
 **A brief sent unprompted** — a wave landed while the steward was away — keeps a date-only heading. Every return has a brief; not every brief has a return.
 
+**Where the check behind part 2 is written down.** The Finished sentence names the check the manager session re-ran after integrating. That re-run gets its own entry in `docs/workflow/CHECK-RECORD.md` — the merges it covered, the command, and what it printed — written in the manager session's own commit, never a lane's. The brief says what it means; the check record says who ran it and what they saw.
+
 **Everything below predates the stamp.** The nine briefs written before 2026-09-04 have no recorded return beside them, so nothing can say whether a return was ever missed. They stand as briefs. The count begins at the first stamped entry.
 
 ## 2026-09-02 — EXECUTE begins
