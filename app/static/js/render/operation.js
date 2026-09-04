@@ -426,7 +426,14 @@ export function renderOperation() {
     const source = w.reasonSource
       ? `<p class="muted" style="${WRAP};font-size:10px;margin:4px 0 0">From ${escapeHtml(w.reasonSource)}</p>`
       : '';
-    return `<article class="wave-card ${escapeHtml(w.cls)}"><div class="wave-kicker"><span>${escapeHtml(w.label)}</span><span>${escapeHtml(w.phase)}</span></div>`
+    // The kicker is styled `text-transform:uppercase`, which is right for the
+    // wave's label and wrong for its phase: `experience.v1` Core 6 fixes the
+    // plain word `Done`, and uppercasing it puts the machine's screaming form
+    // of that word back on the screen after the payload stopped serving it.
+    // So the phase opts out of the transform. (The rule belongs in
+    // `operation.css`, which this lane does not own; rule 6b of the experience
+    // kit is why this comment does not spell the screaming form out.)
+    return `<article class="wave-card ${escapeHtml(w.cls)}"><div class="wave-kicker"><span>${escapeHtml(w.label)}</span><span class="wave-phase" style="text-transform:none">${escapeHtml(w.phase)}</span></div>`
       + `<h3${missing ? ' class="muted"' : ''} style="${WRAP}">${mark}${escapeHtml(reason)}</h3>${source}`
       + `<div class="wave-items">${(w.items || []).map(([name, done]) => `<div class="wave-item ${done ? 'done' : ''}"><span class="check">${done ? '✓' : ''}</span><span>${escapeHtml(name)}</span></div>`).join('')}</div>`
       + `<div class="progress-bar"><span style="width:${Number(w.progress) || 0}%"></span></div></article>`;

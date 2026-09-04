@@ -270,6 +270,26 @@ OUTCOME_WORD = {
     "stuck": "Stuck",
 }
 
+#: A WAVE's phase, in the same WORK words of `experience.v1` Core 6 \u2014 because a
+#: wave is a batch of work, and the question its phase answers ("where does this
+#: batch stand?") is the work question, not the lane question. Until 2026-09-04
+#: this field carried the machine's own tokens instead \u2014 `DONE`, `NOW`, `NEXT`,
+#: `STRETCH` \u2014 and `render/operation.js` wrote them into the wave kicker exactly
+#: as served, so eleven waves read `DONE` and one read `NOW` on the screen.
+#: `DONE` is not `Done`: the plain word is title case, the SCREAMING token is the
+#: machine's, and that difference is the whole of Core 6.
+#:
+#: Where the wave sits in the plan \u2014 the one at work, the one after it, the ones
+#: further out \u2014 is a different reading from where it stands, and it is carried
+#: by `cls` (below) and by the order of the list. A state vocabulary is not asked
+#: to say two things at once.
+WAVE_WORD = {
+    "done": "Done",
+    "working": "Working",
+    "stuck": "Stuck",
+    "ready": "Truly ready",
+}
+
 
 def lane_paths(mc: ManagerConfig, lane: LaneRow) -> tuple[Path, Path, Path, Path]:
     batch = Path(mc.batch_dir) if mc.batch_dir else Path(".")
@@ -1337,16 +1357,26 @@ def operation_payload(mc: ManagerConfig) -> dict:
         items = by_wave[key]
         done = sum(flag for _name, flag in items)
         progress = round(100 * done / len(items)) if items else 0
+        # `experience.v1` Core 6 \u2014 the phase is said in a plain WORK word
+        # (`WAVE_WORD`); `cls` says where the wave sits in the plan and is a
+        # style hook, never a word a steward is shown.
+        #
+        # A wave that is neither finished nor at work reads differently
+        # depending on which side of the current wave it sits: one the plan has
+        # already passed stopped short of finishing, which is *Stuck*; one still
+        # ahead has not been reached yet, which is *Truly ready*. The old
+        # `"DONE" if progress == 100` on the passed-by branch was dead \u2014 a wave
+        # at 100% is taken by the first branch above and never reaches it.
         if progress == 100:
-            phase, cls = "DONE", "done"
+            state, cls = "done", "done"
         elif index == now_index:
-            phase, cls = "NOW", "now"
+            state, cls = "working", "now"
         elif now_index >= 0 and index < now_index:
-            phase, cls = "DONE" if progress == 100 else "STRETCH", "stretch"
+            state, cls = "stuck", "stretch"
         elif index == now_index + 1:
-            phase, cls = "NEXT", "next"
+            state, cls = "ready", "next"
         else:
-            phase, cls = "STRETCH", "stretch"
+            state, cls = "ready", "stretch"
         names = [name for name, _flag in items]
         # Core 2: a wave says what a batch of work is FOR. The lane board is
         # the manager session's own one-line-per-lane summary and is used when
@@ -1364,7 +1394,7 @@ def operation_payload(mc: ManagerConfig) -> dict:
                 "reason": why["reason"],
                 "reasonRecorded": why["recorded"],
                 "reasonSource": why["source"],
-                "phase": phase,
+                "phase": WAVE_WORD[state],
                 "cls": cls,
                 "progress": progress,
                 "items": [[name, flag] for name, flag in items],
