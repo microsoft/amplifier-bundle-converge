@@ -26,6 +26,18 @@
 # them: converge-2ro, converge-6mi, converge-7ym, converge-do8. The same pass
 # taught verify.py to FAIL a red row that cites a resolved item, so the rule stops
 # needing a person — it had been enforced by hand three times.
+# WHAT THE INTEGRATOR WILL SEE, MEASURED IN A SCRATCH MERGE RATHER THAN GUESSED.
+# converge-0gb branched at f718a20; main then moved 26 commits and edited
+# contracts/operation.v1.md. Merging this lane into main in a throwaway worktree
+# and running the gate there: 174/174 quotes verify, 89 executable refs each meet
+# their expect, no red row cites a resolved item — and ONE line still fails,
+# `SYNC contracts/operation.v1.md`. That failure is main's own and predates this
+# lane: main is red on that pin AND on CVG-010's quote today, both from one edit
+# that moved a bold marker. This lane fixes the quote half (see CVG-010) and
+# leaves the pin, because LEDGER-FORMAT §4 answers a hash mismatch with a
+# mandatory full re-review and never a bump, and a lane whose tree holds the OLD
+# bytes cannot honestly pin the new ones. converge-pxz carries it, with most of
+# the re-review already done.
 # Main moves hourly; a ledger that chases it converges on nothing. Re-read on
 # merge.
 #
