@@ -34,13 +34,83 @@ function activeProposalId() {
   return p ? p.id : null;
 }
 
+// --------------------------------------------------------------------------
+// §8 — the granular choices, and the one answer they build
+// --------------------------------------------------------------------------
+//
+// A steward keeps six changes, drops one, fixes three words, and answers once.
+// The keeping is already a write of its own (`changes/{id}/keep`, remembered
+// per steward on the server), and the dropping is a restore that has already
+// put the earlier wording back. What was missing is the last step: those
+// choices reaching the ONE answer. So the ratify-with-edits dialog reads the
+// reading as it stands — kept, not kept — shows the steward exactly what their
+// choices are, and carries them, verbatim, into the note the decision write
+// records. They are not a new kind of ratification; they build the word that
+// is already in the vocabulary.
+
+function plural(n, word) { return `${n} ${word}${n === 1 ? '' : 's'}`; }
+
+function shortOf(text, limit = 88) {
+  const one = String(text || '').replace(/\s+/g, ' ').trim();
+  return one.length > limit ? `${one.slice(0, limit - 1)}…` : one;
+}
+
+//: A card's section is a path — "Principles › 8" — and its head is the
+//: section that path sits in. Kept local rather than imported from
+//: render/direction.js, which imports this file.
+function headOf(section) {
+  return String(section || '').split(' › ')[0];
+}
+
+export function choicesNow() {
+  const rows = cardsNow();
+  return { rows, kept: rows.filter((c) => c.kept), open: rows.filter((c) => !c.kept) };
+}
+
+//: The choices as the ratification record will carry them. Plain lines, the
+//: steward's own sections and sentences, nothing summarised away.
+export function choiceLedger() {
+  const { rows, kept, open } = choicesNow();
+  if (!rows.length) return '';
+  const lines = [`Granular choices carried into this answer — ${kept.length} of ${rows.length} changes kept.`];
+  if (kept.length) {
+    lines.push('Kept:');
+    kept.forEach((c) => lines.push(`- ${c.section || 'this document'}: ${shortOf(c.now || c.before)}`));
+  }
+  if (open.length) {
+    lines.push('Not kept:');
+    open.forEach((c) => lines.push(`- ${c.section || 'this document'}: ${shortOf(c.now || c.before)}`));
+  }
+  return lines.join('\n');
+}
+
+function choiceSummaryHtml() {
+  const { rows, kept, open } = choicesNow();
+  if (!rows.length) {
+    return '<p class="muted">Nothing has moved in this document since your read point, so there are no granular choices to carry.</p>';
+  }
+  const list = (cards) => `<ul>${cards.map((c) => `<li><strong>${escapeHtml(c.section || 'This document')}</strong> — ${escapeHtml(shortOf(c.now || c.before, 64))}</li>`).join('')}</ul>`;
+  return `<p><strong>${kept.length} of ${rows.length}</strong> changes are kept. These go into the record with your word, verbatim.</p>
+      ${kept.length ? `<p class="muted">Kept</p>${list(kept)}` : ''}
+      ${open.length ? `<p class="muted">Not kept</p>${list(open)}` : ''}`;
+}
+
 export function handleDecision(decision, label) {
   if (decision === 'ratified-with-edits') {
     openDialog('Ratify with edits', 'Direction decision', `
+        ${choiceSummaryHtml()}
         <div class="dialog-field"><label for="ratifyEdit">The wording change you want before accepting</label><textarea id="ratifyEdit" placeholder="Say what you want changed…"></textarea></div>
-        <p class="muted">This is recorded as one proposal decision with your edits, in your ratification log.</p>`, [
+        <p class="muted">One answer, in your ratification log, carrying the choices above and your words.</p>`, [
       { label: 'Cancel', kind: 'outline', action: closeDialog },
-      { label: 'Ratify with edits', kind: 'primary', action: () => finalizeDecision(decision, label, $('ratifyEdit')?.value.trim() || '') },
+      {
+        label: 'Ratify with edits',
+        kind: 'primary',
+        action: () => {
+          const words = $('ratifyEdit')?.value.trim() || '';
+          const ledger = choiceLedger();
+          finalizeDecision(decision, label, [words, ledger].filter(Boolean).join('\n\n'));
+        },
+      },
     ]);
     return;
   }
@@ -108,6 +178,113 @@ export async function restoreChange(changeId) {
   } catch (err) {
     toast(`Could not restore that: ${err.message}`);
   }
+}
+
+// --------------------------------------------------------------------------
+// §6 — restoring from history, at four scopes, as a real action
+// --------------------------------------------------------------------------
+//
+// The contract asks that a steward be able to restore a wording, a paragraph,
+// a section, or the whole document, and that on a locked document the same
+// gesture produce a proposal to answer.
+//
+// This app answers ONE restore write — `changes/{id}/restore` — and it puts
+// back the wording that stood before one sentence moved. A wider scope is
+// therefore not a different write: it is that write over every sentence the
+// scope covers, one at a time, and the screen says how many landed and where.
+// The lock is never consulted here. `app/writes.py` reads the document's own
+// H1 and either commits or writes `<doc-stem>.vN-candidate.md` beside it; this
+// file only reports afterwards what the server did, so forcing a control in
+// the browser changes nothing.
+//
+// Two things this deliberately does not pretend:
+//
+// - **The snapshot it restores to is the steward's own read point**, not any
+//   row in the History list. The sentences the server can still find are the
+//   ones in this reading, so that is the only earlier wording that is actually
+//   reachable. Restoring to an arbitrary commit needs a route the app does not
+//   answer; it is filed as converge-4pq and the panel says so on the screen.
+// - **Every restore commits**, which moves HEAD and renumbers every hunk after
+//   it — so the change ids this loop starts with go stale as it runs. Each
+//   sentence is found again by what it SAYS in the reading as it stands, never
+//   by an id that was true one write ago.
+
+const SCOPE_WORD = {
+  wording: 'this wording',
+  paragraph: 'this paragraph',
+  section: 'this section',
+  document: 'the whole document',
+};
+
+function signatureOf(card) {
+  return [String(card.section || ''), String(card.before || ''), String(card.now || '')].join('\u001f');
+}
+
+export function cardsInScope(scope, key) {
+  const rows = cardsNow();
+  if (scope === 'wording') return rows.filter((c) => String(c.id) === String(key));
+  if (scope === 'paragraph') return rows.filter((c) => String(c.section) === String(key));
+  if (scope === 'section') return rows.filter((c) => headOf(c.section) === String(key));
+  return rows.slice();
+}
+
+export function restoreScope(scope, key) {
+  const wanted = cardsInScope(scope, key);
+  if (!wanted.length) {
+    toast('Nothing in this reading moved at that scope, so there is no earlier wording to put back.');
+    return;
+  }
+  const doc = data.doc || {};
+  const lock = doc.locked || '';
+  const point = doc.reading || {};
+  const where = lock
+    ? `${doc.path || 'This document'} is ${lock}, so it is not touched at all: each wording is written to a proposal beside it, for you to answer.`
+    : 'Each wording goes back into the document and is committed in your name.';
+  openDialog(`Restore ${SCOPE_WORD[scope] || 'these changes'}`, 'Restore from history', `
+      <p>${plural(wanted.length, 'sentence')} ${wanted.length === 1 ? 'goes' : 'go'} back to the wording that stood at <strong>${escapeHtml(point.sinceShort || 'your read point')}</strong>${point.sinceSource ? ` — ${escapeHtml(point.sinceSource)}` : ''}.</p>
+      <ul>${wanted.slice(0, 8).map((c) => `<li><strong>${escapeHtml(c.section || 'This document')}</strong> — ${escapeHtml(shortOf(c.before || c.now, 64))}</li>`).join('')}</ul>
+      ${wanted.length > 8 ? `<p class="muted">…and ${wanted.length - 8} more.</p>` : ''}
+      <p class="muted">${escapeHtml(where)}</p>`, [
+    { label: 'Cancel', kind: 'outline', action: closeDialog },
+    { label: `Restore ${plural(wanted.length, 'sentence')}`, kind: 'primary', action: () => runRestore(wanted) },
+  ]);
+}
+
+async function runRestore(targets) {
+  closeDialog();
+  const wanted = targets.map(signatureOf);
+  const landed = [];
+  const refused = [];
+  // Which of the two paths the server took is the server's own word for it
+  // (`mode`), never guessed from the payload's shape: both modes carry a
+  // `file`, so reading that would have called a commit a proposal.
+  let proposal = '';
+  let commits = 0;
+  for (const signature of wanted) {
+    const card = cardsNow().find((c) => signatureOf(c) === signature);
+    if (!card) {
+      refused.push('one sentence had left this reading by the time its turn came');
+      continue;
+    }
+    try {
+      const res = await api.restoreChange(state.managerId, state.repoId, state.docId, card.id);
+      if (res && res.mode === 'candidate') proposal = res.file || proposal;
+      if (res && res.mode === 'commit') commits += 1;
+      landed.push(card.section || card.id);
+    } catch (err) {
+      refused.push(`${card.section || card.id}: ${err.message}`);
+    }
+    await hooks.reloadDoc();
+  }
+  let said = 'Nothing was put back.';
+  if (proposal && commits) {
+    said = `${plural(landed.length, 'wording')} put back: ${plural(commits, 'commit')}, and the rest waiting in ${proposal}.`;
+  } else if (proposal) {
+    said = `${plural(landed.length, 'wording')} written into ${proposal} for you to answer. The document itself was not touched.`;
+  } else if (commits) {
+    said = `${plural(commits, 'sentence')} put back, each committed in your name.`;
+  }
+  toast(refused.length ? `${said} ${plural(refused.length, 'refusal')}: ${refused[0]}` : said);
 }
 
 export async function markAllRead() {
