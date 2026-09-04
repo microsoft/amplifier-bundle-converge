@@ -16,6 +16,14 @@
         <div><span>Lane budget</span><strong id="strategyLaneBudget">—</strong></div>
         <div><span>Lanes active</span><strong id="strategyLanesActive">—</strong></div>
       </div>
+      <!-- experience.v1 Core 8, beside the limits the Steer control sets. The
+           shell's rail carries the same naming for all five writes; this one
+           stands where a steward is already reading what steering would
+           change. -->
+      <details class="op-parity" data-write="steer" data-manager-operation="steer the objective, the lane budget, and whether to fill the lanes">
+        <summary>Details</summary>
+        <p>Same write in the Manager Console: &ldquo;Steer: hold at two lanes until the experience kit is green, and make the objective the app&rsquo;s own contracts.&rdquo; Filling the lanes is that write too &mdash; &ldquo;Fill the lanes.&rdquo; Steering sets the limits and never assigns the work, said here or said there.</p>
+      </details>
     </section>
 
     <section class="return-card panel-card">
@@ -60,12 +68,24 @@
           <p class="muted say-note">Say what you saw. The manager session decides what it becomes — you are never asked to write a piece of work.</p>
           <textarea id="feedbackDropText" rows="3" placeholder="The lane words on this page do not match the contract&#8230;"></textarea>
           <button id="feedbackDropSend" class="primary-subtle-button" type="button">Send to this manager session</button>
+          <!-- experience.v1 Core 8 and Core 14, beside the control they are
+               about: what this same write is in the console, and the one form
+               of feedback this body cannot take. -->
+          <details class="op-parity" data-write="feedback" data-manager-operation="drop feedback into the project feedback folder">
+            <summary>Details</summary>
+            <p>Same write in the Manager Console: &ldquo;Feedback: the lane words on the Operation page do not match the contract.&rdquo; It lands in the project&rsquo;s <code>.converge/feedback/</code> folder either way, and the manager session decides what it becomes &mdash; you are never asked to write a piece of work.</p>
+            <p>Text and a screenshot are taken here. A voice note is not recorded here &mdash; say it in the Manager Console, or drop the audio file into that same folder, which takes whatever form it arrives in. Filed as converge-rj1.</p>
+          </details>
         </div>
         <div id="managers" class="say-managers">
           <span class="eyebrow">Every manager session you run</span>
           <p class="muted say-note">Sorted by which one needs you.</p>
           <div id="managersList" class="managers-list"></div>
           <button id="tellAllButton" class="primary-subtle-button" type="button">Tell all manager sessions</button>
+          <details class="op-parity" data-write="feedback" data-manager-operation="drop the same feedback into every registered manager session">
+            <summary>Details</summary>
+            <p>Telling them all is the feedback write, once per manager session listed. Same write in the Manager Console: &ldquo;Tell every manager session: stop starting new work until the release lands.&rdquo;</p>
+          </details>
         </div>
       </div>
     </section>
