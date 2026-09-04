@@ -17,11 +17,17 @@ convention. The check is made here, in the writer, on the document's own H1 —
 not in the browser, which can be told anything. A draft is committed in the
 steward's name; a locked document is never touched at all and gets a proposal
 beside it in the shape `documents.v1` §8 requires.
+
+Asking for a proposal is the one write that never touches a document at all,
+locked or not. It writes the same proposal file beside it, at every one of the
+three scopes, because `experience-direction.v1` clause 9 says the output of an
+ask is always a proposal — never a silent edit, and never a chat.
 """
 
 from __future__ import annotations
 
 import base64
+import json
 import re
 import subprocess
 from datetime import datetime, timezone
@@ -347,6 +353,372 @@ def _merge_candidate(existing: str, block: str) -> str:
     return existing[:at].rstrip("\n") + "\n\n" + block + existing[at:]
 
 
+# --------------------------------------------------------------------------
+# asking for a proposal: a scoped question, answered as a proposal and nothing else
+# --------------------------------------------------------------------------
+
+#: The three scopes `experience-direction.v1` clause 9 names, and the words a
+#: proposal uses for each. Anything else is refused by name rather than
+#: quietly treated as one of these.
+ASK_SCOPES = {
+    "paragraph": "one paragraph",
+    "document": "this whole document",
+    "all": "every document in this repository",
+}
+
+#: How long a headless drafting session may take before the ask is answered
+#: without drafted wording. The proposal is still written; it says so.
+DRAFT_TIMEOUT = 240.0
+
+
+def _section_text(raw: str, section: str) -> str:
+    """The paragraph a steward pointed at, exactly as the document has it now.
+
+    Sections are `## ` headings, which is how the reader splits a document, so
+    the text quoted back to the steward is the text they were looking at.
+    """
+    wanted = (section or "").strip().lower()
+    if not wanted:
+        return ""
+    body: list[str] = []
+    inside = False
+    for line in (raw or "").split("\n"):
+        if line.startswith("## "):
+            if inside:
+                break
+            inside = line[3:].strip().lower() == wanted
+            continue
+        if inside:
+            body.append(line)
+    return "\n".join(body).strip()
+
+
+def _shorten(text: str, limit: int = 1200) -> str:
+    text = (text or "").strip()
+    if len(text) <= limit:
+        return text
+    return text[:limit].rstrip() + "\n… (the rest of it is in the document)"
+
+
+#: Colour and cursor control, which a terminal shows as style and a document
+#: shows as gibberish. Stripped from anything a session hands back.
+ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+
+
+def _plain(text: str) -> str:
+    return ANSI.sub("", text or "").strip()
+
+
+def _session_answer(out: str) -> dict | None:
+    """The answer object a headless session printed, out of everything it printed.
+
+    The CLI writes a line of its own before the JSON, and measured on
+    2026-09-04 its text mode also carries a banner, a token-usage table and
+    colour codes. Reading the JSON object rather than the whole of stdout is
+    what keeps a steward's proposal from quoting the CLI's own furniture back
+    at them as if it were the drafted wording.
+    """
+    reader = json.JSONDecoder()
+    found = None
+    for index, character in enumerate(out or ""):
+        if character != "{":
+            continue
+        try:
+            value, _end = reader.raw_decode(out[index:])
+        except ValueError:
+            continue
+        if isinstance(value, dict) and ("response" in value or "status" in value):
+            found = value
+    return found
+
+
+def draft_with_amplifier(
+    prompt: str,
+    *,
+    cwd: Path,
+    timeout: float = DRAFT_TIMEOUT,
+) -> tuple[str, str]:
+    """Ask a headless Amplifier session for the wording, and say what happened.
+
+    Returns the drafted wording and one sentence about where it came from. On
+    any failure the wording is empty and the sentence says why: the ask still
+    becomes a proposal, carrying the steward's own words, because an ask that
+    silently disappeared because a subprocess died is exactly the outcome
+    clause 9 forbids.
+    """
+    try:
+        done = subprocess.run(
+            ["amplifier", "run", "--mode", "single", "--output-format", "json", prompt],
+            cwd=str(cwd),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        return "", f"no wording was drafted: the drafting session did not finish within {int(timeout)}s"
+    except (OSError, subprocess.SubprocessError) as problem:
+        return "", f"no wording was drafted: {str(problem)[:160]}"
+    if done.returncode != 0:
+        detail = (done.stderr or done.stdout or "").strip().splitlines()
+        return "", f"no wording was drafted: the drafting session exited {done.returncode} ({detail[-1][:120] if detail else 'no output'})"
+
+    answer = _session_answer(done.stdout or "")
+    if answer is None:
+        return "", "no wording was drafted: the drafting session printed no answer this could read"
+    status = str(answer.get("status") or "success")
+    if status != "success":
+        return "", f"no wording was drafted: the drafting session reported {status}"
+    wording = _plain(str(answer.get("response") or ""))
+    if not wording:
+        return "", "no wording was drafted: the drafting session answered nothing"
+    return wording, "drafted by a headless Amplifier session reading this repository"
+
+
+def _ask_prompt(*, rel: str, scope: str, section: str, question: str, current: str, covers: list[str]) -> str:
+    where = {
+        "paragraph": f"the section `{section}` of `{rel}`",
+        "document": f"the whole of `{rel}`",
+        "all": "every document a steward steers by in this repository",
+    }.get(scope, f"`{rel}`")
+    lines = [
+        "You are drafting a proposal for an intent steward, not chatting with them.",
+        f"They are reading `{rel}` and asked about {where}.",
+        "",
+        "What they asked, verbatim:",
+        question.strip(),
+        "",
+    ]
+    if current:
+        lines += ["The text as it stands now:", "", current, ""]
+    if scope == "all" and covers:
+        lines += ["The documents in scope: " + ", ".join(covers), ""]
+    lines += [
+        "Answer with the replacement wording only — the sentences that should stand in the",
+        "document if this is ratified. No preamble, no explanation, no question back.",
+    ]
+    return "\n".join(lines)
+
+
+def _ask_block(*, scope: str, section: str, current: str, wanted: str, drafted: bool, found_section: bool = True) -> str:
+    """One change in the shape `documents.v1` §8 requires: current, then replacement."""
+    where = {
+        "paragraph": f"**{section or 'one paragraph'}**",
+        "document": "**The whole document**",
+        "all": "**Every document in this repository**",
+    }.get(scope, f"**{section or 'the document'}**")
+    if scope == "paragraph" and not found_section:
+        # Quoting the whole document under a heading the document does not
+        # have would read as though that paragraph said all of this.
+        where += " (no section by that name is in the document, so the whole of it is quoted)"
+    lead = (
+        "the text below becomes the wording under it."
+        if drafted
+        else "the text below is what the steward was reading; under it is what they asked for, in their words. "
+        "No wording was drafted for them, so someone must write it before this can be ratified."
+    )
+    shown = _shorten(current) or "(the document had nothing to quote here)"
+    return (
+        f"{where} — {lead}\n\n"
+        "```text\n"
+        f"{shown}\n"
+        "```\n\n"
+        "```text\n"
+        f"{wanted.strip()}\n"
+        "```\n"
+    )
+
+
+def _ask_evidence(
+    *,
+    rel: str,
+    scope: str,
+    question: str,
+    covers: list[str],
+    drafted_note: str,
+    when: datetime,
+) -> list[str]:
+    """What an ask puts on the record: who asked what, at what scope, and when."""
+    lines = [
+        f"The steward asked for this in Converge on {when.strftime('%Y-%m-%d')}, reading `{rel}`.",
+        f'What they asked, verbatim: "{question.strip()}"',
+        f"The ask covers {ASK_SCOPES.get(scope, scope)}.",
+    ]
+    if scope == "all" and covers:
+        lines.append("The documents in scope: " + ", ".join(f"`{one}`" for one in covers) + ".")
+    lines.append(f"Where the wording came from: {drafted_note}")
+    return lines
+
+
+def _ask_candidate_text(
+    *,
+    rel: str,
+    title: str,
+    lock: str,
+    block: str,
+    scope: str,
+    evidence: list[str],
+    user: str,
+    when: datetime,
+) -> str:
+    standing = (
+        f"This document is {lock}, so nothing in it has been touched."
+        if lock
+        else "Nothing in the document has been touched."
+    )
+    return (
+        f"# {title} — asked for\n\n"
+        f"target: {rel}\n"
+        f"author: {user or 'unknown'} via Converge\n"
+        f"date: {_stamp(when)}\n"
+        f"scope: {scope}\n\n"
+        f"{standing} An ask comes back as a proposal to answer — never a silent edit,\n"
+        "never a chat.\n\n"
+        "## The exact change\n\n"
+        f"{block}\n"
+        "## The evidence\n\n"
+        + "".join(f"- {line}\n" for line in evidence)
+        + "\n## What does not change\n\n"
+        f"Every other sentence in `{rel}` stands exactly as it is until this is answered.\n"
+    )
+
+
+def _merge_ask(existing: str, block: str, evidence: list[str]) -> str:
+    """Add one more ask to an open proposal — its change *and* its evidence.
+
+    Merging only the change would quietly drop what the steward asked and at
+    what scope, leaving a proposal whose evidence names one ask and whose body
+    carries three. The two go in together or the record is a half-truth.
+    """
+    whole = _merge_candidate(existing, block)
+    marker = "\n## What does not change"
+    at = whole.find(marker)
+    added = "\n".join(f"- {line}" for line in evidence) + "\n"
+    if at < 0:
+        return whole.rstrip("\n") + "\n\n## The evidence\n\n" + added
+    return whole[:at].rstrip("\n") + "\n" + added + whole[at:]
+
+
+def record_ask(
+    repo: Path,
+    path: Path,
+    *,
+    scope: str,
+    text: str,
+    section: str = "",
+    documents: list[Path] | tuple[Path, ...] = (),
+    user: str = "",
+    when: datetime | None = None,
+    drafter: str = "fixture",
+) -> dict:
+    """A steward's scoped ask, written out as a proposal beside the document.
+
+    Clause 9 of `experience-direction.v1` says the output of an ask is always a
+    proposal, at every scope. So this writes one file and only one file: the
+    same `<doc-stem>.vN-candidate.md` beside the document that a locked-document
+    edit produces, in the three-part shape `documents.v1` §8 requires, so a
+    proposal that came from an ask and a proposal that came from anywhere else
+    read the same. The document itself is never opened for writing here.
+
+    `drafter` says who writes the replacement wording. `"agent"` runs a headless
+    Amplifier session against the repository; anything else — the default —
+    writes the proposal from the steward's own words without one, which is what
+    the tests use and what an ask falls back to when the session fails.
+    """
+    when = when or _now()
+    repo, path = Path(repo), Path(path)
+    rel = path.relative_to(repo).as_posix()
+    question = (text or "").strip()
+    section = (section or "").strip()
+
+    if scope not in ASK_SCOPES:
+        return {"ok": False, "error": f"an ask covers one of {', '.join(sorted(ASK_SCOPES))} — not {scope or 'nothing named'}"}
+    if not question:
+        return {"ok": False, "error": "an ask needs a question"}
+
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError:
+        return {"ok": False, "error": f"could not read {rel}"}
+
+    covers = [Path(one).relative_to(repo).as_posix() for one in documents] if scope == "all" else []
+    found_section = True
+    if scope == "paragraph":
+        current = _section_text(raw, section)
+        if not current:
+            current, found_section = raw, False
+    elif scope == "document":
+        current = raw
+    else:
+        current = "\n".join(covers) if covers else raw
+
+    wording, drafted_note = "", "the steward's own words, written down as they asked them"
+    if drafter == "agent":
+        wording, note = draft_with_amplifier(
+            _ask_prompt(rel=rel, scope=scope, section=section, question=question, current=_shorten(current), covers=covers),
+            cwd=repo,
+        )
+        drafted_note = note if wording else f"{note}, so the steward's own words stand in its place"
+
+    block = _ask_block(
+        scope=scope,
+        section=section,
+        current=current,
+        wanted=wording or question,
+        drafted=bool(wording),
+        found_section=found_section,
+    )
+
+    evidence = _ask_evidence(
+        rel=rel, scope=scope, question=question, covers=covers, drafted_note=drafted_note, when=when
+    )
+    lock = document_lock(path)
+    target = candidate_path(path)
+    if target.exists():
+        try:
+            whole = _merge_ask(target.read_text(encoding="utf-8"), block, evidence)
+        except OSError:
+            return {"ok": False, "error": f"could not read {target.name}"}
+        merged = True
+    else:
+        whole = _ask_candidate_text(
+            rel=rel,
+            title=path.stem,
+            lock=lock,
+            block=block,
+            scope=scope,
+            evidence=evidence,
+            user=user,
+            when=when,
+        )
+        merged = False
+
+    before = path.read_bytes()
+    target.write_text(whole, encoding="utf-8")
+    # Said out loud rather than assumed: the one promise clause 9 makes about
+    # the document itself is that an ask does not change it.
+    untouched = path.read_bytes() == before
+
+    return {
+        "ok": True,
+        "mode": "candidate",
+        "scope": scope,
+        "locked": lock,
+        "proposal": target.stem,
+        "path": str(target),
+        "file": target.relative_to(repo).as_posix(),
+        "document": rel,
+        "documentUntouched": untouched,
+        "merged": merged,
+        "drafted": bool(wording),
+        "draftedBy": drafted_note,
+        "said": (
+            f"Your ask about {ASK_SCOPES[scope]} is waiting in {target.name} as a proposal. "
+            f"Nothing in {path.name} changed."
+        ),
+    }
+
+
 def apply_change(
     repo: Path,
     path: Path,
@@ -456,11 +828,15 @@ def apply_change(
 
 
 __all__ = [
+    "ASK_SCOPES",
     "DECISION_WORDS",
+    "DRAFT_TIMEOUT",
     "LOCK_WORD",
     "apply_change",
     "candidate_path",
     "document_lock",
+    "draft_with_amplifier",
+    "record_ask",
     "record_decision",
     "record_feedback",
     "steer",
