@@ -2689,7 +2689,25 @@
     and asserts all five are aligned. It goes red if any kit drifts, and it goes
     red if a sixth kit lands unaligned, which is the case that matters now that
     the experience family has three kits of its own.
-    RAN 2026-09-03 → KITS-ALL-NUMBERED-TO-CORE-CLAUSES=7 (composition, documents,
+    RE-RUN 2026-09-04 (converge-5yu), THE PASS THAT RE-DERIVED THE EXPERIENCE
+    FAMILY. The expectation `=7` is CURRENT and CORRECT, and it already counts
+    both kits converge-f1l built. Seven kits, every one `aligned: True`, each
+    named from the run's own observation rather than from memory:
+      composition               Core 1-7   vs kit rules 1-7
+      documents                 Core 1-14  vs kit rules 1-14
+      experience                Core 1-15  vs kit rules 1-15   <- new
+      experience-collaboration  Core 1-10  vs kit rules 1-10   <- new
+      experience-console        Core 1-10  vs kit rules 1-10
+      experience-direction      Core 1-11  vs kit rules 1-11
+      experience-operation      Core 1-13  vs kit rules 1-13
+    -> KITS-ALL-NUMBERED-TO-CORE-CLAUSES=7
+    A CORRECTION TO THE LINE BELOW, made rather than left standing. The
+    2026-09-03 entry printed `=7` and then named only five kits in its
+    parenthetical. Both new kits were in that count; the list beside it was
+    short. A record that disagrees with its own number teaches the next reader
+    the wrong thing, so the number is confirmed above by name.
+    RAN 2026-09-03 → KITS-ALL-NUMBERED-TO-CORE-CLAUSES=7 (parenthetical as
+    written that day, naming five of the seven: composition, documents,
     experience-console, experience-direction, experience-operation — every one
     `aligned: True`).
     THE ORIGINAL PINNING, KEPT FOR THE RECORD —
@@ -3846,25 +3864,54 @@
       **At most five things ask for your word at once,** re-ranked each refresh.
       Several small calls may arrive as one ratification sheet answered in a pass;
       every answer lands in a dated ratification record.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
-    kind: probe
-    ref: 'ls docs/workflow/owner-ratifications-*.md >/dev/null 2>&1 && echo "DATED-RATIFICATION-RECORDS=$(ls docs/workflow/owner-ratifications-*.md | wc -l)" || echo NO-DATED-RATIFICATION-RECORD'
-    expect:
-      exit: 0
-      stdout_contains: "DATED-RATIFICATION-RECORDS="
+    kind: indexed
+    ref: 'conformance/experience/run.py (rules 5a, 5b)'
   proves: >
-    Only that dated ratification records EXIST in this repository, which is the
-    second half of the clause. The first half - that at most five things ask for
-    your word at once - is countable from the app's own /api/needs payload and
-    nothing counts it. The probe deliberately pins the presence of the records
-    and not their number, so adding one does not flip a row about a different
-    promise.
+    BOTH halves of the clause, each by its own rule, which is the whole reason
+    this row moved. Rule 5a counts the things asking for your word from
+    /api/needs/{mid} - the app's own answer to that question - and holds it
+    against the limit of five. Rule 5b requires two things together: a dated
+    docs/workflow/owner-ratifications-<date>.md in the repository AND the app's
+    own write path naming it, because a record nothing writes to is not where
+    answers land.
+    WHAT IT DOES NOT PROVE, named so it is not read as more. Rule 5a is a count
+    taken at the moment of the run, not a limit the app enforces: nothing here
+    proves the app would refuse a sixth. The clause's "re-ranked each refresh" is
+    unasserted by either rule. And rule 5b is a static read of the write path, so
+    what a record actually holds once written is beyond it.
   notes: >
-    Measured 2026-09-03 (converge-pq2) against the app running at
-    127.0.0.1:8788. No kit asserts the five-at-once limit; converge-f1l is the
-    item for the umbrella's own clauses.
-  work: converge-f1l
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW UMBRELLA KIT. GAP ->
+    CONFORMS, and kind: probe -> kind: indexed. converge-f1l built
+    conformance/experience/, and its rules 5a and 5b now judge this clause; the
+    hand-written probe this row carried is superseded by them.
+    THE DISPOSITION MOVED BECAUSE THE ASSERTION GREW, NOT BECAUSE THE BODY DID.
+    The old probe deliberately pinned only the presence of the records - the
+    clause's second half - and its own `proves` said so: "The first half ... is
+    countable from the app's own /api/needs payload and nothing counts it." Rule
+    5a now counts it. With both halves asserted and both passing, GAP is no
+    longer the honest word.
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server,
+    reading this worktree as the repository half):
+      [PASS] 5a  1 thing(s) ask for your word at once, within the limit of 5
+      [PASS] 5b  the answer write names the dated ratification record, and 2
+                 record(s) exist (docs/workflow/owner-ratifications-2026-09-02.md,
+                 docs/workflow/owner-ratifications-2026-09-03.md)
+    CONFIRMED INDEPENDENTLY, not read from the kit's own verdict: `curl
+    /api/needs/converge` returned a list of length 1 (one proposal, "Experience
+    Contract - v1 candidate"), and `ls docs/workflow/owner-ratifications-*.md`
+    lists exactly the two files rule 5b names.
+    THE WORK REF IS DROPPED, as LEDGER-FORMAT requires of a green row. It named
+    converge-f1l, which is resolved: f1l's job was to make this checkable, and
+    that is done. Note the item that filed this re-derivation (converge-5yu)
+    predicted this row would stay GAP; the live run says otherwise, and the run
+    is what is recorded. The umbrella kit's own README agrees - its measured
+    verdict lists no Core 5 failure.
+    KEPT FOR THE RECORD - what the row said before this pass: measured 2026-09-03
+    (converge-pq2) against the app running at 127.0.0.1:8788, GAP, "No kit asserts
+    the five-at-once limit; converge-f1l is the item for the umbrella's own
+    clauses."
 - id: CVG-105
   title: "plain state words everywhere"
   contract:
@@ -4009,22 +4056,36 @@
       project needs is reachable only by a person at a screen.
   disposition: GAP
   assertion:
-    kind: probe
-    ref: 'grep -rlE "manager operation|manager-session operation" app/templates app/static 2>/dev/null | wc -l | sed ''s/^/WRITE-TO-OPERATION-MAPPING-FILES=/'''
-    expect:
-      exit: 0
-      stdout_contains: "WRITE-TO-OPERATION-MAPPING-FILES=0"
+    kind: indexed
+    ref: 'conformance/experience/run.py (rule 8)'
   proves: >
-    That the app publishes NO mapping from a write to the manager-session
-    operation that does the same thing - the thing this clause asks every write
-    to name. It does not prove the operations are unreachable; it proves the
-    surface never says which they are, so a reader cannot check the claim.
+    That for every write the body offers, the served surface must name the
+    manager-session operation that does the same thing - and that none of them
+    does. Rule 8 reads the writes the app actually declares and looks for the
+    operation naming on what the app serves, so a reader cannot check the
+    clause's claim at all.
+    THIS IS A WIDER READ THAN THE PROBE IT REPLACES. The old ref grepped
+    app/templates and app/static for two literal phrases and asserted the count
+    was 0 - the absence of a word, not the absence of the mapping. A mapping
+    published under any other wording would have left the row red while the
+    clause was kept.
+    WHAT IT DOES NOT PROVE: that the manager-session operations are unreachable.
+    They may well exist; the surface never says which they are.
   notes: >
-    Measured 2026-09-03 (converge-pq2) against the app running at
-    127.0.0.1:8788. The superseded surface kit checked exactly this and the
-    old app published the mapping behind a Details fold; the app that shipped
-    does not. No experience kit picked the rule up - converge-f1l.
-  work: converge-f1l
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW UMBRELLA KIT. Stays GAP;
+    kind: probe -> kind: indexed, and the work ref moves. converge-f1l built
+    conformance/experience/ and is resolved - making this checkable was its job,
+    and it is done. The item that fixes the app is converge-9mq, which carries
+    this clause and Core 14 together.
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server):
+      [FAIL] 8  this body offers 4 of the five writes (answer with a word, drop
+                feedback, steer, ask for a proposal) and publishes no
+                manager-session operation for any of them
+    KEPT FOR THE RECORD: measured 2026-09-03 (converge-pq2) against the app at
+    127.0.0.1:8788 - the superseded surface kit checked exactly this and the old
+    app published the mapping behind a Details fold; the app that shipped does
+    not.
+  work: converge-9mq
 - id: CVG-108
   title: "every behavior carries one of four words"
   contract:
@@ -4036,22 +4097,33 @@
       absence is a gap; optional a surface may carry; excluded it must not, and its
   disposition: GAP
   assertion:
-    kind: probe
-    ref: 'for f in contracts/experience-console.v1.md contracts/experience-collaboration.v1.md; do printf "%s " "$(grep -c ''(REQUIRED)\|(IDIOM)\|(OPTIONAL)\|(EXCLUDED)'' $f)"; done | sed ''s/^/SECTION-CONTRACTS-WITH-NO-BEHAVIOUR-WORDS: /'''
-    expect:
-      exit: 0
-      stdout_contains: "SECTION-CONTRACTS-WITH-NO-BEHAVIOUR-WORDS: 0 0 "
+    kind: indexed
+    ref: 'conformance/experience/run.py (rule 9)'
   proves: >
-    That two of the four section contracts tag not one clause with any of the
-    four words. experience-direction tags all 11 of its clauses and
-    experience-operation all 13; experience-console and
-    experience-collaboration tag none. The probe asserts the gap itself, so it
-    flips the moment either contract starts tagging.
+    That every Core clause of every section contract must carry one of
+    (REQUIRED), (IDIOM), (OPTIONAL) or (EXCLUDED) - and that two of the four
+    carry none. Rule 9 reads the contracts, not the app: this clause is a promise
+    about how the family is WRITTEN, and an untagged behavior means nothing
+    either way.
+    THIS ASSERTS THE CLAUSE, WHERE THE PROBE ASSERTED THE GAP. The old ref
+    hard-coded the two failing contracts by name and expected the string
+    "SECTION-CONTRACTS-WITH-NO-BEHAVIOUR-WORDS: 0 0 ". It would have gone green
+    the moment those two were tagged even if a fifth section contract landed
+    untagged, because a contract it never named could not fail it. Rule 9 walks
+    whatever section contracts exist.
   notes: >
-    Measured 2026-09-03 (converge-pq2) against the app running at
-    127.0.0.1:8788. Read from the contracts, not the app: this clause is a
-    promise about how the family is WRITTEN.
-  work: converge-f1l
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW UMBRELLA KIT. Stays GAP;
+    kind: probe -> kind: indexed, and the work ref moves off the resolved
+    converge-f1l to converge-er6, which carries this clause and Core 13 together
+    (they are two halves of one authoring pass).
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server):
+      [FAIL] 9  section contracts with behaviors carrying none of ['REQUIRED',
+                'IDIOM', 'OPTIONAL', 'EXCLUDED']: experience-collaboration.v1.md
+                (10 of 10); experience-console.v1.md (10 of 10)
+    The count is unchanged from 2026-09-03 (converge-pq2): experience-direction
+    tags all 11 of its clauses and experience-operation all 13; the other two tag
+    none. What changed is that a kit rule now says so rather than a grep.
+  work: converge-er6
 - id: CVG-109
   title: "IDIOM means the behavior is required and its shape is not"
   contract:
@@ -4063,17 +4135,37 @@
       a body gets to be wholly native without drifting.
   disposition: NOT-ASSERTABLE
   assertion:
-    kind: none
+    kind: indexed
+    ref: 'conformance/experience/run.py (rule 10)'
   justification: >
-    This clause governs how a REVIEW is conducted - it asks the reviewer to ask
-    'is the behavior satisfied?' rather than 'does it look the same?'. There is
-    no artifact in the tree whose state could be read to answer it, and no
+    STILL CAN'T CHECK - BUT THE KIT NOW SAYS SO OUT LOUD, WHICH IS THE CHANGE
+    HERE. This clause governs how a REVIEW is conducted: it asks the reviewer to
+    ask 'is the behavior satisfied?' rather than 'does it look the same?'. There
+    is no artifact in the tree whose state could be read to answer it, and no
     second body to review against a first. A machine can check that a clause
-    carries the word IDIOM (CVG-108 does); it cannot check that a reader
-    honoured what the word means.
-    WHAT WOULD SETTLE IT: a second body, and a recorded review of one against
-    the other, by name and date - which is what this contract's own conformance
-    list asks for in its last bullet.
+    carries the word IDIOM (CVG-108 does); it cannot check that a reader honoured
+    what the word means.
+    THE REASON IS NOW THE KIT'S OWN AND IT IS PINNED. Rule 10 is a declared SKIP
+    with a stated reason, and conformance/experience/tests/'s
+    `test_skip_set_is_pinned` FAILs if any other rule drifts into SKIP - so a
+    rule cannot quietly become a soft pass by going silent. The row is indexed to
+    the rule so that reason travels with it and a reader is not left to take this
+    justification's word for it.
+    WHAT WOULD SETTLE IT: a review that leaves a record naming the behavior it
+    judged - by name and date - which is what this contract's own conformance
+    list asks for in its last bullet. A second body would settle it more fully.
+  notes: >
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW UMBRELLA KIT.
+    NOT-ASSERTABLE both before and after; kind: none -> kind: indexed. Before
+    this pass the row asserted nothing at all and the reason lived only in this
+    file. converge-f1l built conformance/experience/, whose rule 10 declares the
+    same *Can't check* and prints its reason on every run.
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server):
+      [SKIP] 10  whether review asked "is the behavior satisfied?" rather than
+                 "does it look the same?" is a fact about how a person read the
+                 work, and no artifact records it. It becomes checkable when a
+                 review leaves a record naming the behavior it judged - there is
+                 no such record to read today.
 - id: CVG-110
   title: "idioms satisfy behaviors; they never subtract them"
   contract:
@@ -4085,13 +4177,33 @@
       same refusal for the same reason; *transfer*: is the person surprised, or
   disposition: NOT-ASSERTABLE
   assertion:
-    kind: none
+    kind: indexed
+    ref: 'conformance/experience/run.py (rule 11)'
   justification: >
-    The clause names three tests - behavior, transfer, subtraction - and every
-    one of them is a judgment about a PAIR of bodies. One body exists. There is
-    nothing to compare, so any verdict here would be invented.
+    STILL CAN'T CHECK - BUT THE KIT NOW SAYS SO OUT LOUD, WHICH IS THE CHANGE
+    HERE. The clause names three tests - behavior, transfer, subtraction - and
+    every one of them is a judgment about a PAIR of bodies. One body exists (the
+    browser app). There is nothing to compare, so any verdict here would be
+    invented.
+    THE REASON IS NOW THE KIT'S OWN AND IT IS PINNED. Rule 11 is a declared SKIP
+    whose reason names both halves - the subtraction test compares two bodies,
+    and the transfer test needs a person who learned the behavior in the other
+    one - and `test_skip_set_is_pinned` FAILs if any other rule drifts into SKIP.
     WHAT WOULD SETTLE IT: a second body. Until then this is 'can't check', which
     is a different answer from 'not yet' and is recorded as one.
+  notes: >
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW UMBRELLA KIT.
+    NOT-ASSERTABLE both before and after; kind: none -> kind: indexed. Before
+    this pass the row asserted nothing at all. converge-f1l built
+    conformance/experience/, whose rule 11 declares the same *Can't check* and
+    prints its reason on every run.
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server):
+      [SKIP] 11  the subtraction and transfer tests compare two bodies - whether
+                 a shape removed a state or a refusal reason, and whether the
+                 person was surprised or merely found it elsewhere. This family
+                 has one body (the browser app), so there is nothing to compare
+                 against; and the transfer test needs a person who learned the
+                 behavior in the other one.
 - id: CVG-111
   title: "a body may exceed this umbrella in idiom, never in features"
   contract:
@@ -4101,16 +4213,58 @@
       **A body may exceed this umbrella in idiom, never in features.** Richer
       gestures and better affordances are welcome everywhere. A feature in one
       body and nowhere else is either a behavior that belongs in this family or
-  disposition: NOT-ASSERTABLE
+  disposition: CONFORMS
   assertion:
-    kind: none
-  justification: >
-    'A feature in one body and nowhere else is either a behavior that belongs in
+    kind: indexed
+    ref: 'conformance/experience/run.py (rule 12)'
+  proves: >
+    That every write this body offers beyond the five the umbrella names is named
+    by a contract in the family - so none of them is debt. Rule 12 carries a
+    HAND-WRITTEN table of route-to-clause citations and RE-READS EVERY CITATION
+    AGAINST THE REPOSITORY ON EVERY RUN, so a clause that moved or was reworded
+    makes the citation stale and the write falls back to being reported as debt.
+    THE RE-READ IS THE LOAD-BEARING PART, and it exists because the rule got this
+    wrong once. The kit's README records that an earlier form linked a route to a
+    clause by searching for the route's own word, and produced three fabricated
+    PASSes - `.../changes/{id}/keep` "cited" a clause about keeping a teammate a
+    first-class participant, `.../ask` "cited" a clause about a question being
+    asked. A contract names behaviors in prose; it does not name routes.
+    `test_a_keyword_is_not_a_citation` and
+    `test_every_citation_still_reads_true_in_this_repository` hold both halves.
+    WHAT IT DOES NOT PROVE, named so it is not read as more: the clause's own
+    two-body test - "a feature in one body and nowhere else is either a behavior
+    that belongs in this family or it is debt" - is not what is checked here.
+    With one body, that comparison still cannot be made. What rule 12 checks is
+    the half that IS decidable from one body: whether a contract names the
+    feature. A feature named by no contract would be reported as debt whatever a
+    second body did.
+  notes: >
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW UMBRELLA KIT.
+    NOT-ASSERTABLE -> CONFORMS, kind: none -> kind: indexed. This is the largest
+    move in this pass and it needs its reason stated plainly: the row was
+    NOT-ASSERTABLE because it read the clause as demanding a comparison between
+    two bodies, and only one exists. converge-f1l's rule 12 found a half of the
+    clause that one body settles - every write must be named by SOME contract in
+    the family - and that half now passes.
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server,
+    reading this worktree as the repository half):
+      [PASS] 12  every one of the 8 writes this body offers is named by a
+                 contract in the family, each citation re-read this run, so none
+                 of them is debt
+    Note the tension this row sits beside, deliberately not smoothed over: the
+    umbrella's Core 4 says five writes and nothing else writes anything, and this
+    body offers eight. Rule 4b FAILs on exactly that, and says the disagreement
+    is between the contracts and the steward's to settle (CVG-103's family).
+    Rule 12 asks a different question - is each write NAMED by a contract - and
+    the answer is yes: the four beyond the five are editing, restoring and
+    per-change choices from experience-direction.v1 clauses 5, 6 and 8, and the
+    read point, which is this umbrella's own open question (CVG-106).
+    KEPT FOR THE RECORD - what the row said before this pass: NOT-ASSERTABLE,
+    "'A feature in one body and nowhere else is either a behavior that belongs in
     this family or it is debt.' With one body, every feature is in one body and
-    nowhere else, and the clause's own test cannot separate the two cases.
-    WHAT WOULD SETTLE IT: a second body, and the comparison this contract's
-    conformance list calls 'a behavior found in one body and named in no
-    contract is reported as debt'.
+    nowhere else, and the clause's own test cannot separate the two cases." That
+    reading is still true of the two-body test, and is preserved in `proves`
+    above as what this row does NOT assert.
 - id: CVG-112
   title: "three surface classes, and every behavior placed against all three"
   contract:
@@ -4122,22 +4276,39 @@
       three, so "nobody thought about the widget" cannot pass as a decision.
   disposition: GAP
   assertion:
-    kind: probe
-    ref: 'grep -rl ''quick-access'' contracts/experience-*.v1.md | wc -l | sed ''s/^/SECTION-CONTRACTS-PLACING-BEHAVIOUR-AGAINST-THE-THREE-CLASSES=/'''
-    expect:
-      exit: 0
-      stdout_contains: "SECTION-CONTRACTS-PLACING-BEHAVIOUR-AGAINST-THE-THREE-CLASSES=0"
+    kind: indexed
+    ref: 'conformance/experience/run.py (rule 13)'
   proves: >
-    That no section contract places any behavior against the three surface
-    classes - not one of the four so much as names 'quick-access'. The five
-    platform contracts do name it; the sections, where the behaviours live, do
-    not. So 'nobody thought about the widget' can still pass as a decision,
-    which is the exact failure this clause exists to stop.
+    That every section contract must place its behaviors against all three
+    surface classes - full app, quick-access, notification - and that not one of
+    the four does. Rule 13 reads the contracts, and reports the classes by name
+    so a reader can see which of the three is missing rather than only that
+    something is.
+    THIS IS A WIDER READ THAN THE PROBE IT REPLACES. The old ref grepped the
+    section contracts for the single literal string 'quick-access' and asserted
+    the count was 0. A contract that named quick-access once, in passing, in a
+    sentence that placed nothing, would have flipped that probe green while the
+    clause stayed broken - it asserted the absence of a word, not the absence of
+    the placement.
+    WHAT IT DOES NOT PROVE: that a placement, once written, is a considered one.
+    The clause exists so that "nobody thought about the widget" cannot pass as a
+    decision; a machine can see the three classes named, not the thinking.
   notes: >
-    Measured 2026-09-03 (converge-pq2) against the app running at
-    127.0.0.1:8788. Read from the contracts. converge-f1l carries the missing
-    matrix.
-  work: converge-f1l
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW UMBRELLA KIT. Stays GAP;
+    kind: probe -> kind: indexed, and the work ref moves off the resolved
+    converge-f1l to converge-er6, which carries this clause and Core 9 together -
+    once a behavior carries one of the four words, placing it against the three
+    classes is the same sentence's other half.
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server):
+      [FAIL] 13  experience-collaboration.v1.md places behavior against none;
+                 experience-console.v1.md places behavior against none;
+                 experience-direction.v1.md places behavior against none;
+                 experience-operation.v1.md places behavior against none - the
+                 three classes are ['full app', 'quick-access', 'notification']
+    Unchanged from 2026-09-03 (converge-pq2) in substance: the five platform
+    contracts do name the classes; the sections, where the behaviors live, do
+    not. What changed is that a kit rule now says so rather than a grep.
+  work: converge-er6
 - id: CVG-113
   title: "where a body genuinely cannot do a thing, it says so in the app"
   contract:
@@ -4149,19 +4320,45 @@
   disposition: GAP
   assertion:
     kind: indexed
-    ref: 'conformance/experience-operation/run.py (rule 10)'
+    ref: 'conformance/experience/run.py (rule 14)'
   proves: >
-    Rule 10 PASSes - feedback works in every form the body CLAIMS - and its
-    report names the forms it does not offer. That naming is the evidence for
-    this row, not the rule's verdict: the rule judges the section clause, this
-    row judges the umbrella's, and they disagree on purpose.
+    That for each thing this body genuinely cannot do, the app must state the
+    limit and what to do instead somewhere it serves - and that for two such
+    things it states nothing. Rule 14 COMPUTES the absences rather than being
+    told them: writes among the five with no route, and feedback forms the body
+    does not offer. Then, for each, it looks for the limit on the served surface.
+    Silence is the only wrong answer the clause names, and silence is what it
+    found.
+    THE RE-POINT IS THE POINT OF THIS PASS. This row was indexed to
+    experience-operation rule 10, whose verdict DISAGREED with the row on
+    purpose: rule 10 PASSes (feedback works in every form the body claims) and
+    only its report's incidental naming of the absent form was the evidence. A
+    reader following that cite landed on a green rule and had to be told in prose
+    why the row was red. Rule 14 judges this umbrella's clause directly and FAILs
+    on it, so the cite and the row now agree.
   notes: >
-    Measured 2026-09-03 (converge-pq2) against the app running at
-    127.0.0.1:8788. Rule 10 reports forms_accepted ['text', 'a screenshot'],
-    forms_absent ['voice']. The app says nothing anywhere about not taking a
-    voice note - no limit stated, no alternative offered. Silence is the one
-    wrong answer this clause names.
-  work: converge-f1l
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW UMBRELLA KIT. Stays GAP;
+    the indexed ref moves from conformance/experience-operation/run.py (rule 10)
+    to conformance/experience/run.py (rule 14), and the work ref moves off the
+    resolved converge-f1l to converge-9mq, which carries this clause and Core 8
+    together.
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server):
+      [FAIL] 14  this body cannot do ['raise or lower a priority (`priority`)',
+                 'feedback as voice'], and says nothing anywhere about ['raise or
+                 lower a priority (`priority`)', 'feedback as voice'] - not what
+                 the limit is, and not what to do instead
+    THE ABSENCE LIST GREW BY ONE SINCE 2026-09-03 (converge-pq2), and that is a
+    real difference, not a re-wording. The old row named one absence, voice
+    feedback, because experience-operation rule 10 only ever looks at feedback
+    forms. Rule 14 also computes the missing writes, and finds the priority write
+    has no route at all - CVG-103's gap, filed as converge-6cc. Building the
+    priority write is that item's job; saying so in the app is this one's.
+    The app already does this well elsewhere, which is why the rule can tell the
+    difference: render/direction.js carries Details folds saying presence is this
+    browser only and that restoring past the read point is not offered, each
+    naming the item that would change it. The two absences above have no such
+    sentence.
+  work: converge-9mq
 - id: CVG-114
   title: "this umbrella governs a family — and two of the contracts it names do not exist"
   contract:
@@ -4937,16 +5134,40 @@
       **Git is the protocol; Converge is the lens.** Collaboration between people
       happens through the shared repository host — commits, pull requests, and
       their comments. Converge renders that flow; it never replaces it.
-  disposition: NOT-ASSERTABLE
+  disposition: CONFORMS
   assertion:
-    kind: none
-  justification: >
-    'Collaboration between people happens through the shared repository host.'
-    No collaboration has happened through a host on this machine - one steward,
-    one checkout, no pull request. Whether Converge RENDERS that flow rather
-    than replacing it cannot be read from a tree in which the flow never ran.
-    WHAT WOULD SETTLE IT: one pull request from a second person, rendered in the
-    app, with the host still the record of it.
+    kind: indexed
+    ref: 'conformance/experience-collaboration/run.py (rule 1)'
+  proves: >
+    The half of this clause that one machine settles: that git is the protocol.
+    Rule 1 requires the write path to run git AND to reach the repository through
+    nothing else beside it - a second transport would be a private channel a
+    teammate on plain tooling cannot see, which is exactly what "Converge renders
+    that flow; it never replaces it" forbids.
+    WHAT IT DOES NOT PROVE, named so it is not read as more: that collaboration
+    between two people has actually happened through a host. It has not on this
+    machine - one steward, one checkout, no pull request. What the rule settles
+    is that if it did, it would go through git, because there is no other road
+    out of this body. The other clauses of this contract carry the halves that
+    need a live host: 4a (a bridge exists), 4b and 8b (SKIP, they need a second
+    party), 5b (the answer returns to its origin).
+  notes: >
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW COLLABORATION KIT.
+    NOT-ASSERTABLE -> CONFORMS, kind: none -> kind: indexed. converge-f1l built
+    conformance/experience-collaboration/, and the distinction its README draws
+    is the reason this row moved: "whether a bridge to the host EXISTS" is
+    provable from what the app declares, even though "whether a teammate's reply
+    came back attributed" is not.
+    THE OLD JUSTIFICATION READ THE CLAUSE AS ALL-OR-NOTHING and that was too
+    strong. It said the clause "cannot be read from a tree in which the flow
+    never ran". The flow never running does not make the protocol unreadable -
+    the write path is in the tree, and it either speaks git or it does not.
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server):
+      [PASS] 1  every write reaches the shared repository through git and nothing
+                else; what the host then does with it is the host's own business
+    KEPT FOR THE RECORD - what would settle the remaining half: one pull request
+    from a second person, rendered in the app, with the host still the record of
+    it. That is rule 4b's SKIP reason, carried by CVG-183.
 - id: CVG-181
   title: "manager sessions never talk to each other directly"
   contract:
@@ -5004,15 +5225,43 @@
       **Pull-request comments are a two-way bridge.** A question asked in Converge
       arrives as a comment; the reply arrives back inside the same review. The
       teammate never leaves their tools, and the steward never copies a judgment
-  disposition: NOT-ASSERTABLE
+  disposition: GAP
   assertion:
-    kind: none
-  justification: >
-    A question asked in Converge must arrive as a comment, and the reply must
-    arrive back inside the same review. Both halves need a host and a second
-    person. Neither exists here, and no amount of file reading substitutes.
-    WHAT WOULD SETTLE IT: one question asked in the app, found on the host, and
-    one reply written on the host, found back in the review.
+    kind: indexed
+    ref: 'conformance/experience-collaboration/run.py (rules 4a, 4b)'
+  proves: >
+    THE ROW IS SPLIT ALONG THE CLAUSE'S TWO HALVES, WHICH IS THE WHOLE CHANGE
+    HERE, and each half is named so neither is mistaken for the other.
+    ASSERTED, AND RED - rule 4a: a question asked in Converge must be able to
+    reach the host as a comment. This needs no second person to settle. Either
+    the app declares a route addressing a pull request or its comments, or a code
+    path posts one, or it does not. It does not.
+    STILL CAN'T CHECK - rule 4b: that the reply arrives back inside the same
+    review, with the teammate's name on it. A comment written by a person on a
+    real host cannot be produced by any file in this tree. Rule 4b is a declared
+    SKIP with that reason, pinned by `test_skip_set_is_pinned`, and it points at
+    4a as the half that IS checked.
+    WHAT WOULD SETTLE THE SKIPPED HALF: one question asked in the app, found on
+    the host, and one reply written on the host, found back in the review.
+  notes: >
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW COLLABORATION KIT.
+    NOT-ASSERTABLE -> GAP, kind: none -> kind: indexed. The old justification
+    said "Both halves need a host and a second person", and that was only true of
+    one of them. converge-f1l's kit found the other half checkable, and it fails.
+    A GAP IS A DIFFERENT ANSWER FROM A CAN'T CHECK, and this is the row where the
+    difference bites hardest. Before this pass the ledger recorded silence about
+    a bridge that is simply absent - a steward reading it would learn nothing
+    about work that needs doing. It now carries a live work ref.
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server):
+      [FAIL] 4a  nothing in this body can carry a question to the host as a
+                 comment: no route the app declares addresses a pull request or
+                 its comments, and no code path posts one. A steward asking a
+                 question here has to leave and say it somewhere else, which is
+                 the copying between tools this clause exists to stop.
+      [SKIP] 4b  a comment written by a teammate on a real repository host,
+                 arriving back inside the review with their name on it, cannot be
+                 produced by any file in this tree.
+  work: converge-scb
 - id: CVG-184
   title: "your answer returns where the proposal came from"
   contract:
@@ -5022,16 +5271,47 @@
       **Your answer returns where the proposal came from.** *ratified · ratified
       with edits · declined · later* — written to the dated ratification record and
       posted back to the origin, in the steward's own words.
-  disposition: NOT-ASSERTABLE
+  disposition: GAP
   assertion:
-    kind: none
-  justification: >
-    Half of this clause IS checkable and is checked next door - an answer is
-    written to the dated ratification record (CVG-104, CVG-188). The other half
-    - that it is posted back to the ORIGIN - needs an origin that is not this
-    machine. There is none.
-    WHAT WOULD SETTLE IT: one proposal that arrived from a host, answered here,
-    with the answer found on the host afterwards.
+    kind: indexed
+    ref: 'conformance/experience-collaboration/run.py (rules 5a, 5b)'
+  proves: >
+    Both halves of the clause, each by its own rule, and they disagree - which is
+    why this row is red rather than green or silent.
+    KEPT - rule 5a: the steward's word is written to the dated ratification
+    record. The repository holds docs/workflow/owner-ratifications-<date>.md and
+    the app's own write path names it.
+    BROKEN - rule 5b: nothing posts the answer back where the proposal came from.
+    This does NOT need a live origin to settle, which is what the old
+    justification got wrong: the question is whether anything in this body
+    addresses an origin after the word is recorded, and nothing does. There is no
+    bridge to post through either (see CVG-183 / rule 4a).
+    WHAT IT DOES NOT PROVE: what a ratification record holds once written, which
+    is beyond a static read. And a body that DID address an origin would still
+    need a live host to prove the answer arrived.
+  notes: >
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW COLLABORATION KIT.
+    NOT-ASSERTABLE -> GAP, kind: none -> kind: indexed. The old justification
+    already spotted the split - "Half of this clause IS checkable and is checked
+    next door" - but drew the wrong conclusion from it, holding that the posting
+    half "needs an origin that is not this machine". Whether the CODE posts
+    anywhere is readable without an origin; only whether the post ARRIVES needs
+    one. converge-f1l's rule 5b reads the former.
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server):
+      [PASS] 5a  the answer write names the dated ratification record, and 2
+                 record(s) exist (docs/workflow/owner-ratifications-2026-09-02.md,
+                 docs/workflow/owner-ratifications-2026-09-03.md)
+      [FAIL] 5b  the steward's word is recorded but nothing posts it back where
+                 the proposal came from - and there is no bridge to post it
+                 through either (see rule 4a). A teammate who proposed on the
+                 host learns the answer only if someone copies it there by hand,
+                 which is the judgment-copying this clause forbids.
+    5b is one piece of work with CVG-183's 4a and CVG-185's 6a: all three are the
+    same missing half, a path to the repository host. converge-scb says so.
+    KEPT FOR THE RECORD - what would settle the part no file can: one proposal
+    that arrived from a host, answered here, with the answer found on the host
+    afterwards.
+  work: converge-scb
 - id: CVG-185
   title: "inbound changes arrive without you asking for them"
   contract:
@@ -5041,19 +5321,49 @@
       **Inbound changes arrive without you asking for them.** Webhooks where the
       host offers them, polling as the honest fallback. Freshness is never made the
       steward's job, and the fallback is named rather than assumed.
-  disposition: NOT-ASSERTABLE
+  disposition: GAP
   assertion:
-    kind: none
-  justification: >
-    Webhooks where the host offers them, polling as the honest fallback. No host
-    is configured, so neither path has a subject. A grep proving the app has no
-    webhook receiver would say 'not yet', but that reading presumes the app is
-    the right place for it - the contract does not say whether the receiver
-    belongs to the app or the manager session, and choosing here would forge a
-    decision.
-    WHAT WOULD SETTLE IT: a configured host, and a change landing without the
-    steward acting - with the fallback named in plain words when webhooks are
-    unavailable, which is the half this clause is most insistent about.
+    kind: indexed
+    ref: 'conformance/experience-collaboration/run.py (rules 6a, 6b)'
+  proves: >
+    Both halves, both red, and the second derived from the first.
+    BROKEN - rule 6a: nothing brings an inbound change in on its own. The rule
+    accepts ANY of three mechanisms - a webhook route, a live stream, or a timer
+    that reloads the project's own data - and finds none. Freshness is the
+    steward's job in this body; they find out by reloading.
+    BROKEN - rule 6b: nothing on the surface says in plain words how this body
+    stays fresh. The clause is most insistent about exactly this - "the fallback
+    is named rather than assumed" - and a steward reading the app cannot tell
+    whether what they are looking at is current. 6b is a DERIVED failure, not a
+    second one: where 6a found no mechanism, there is nothing to name.
+    THE OLD JUSTIFICATION'S OBJECTION IS ANSWERED, NOT OVERRULED. It refused to
+    read a missing webhook receiver as a gap, because "the contract does not say
+    whether the receiver belongs to the app or the manager session, and choosing
+    here would forge a decision." Rule 6a does not choose: it accepts three
+    different mechanisms and asks only that SOMETHING brings the change in
+    without the steward acting. Nothing does, whoever owns it. And rule 6b needs
+    no such choice at all - the clause requires the fallback be NAMED on the
+    surface, and nothing names anything.
+    WHAT IT DOES NOT PROVE: that a mechanism, once present, actually delivers. A
+    configured host and a change landing without the steward acting is what would
+    settle that.
+  notes: >
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW COLLABORATION KIT.
+    NOT-ASSERTABLE -> GAP, kind: none -> kind: indexed. This is the row whose old
+    reasoning was the most careful and still landed wrong: it declined to forge a
+    decision the contract had not made, which was right, and then treated the
+    whole clause as unassertable, which did not follow. converge-f1l's rules 6a
+    and 6b assert what the clause says without picking an owner for the receiver.
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server):
+      [FAIL] 6a  nothing brings an inbound change in on its own: the app declares
+                 no webhook route, opens no live stream, and runs no timer that
+                 reloads the project's own data. Freshness is the steward's job
+                 in this body - they find out by reloading.
+      [FAIL] 6b  nothing on the surface says how this body stays fresh - not
+                 "checked every N minutes", not "webhook", not "polling".
+    6a is one piece of work with CVG-183's 4a and CVG-184's 5b - the same missing
+    half, a path to the repository host. converge-scb carries all three.
+  work: converge-scb
 - id: CVG-186
   title: "the manager session is not in the hot path"
   contract:
@@ -5192,18 +5502,43 @@
       **One steward per manager session.** Whose word counts is settled when the
       session is registered, not inferred from whoever is looking. Everyone else is
       a teammate, whose proposals get the same reading and none of the authority.
-  disposition: NOT-ASSERTABLE
+  disposition: GAP
   assertion:
-    kind: none
-  justification: >
-    'Whose word counts is settled when the session is registered, not inferred
-    from whoever is looking.' The app's manager configuration carries no steward
-    field, and its sign-in proves a MACHINE ACCOUNT rather than a registered
-    steward. Whether the machine account standing in for a steward satisfies
-    this clause is a reading, and one person cannot produce the case that would
-    test it.
-    WHAT WOULD SETTLE IT: a second person signing in to the same manager
-    session, and the ratification record showing whose word was written.
+    kind: indexed
+    ref: 'conformance/experience-collaboration/run.py (rules 8a, 8b)'
+  proves: >
+    THE ROW IS SPLIT ALONG THE CLAUSE'S TWO HALVES, and the half that needed no
+    second person turns out to be decided rather than a reading.
+    ASSERTED, AND RED - rule 8a: the registration must name a steward. It does
+    not. The clause's own words are "settled when the session is registered, NOT
+    inferred from whoever is looking", and this body infers - the rule reports
+    who it inferred, which on this target was 'bkrabach'. That the registration
+    carries no steward field is a fact, not a judgment about whether a machine
+    account is good enough.
+    STILL CAN'T CHECK - rule 8b: whether a second person's word ever reached the
+    ratification record. That needs two people answering on one manager session.
+    Rule 8b is a declared SKIP with that reason, pinned by
+    `test_skip_set_is_pinned`, and it points at 8a as the half that IS checked.
+    WHAT WOULD SETTLE THE SKIPPED HALF: a second person signing in to the same
+    manager session, and the ratification record showing whose word was written.
+  notes: >
+    RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW COLLABORATION KIT.
+    NOT-ASSERTABLE -> GAP, kind: none -> kind: indexed. The old justification
+    named the right fact - "The app's manager configuration carries no steward
+    field" - and then declined to draw a conclusion from it, on the ground that
+    whether a machine account satisfies the clause is a reading. converge-f1l's
+    rule 8a does not need that reading: the clause forbids INFERRING whose word
+    counts, and a body with no steward field infers, whatever the account is.
+    RAN 2026-09-04 against the app at 127.0.0.1:8795 (this lane's own server):
+      [FAIL] 8a  no manager session names a steward, so whose word counts is
+                 inferred from whoever is looking (this target answers as
+                 'bkrabach'). The clause asks for it to be settled when the
+                 session is registered.
+      [SKIP] 8b  whether a second person's word ever reached the ratification
+                 record needs two people answering on one manager session.
+    8a is the small, separable one of converge-scb's four failures - a field on
+    the manager registration, not a path to a host.
+  work: converge-scb
 - id: CVG-188
   title: "a ratification is a change to the repository, made the ordinary way"
   contract:
