@@ -93,11 +93,19 @@
 #      shells out to them.
 #      CORRECTED 2026-09-04 (converge-0gb): this paragraph used to say "This repo
 #      has no ledger/checks/ yet", which was already untrue — verify.py itself
-#      lives there and always has. Two probe helpers now live beside it,
-#      `turnkey_step.py` and `surface_clause9.py`, written where a one-line shell
-#      command could not carry the reasoning about what the probe does and does
-#      not prove. A comment that has quietly stopped being true is the same
-#      species of drift as a row that has.
+#      lives there and always has. Four probe helpers now live beside it —
+#      `turnkey_step.py`, `surface_clause9.py`, `return_log_ratio.py` and
+#      `clause_named_contracts.py` — written where a one-line shell command could
+#      not carry the reasoning about what the probe does and does not prove. A
+#      comment that has quietly stopped being true is the same species of drift
+#      as a row that has. (It stopped being true again on 2026-09-04, when
+#      converge-4xg and converge-oye added the last two; corrected in the same
+#      change that added them, which is the only way this line stays honest.)
+#      TWO OF THE FOUR IMPORT SOMEBODY ELSE'S CHECK RATHER THAN RESTATING IT.
+#      `surface_clause9.py` imports the shipped surface kit; `return_log_ratio.py`
+#      imports the turnkey harness's own `parse_return_log`. A ledger that writes
+#      its own second definition of a clause's terms ends up enforcing a law the
+#      repository does not hold, and the two drift apart with nothing to catch it.
 #      THIS WAIVES MORE THAN THE REF FORMAT, and the waiver is the point:
 #        - §1's "In-process only: no LLM, no network, no subprocess" — every
 #          probe here is a subprocess, several are `uv run` (seconds, not the
@@ -1320,7 +1328,7 @@
   work: converge-2ro
 
 - id: CVG-020
-  title: a brief on every return — and the log it names does not exist
+  title: a brief on every return — returns and briefs are countable now, and there are none of either
   contract:
     file: contracts/operation.v1.md
     clause: "Core 10"
@@ -1331,14 +1339,19 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 10 - " modes/converge-manager.md && [ -f docs/workflow/OWNER-RETURN-LOG.md ]; then echo "MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=$(grep -c "^## " docs/workflow/OWNER-RETURN-LOG.md)"; else echo STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'python3 ledger/checks/return_log_ratio.py'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=9"
+      stdout_contains: "CLAUSE-10-STAMPED-RETURNS=0 BRIEFED-RETURNS=0 UNBRIEFED=0"
   proves: >
-    That the mode encodes this clause and the log it names now exists with nine
-    briefs in it. NOT that a brief exists for EVERY return, which is what the
-    clause requires and what nothing counts.
+    That the manager mode still encodes clause 10 AND its stamp instruction, and
+    that of the returns stamped in the log, this many carry all five parts. It
+    does NOT prove a brief on every return, on two counts. First, the count is
+    0 of 0: no return has been stamped yet, and a ratio with no returns in it is
+    not evidence that anything is kept. Second, a return the manager session
+    never recorded at all leaves no trace on either side of the ratio — nothing
+    but the returning session keeps that record, so the probe cannot see a
+    return that was never written down.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=4. DRIFT BACK TOWARD
     SPEC, RECORDED: at seed this row's probe asserted the log's ABSENCE, and it was
@@ -1375,7 +1388,48 @@
     (Fourteen OTHER rows still cite converge-qtp. Re-pointing them without running
     their probes would be the blind bump this file forbids, so they are filed for
     a live re-derivation as converge-0gb rather than edited here.)
-  work: converge-823
+    RE-DERIVED 2026-09-04 (converge-4xg) — THE DENOMINATOR EXISTS NOW, AND IT IS
+    ZERO. Every note above says the same thing: nothing records that a return
+    HAPPENED, so a count of briefs has no denominator. converge-823 built the
+    missing half — `modes/converge-manager.md` clause 10 now makes the manager
+    session stamp the return in the entry heading the moment the steward's message
+    arrives, and write the five parts under it at the end of the turn. Written at
+    two different moments, the two are countable against each other for the first
+    time.
+    THE PROBE NOW COUNTS BOTH SIDES, and it does not re-implement the counting:
+    `ledger/checks/return_log_ratio.py` imports `parse_return_log` from
+    `evaluations/turnkey/run.py`, the harness the operation contract itself names,
+    whose step (i) counts these same two numbers. A second definition of "a
+    complete brief" written into the ledger would be a second law for one clause,
+    and the two would drift apart silently — the same reasoning `surface_clause9.py`
+    records for the surface kit.
+    RAN 2026-09-04 → CLAUSE-10-STAMPED-RETURNS=0 BRIEFED-RETURNS=0 UNBRIEFED=0.
+    The helper was made to earn its keep before being pinned: run against seven
+    fixtures beside converge-4xg's own specified awk reference, the two agreed on
+    every one. Real log today 0/0. One stamped return with all five parts: 1/1.
+    One stamped return with *time away* folded into *finished* — the defect a real
+    manager session committed, recorded in the 2026-09-04 brief: 1 return, 0
+    briefed, 1 unbriefed. Two stamped returns, one never briefed: 2/1. An
+    unprompted brief (date-only heading, sent while the steward is away): not
+    counted as a return, because the clause asks that every return has a brief and
+    not the reverse. Mode with the clause 10 heading removed, and mode with the
+    stamp instruction removed, log perfect in both: STATE-CHANGED-REREAD-THIS-ROW,
+    each naming which sentence went missing. Control, mode intact, same log: 1/1.
+    STILL GAP, AND THE REASON IS NOW ONE STEP SHORTER. The mechanism is encoded and
+    the comparison is computable; what is missing is a return. Nine briefs sit above
+    the first stamp and have no recorded return beside them, so nothing can say
+    whether one was ever missed — the log's own header says exactly that, and the
+    count begins at the first stamped entry. The row goes green when
+    STAMPED-RETURNS equals BRIEFED-RETURNS and STAMPED-RETURNS is above zero; it
+    goes red the moment a stamped return goes unbriefed. Either movement fails the
+    `expect` above, which is the count being the pin and not a number to bump.
+    THE `work` REF MOVED converge-823 → converge-8er. converge-823 is RESOLVED —
+    it landed the stamp and this replacement check — and this ledger's own rule,
+    enforced by `ledger/checks/verify.py`, is that a red row may not cite a closed
+    item as the thing that will fix it. converge-8er carries the two honest ways to
+    close this one: a manager session runs a real return, or the steward ratifies in
+    writing that the clause is kept by the mode's standing instruction plus the log.
+  work: converge-8er
 
 - id: CVG-021
   title: four calls reach the steward
@@ -3628,7 +3682,7 @@
     wrong answer this clause names.
   work: converge-f1l
 - id: CVG-114
-  title: "this umbrella governs a family — and it names two contracts that do not exist"
+  title: "this umbrella governs a family — and two of the contracts it names do not exist"
   contract:
     file: contracts/experience.v1.md
     clause: "Core 15"
@@ -3637,17 +3691,21 @@
       `experience-direction.v1` · `experience-operation.v1` ·
       `experience-console.v1` · `experience-collaboration.v1`; the idioms of one
       body by one `platform-*.v1` — `platform-browser.v1` and
+      `platform-web-app.v1` first, then one per native body.
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'for f in contracts/platform-browser.v1.md contracts/platform-web-app.v1.md; do [ -f $f ] && echo PRESENT || echo ABSENT; done | paste -sd, - | sed ''s/^/CLAUSE-15-NAMED-PLATFORM-CONTRACTS: /'''
+    ref: 'python3 ledger/checks/clause_named_contracts.py contracts/experience.v1.md 15'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-15-NAMED-PLATFORM-CONTRACTS: ABSENT,ABSENT"
+      stdout_contains: "CLAUSE-15-NAMED-CONTRACTS NAMED=6 PRESENT=4 MISSING=platform-browser.v1,platform-web-app.v1"
   proves: >
-    That both platform contracts this clause names by name are absent from
-    `contracts/`. It proves the umbrella and the family disagree about the
-    family's membership; it does not decide which of them is wrong.
+    That of the six contracts clause 15 names by name, four exist in
+    `contracts/` and two do not — read out of the clause itself, not out of this
+    row. It proves the umbrella and the folder disagree about the family's
+    membership; it does not decide which of them is wrong. The clause's own
+    `platform-*.v1` is a glob describing the family's shape, not a name, and is
+    not counted.
   notes: >
     Measured 2026-09-03 (converge-pq2) against the app running at
     127.0.0.1:8788. What exists instead is one `platform-web.v1`, covering the
@@ -3655,6 +3713,38 @@
     install seam. Both readings are defensible and both were ratified in the
     same pass, which is why this is filed rather than fixed: a ratified clause
     changes by proposal. converge-d3n carries the decision.
+    RE-DERIVED 2026-09-04 (converge-oye) — THE PROBE NOW READS THE CLAUSE INSTEAD
+    OF NAMING THE FILES. The first probe hard-coded `platform-browser.v1` and
+    `platform-web-app.v1` and asserted they were ABSENT. That is true today and
+    would stay true forever — including after an amendment that stops mentioning
+    either name, at which point this row would go on passing while asserting the
+    absence of two names no document holds. A row that passes for a reason nobody
+    holds is a stale check, not a kept clause. `ledger/checks/clause_named_contracts.py`
+    extracts clause 15 from the contract, collects every backticked `<name>.vN` in
+    it, and checks each against `contracts/`, so the row moves when the clause
+    moves, in either direction.
+    RAN 2026-09-04 → CLAUSE-15-NAMED-CONTRACTS NAMED=6 PRESENT=4
+    MISSING=platform-browser.v1,platform-web-app.v1. Four controls beside it, each
+    run: the candidate's wording in a temp copy (clause names `platform-web.v1`)
+    → NAMED=5 PRESENT=5 MISSING=none, so ratification flips this row green rather
+    than leaving it passing on a dead assertion; a clause naming a contract nobody
+    wrote (`platform-hologram.v1`) → caught, PRESENT=4 with the invented name in
+    MISSING; clause 14, which names no contract → NAMED=0, so the extraction is
+    reading the clause it was asked for and not the whole file; clause 99 →
+    CLAUSE-99-NOT-FOUND-REREAD-THIS-ROW, so a renumbered contract reaches a person
+    rather than passing as an empty green.
+    THE STEWARD HAS NOT ANSWERED YET, AND THIS ROW DOES NOT PRETEND OTHERWISE.
+    `contracts/experience.v1-candidate.md` was filed on 2026-09-04 (commit ba83e65)
+    proposing that clause 15 name `platform-web.v1`; there is no ratification
+    record for it, converge-d3n is BLOCKED on that call, and clause 15 on disk and
+    on main still reads exactly as quoted above. So the quote is verbatim from the
+    text the steward has actually ratified — the umbrella as content-ratified
+    2026-09-03 — and the SYNC row's hash for `contracts/experience.v1.md` matches
+    the file on disk unchanged (nothing in `contracts/` was touched by this lane).
+    Whichever word lands, this row now tells the truth without being edited again:
+    *ratified* flips the count to 5/5 and fails the `expect` above, which is the
+    re-review the SYNC row exists to force; *declined* leaves the count at 6/4 and
+    the row red for the reason it has always been red.
   work: converge-d3n
 
 # ────────────────────────────────────────────────────────────────────────────
