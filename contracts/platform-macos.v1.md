@@ -1,4 +1,4 @@
-# Platform Contract — macOS — v1 (DRAFT)
+# Platform Contract — macOS — v1 (DRAFT — content owner-ratified 2026-09-03)
 
 **Who builds against this:** whoever builds the macOS body of Amplifier
 Converge, and the intent steward who keeps it open on a desk beside the rest of

@@ -1,4 +1,4 @@
-# Composition Contract — v1 (DRAFT)
+# Composition Contract — v1 (DRAFT — content owner-ratified 2026-09-02)
 
 **Who builds against this:** everyone who installs Converge, by either path, and
 every automated step that expects certain helpers to be present. The most

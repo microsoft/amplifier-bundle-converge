@@ -1,4 +1,4 @@
-# Amplifier Converge — Vision (DRAFT)
+# Amplifier Converge — Vision (DRAFT — content owner-ratified 2026-09-02)
 
 *Written for amplified information workers. Terms of art are defined where they first appear; the full rules live in `docs/PROTOCOL.md`.*
 

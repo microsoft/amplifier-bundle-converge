@@ -1,4 +1,4 @@
-# Platform Contract — Web — v1 (DRAFT)
+# Platform Contract — Web — v1 (DRAFT — content owner-ratified 2026-09-03)
 
 **Who builds against this:** whoever builds the browser body of Amplifier
 Converge — the first body and, for most people, the only one — and the intent
