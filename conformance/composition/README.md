@@ -86,6 +86,15 @@ carrying the policy. Two properties keep it honest:
   the promise is broken *and* says whose setting broke it. This is the same
   discipline rule 6b's control enforces, applied to attribution.
 
+One consequence to expect rather than be surprised by: **6c's verdict is a fact
+about the machine, not about the repository.** The same commit can be PASS on a
+clean laptop, FAIL on one with a bad release installed, and SKIP on a CI runner
+that installs no app bundles at all. That is the promise being asserted — "after
+installing Converge beside other work" is a claim about hosts — and it is why
+the row always reports the app-bundle count, where the list came from, and which
+entry carries the policy. Read a red 6c as "on this machine, right now", and go
+read the entry it names.
+
 Because no fixture is installed on anybody's host, 6c declines on both fixtures
 by design — so it is proven through a seam instead of a fixture.
 `AMPLIFIER_COMPOSITION_KIT_APP_BUNDLES` (whitespace-separated URIs) replaces the
