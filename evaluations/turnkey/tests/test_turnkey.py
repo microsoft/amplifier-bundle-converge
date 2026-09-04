@@ -1410,3 +1410,179 @@ def test_a_call_word_elsewhere_in_the_entry_does_not_classify_the_park():
                   "Live: renumber-followup. Parked: protocol-terms.")[0]
     assert park["call"] is None
     assert park["continued"] == 1
+
+
+# --- clause 9, against a real wave with a real stalled lane ----------------
+#
+# Everything above about clause 9 is a pure function over a synthetic list. That
+# proves the judgement and nothing about the DETECTION: whether a stall that
+# really happened is found at all, from git, tmux and the launcher's manifest,
+# and whether the reading tells a declared one from a hidden one on evidence
+# somebody could actually write.
+#
+# It could not, and that is what these found. The two fixtures below differ by
+# ONE plan-record entry and both used to read `Core 9 PASS`, because the entry
+# that LAUNCHED the lane carried its name and the reading asked for nothing
+# more. A reading that cannot go red is the fabricated pass this harness exists
+# to refuse, so these run the whole step against both.
+
+
+def _load_stall_fixture():
+    spec = importlib.util.spec_from_file_location(
+        "turnkey_stall_wave", FIXTURES / "stall_wave.py")
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules["turnkey_stall_wave"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+stall_wave = _load_stall_fixture()
+
+
+def _stall_context(built):
+    env = _RealGitEnv()
+    return run.Context(env=env, host=env, mode=run.OBSERVED,
+                       workspace=built["root"], repo=built["repo"],
+                       project="lumen", integration_branch="main", answer_key={})
+
+
+def _clause_9(built):
+    result = run.step_clauses(_stall_context(built))
+    reading = next(r for r in result.evidence["clause_readings"]
+                   if r["row"] == "CVG-019")
+    return result, reading
+
+
+@pytest.fixture
+def declared_wave(tmp_path):
+    return stall_wave.seed(tmp_path / "declared", declared=True)
+
+
+@pytest.fixture
+def hidden_wave(tmp_path):
+    return stall_wave.seed(tmp_path / "hidden", declared=False)
+
+
+def test_the_fixture_really_leaves_a_branch_that_never_moved(declared_wave):
+    """The fixture's central fact, checked in git rather than described.
+
+    A fixture that quietly healed - a stalled lane that acquired a commit -
+    would let this whole section report a discrimination nobody performed.
+    """
+    assert declared_wave["stalled_commits"] == 0
+    assert declared_wave["moved_commits"] == 1
+    assert Path(declared_wave["stalled_worktree"], ".git").exists()
+    worktrees = run.read_worktrees(_RealGitEnv(), declared_wave["repo"])
+    branches = {w.get("branch") for w in worktrees}
+    assert {"lane/lumen-index", "lane/lumen-units"} <= branches
+
+
+def test_the_stalled_lanes_terminal_session_is_really_gone(declared_wave):
+    """A stall is a lane that STOPPED, so its session must be absent."""
+    assert not set(stall_wave.SESSIONS.values()) & stall_wave.live_sessions()
+
+
+def test_a_real_stall_the_plan_record_declares_is_clause_9_kept(declared_wave):
+    """The observation CVG-019 had been waiting on since 2026-09-02."""
+    result, reading = _clause_9(declared_wave)
+    assert reading["verdict"] == run.PASS
+    assert reading["stalled"] == ["lumen-index"]
+    assert reading["declared"][0]["lane"] == "lumen-index"
+    assert "is stuck and is not being relaunched" in reading["declared"][0]["sentence"]
+    assert "lumen-index" in reading["why"]
+    assert "not whether the cause it gives is the real one" in reading["why"]
+    assert result.status == run.PASS
+
+
+def test_a_real_stall_nobody_declared_is_clause_9_broken(hidden_wave):
+    """The same stall, and no record says the lane stopped.
+
+    The plan record still NAMES the lane - the entry that launched it does -
+    which is exactly the mention that used to be credited as a declaration.
+    """
+    result, reading = _clause_9(hidden_wave)
+    assert reading["verdict"] == run.FAIL
+    assert reading["stalled"] == ["lumen-index"]
+    assert reading["declared"] == []
+    assert reading["mentioned_only"][0]["lane"] == "lumen-index"
+    assert "a mention and not a declaration" in reading["why"]
+    assert result.status == run.FAIL
+
+
+def test_the_lane_that_committed_is_never_counted_as_a_stall(declared_wave):
+    """The control: same wave, same absent session, one commit.
+
+    A reading that called every ended lane a stall would be red on every wave
+    that finished, which is the opposite fabrication.
+    """
+    result, _ = _clause_9(declared_wave)
+    assert [s["lane"] for s in result.evidence["stalled_lanes"]] == ["lumen-index"]
+
+
+def test_the_two_variants_differ_by_exactly_one_plan_entry(declared_wave,
+                                                           hidden_wave):
+    """One thing to see, so the difference in verdict has one cause."""
+    declared = Path(declared_wave["plan_record"]).read_text(encoding="utf-8")
+    hidden = Path(hidden_wave["plan_record"]).read_text(encoding="utf-8")
+    only_declared = [ln for ln in declared.splitlines() if ln not in hidden.splitlines()]
+    only_hidden = [ln for ln in hidden.splitlines() if ln not in declared.splitlines()]
+    assert len(only_declared) == 1 and len(only_hidden) == 1
+    assert "is stuck" in only_declared[0]
+    assert "lumen-index" not in only_hidden[0]
+    for name in ("manifest.tsv", "goals/lumen-index.md", "goals/lumen-units.md"):
+        assert (Path(declared_wave["root"], name).read_text(encoding="utf-8")
+                .replace(declared_wave["root"], "")
+                == Path(hidden_wave["root"], name).read_text(encoding="utf-8")
+                .replace(hidden_wave["root"], ""))
+
+
+def test_the_seeder_refuses_to_seed_over_existing_work(tmp_path):
+    target = tmp_path / "occupied"
+    target.mkdir()
+    (target / "someone-elses.txt").write_text("work\n", encoding="utf-8")
+    with pytest.raises(stall_wave.SeedError, match="refusing to seed over"):
+        stall_wave.seed(target)
+
+
+def test_being_named_by_the_launch_entry_is_not_a_declaration():
+    """The defect the fixture found, pinned as a unit assertion.
+
+    A refill line naming the lane whose slot it filled is the same shape, and
+    this workspace's own plan record writes one of those every cycle.
+    """
+    reading = run.assert_stalls_are_declared(
+        [{"lane": "w8-x"}],
+        [{"text": "cycle 32: refilled w8-x, w8-y. Live 7."}])
+    assert reading["verdict"] == run.FAIL
+    assert reading["mentioned_only"][0]["lane"] == "w8-x"
+
+
+def test_a_stall_declared_in_a_sentence_about_another_lane_does_not_count():
+    """Read from the whole entry, w6-y's cause would have vouched for w6-x."""
+    reading = run.assert_stalls_are_declared(
+        [{"lane": "w6-x"}],
+        [{"text": "cycle 3: refilled w6-x. w6-y is stuck at the provider prompt."}])
+    assert reading["verdict"] == run.FAIL
+
+
+@pytest.mark.parametrize("lane,text", [
+    ("w8-ledger-refs",
+     "W8 cycle 2: merged w8-clause15 (candidate; ratify card for the steward). "
+     "w8-ledger-refs relaunched: first attempt hung at the provider-setup prompt."),
+    ("w6-guard-3",
+     "cycle 20: w6-guard-3 died silently mid-work (0 commits, no markers, logs "
+     "end mid-thought at ~07:43); relaunched in place."),
+])
+def test_the_declarations_this_workspace_actually_writes_still_read(lane, text):
+    """Calibration, against entries taken from this workspace's own record.
+
+    Requiring the stop word is only worth having if it does not fabricate a red
+    on the declarations a manager session here already writes. Both of these
+    are real lines from `~/dev/hw-converge/HIGHWAY.md`, one lightly edited to
+    name its lane (the original says "both w6 lanes", which names none of them
+    -- and that reading FAILS, correctly, because a lane it does not name is a
+    lane it cannot be said to be about).
+    """
+    reading = run.assert_stalls_are_declared([{"lane": lane}], [{"text": text}])
+    assert reading["verdict"] == run.PASS

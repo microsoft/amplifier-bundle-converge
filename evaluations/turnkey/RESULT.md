@@ -838,3 +838,176 @@ continuing and no reason, a call stamped as none of the four, a check-record
 entry that arrived through a lane merge, an entry naming no command at all, and
 a typo fix three entries up that must not be credited with writing the newest
 one.
+
+## Amendment, 2026-09-04 — Core 9 finally had a stall to judge, and could not tell one from a mention
+
+Clause 9's reading was never waiting on a cleverer parser either. It was waiting
+on an **event**. Every wave on this host produced commits, so the reading ran,
+found nothing, and said so — the honest answer, and not a pass:
+
+> **Core 9 (CVG-019) SKIP:** no lane ended without commits, so no stall exists
+> for this reading to judge — the reading ran and found nothing.
+
+`evaluations/turnkey/fixtures/stall_wave.py` seeds the missing event: a wave, in
+observed mode, in which one lane really did stop with an unchanged branch and a
+second one did not. Both lanes are real worktrees on real branches with a real
+launcher manifest; neither has a live terminal session, because a stall is a
+lane that has stopped. Git, not this file, is what says so:
+
+```
+$ uv run evaluations/turnkey/fixtures/stall_wave.py /tmp/stall-shown
+stalled_lane	lumen-index
+stalled_branch	lane/lumen-index
+stalled_commits	0
+moved_lane	lumen-units
+moved_commits	1
+
+$ git -C /tmp/stall-shown/repo worktree list
+/tmp/stall-shown/repo                    cbe7d95 [main]
+/tmp/stall-shown/lanes/lumen-index/repo  cbe7d95 [lane/lumen-index]
+/tmp/stall-shown/lanes/lumen-units/repo  3f1ec59 [lane/lumen-units]
+```
+
+### The first run of it found a fabricated pass
+
+Two variants, differing by **one plan-record entry** — one where the plan record
+declares the stall, one where nothing about it is written down at all. **Both
+came back PASS.**
+
+The reading asked only whether some record *named* the stalled lane. In the
+hidden variant the entry that **launched** the lane, three lines up, named it.
+So does every refill line this workspace's own plan record writes — cycle 32's
+entry names `stall-fixture` for exactly that reason. A reading whose two
+outcomes are indistinguishable is not a reading, and this is the second time
+this harness has caught itself producing a green line nobody could back up.
+
+The fix is `STALL_DECLARED` in `run.py`: a record declares a stall only if it
+says the lane **stopped**, **in the same sentence as the lane's name** — so an
+entry naming lane A while reporting lane B stuck can never vouch for A.
+
+### The reading now, both ways, on a real stalled lane
+
+Run as `uv run evaluations/turnkey/run.py --env local --steps j --repo
+<root>/repo --workspace <root>`, against the two variants:
+
+> **Core 9 (CVG-019) PASS:** 1 lane(s) stopped with an unchanged branch and each
+> is named in a record that says it stopped — lumen-index: `'cycle 2:
+> lumen-index is stuck and is not being relaunched.'`; this reads that the stop
+> was written down, not whether the cause it gives is the real one.
+>
+> — step (j) itself PASS, run exit 0.
+
+> **Core 9 (CVG-019) FAIL:** 1 lane(s) stopped with an unchanged branch and were
+> not declared stuck: lumen-index — named, but no record says the lane stopped;
+> the newest one naming lumen-index reads `"cycle 1: launched lumen-units and
+> lumen-index at width 2, because the fixture's two gaps are in files that do
+> not touch and neither lane's paths collide with th"`, which is a mention and
+> not a declaration.
+>
+> — step (j) itself FAIL, run exit 1.
+
+Both readings name the lane, and both name the record that does or does not say
+what stopped it. The control held: `lumen-units` ended with its session gone
+too, carries one commit, and is not counted as a stall in either variant —
+`stalled_lanes` is `[lumen-index]` both times. A reading that called every ended
+lane a stall would go red on every wave that finished, which is the opposite
+fabrication and just as false.
+
+### What this does NOT prove
+
+- **Not** that the cause a record gives is the real one, or an adequate one.
+  The reading shows the words it found; a reader judges them.
+- **Not** that the lane had not already been retried before it was declared.
+  Clause 9's "across iterations" needs a count of attempts, and nothing on disk
+  here records one. A record that declares the stop and then relaunches in place
+  reads as declared, which is the honest limit of an artifact left on disk.
+- **Not** that a manager session on this host would declare a stall. This is a
+  fixture, not this host's own wave — the same standing this file already gives
+  the clause 7 and 8 attribution. This host's habit is a separate observation,
+  and it lands the first time a real lane here ends with an unchanged branch.
+
+### Calibration: the stricter rule does not fabricate a red
+
+Requiring the stop word is only worth having if it leaves the declarations a
+manager session here already writes standing. Both real ones in
+`~/dev/hw-converge/HIGHWAY.md` still read as declarations, and
+`test_the_declarations_this_workspace_actually_writes_still_read` holds them
+there:
+
+```
+w8-ledger-refs relaunched: first attempt hung at the provider-setup prompt.
+w6-guard-3 died silently mid-work (0 commits, no markers, logs end mid-thought).
+```
+
+The second is lightly edited: the original says "both w6 lanes died", which
+names no lane at all, and under this reading that is a FAIL — correctly, because
+a lane a record does not name is a lane it cannot be said to be about.
+
+### For the reconciler: CVG-019, and why this file carries no new step block
+
+`ledger/` is not this lane's to edit, and CVG-019's ref currently pins
+`"Core 9 (CVG-019) SKIP"` in this file's newest step block. That pin is now the
+wrong one: the reading has an event and answers in both directions.
+
+**The step block above was deliberately NOT re-pasted**, for the reason the
+previous amendment records — `ledger/checks/turnkey_step.py` keys a row on the
+newest `[STATUS] (letter)` line in this file, so pasting one would flip CVG-019
+to `CHANGED-REREAD-THIS-ROW`. CVG-019 still routes through that file-reading
+helper, not through `ledger/checks/turnkey_clause.py`, which landed on `main`
+the same day for the four rows that had moved. Measured on this tree, and
+unchanged by this lane:
+
+```
+$ python3 ledger/checks/turnkey_step.py j "Core 9 (CVG-019) SKIP"
+TURNKEY-STEP-J-PASS-ASSERTS-THIS
+$ python3 ledger/checks/turnkey_step.py f "no work item was held by a process outside a lane worktree"
+TURNKEY-STEP-F-PASS-ASSERTS-THIS
+```
+
+**`verify.py` does not exit 0 on this tree, and it did not before this lane
+either.** Saying otherwise would be exactly the unchecked green this file
+exists to refuse, so here is the measurement — the whole report, taken with
+this lane's changes stashed and again with them applied:
+
+```
+$ git stash -u && uv run --with pyyaml ledger/checks/verify.py; echo "exit=$?"
+exit=1
+$ git stash pop && uv run --with pyyaml ledger/checks/verify.py; echo "exit=$?"
+exit=1
+$ diff <report before> <report after>
+  (no differences)
+
+FAILURES (identical in both):
+  - no GAP/VIOLATION row cites a resolved work item (39 red rows read
+    against docs/work-items.json)   [35 rows named, e.g. CVG-163 -> converge-tfu]
+  - CVG-051 expect NOT met (stdout='WORK-ITEM-CHECK-NOW-RUNS-FAIL-ITEMS=12')
+```
+
+Byte-identical reports either side of this lane's diff is the whole claim: both
+failures live in `ledger/**`, both predate this work, and this lane neither
+caused nor can clear them — `ledger/` is not this lane's to edit. That is a
+residual, named here rather than discovered later.
+
+What CVG-019 should pin instead, and what the reading does not prove, is filed
+as **`converge-rp7`**, which quotes both new readings and names the three things
+a pass on this fixture does not prove. The row's disposition can move on this
+fixture only as far as the fixture goes: the reading is exercised, and this
+host's own manager sessions are still unobserved on it. This supersedes the
+*What is still waiting* row above,
+which said CVG-019 waits on "a lane that ends with an unchanged branch" — it has
+one now, on a fixture, and what it still waits on is this host's own.
+
+```
+$ uv run --with pytest --with pyyaml pytest evaluations/turnkey -q
+147 passed
+
+$ uv run evaluations/turnkey/run.py --self-check
+verdict: PASS | passed: 74 | failed: []
+```
+
+Three new self-check cases and eleven new tests. The new ones are exercised
+against evidence that must make them fail: a stall whose only record is the
+entry that launched it, a stall whose only record is the refill line that filled
+its slot, a stall word written about a different lane in the same entry, and a
+seeded wave whose stalled branch must carry zero commits or the fixture refuses
+to stand.
