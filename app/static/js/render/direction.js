@@ -10,9 +10,9 @@
 // The Reading view holds to the same rule. Editing a draft in place goes to
 // the same document-saving write the Changes view uses, and it is offered on a
 // paragraph only where that write can still land — the lock itself is read by
-// the server, never guessed here. Ask is the one control on this screen whose
-// route the app does not answer yet: it fails out loud and names the work
-// (converge-ddt) rather than looking like it did something.
+// the server, never guessed here. Ask reaches a route the app answers
+// (converge-ddt landed); when it fails, actions.js reports what refused, in
+// that refuser's own words, and asserts no cause of its own.
 import { $, qsa, state, data, escapeHtml, currentRepo, currentDoc, readBookmark } from '../state.js';
 import { hooks } from '../refresh.js';
 import { handleDecision, keepChange, saveChangeEdit, restoreChange, restoreScope, markAllRead, editDoc, reconcile, openAsk, copyText, confirmLock } from '../actions.js';

@@ -83,12 +83,12 @@ export const api = {
   presenceQueue: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/presence/queue`, payload),
   // Ask — the fifth write the umbrella names. One route for all three scopes,
   // because the scope is a fact about the request rather than a different
-  // request. What should come back is a proposal to review.
+  // request. What comes back is a proposal to review.
   //
-  // The app does not answer this route yet: `app/serve.py` and `app/writes.py`
-  // are another lane's files and the server half is filed as converge-ddt. The
-  // call is left pointing at the real route on purpose — it fails loudly and
-  // the screen says so, rather than a control that quietly does nothing.
+  // The app answers this route: converge-ddt landed in `app/serve.py` and
+  // `app/writes.py` (48cdc90). So a failure here is no longer evidence of a
+  // missing route, and `sendAsk` no longer says it is (converge-3al) — it
+  // reports whatever refused, in that refuser's own words.
   ask: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/ask`, payload),
   // Lock — stamping a document's H1 so it becomes law (§11). The gate in the
   // browser decides whether the control is live; the write itself is the
