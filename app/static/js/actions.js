@@ -119,6 +119,124 @@ export async function markAllRead() {
   }
 }
 
+// --------------------------------------------------------------------------
+// the Reading view: editing a draft in place, and meeting a collision
+// --------------------------------------------------------------------------
+//
+// The document-saving write is `changes/{id}/edit`, and it is the same write
+// whether the steward reaches it from a change card or from the document they
+// are reading. Which sentences it can carry is therefore not a choice this
+// file makes: it is the sentences the server can still find, which is why the
+// Reading view offers editing on those and nowhere else.
+//
+// The lock is not consulted here at all. `app/writes.py` reads the document's
+// own H1 and either commits or writes a proposal beside it; the browser only
+// says afterwards what the server did. A refusal that came from this file
+// would be an instruction someone could follow, not a guard.
+
+//: A refusal that means the document moved under this reading rather than
+//: that the steward wrote something wrong. Each phrase is `app/writes.py`'s
+//: or `app/serve.py`'s own wording.
+const COLLISION = /no longer in the file|uncommitted changes|not in this reading/i;
+
+function cardsNow() {
+  return (data.doc && data.doc.changes) || [];
+}
+
+export async function editDoc(changeId, text) {
+  if (!text || !text.trim()) { toast('Write the wording you want first.'); return; }
+  const card = cardsNow().find((c) => String(c.id) === String(changeId)) || null;
+  try {
+    const res = await api.editChange(state.managerId, state.repoId, state.docId, changeId, text.trim());
+    state.editingChangeId = null;
+    state.collision = null;
+    await afterChange(res && res.said ? res.said : 'Saved to the document.');
+  } catch (err) {
+    if (!COLLISION.test(err.message || '')) {
+      toast(`Could not write that edit: ${err.message}`);
+      return;
+    }
+    // Someone else's write landed between this reading and this save. Nothing
+    // has been written, so the steward is shown both wordings and chooses.
+    state.collision = { section: card ? card.section : '', mine: text.trim(), theirs: '', why: err.message };
+    await hooks.reloadDoc();
+    const fresh = cardsNow().find((c) => String(c.section) === String(state.collision.section));
+    state.collision.theirs = fresh ? String(fresh.now || fresh.before || '') : '';
+    state.editingChangeId = fresh ? fresh.id : null;
+    hooks.renderDirection();
+    toast('That sentence moved while you were writing. Nothing was written.');
+  }
+}
+
+export async function reconcile(choice) {
+  const clash = state.collision;
+  if (!clash) return;
+  if (choice === 'review-both') {
+    state.collision = null;
+    state.editingChangeId = null;
+    state.docMode = 'changes';
+    hooks.renderDirection();
+    toast('Nothing was written. Both wordings are side by side in Changes.');
+    return;
+  }
+  const card = cardsNow().find((c) => String(c.section) === String(clash.section)) || null;
+  if (!card) {
+    toast('That sentence is gone from this reading, so there is nothing left to combine. Review both instead.');
+    return;
+  }
+  const theirs = String(card.now || card.before || '').trim();
+  const wanted = choice === 'use-combined' && theirs ? `${theirs} ${clash.mine}` : clash.mine;
+  state.collision = null;
+  await editDoc(card.id, wanted);
+}
+
+// --------------------------------------------------------------------------
+// Ask: a scoped request whose output is a proposal
+// --------------------------------------------------------------------------
+
+const ASK_SCOPES = [
+  ['paragraph', 'Ask about this paragraph'],
+  ['document', 'Ask about this document'],
+  ['all', 'Ask across every document in this repository'],
+];
+
+export function openAsk(scope, section) {
+  const wanted = ASK_SCOPES.some(([value]) => value === scope) ? scope : 'document';
+  const doc = data.doc;
+  const about = section || (doc ? doc.title : '');
+  openDialog('Ask for a proposal', 'Ask', `
+      <div class="dialog-field"><label for="askScope">What this ask covers</label>
+        <select id="askScope">${ASK_SCOPES.map(([value, label]) =>
+    `<option value="${value}" ${value === wanted ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}</select></div>
+      <div class="dialog-field"><label for="askWhat">What you want</label><textarea id="askWhat" placeholder="Say plainly what should be different…"></textarea></div>
+      ${section ? `<div class="dialog-field"><label for="askSection">The paragraph this is about</label><input id="askSection" value="${escapeHtml(section)}" readonly /></div>` : ''}
+      <p class="muted">What comes back is a proposal to review — never a silent edit, and never a chat. Nothing in any document changes until you answer it.</p>`, [
+    { label: 'Cancel', kind: 'outline', action: closeDialog },
+    {
+      label: 'Ask',
+      kind: 'primary',
+      action: () => sendAsk($('askScope')?.value || wanted, $('askWhat')?.value.trim() || '', about),
+    },
+  ]);
+}
+
+export async function sendAsk(scope, text, section) {
+  if (!text) { toast('Say what you want first.'); return; }
+  closeDialog();
+  try {
+    const res = await api.ask(state.managerId, {
+      scope, text, section: section || '', repoId: state.repoId, docId: state.docId,
+    });
+    toast(res && res.proposal ? `Proposal ${res.proposal} is waiting in Review.` : 'Your ask came back as a proposal, waiting in Review.');
+    await hooks.reloadDoc();
+  } catch (err) {
+    // Said out loud rather than swallowed: this app answers no route that
+    // makes a proposal, so nothing was asked and nothing was recorded. The
+    // server half is converge-ddt.
+    toast(`Nothing was asked — this app answers no proposal route yet (${err.message}). Filed as converge-ddt.`);
+  }
+}
+
 function readImage(input) {
   const file = input && input.files && input.files[0];
   if (!file) return Promise.resolve(null);
