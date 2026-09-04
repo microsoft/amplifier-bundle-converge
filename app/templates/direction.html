@@ -63,9 +63,17 @@
         </div>
       </div>
 
+      <!-- #docSyncedAt is platform-web.v1 §10's mark, beside the thing it is
+           about. The offline banner in the corner already lists one chip per
+           stored payload, but a steward reading a document offline is looking
+           at the document, not at the corner — and on a phone that is a
+           different part of the screen entirely (converge-baz). It is drawn
+           from the moment `app/static/sw.js` stored THIS document's payload,
+           carried out of the response by api.js, so it says nothing at all
+           when the document came from the server just now. -->
       <div class="document-title-row">
         <div>
-          <div class="title-meta"><span id="docStateBadge" class="state-badge kept">Kept</span><span id="docUpdated"></span></div>
+          <div class="title-meta"><span id="docStateBadge" class="state-badge kept">Kept</span><span id="docUpdated"></span><span id="docSyncedAt" class="doc-synced" hidden></span></div>
           <h1 id="docTitle">&nbsp;</h1>
         </div>
         <button id="bookmarkButton" class="round-button" type="button" aria-pressed="false" title="Bookmark">☆</button>

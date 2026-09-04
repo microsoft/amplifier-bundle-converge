@@ -26,7 +26,27 @@ async function request(url, options = {}) {
     refusal.said = said;
     throw refusal;
   }
-  return res.json();
+  return marked(await res.json(), res);
+}
+
+// platform-web.v1 §10: what is shown while the network is down is "marked with
+// the moment it came from". `app/static/sw.js` already puts that moment on
+// every stored payload (`X-Converge-Synced-At`) and re-serves it with
+// `X-Converge-Offline: 1`; both headers are readable here because the response
+// is same-origin. Reading them off the very response a screen was drawn from is
+// what lets a document carry its own mark beside its own title, rather than the
+// steward having to look at the banner in the corner (converge-baz).
+//
+// Nothing is attached to a payload that came from the server just now, so a
+// screen on a live network is unchanged.
+const FROM_STORE = 'X-Converge-Offline';
+const SYNCED_AT = 'X-Converge-Synced-At';
+
+function marked(payload, res) {
+  if (!res.headers.get(FROM_STORE)) return payload;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
+  payload.storedCopy = { syncedAt: res.headers.get(SYNCED_AT) || '' };
+  return payload;
 }
 
 const post = (url, payload) => request(url, { method: 'POST', body: JSON.stringify(payload) });
@@ -63,12 +83,12 @@ export const api = {
   presenceQueue: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/presence/queue`, payload),
   // Ask — the fifth write the umbrella names. One route for all three scopes,
   // because the scope is a fact about the request rather than a different
-  // request. What should come back is a proposal to review.
+  // request. What comes back is a proposal to review.
   //
-  // The app does not answer this route yet: `app/serve.py` and `app/writes.py`
-  // are another lane's files and the server half is filed as converge-ddt. The
-  // call is left pointing at the real route on purpose — it fails loudly and
-  // the screen says so, rather than a control that quietly does nothing.
+  // The app answers this route: converge-ddt landed in `app/serve.py` and
+  // `app/writes.py` (48cdc90). So a failure here is no longer evidence of a
+  // missing route, and `sendAsk` no longer says it is (converge-3al) — it
+  // reports whatever refused, in that refuser's own words.
   ask: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/ask`, payload),
   // Lock — stamping a document's H1 so it becomes law (§11). The gate in the
   // browser decides whether the control is live; the write itself is the

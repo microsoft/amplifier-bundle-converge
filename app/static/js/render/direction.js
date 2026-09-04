@@ -10,9 +10,9 @@
 // The Reading view holds to the same rule. Editing a draft in place goes to
 // the same document-saving write the Changes view uses, and it is offered on a
 // paragraph only where that write can still land — the lock itself is read by
-// the server, never guessed here. Ask is the one control on this screen whose
-// route the app does not answer yet: it fails out loud and names the work
-// (converge-ddt) rather than looking like it did something.
+// the server, never guessed here. Ask reaches a route the app answers
+// (converge-ddt landed); when it fails, actions.js reports what refused, in
+// that refuser's own words, and asserts no cause of its own.
 import { $, qsa, state, data, escapeHtml, currentRepo, currentDoc, readBookmark } from '../state.js';
 import { hooks } from '../refresh.js';
 import { handleDecision, keepChange, saveChangeEdit, restoreChange, restoreScope, markAllRead, editDoc, reconcile, openAsk, copyText, confirmLock } from '../actions.js';
@@ -150,6 +150,49 @@ function toggleObjective() {
   const block = $('objectiveText').closest('.objective-block');
   block.classList.toggle('objective-open');
   syncObjective();
+}
+
+// --------------------------------------------------------------------------
+// platform-web.v1 §10 — this document's own sync moment, on this document
+// --------------------------------------------------------------------------
+//
+// §10 asks that what is shown while the network is down is "marked with the
+// moment it came from". The offline banner says that for the device as a whole,
+// in the corner of the screen; this says it for the document the steward is
+// actually reading, beside its own title, at every width (converge-baz).
+//
+// The moment is the one `app/static/sw.js` stored with THIS document's payload,
+// carried out of that response by api.js as `doc.storedCopy`. A document read
+// from the server just now carries no mark at all, because there is nothing
+// stale to say about it.
+//
+// The words are formatted exactly as offline.js formats the banner's: two
+// surfaces naming one payload must name one time. They are not shared through
+// an import because offline.js is a plain script that has to be running before
+// any module loads, and so exports nothing.
+function syncedWord(iso) {
+  if (!iso) return 'an unrecorded moment';
+  const at = new Date(iso);
+  if (isNaN(at.getTime())) return 'an unrecorded moment';
+  const clock = at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const sameDay = at.toDateString() === new Date().toDateString();
+  return sameDay ? clock : `${at.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${clock}`;
+}
+
+export function renderStoredMark(doc) {
+  const mark = $('docSyncedAt');
+  if (!mark) return;
+  const stored = doc && doc.storedCopy;
+  if (!stored) {
+    mark.hidden = true;
+    mark.textContent = '';
+    mark.removeAttribute('title');
+    return;
+  }
+  const when = syncedWord(stored.syncedAt);
+  mark.textContent = `Stored copy · as of ${when}`;
+  mark.title = `This document was not read from the server just now. What is on screen is the copy stored on this device, as of ${when}.`;
+  mark.hidden = false;
 }
 
 // --------------------------------------------------------------------------
@@ -588,6 +631,7 @@ export function renderDirection() {
   $('docPath').textContent = doc ? doc.path : (repo && navDoc ? `${repo.name} / ${navDoc.title}` : '—');
   $('docTitle').textContent = doc ? doc.title : (navDoc ? navDoc.fullTitle : '');
   $('docUpdated').textContent = doc ? doc.updated : '';
+  renderStoredMark(doc);
   const docState = doc ? doc.state : (navDoc ? navDoc.state : 'draft');
   $('docStateBadge').textContent = STATE_LABEL[docState] || 'Draft';
   $('docStateBadge').className = `state-badge ${docState}`;
