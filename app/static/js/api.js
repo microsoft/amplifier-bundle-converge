@@ -26,7 +26,27 @@ async function request(url, options = {}) {
     refusal.said = said;
     throw refusal;
   }
-  return res.json();
+  return marked(await res.json(), res);
+}
+
+// platform-web.v1 §10: what is shown while the network is down is "marked with
+// the moment it came from". `app/static/sw.js` already puts that moment on
+// every stored payload (`X-Converge-Synced-At`) and re-serves it with
+// `X-Converge-Offline: 1`; both headers are readable here because the response
+// is same-origin. Reading them off the very response a screen was drawn from is
+// what lets a document carry its own mark beside its own title, rather than the
+// steward having to look at the banner in the corner (converge-baz).
+//
+// Nothing is attached to a payload that came from the server just now, so a
+// screen on a live network is unchanged.
+const FROM_STORE = 'X-Converge-Offline';
+const SYNCED_AT = 'X-Converge-Synced-At';
+
+function marked(payload, res) {
+  if (!res.headers.get(FROM_STORE)) return payload;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
+  payload.storedCopy = { syncedAt: res.headers.get(SYNCED_AT) || '' };
+  return payload;
 }
 
 const post = (url, payload) => request(url, { method: 'POST', body: JSON.stringify(payload) });

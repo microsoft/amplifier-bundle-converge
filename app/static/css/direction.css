@@ -84,6 +84,15 @@
 .state-badge.kept { color:#128353; background:#e8f8f0; }
 .state-badge.gap { color:#9b640d; background:#fff4d7; }
 .state-badge.draft { color:#4a5568; background:#eef2f8; }
+/* platform-web.v1 §10 (converge-baz): a document being read out of this
+   device's store says so beside its own title, with the moment it came from.
+   Amber rather than green because it is a true reading of something that is
+   not current. `[hidden]` is spelled out: a `display` here would otherwise
+   beat the browser's own rule for the attribute, and the mark would show on a
+   live network with nothing to say. It sits on its own line below 520px,
+   where `.title-meta` is already a column. */
+.doc-synced { padding:3px 7px; border-radius:999px; font-weight:700; color:var(--amber); background:var(--amber-bg); white-space:nowrap; }
+.doc-synced[hidden] { display:none; }
 .round-button { width:36px; height:36px; border-radius:50%; border:1px solid var(--line); background:#fff; color:#758196; font-size:20px; }
 .round-button[aria-pressed="true"] { color:#6d4df4; background:#f1edff; }
 .mode-tabs { display:flex; border-bottom:1px solid var(--line); gap:4px; }
