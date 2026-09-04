@@ -73,6 +73,13 @@ export const api = {
   decision: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/decision`, payload),
   feedback: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/feedback`, payload),
   steer: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/steer`, payload),
+  // Priority — the second of the five writes the umbrella names, and the last
+  // one to exist (converge-a5g). `{item, direction, note, title}`, where the
+  // direction is `raise` or `lower` and nothing else: the server refuses any
+  // other word by name rather than guessing at it, so this end does not need
+  // to police the vocabulary. `surface.v1` clause 3 says "with a note", which
+  // is why the note travels in the same call rather than after it.
+  priority: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/priority`, payload),
   markRead: (mid, repoId, docId) => post(`${docBase(mid, repoId, docId)}/read`, {}),
   keepChange: (mid, repoId, docId, changeId, kept) =>
     post(`${docBase(mid, repoId, docId)}/changes/${encodeURIComponent(changeId)}/keep`, { kept }),

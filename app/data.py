@@ -1303,6 +1303,110 @@ def queue_reading(counts: dict) -> dict:
     return {"trulyReady": counts.get("READY", 0), "available": bool(counts)}
 
 
+#: How many of the queue's ready items the Operation surface offers to reorder.
+#: The queue prints its own order -- priority first, then age -- so the top row
+#: here is the row that will be claimed next. Short on purpose: this is a place
+#: to raise or lower the front of the queue, not a second copy of the queue.
+QUEUE_SHOWN = 6
+
+
+def queue_items(mc: ManagerConfig, limit: int = QUEUE_SHOWN) -> dict:
+    """The front of the work queue, in the order it will be claimed.
+
+    Read fresh from the queue's own command line every time and kept nowhere:
+    `experience.v1` Core 7 -- the app holds no data of its own, and a second
+    copy of the truth is a defect rather than a cache.
+
+    When there is no queue to read, or the queue does not answer, this says so
+    in a sentence. It never returns an empty list that would read as "the queue
+    is empty" when what actually happened is that nothing could be asked.
+    """
+    if not mc.tracker_project:
+        return {
+            "available": False,
+            "items": [],
+            "why": "this manager session names no work queue, so there is nothing to order",
+        }
+    out = run(
+        [
+            "amplifier-work-tracker", "list",
+            "--project", mc.tracker_project,
+            "--status", "open",
+            "--limit", str(max(1, int(limit))),
+            "--json",
+        ],
+        timeout=12.0,
+    )
+    if not out.strip():
+        return {
+            "available": False,
+            "items": [],
+            "why": f"the work queue {mc.tracker_project} did not answer, so nothing can be ordered from here",
+        }
+    try:
+        payload = json.loads(out)
+    except ValueError:
+        return {
+            "available": False,
+            "items": [],
+            "why": f"the work queue {mc.tracker_project} answered in a shape this app could not read",
+        }
+    rows = payload.get("items") or []
+    items = [
+        {"id": str(row.get("id") or ""), "title": str(row.get("title") or "")}
+        for row in rows
+        if isinstance(row, dict) and row.get("id")
+    ]
+    return {
+        "available": True,
+        "items": items[:limit],
+        "total": int(payload.get("total_count") or len(items)),
+        "project": mc.tracker_project,
+        "why": "",
+    }
+
+
+#: A priority call as `writes.record_priority` writes it into the weave-in log.
+#: Searched rather than anchored: the line carries its own stamp ahead of the
+#: word, exactly as a steer line does.
+#:
+#: The item is read up to the first separator rather than to the first space.
+#: Measured 2026-09-04: `\S+` against a call written with a note and no title
+#: (`lower converge-9zz; note: can wait a wave`) read the item as
+#: `converge-9zz;` -- an id that names nothing, shown to the steward as if it
+#: did.
+_PRIORITY_LINE = re.compile(
+    r"\bpriority\s*\(([^)]*)\):\s*(raise|lower)\s+([^\s;\u2014]+)\s*[;\u2014]?\s*(.*)$", re.I
+)
+
+
+def priority_calls(text: str, limit: int = 8) -> list[dict]:
+    """Every raise-or-lower on the record, newest first, in the record's words.
+
+    The weave-in log is the one place a priority call lands, so this is a
+    reading of that log and not a second store. What it shows a steward is the
+    calls already made, which is how a call given here can be seen to have
+    landed at all.
+    """
+    made: list[dict] = []
+    for stamp, said in weave_log(text):
+        found = _PRIORITY_LINE.search(said)
+        if not found:
+            continue
+        who, direction, item, rest = found.groups()
+        made.append(
+            {
+                "when": stamp or said[: found.start()].strip(),
+                "who": who.strip(),
+                "direction": direction.lower(),
+                "item": item.strip(),
+                "said": rest.strip().lstrip("\u2014").strip(),
+            }
+        )
+    made.reverse()
+    return made[:limit]
+
+
 def operation_payload(mc: ManagerConfig) -> dict:
     """The manager session at work.
 
@@ -1419,6 +1523,12 @@ def operation_payload(mc: ManagerConfig) -> dict:
         "briefReading": brief_reading(log_entries),
         "throughput": throughput(counts, merged_count, reopened),
         "queue": queue_reading(counts),
+        # The fifth write needs something to be about. Core 7 lets this app
+        # SHOW the project's work queue; these two are that reading -- the
+        # front of the queue, and the raise-or-lower calls already recorded
+        # against it -- and neither is kept anywhere.
+        "queueItems": queue_items(mc),
+        "priorityCalls": priority_calls(highway),
         "confidence": confidence(mc.repo) if mc.repo else {"pct": 0, "kept": 0, "notyet": 0, "broken": 0, "available": False},
     }
 
@@ -1465,7 +1575,9 @@ __all__ = [
     "operation_payload",
     "owner_log_commits",
     "plan_redraws",
+    "priority_calls",
     "proposals_for",
+    "queue_items",
     "queue_reading",
     "repo_docs",
     "repo_id",
