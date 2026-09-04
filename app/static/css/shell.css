@@ -212,6 +212,36 @@
   .floating-menu { top:56px; left:72px; }
 }
 
+/* The offline banner (platform-web.v1 §10, §11). Fixed and bottom-left so it
+   adds no layout at either width and cannot widen the page, bounded to 520px
+   so the toast — which is bottom-RIGHT at up to 420px — has its own room on a
+   laptop. Below the toast (z-index 100) and below a dialog (90) on purpose:
+   it is standing information, never the thing in front of you. */
+.offline-banner {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 80;
+  width: min(520px, 100%);
+  max-height: 40vh;
+  overflow: auto;
+  background: #111827;
+  color: #fff;
+  border-top: 1px solid #283447;
+  border-right: 1px solid #283447;
+  border-radius: 0 12px 0 0;
+  padding: 12px 16px;
+  box-shadow: 0 -10px 40px rgba(15,23,42,.28);
+}
+.offline-banner[hidden] { display: none; }
+.offline-banner .offline-headline { margin: 0; font-weight: 750; }
+.offline-banner .offline-refusal { margin: 4px 0 0; color: #c8d3e4; }
+.offline-banner .offline-marks { margin: 8px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.offline-banner .offline-mark { background: #1b2536; border: 1px solid #283447; border-radius: 999px; padding: 2px 9px; font-size: 11px; color: #aab5c6; }
+/* On a phone the toast lands on top of this banner, so the bottom strip is
+   left empty for it and the sentences stay readable underneath. */
+@media (max-width: 520px) { .offline-banner { padding-bottom: 62px; } }
+
 @media (max-width: 520px) {
   .topbar { grid-template-columns:54px minmax(0,1fr) auto; }
   .brand { width:54px; padding:0 10px; }
