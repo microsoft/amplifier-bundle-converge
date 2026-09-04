@@ -55,3 +55,12 @@ the entry.
 **Everything begins at the first entry.** Waves integrated before this file
 existed left no record of who verified them, and nothing here can say. The count
 starts below.
+
+## 2026-09-04 12:24 - wave 8, twenty-seven lanes merged so far
+Merged the wave-8 lanes launched on the steward's word "loosely, ratified, go" (announce, clause15, return-brief, examples, shell-css, console, direction-writes, brief-convention, operation-words, turnkey-step-i, ledger-refs, ask-route, direction-persist, offline, ledger-followups, strip-test, operation-reasons, composition-live, operation-runners, reconcile-2, umbrella-kits, direction-final, operation-eight, step-regex, presence, operation-plain, hygiene, ledger-core6, tests-isolation, ledger-family, ask-test, neighbour, shell-home, tag-candidates, lock-write, operation-observations) into main at 7bca7ac, then re-ran the check myself:
+    uv run --with pyyaml ledger/checks/verify.py          -> ALL LEDGER SELF-CHECKS PASS 
+    uv run conformance/documents/run.py .                 -> PASS 
+    uv run conformance/composition/run.py .               -> FAIL FAILs: ['6c'] (6c is red on this host: a stale app bundle registration, converge-2a9, the steward's call)
+    uv run --extra app pytest -q app/tests                -> 189 passed, 112 skipped, 2 warnings in 11.89s
+    uv run --extra web pytest -q tests/                   -> 151 passed, 2 warnings in 51.45s
+Three lanes are still at work (collab-bridge, direction-polish, writes-named); their merges get the next entry.
