@@ -69,6 +69,9 @@ Four things a steward can do to a card, and each one writes:
 | Restore | the previous wording goes back — an addition is taken back out, a removal is put back |
 | Mark all as read | your read point advances to the current commit |
 
+Restore is also offered **at three wider scopes** from History — a paragraph, a
+section, the whole document. Same write, more sentences; see *History* below.
+
 Edit and Restore take one of two paths, and **the document decides which**. If
 its H1 carries no locking word the file is rewritten and committed, authored
 `<you> via Converge`, with a subject naming the document and the section. If
@@ -77,9 +80,78 @@ wording is written to `<doc-stem>.vN-candidate.md` beside it, in the three-part
 shape `documents.v1` §8 requires. The check is made in `app/writes.py`, on the
 file, so forcing the control in the browser changes nothing.
 
-The other writes are real too: a decision appends to
-`docs/workflow/owner-ratifications-<date>.md`, feedback creates
-`.converge/feedback/<ts>.md`, a steer rewrites `.width` and appends to
+### Answer with these choices
+
+Keeping and dropping are already writes of their own — **Keep this change** is
+`changes/{change_id}/keep`, remembered per steward on the server, and dropping
+one is a Restore that has already put the earlier wording back. What was
+missing was those choices reaching the **one** answer. So Changes offers
+**Answer with these choices**, which opens the ratify-with-edits dialog on the
+reading as it stands: *N of M changes are kept*, then the **Kept** list and the
+**Not kept** list, each row its own section path and its own sentence. A list
+with no rows is not drawn — keep everything and there is no *Not kept* heading,
+keep nothing and there is no *Kept* one — but the count above them is always
+both numbers, so neither list is silently missing.
+
+The control appears **only while a proposal is open on that document**, because
+an answer with nothing to answer would refuse. With none open the line says so
+instead — *"Your keeping is remembered for you, and goes into the record with
+your word when a proposal is open"* — rather than offering a button that would
+fail when pressed.
+
+Answering carries both lists into the record, **verbatim** — the steward's own
+words first, then the choice ledger:
+
+```
+Granular choices carried into this answer — 6 of 7 changes kept.
+Kept:
+- Principles › 8: <the sentence>
+…
+Not kept:
+- Principles › 3: <the sentence>
+```
+
+That whole block travels as the decision's note, and `app/writes.py` appends it
+under **Note, verbatim:** in `docs/workflow/owner-ratifications-<date>.md`
+beneath the decision, document, proposal and steward. It is **not a new kind of
+ratification**: the word recorded is *ratified with edits*, already in the
+vocabulary. The choices build that word; they do not add one.
+
+## History: restoring, at four scopes
+
+History carries a restore panel, and it offers all four scopes
+`experience-direction.v1` §6 names — **a wording · a paragraph · a section ·
+the whole document**. A paragraph is a change card's own section path
+(`Principles › 8`); a section is the head of that path (`Principles`). Every
+one of them is the same per-card `changes/{change_id}/restore` write, applied
+one sentence at a time — no scope has a write of its own, and none of them
+stages anything.
+
+**Which snapshot a restore reaches, and which it cannot.** It reaches exactly
+one: the wording as it stood at **your own read point**, because that is the
+only earlier wording the server can still find. Restoring to any other row in
+the history list is **not offered**. The app answers no route that reads a
+document at an arbitrary commit, so a control for it would look like time
+travel and not be one; the panel says so in its own Details, and the gap is
+filed as `converge-4pq`. Only the sentences in this reading can be put back.
+
+Before anything is written, the confirmation names the sentences (the first
+eight, then *…and N more*) and which of the two paths this document takes.
+Afterwards the outcome sentence separates commits from proposals using the
+server's own `mode` for each write, never guessed from the payload's shape —
+both modes carry a `file`, and reading that would have called a commit a
+proposal.
+
+Which of the two paths a restore takes is the same rule as an edit's, above:
+a draft is committed in your name, a locked document gets
+`<doc-stem>.vN-candidate.md` beside it and is not touched.
+
+## The other writes
+
+They are real too. A decision appends to
+`docs/workflow/owner-ratifications-<date>.md`, carrying the kept and not-kept
+lists verbatim when the answer came from *Answer with these choices*; feedback
+creates `.converge/feedback/<ts>.md`; a steer rewrites `.width` and appends to
 `HIGHWAY.md`. Nothing here has a demo mode.
 
 ## Ask: a scoped question, answered as a proposal
@@ -114,6 +186,23 @@ proposed them. A session that fails, times out, is missing, or reports anything
 but success does not lose the ask: the proposal is still written from the
 steward's own words and names what went wrong.
 
-The terminal pane is **read-only in this version** — it shows a lane's tmux
-session and takes no keystrokes. Its router (`app/tmux_view.py`) is optional:
-when it is absent, the rest of the app runs unchanged.
+## The console: the manager session, not a chat about it
+
+The terminal pane **is the manager's own session** — what you type there is
+what that session receives, sent as code points to
+`POST /api/tmux/{socket}/{session}/keys`, never a summary the app relays. So
+the word `Enter` typed into it is five letters, not the Return key. Nothing is
+echoed into the pane by the app: the next capture of the pane is what appears,
+so the screen can only ever show what the session itself did with the line.
+
+The keyboard belongs to the manager's own session and to nothing else. Watching
+a lane reuses the same pane, and that pane takes no keystrokes — the contract
+promises the console carries the manager conversation and says nothing about
+typing into somebody else's worker. When there is no session on the other end
+the controls go quiet and the footer says why. Either way the footer says the
+same thing about what this is: **not a chat**. It is not a conversation built
+into the app, in this version or any planned one.
+
+Its router (`app/tmux_view.py`) is optional: when it is absent, the rest of the
+app runs unchanged — and with it absent there is no path for a keystroke, which
+`app/tests/test_console_input.py` asserts rather than assumes.

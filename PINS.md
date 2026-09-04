@@ -9,14 +9,23 @@ line here is wrong, sessions act on it anyway — fix it the moment it drifts.
 |---|---|
 | Vision | `docs/VISION.md` |
 | The full protocol (rules behind the vision) | `docs/PROTOCOL.md` |
-| Contracts | `contracts/{documents,operation,surface,composition}.v1.md` |
+| Contracts | `contracts/*.v1.md` — fourteen today (`ls contracts/`) |
 | Contracts README | `docs/CONTRACTS-README.md` |
 | Standing rules for sessions | `AGENTS.md` |
 | Participant kit for other repositories | `docs/workspace-template/` |
 | Ledger format | `docs/LEDGER-FORMAT.md` |
-| Conformance ledger | `ledger/rows.yaml` — **not seeded yet** |
-| Conformance kits | `conformance/<contract>/run.py` — **not built yet** |
+| Conformance ledger | `ledger/rows.yaml` — seeded; self-check with `uv run --with pyyaml ledger/checks/verify.py` |
+| Conformance kits | `conformance/<contract>/run.py` — `conformance/README.md` names each one and how to run it |
 | Integration branch | `main` |
+
+Measured on this tree, 2026-09-04:
+
+```
+$ uv run --with pyyaml ledger/checks/verify.py
+ALL LEDGER SELF-CHECKS PASS                    (175 rows, 14 contracts, exit 0)
+$ uv run conformance/documents/run.py .
+VERDICT: PASS  (pass=18 fail=0 skip=9)
+```
 
 ## Naming
 
@@ -25,7 +34,7 @@ line here is wrong, sessions act on it anyway — fix it the moment it drifts.
   `contracts/documents.v2-candidate.md`.
 - A locked contract carries `(FROZEN <date>)` in its first heading line; a draft
   carries `(DRAFT)`. Status appears nowhere else in the file.
-- All four contracts are `(DRAFT)` today. None is locked.
+- Every contract in `contracts/` is `(DRAFT)` today. None is locked.
 
 ## The pre-push guard
 
@@ -79,6 +88,61 @@ the guard; the contract is the law and the guard is the thing that must move.
   and `load_skill`. Confirmed with a removal control. Per-agent spawn policy is
   an upstream request; until it lands, agent tool limits are behavioural and the
   candidate guard is the structural enforcement.
+
+## The recipe declares its own helpers
+
+`recipes/seed-reconcile.yaml` carries `schema_version: 2` and a `dependencies:`
+block, so its two `agent:` references resolve from the declared closure and
+**not** from the calling session's agent map. Measured on this tree,
+2026-09-04:
+
+```
+$ recipe-runner validate recipes/seed-reconcile.yaml
+status: ok
+schema_version: 2
+
+$ recipe-runner plan recipes/seed-reconcile.yaml
+dependencies (1):
+  - git+https://github.com/microsoft/amplifier-bundle-converge@main [bundle]
+      -> 4507e462d1e801a2b0080c58417ec9647b313880
+agents (12): … anchors:explorer … converge:reconciler …   (both from that one entry)
+steps: load-contracts, derive-rows, run-conformance, file-drift
+```
+
+Four facts about it that are **not** what you would assume:
+
+1. **One dependency, not two, and that is deliberate.** Declaring the lean base
+   alongside this bundle is a preflight *error*, because this bundle already
+   composes the lean base. Reproduced on a scratch copy, 2026-09-04:
+
+   ```
+   error: Agent name 'context-intelligence:session-navigator' is supplied by
+   more than one dependency: …bundles/anchors, …amplifier-bundle-converge@main.
+   remedy: … agent name collisions are never resolved by precedence.
+   ```
+
+2. **The self-reference is required, not redundant.** The runner never infers a
+   dependency from an agent name's namespace prefix.
+3. **`@main`, not a SHA, on purpose.** A ref is fetched with `git clone
+   --branch`, which takes a branch or a tag but not a commit SHA. Reproduced on
+   a scratch copy pinned to the very revision `plan` had just resolved:
+
+   ```
+   warning: Could not find remote branch 4507e462… to clone.
+   fatal: Remote branch 4507e462… not found in upstream origin
+   ```
+
+   This repository publishes no tags, so `@main` is the most precise pin that
+   resolves today, and `plan` still pins the run itself to an immutable
+   revision. Re-pin the moment a tag exists.
+4. **The Amplifier recipes tool runs it `runner-isolated`,** measured here — not
+   the in-session `v2-closed-world-legacy-engine` mode named in older notes.
+   Either way the closed world is the point: the helpers come from the manifest.
+
+Still stated in the old terms, and therefore wrong until their owner fixes
+them: `README.md`'s Host requirement sentence and its "`seed-reconcile` recipe
+runnable — only if the host is on the `anchors` base" table row. This lane may
+not edit `README.md`.
 
 ## Work tracking
 
