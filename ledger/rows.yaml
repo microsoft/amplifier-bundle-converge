@@ -824,7 +824,7 @@
   contract:
     file: contracts/operation.v1.md
     clause: "Conformance kit asserts, Turnkey"
-    quote: "**First green 2026-09-04 — nine of nine steps, twice, in fresh containers, with a manager session that was not the integrator (`evaluations/turnkey/RESULT.md`); it re-runs on every merge."
+    quote: "nine of nine steps, twice, in fresh containers, with a manager session that was not the integrator (`evaluations/turnkey/RESULT.md`); it re-runs on every merge."
   disposition: CONFORMS
   assertion:
     kind: absence
@@ -865,15 +865,29 @@
     reasons, and none was bulk-flipped. What each one now rests on is in its own
     notes.
     THE QUOTE WAS CORRECTED IN THE SAME PASS, and this is not a bump. The row
-    quoted a closing `**` the contract does not carry: `operation.v1.md:77` ends
-    "…it re-runs on every merge." with the bold left open, so the ledger's own
-    quote tripwire failed on main — `CVG-010 QUOTE NOT FOUND`, and with it the
-    whole gate, for every lane that ran it. A row quotes the contract's bytes and
-    never tidies them, so the trailing `**` was dropped from the quote rather
-    than added to the contract. converge-wq4 is the item that carries this; it is
-    open and unheld, and its acceptance is now met — whoever holds it should read
-    this row and close it. The unbalanced bold in the contract is a separate
-    question for whoever owns `contracts/`, and this lane may not touch that file.
+    quoted a closing `**` the contract did not carry: at this lane's branch point
+    `operation.v1.md:77` ended "…it re-runs on every merge." with the bold left
+    open, so the ledger's own quote tripwire failed — `CVG-010 QUOTE NOT FOUND`,
+    and with it the whole gate, for every lane that ran it. converge-wq4 is the
+    item that carries this.
+    THE QUOTE NOW STARTS MID-SENTENCE ON PURPOSE. DO NOT TIDY IT BACK. While this
+    lane worked, main fixed the same defect from the other end: commit on main
+    closes the bold early, `**First green 2026-09-04** — nine of nine steps…`,
+    where this tree still has `**First green 2026-09-04 — nine of nine steps…`.
+    Both readings are one `**` apart and a quote spanning that span can only
+    verify against one of them — so a row quoting either form would be red either
+    here or on the merged result, and being green in this tree while poisoning
+    main is the worse of the two. The quote was narrowed to the longest run both
+    files carry byte-for-byte, which begins at "nine of nine steps". Checked
+    against both, whitespace-collapsed, before committing: matches this tree,
+    matches `git show main:contracts/operation.v1.md`.
+    WHAT IS LOST BY NARROWING IT, SAID PLAINLY: the words "First green" and the
+    date are no longer inside the binding anchor, so a change to them would not
+    make this row notice. Everything the row actually rests on — nine of nine,
+    twice, fresh containers, a manager session that was not the integrator, the
+    named evidence file, and re-running on every merge — is still quoted. When
+    main's form is the only one left, whoever reconciles next should widen the
+    quote back to the whole sentence and say so here.
 
 - id: CVG-011
   title: work is derived, never invented
