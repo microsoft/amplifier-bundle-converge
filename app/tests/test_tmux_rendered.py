@@ -17,8 +17,11 @@ banner's CSS class and the text xterm.js actually painted — never on the JSON.
 Everything runs in-process: a FastAPI app carrying the real
 ``tmux_view.router``, the real ``app/static`` mounted at ``/static``, and a
 minimal harness page that calls the real ``window.ConvergeTmux.attach``.  The
-tmux server is the isolated ``cvtest`` socket, and the only destructive command
-in this file is ``tmux -L cvtest kill-server``.
+tmux server is named for **this run** — ``cvrender-<pid>-<random>`` — and the
+only destructive command in this file is ``tmux -L <that socket> kill-server``.
+A fixed name would be machine-wide, and two lanes testing at once would kill
+each other's sessions and report the loss as a failure in a file neither had
+touched; ``conftest.py`` records the measurement.
 
 If Playwright or its Chromium build is unavailable, both tests skip with the
 reason printed, and ``MANUAL_PROCEDURE`` below is the documented manual check
@@ -28,12 +31,14 @@ that stands in for them.
 from __future__ import annotations
 
 import asyncio
+import os
 import shutil
 import socket as socketlib
 import subprocess
 import sys
 import threading
 import time
+import uuid
 from pathlib import Path
 
 import pytest
@@ -42,7 +47,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from app import tmux_view as tv  # noqa: E402
 
-SOCKET = "cvtest"
+#: One server per run, never a fixed machine-wide name — and a different prefix
+#: from test_tmux_view.py, so the two modules cannot collide inside one run
+#: either.  The convention is in ``conftest.py``; the pid is what its
+#: end-of-run reaper looks for.
+SOCKET = f"cvrender-{os.getpid()}-{uuid.uuid4().hex[:8]}"
 MARKER = "ZZMARKERZZ"
 APP_DIR = Path(__file__).resolve().parents[1]
 
@@ -51,30 +60,34 @@ MANUAL PROCEDURE — run these two checks by hand if Playwright is unavailable.
 Each step says what you must SEE; seeing anything else is a failure.
 
 Setup
-  tmux -L cvtest new -d -s victim 'while :; do echo VICTIMLINE; sleep 1; done'
-  tmux -L cvtest new -d -s marker 'while :; do echo ZZMARKERZZ; sleep 1; done'
-  tmux -L cvtest new -d -s tui top
+  Give this run its own socket, so you cannot kill another run's sessions and
+  it cannot kill yours ($$ is your shell's pid):
+  export CVSOCK=cvmanual-$$
+  tmux -L "$CVSOCK" new -d -s victim 'while :; do echo VICTIMLINE; sleep 1; done'
+  tmux -L "$CVSOCK" new -d -s marker 'while :; do echo ZZMARKERZZ; sleep 1; done'
+  tmux -L "$CVSOCK" new -d -s tui top
   uv run --extra app python -m app.serve --host 127.0.0.1 --port 8788
-  Open http://127.0.0.1:8788/ and attach the console terminal to cvtest/victim
-  (or call ConvergeTmux.attach(el, 'cvtest', 'victim') from the devtools console).
+  Open http://127.0.0.1:8788/ and attach the console terminal to $CVSOCK/victim
+  (or call ConvergeTmux.attach(el, '<that socket>', 'victim') from the devtools
+  console — echo $CVSOCK for the name).
 
 Check 1 — killed session renders `ended`, never another session's pane
   a. SEE: the banner element carries class `tmux-ok`, and the terminal shows
      repeating lines reading VICTIMLINE.
-  b. Run: tmux -L cvtest kill-session -t '=victim:'
+  b. Run: tmux -L "$CVSOCK" kill-session -t '=victim:'
   c. Within ~1 s, SEE: the banner element carries class `tmux-ended`.
   d. SEE: the terminal contains NO line reading ZZMARKERZZ — the viewer must
      not have fallen through to the `marker` session.
   FAILS IF: the banner stays `tmux-ok`/`tmux-empty`, or ZZMARKERZZ appears.
 
 Check 2 — a full-height TUI keeps its top row
-  a. Attach to cvtest/tui.
+  a. Attach to $CVSOCK/tui.
   b. SEE: the FIRST rendered row of the terminal begins with "top - ".
   FAILS IF: the first row is the "Tasks:" line (the trailing newline from
      capture-pane scrolled the title row out of the viewport).
 
 Teardown
-  tmux -L cvtest kill-server
+  tmux -L "$CVSOCK" kill-server
 """
 
 
@@ -126,7 +139,7 @@ HARNESS_HTML = """<!doctype html>
 <script>
   var q = new URLSearchParams(location.search);
   window.ConvergeTmux.attach(document.getElementById('host'),
-                             q.get('socket') || 'cvtest',
+                             q.get('socket') || '__RUN_SOCKET__',
                              q.get('session') || 'victim');
 </script>
 </body></html>
@@ -164,7 +177,9 @@ def server():
 
     @app.get("/harness", response_class=HTMLResponse)
     def harness() -> str:
-        return HARNESS_HTML
+        # The tests always pass ?socket=; the substitution is so that opening
+        # /harness by hand points at this run's server and no one else's.
+        return HARNESS_HTML.replace("__RUN_SOCKET__", SOCKET)
 
     port = _free_port()
     config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
@@ -181,15 +196,36 @@ def server():
     thread.join(timeout=10)
 
 
+def _refuse_if_a_server_is_already_up() -> None:
+    """Say so and stop, rather than kill a server this run did not start.
+
+    On a per-run socket name this should be unreachable.  If it ever fires,
+    the naming is wrong, and the honest answer is to report that — not to
+    ``kill-server`` and take someone else's sessions out from under them.
+    """
+    found = _tmux("ls")
+    if found.returncode == 0:
+        pytest.fail(
+            f"a tmux server is already running on socket {SOCKET!r}, which this run "
+            f"expected to have to itself. Refusing to kill it. Sessions found:\n"
+            f"{found.stdout.strip()}"
+        )
+
+
 @pytest.fixture(scope="module")
 def sessions():
-    _tmux("kill-server")
-    _tmux("new", "-d", "-s", "victim", "while :; do echo VICTIMLINE; sleep 1; done", check=True)
-    _tmux("new", "-d", "-s", "marker", f"while :; do echo {MARKER}; sleep 1; done", check=True)
-    _tmux("new", "-d", "-s", "tui", "top", check=True)
-    time.sleep(2.0)
-    yield
-    _tmux("kill-server")
+    _refuse_if_a_server_is_already_up()
+    print(f"\ntmux socket for this run: {SOCKET}")
+    # try/finally, not a bare yield: a `check=True` failure below would
+    # otherwise skip the teardown and leak this run's server.
+    try:
+        _tmux("new", "-d", "-s", "victim", "while :; do echo VICTIMLINE; sleep 1; done", check=True)
+        _tmux("new", "-d", "-s", "marker", f"while :; do echo {MARKER}; sleep 1; done", check=True)
+        _tmux("new", "-d", "-s", "tui", "top", check=True)
+        time.sleep(2.0)
+        yield
+    finally:
+        _tmux("kill-server")
 
 
 @pytest.fixture(scope="module")
@@ -293,8 +329,26 @@ def test_manual_procedure_is_documented():
     assert "tmux-ended" in MANUAL_PROCEDURE
     assert "top - " in MANUAL_PROCEDURE
     assert "FAILS IF" in MANUAL_PROCEDURE
+    # And it tells the person running it by hand to take their own socket, for
+    # the same reason the automated run does.
+    assert "export CVSOCK=cvmanual-$$" in MANUAL_PROCEDURE
+    assert "tmux -L cvtest" not in MANUAL_PROCEDURE, "no fixed, machine-wide socket name"
     if PLAYWRIGHT_SKIP:
         print(f"\nPlaywright unavailable ({PLAYWRIGHT_SKIP}). Manual procedure:\n{MANUAL_PROCEDURE}")
+
+
+def test_the_socket_name_is_private_to_this_run():
+    """A socket name is the one machine-wide name these tests use.
+
+    A fixed one means two runs share a server: each fails to create a session
+    name the other already took, and each ``kill-server`` takes the other's
+    sessions out from under it.  Measured, and recorded in ``conftest.py``.
+    """
+    print(f"\nthis run's socket: {SOCKET}")
+    assert SOCKET != "cvtest", "never the bare, machine-wide name"
+    assert SOCKET.startswith("cvrender-"), "and a different server from test_tmux_view.py's"
+    assert f"-{os.getpid()}-" in SOCKET, "the pid is what conftest's end-of-run reaper looks for"
+    assert "__RUN_SOCKET__" in HARNESS_HTML, "the harness page defaults to this run's socket too"
 
 
 def _run_manual_notice() -> None:  # pragma: no cover - convenience
@@ -303,6 +357,11 @@ def _run_manual_notice() -> None:  # pragma: no cover - convenience
 
 if __name__ == "__main__":  # pragma: no cover
     _run_manual_notice()
-    # One frame of one named session.  There is deliberately no way to ask
-    # "what else is on this socket" — see tmux_view's module docstring.
-    print(asyncio.run(tv.CaptureCache().get(SOCKET, "marker")).as_dict()["state"])
+    # One frame of one named session, on the socket the procedure above told
+    # you to export.  There is deliberately no way to ask "what else is on this
+    # socket" — see tmux_view's module docstring.
+    _manual_socket = os.environ.get("CVSOCK")
+    if _manual_socket:
+        print(asyncio.run(tv.CaptureCache().get(_manual_socket, "marker")).as_dict()["state"])
+    else:
+        print("set CVSOCK (see the procedure above) to probe a session's state from here")
