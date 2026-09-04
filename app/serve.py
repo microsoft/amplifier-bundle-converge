@@ -205,19 +205,78 @@ def create_app(
             return None, JSONResponse({"error": f"no document {doc_ident} in {repo_ident}"}, status_code=404)
         return found, None
 
+    #: The shortest prefix that may name a snapshot. `history_for` hands the
+    #: browser eight characters; anything shorter than seven is as likely to
+    #: name two commits as one, and resolving it to whichever matched first
+    #: would restore wording from a commit nobody chose.
+    SHA_FLOOR = 7
+
+    #: How deep the bound reads this document's history. The History view
+    #: shows eight rows; the bound reads far deeper on purpose, because a
+    #: whole-document restore is one commit per sentence. Bounded at eight, a
+    #: restore of eight sentences would push its own snapshot out of range
+    #: partway through and be refused with half the work already written —
+    #: the loop's own commits would have made its starting point unreachable.
+    #: Every sha here is still a commit that touched THIS document and
+    #: nothing else, which is the whole of what the bound promises.
+    SNAPSHOT_DEPTH = 500
+
+    def snapshot_or_refusal(repo: Path, path: Path, wanted: str):
+        """One commit from THIS document's own history, or a refusal in words.
+
+        `changes.changes_for` will diff any revision it is handed, so the
+        bound has to be made here: a route that reads a document at any
+        revision the caller names is a larger promise than
+        `experience-direction.v1` §6 makes. What §6 asks for is the snapshots
+        the History view shows, which is what `data.history_for` returns — so
+        a commit that never touched this document is refused by name rather
+        than resolved quietly.
+
+        The refusal names the nearest few rather than every commit it read,
+        because a refusal a steward cannot finish reading tells them nothing.
+        """
+        rows = data.history_for(Path(repo), Path(path), limit=SNAPSHOT_DEPTH)
+        offered = [str(row.get("sha") or "") for row in rows if row.get("sha")]
+        if len(wanted) >= SHA_FLOOR:
+            for sha in offered:
+                if sha.startswith(wanted) or wanted.startswith(sha):
+                    return sha, None
+        nearest = ", ".join(offered[:8]) or "none"
+        rest = f", and {len(offered) - 8} older" if len(offered) > 8 else ""
+        return "", JSONResponse(
+            {
+                "error": (
+                    f"{wanted or '(no commit named)'} is not a commit in this document's history. "
+                    f"The snapshots this document offers are: {nearest}{rest}."
+                )
+            },
+            status_code=400,
+        )
+
     @app.get("/api/managers/{mid}/docs/{repo_ident}/{doc_ident}")
-    def document(mid: str, repo_ident: str, doc_ident: str, request: Request) -> JSONResponse:
+    def document(mid: str, repo_ident: str, doc_ident: str, request: Request, since: str = "") -> JSONResponse:
+        """This document, read from the steward's own point — or from one snapshot.
+
+        `?since=<sha>` reads the document as it stood at one commit in its own
+        history, for that one response only. It deliberately does **not** move
+        the read point: the read point belongs to the steward, and looking at
+        history is not reading. So a steward can open a snapshot, restore from
+        it, and still come back to exactly the changes they had not answered.
+        """
         found, refusal = doc_or_none(mid, repo_ident, doc_ident)
         if refusal is not None:
             return refusal
+        repo, path = found
         user = who(request)
         store = app.state.store
+        point = store.read_point(user, repo_ident, doc_ident)
+        wanted = (since or "").strip()
+        if wanted:
+            point, refusal = snapshot_or_refusal(repo, path, wanted)
+            if refusal is not None:
+                return refusal
         return JSONResponse(
-            data.doc_payload(
-                *found,
-                since=store.read_point(user, repo_ident, doc_ident),
-                kept=store.kept(user, repo_ident, doc_ident),
-            )
+            data.doc_payload(repo, path, since=point, kept=store.kept(user, repo_ident, doc_ident))
         )
 
     # --------------------------------------------------- since you last read
@@ -253,23 +312,37 @@ def create_app(
         return JSONResponse({"ok": True, "kept": on, "keptIds": sorted(here)})
 
     async def _reword(mid, repo_ident, doc_ident, change_id, request, action) -> JSONResponse:
+        """Edit or restore one sentence, from one reading of this document.
+
+        Which reading is the caller's to name. With no `since` in the body it
+        is the steward's own read point, as it always was; with one, it is
+        that snapshot from this document's history — which is what lets a
+        restore reach a wording older than anything the steward has read
+        (`experience-direction.v1` §6). Nothing below this line changes:
+        `writes.apply_change` is handed the card either way, and it is that
+        function, reading the document's own H1, that decides whether this
+        commits or becomes a proposal beside a locked document.
+        """
         found, refusal = doc_or_none(mid, repo_ident, doc_ident)
         if refusal is not None:
             return refusal
         repo, path = found
         user = who(request)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        body = body if isinstance(body, dict) else {}
         since = app.state.store.read_point(user, repo_ident, doc_ident)
+        wanted_snapshot = str(body.get("since") or "").strip()
+        if wanted_snapshot:
+            since, refusal = snapshot_or_refusal(repo, path, wanted_snapshot)
+            if refusal is not None:
+                return refusal
         card = changes.find_change(repo, path, change_id, since=since)
         if card is None:
             return JSONResponse({"error": "that change is not in this reading any more"}, status_code=404)
-        if action == "edit":
-            try:
-                body = await request.json()
-            except Exception:
-                body = {}
-            wanted = str((body or {}).get("text") or "")
-        else:
-            wanted = card["before"]
+        wanted = str(body.get("text") or "") if action == "edit" else card["before"]
         result = writes.apply_change(Path(repo), Path(path), change=card, text=wanted, action=action, user=user)
         return JSONResponse(result, status_code=200 if result.get("ok") else 400)
 
@@ -280,7 +353,11 @@ def create_app(
 
     @app.post("/api/managers/{mid}/docs/{repo_ident}/{doc_ident}/changes/{change_id}/restore")
     async def restore_change(mid: str, repo_ident: str, doc_ident: str, change_id: str, request: Request) -> JSONResponse:
-        """The wording that was there before, back where it was."""
+        """The wording that was there before, back where it was.
+
+        An optional `since` in the body names which "before" — any snapshot in
+        this document's own history, not only the steward's read point.
+        """
         return await _reword(mid, repo_ident, doc_ident, change_id, request, "restore")
 
     @app.post("/api/managers/{mid}/docs/{repo_ident}/{doc_ident}/lock")
