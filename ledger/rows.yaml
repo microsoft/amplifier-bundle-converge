@@ -114,6 +114,66 @@
 # the re-review already done.
 # Main moves hourly; a ledger that chases it converges on nothing. Re-read on
 # merge.
+# RE-DERIVED 2026-09-04 (converge-g82, converge-bdt) — THE STANDING RECONCILE
+# AFTER WAVE 8 CLOSED, AND THE FIFTH MANDATORY SYNC RE-REVIEW. The item that
+# opened this pass was written against main at 4fd7592 and described 42 red rows
+# citing resolved work. THAT IS NOT WHAT THIS TREE HOLDS, and the difference was
+# measured before anything was edited rather than assumed: main moved on to
+# be59331 (wave 8f), where the closed-cite tripwire PASSES — 10 red rows, none
+# citing a resolved item — because converge-yjn and converge-3rzz had already
+# re-run those rows one at a time. The forty-two were real when counted and were
+# cleared by the two passes named above; re-deriving them again would have been
+# re-deriving nothing. What this pass found instead, from `uv run --with pyyaml
+# ledger/checks/verify.py` on this tree, is SIX failures, and every one of them
+# is a row that had been keyed to notice exactly this:
+#   CVG-000  SYNC composition.v1 mismatched. THREE commits had moved the file
+#            since the pinned bytes and the tripwire had been failing on main
+#            the whole time. Full re-review run (see the row); pin bumped only
+#            after it, never instead of it.
+#   CVG-020  GAP → CONFORMS. A manager session ran a real return at the close of
+#            wave 8 and briefed it in five parts: 0/0 → 1 stamped, 1 briefed, 0
+#            unbriefed. The row's own note had prescribed this outcome word for
+#            word. `work: converge-8er` DROPPED — a kept promise owes nobody
+#            work.
+#   CVG-021  GAP → CONFORMS, and this is converge-bdt's own row. The two
+#            pre-convention park entries in the plan record were typed with the
+#            call kind their neighbours already gave the same park, and step
+#            (j)'s Core 11 reading moved SKIP → PASS: every one of 6 recorded
+#            calls is one of the four. `work: converge-bdt` DROPPED.
+#   CVG-060  OPEN-PINNED, re-pinned 28 → 29. The count is the pin and it
+#            flipped: composition.v1 Core 4 went from four lines to five in the
+#            ratified amendment. The undecided reading is untouched.
+#   CVG-071  GAP → CONFORMS. Kit rule 6c turned FAIL → PASS because the stale
+#            fork left this host's app-bundle list (22 → 21 entries,
+#            host_spawn_policy null, host_lost empty) — converge-2a9's option 2,
+#            taken. The probe is re-keyed FAIL → PASS so the harm cannot return
+#            in silence either. `work: converge-2a9` DROPPED.
+#   CVG-106  OPEN-PINNED, unchanged, probe re-pinned. A THIRD module in app/
+#            began writing files (app/feedback_voice.py, wave 8) and the row's
+#            tripwire fired on it. Read before judged: it writes the voice half
+#            of the feedback write into the steward's own REPOSITORY, beside the
+#            note app/writes.py already wrote there — not a second copy of the
+#            truth, so the clause's teeth are untouched and the disposition does
+#            not move.
+# FOUR ROWS WENT RED IN ORDER TO MOVE, WHICH IS THE RATCHET WORKING RATHER THAN
+# FOUR REGRESSIONS. Three of them (CVG-020, CVG-071, CVG-106) were keyed to fail
+# the moment the thing they watched changed IN EITHER DIRECTION, and each one's
+# own text had written down, in advance, what would have to happen next. None
+# was bumped: every one was re-run in this tree, and the run's own words are
+# quoted in the row.
+# NOTHING WAS RE-POINTED TO A LIVE ITEM TO SILENCE A CITE. Three `work` refs
+# were DROPPED because their rows went green; no ref was swapped. The three
+# items behind them (converge-8er, converge-2a9, converge-bdt) are named in
+# their rows with what actually satisfied them.
+# ONE INFO LINE IS EXPECTED ON THIS TREE AND IS NOT A FAILURE: CVG-019 cites
+# converge-7stl, filed by the previous pass and newer than the committed
+# docs/work-items.json. It is live work held by lane w9-queue-and-kits right
+# now. docs/ is not this lane's to edit, so the export is left alone rather than
+# refreshed to flatter the report.
+# ONE FINDING IS FILED RATHER THAN ROWED, and the reasoning is in CVG-000: the
+# kit-assert bullet the amendment ADDED to composition.v1 has neither a ledger
+# row nor a kit rule. The fact it describes holds on this host; the promise that
+# the kit asserts it does not.
 #
 # WHAT THIS REPO OWES
 # -------------------
@@ -492,7 +552,7 @@
   kind: sync
   pins:
     - file: contracts/composition.v1.md
-      sha256: 8e0a02822c815f8231828d5a6a6678c0827aa338ac32dc9707a66c46090c1c87
+      sha256: 2ace26c24ab68b80b05216566ffd0a0a1c2464fab4109221af02d149db84593c
     - file: contracts/documents.v1.md
       sha256: 856026df5e3e56bf5f92080b3a81371462ffffb6d75be171d576cf62778234ea
     - file: contracts/operation.v1.md
@@ -525,7 +585,7 @@
     ref: 'sha256sum contracts/*.md'
     expect:
       exit: 0
-      stdout_contains: "8e0a02822c815f8231828d5a6a6678c0827aa338ac32dc9707a66c46090c1c87"
+      stdout_contains: "2ace26c24ab68b80b05216566ffd0a0a1c2464fab4109221af02d149db84593c"
   notes: >
     SEEDED 2026-09-02 from `sha256sum contracts/*.md`, run at repo 2543e1c.
     Verified identical on `main` at seed time (`git show main:contracts/<f>` →
@@ -570,6 +630,65 @@
     ratified DRAFT 2026-09-03. They were SEEDED, not reconciled: this is their first
     ledger. surface.v1 stays pinned though it is superseded, because its rows are
     still live and a superseded contract's bytes changing is still a re-review.
+    ────────────────────────────────────────────────────────────────────────
+    THE FIFTH RE-REVIEW — 2026-09-04, converge-g82. ONE PIN MISMATCHED
+    (composition.v1) AND THE MANDATORY RE-REVIEW WAS RUN RATHER THAN THE HASH
+    BUMPED (LEDGER-FORMAT §4). Pin was 8e0a0282…, disk read 2ace26c2…, and the
+    tripwire had been failing on main since the first of THREE commits moved the
+    file — this is the mismatch sitting unanswered, not a fresh one:
+      19a3d7b  8e0a0282  the pinned bytes (2026-09-03)
+      49534d6  00c7bcc6  a kit-assert bullet INSERTED at position 2
+      1413caf  e07923c7  the steward's ratification of the Core 4 amendment
+      0b00fda  2ace26c2  the amendment applied — HEAD, and the new pin
+    WHAT MOVED, from `git diff 19a3d7b HEAD -- contracts/composition.v1.md`
+    (17 insertions, 4 deletions), and what each means for the rows:
+      Core 4 REWRITTEN, two lines to five. The bold lead — "**The host
+        requirement is one sentence in the README.**" — is byte-identical, which
+        is why CVG-004's quote never stopped verifying, and why quote
+        verification alone would have reported this contract unchanged. The
+        SENTENCE AFTER IT is entirely new: it now names two cases where it named
+        one. CVG-004 re-read and re-derived below; its reading still holds and
+        its probe still passes.
+      NOT-FREEZE LIST: "Automated steps that bring their own helpers — when the
+        engine supports it" LEFT (the condition was met); "a tagged release of
+        the lean base" ARRIVED. NO ROW CITES THIS LIST — this ledger's own
+        declared-deviation note already records that nothing here watches a
+        promotion trigger — so no row's reading is affected, and the fact is
+        written down rather than left silent.
+      KIT-ASSERT BULLET ADDED (now bullet 5): "A step that declares its own
+        helpers resolves them from that closure…". NO ROW CITES IT. See the
+        finding below.
+      CHANGELOG SECTION ADDED. No row cites it.
+    ALL TEN composition.v1 ROWS WERE RE-READ AGAINST THE NEW BYTES, and the kit
+    was run live to re-derive them rather than re-read from a note — `uv run
+    conformance/composition/run.py .` → VERDICT PASS (13 pass / 0 fail / 0 skip),
+    the first run in this repository's history with no SKIP in it. Nine rows'
+    readings still hold unchanged (CVG-001, 002, 003, 004, 005, 006, 007, 008,
+    009); ONE MOVED, and not because of the contract:
+      CVG-071  GAP → CONFORMS. Kit rule 6c turned FAIL → PASS because the host's
+               app-bundle list lost the carrier (22 → 21). Re-derived in its own
+               row, with the structured evidence naming the cause.
+    THE BULLET NUMBERS WERE CHECKED, NOT ASSUMED, because a list that gains and
+    loses items renumbers everything below silently. CVG-008 is "bullet 2" and
+    CVG-009/CVG-071 are "bullet 3"; against the PINNED bytes and against HEAD
+    those labels are both correct. They were briefly WRONG in between — 49534d6
+    inserted a bullet at position 2, pushing both down one — and 0b00fda removed
+    it again. The labels are right today by the shape of the file, and the quote
+    is what actually binds a row to a sentence; the number is a reader's
+    convenience. Recorded because a re-review that only checked the endpoints
+    would have seen nothing, and the next list edit will not be so tidy.
+    ONE FINDING THIS RE-REVIEW OWES ITS OWN ROW, FILED RATHER THAN INVENTED
+    HERE: the new kit-assert bullet 5 has NO ledger row AND no kit rule. The
+    composition kit's rule table runs 1a–7b and rule 4 reads only the README
+    sentence; nothing in `conformance/composition/run.py` reads the recipe
+    manifest, though the bullet says the kit asserts it. The FACT the bullet
+    describes does hold on this host — `recipe-runner validate
+    recipes/seed-reconcile.yaml` → `status: ok`, `schema_version: 2`, and `plan`
+    names both helpers against the dependency that supplies each — but a promise
+    nothing checks is exactly the invisible gap converge-bv7 wrote CVG-071 for.
+    Filed as work rather than rowed in this pass, because whether that row's
+    probe may depend on a dependency fetch (network) is a real design call and
+    not a thing to settle at the end of a reconcile.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # composition.v1 — 9 rows.  The healthy one: 7 of 9 CONFORM, each by a kit rule
@@ -685,6 +804,45 @@
     full-workspace setup or a host session already on the lean `anchors` base."
     One sentence, as the clause asks.
     HONEST LIMIT: no kit rule covers this clause; the check is hand-run.
+    ────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-g82) UNDER THE MANDATORY RE-REVIEW, BECAUSE
+    THIS IS THE CLAUSE THAT MOVED. The steward ratified an amendment to Core 4
+    (PR #25, word verbatim: "ratified, and go ahead w/ that PR, merge it") and
+    the sentence after the bold lead was replaced: where it said steps can use
+    only the session's helpers, it now names TWO cases — a step that declares no
+    helpers of its own uses the session's and needs Converge's full setup or a
+    host on the lean base; a step that declares its helpers resolves them from
+    that closure and asks nothing of its host.
+    THE QUOTE THIS ROW HOLDS IS THE BOLD LEAD, AND IT IS BYTE-IDENTICAL, so this
+    row's quote went on verifying through the whole amendment. That is worth
+    saying plainly: quote verification would have reported nothing wrong here
+    while the clause under it changed meaning. Only the SYNC mismatch and this
+    re-review catch that, which is exactly what LEDGER-FORMAT §8 means by
+    "quote-verification proves text exists, not that the row reads it correctly".
+    THE READING STILL HOLDS AND THE ROW STAYS CONFORMS. What this row asserts is
+    the clause's own teeth — that the host requirement is ONE SENTENCE IN THE
+    README — and the amendment did not touch that. The README's sentence was
+    rewritten to follow the new clause in the same commit and is still one
+    sentence, now at README.md:78:
+      "**Host requirement.** The `seed-reconcile` recipe declares its own
+      helpers (`schema_version: 2`) and resolves them only from that declared
+      closure, never from the session it runs in, so it needs no particular
+      host, not even the lean `anchors` base the rest of Converge assembles on."
+    RAN 2026-09-04 → HOST-SENTENCE-PRESENT. The probe is unchanged on purpose:
+    it asserts the `> **Host requirement.**` blockquote exists, which is the
+    clause's SHAPE and not its wording, so it survives a re-wording of the
+    requirement and still fails the day the sentence is deleted or spread over
+    three paragraphs.
+    THE HONEST LIMIT ABOVE IS NOW HALF WRONG, AND IS CORRECTED RATHER THAN LEFT
+    STANDING: the kit DOES cover this clause. `conformance/composition/run.py`
+    rule 4 was rewritten in the same commit to follow the amended clause, and it
+    reads more than this probe does — it unwraps the blockquote and the line
+    wrapping and requires ONE sentence to carry all three halves (the host, how
+    a step resolves helpers, the lean base). Live: [PASS] 4
+    host_requirement_in_readme, quoting that sentence back. This row keeps its
+    own probe beside the rule rather than switching to an `indexed` ref on it,
+    because the two ask different questions — the rule judges the sentence's
+    CONTENT, this row judges that the README still carries it at all.
 
 - id: CVG-005
   title: the shared work queue rides on both install paths
@@ -1008,28 +1166,41 @@
     read as covering the sentence it quotes.
 
 - id: CVG-071
-  title: the neighbour promise on the HOST — the installed release strips a neighbour's tools
+  title: the neighbour promise on the HOST — the installed release leaves a neighbour's tools alone
   contract:
     file: contracts/composition.v1.md
     clause: "Conformance kit asserts, bullet 3"
     quote: |
       After installing Converge beside other work, a helper in an unrelated session
       keeps its shell, delegation, and skills tools.
-  disposition: GAP
-  work: converge-2a9
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'uv run conformance/composition/run.py . --json-only | python3 -c "import json,sys;r={x[\"id\"]:x[\"status\"] for x in json.load(sys.stdin)[\"results\"]};print(\"HOST-NEIGHBOUR-CHECK-\"+r[\"installed_release_keeps_neighbour_tools\"])"'
     expect:
       exit: 0
-      stdout_contains: "HOST-NEIGHBOUR-CHECK-FAIL"
+      stdout_contains: "HOST-NEIGHBOUR-CHECK-PASS"
   proves: >
     That the composition kit's rule 6c composes the unrelated session THE WAY
     THIS HOST ACTUALLY DOES IT — the lean base plus the host's whole app-bundle
     list, exactly as the installed CLI's `runtime/config.py` hands
     `get_app_bundles()` to `load_and_prepare_bundle` — and finds the spawned
-    helper LOSING its shell, delegation and skills tools; then loads each app
-    entry alone until it can name the one carrying the policy.
+    helper KEEPING its shell, delegation and skills tools.
+    IT IS STILL KEYED IN BOTH DIRECTIONS, and the key has simply swapped ends.
+    Before 2026-09-04 this probe asserted the kit answers FAIL, so that the fix
+    could not land silently; it now asserts PASS, so that the harm cannot RETURN
+    silently. The day the carrier is re-installed on this host, 6c answers FAIL,
+    this probe misses its expect, `ledger/checks/verify.py` fails NAMING THIS
+    ROW, and the row must be re-read before it may go red. Movement is caught in
+    both directions (LEDGER-FORMAT §3) because neither direction is allowed to
+    be quiet.
+    NOT PROVEN HERE: that this repository's tree is why it passes. The tree half
+    was never at fault — 6a and 6b were PASS on every run through the red period
+    (CVG-006, CVG-009). What moved is the HOST.
+    KEPT FOR THE RECORD, THE READING WHILE THIS ROW WAS RED —
+    That rule 6c found the spawned helper LOSING its shell, delegation and
+    skills tools; then loaded each app entry alone until it could name the one
+    carrying the policy.
     THE PROBE PASSES AND THE ROW IS RED, WHICH IS NOT A CONTRADICTION. The
     probe asserts the kit still answers FAIL for this rule. The disposition
     records what that answer MEANS about the promise: on this machine, right
@@ -1095,6 +1266,45 @@
     made on lane/w8-neighbour; it is recorded here because it is load-bearing
     for this row's colour, and because converge-2a9's option 3 puts the same
     question to the steward in different words.
+    ────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-g82, the standing reconcile after wave 8).
+    GAP → CONFORMS. THE ROW WENT RED TO GET HERE, EXACTLY AS IT PROMISED IT
+    WOULD. `ledger/checks/verify.py` failed naming this row — "CVG-071 expect
+    NOT met (exit=0, stdout='HOST-NEIGHBOUR-CHECK-PASS')" — because the probe
+    was keyed on the harm still being measurable, and it is not any more. That
+    failure is the paragraph above working, not a regression.
+    WHAT THE KIT SAYS NOW, verbatim from `uv run conformance/composition/run.py .`
+    on this host:
+      [PASS] 6c  installed_release_keeps_neighbour_tools: with 21 app bundle(s)
+      composed -- 1 of them this repository's -- an unrelated session's mount
+      plan carries no session-wide spawn policy and its spawned helper keeps
+      shell (tool-bash), delegation (tool-delegate), skills (tool-skills)
+    Kit verdict on that run: PASS — 13 PASS, 0 FAIL, 0 SKIP. Read twice, same
+    answer both times.
+    THE CARRIER LEFT THE HOST'S APP LIST, WHICH IS converge-2a9's OPTION 2, AND
+    THE STRUCTURED EVIDENCE NAMES IT rather than leaving the cause to be
+    guessed. `app_bundle_count` 22 → 21; `host_spawn_policy`
+    {'exclude_tools': ['tool-delegate', 'tool-skills', 'tool-bash']} → null;
+    `host_lost` [tool-bash, tool-delegate, tool-skills] → []; and
+    `app_bundles_naming_this_repository`, which listed BOTH forks, now lists
+    one — the microsoft entry, the one that always read `spawn: null`. Confirmed
+    against the host's own settings: `grep amplifier-bundle-converge
+    ~/.amplifier/settings.yaml` returns the microsoft entry alone.
+    THE PROBE IS RE-KEYED, NOT RETIRED. `expect` moves FAIL → PASS so the row
+    goes red the day the fork is installed here again. A row that stopped
+    watching once the harm cleared would let it return in silence, which is the
+    same one-directional blindness this row was written to refuse.
+    THE `work` REF IS DROPPED, NOT RE-POINTED. converge-2a9 asked for one of
+    three things to happen and one of them has; a kept promise owes nobody work,
+    and `verify.py` fails a CONFORMS row that carries a ref. converge-2a9 itself
+    is not this lane's to close — its own record should say which option was
+    taken and by whom, and that is its owner's sentence to write, not this
+    file's.
+    THE HONEST LIMIT IS UNCHANGED AND CUTS BOTH WAYS NOW. This verdict is a fact
+    about THIS MACHINE at THIS MOMENT. The same commit would have read PASS on a
+    clean laptop while this row was red, and would read SKIP on a CI runner that
+    installs no app bundles. It may not be read as a claim about the repository;
+    CVG-006 and CVG-009 are the rows that make those, and both are green.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # operation.v1 — 15 rows.  The contract names its own gate "**Red today** —
@@ -2015,22 +2225,31 @@
       **A brief on every return.** Time away · finished · stuck · needs you ·
       anything quietly broken — in sentences, appended to a log the steward can
       read.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'python3 ledger/checks/return_log_ratio.py'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-10-STAMPED-RETURNS=0 BRIEFED-RETURNS=0 UNBRIEFED=0"
+      stdout_contains: "CLAUSE-10-STAMPED-RETURNS=1 BRIEFED-RETURNS=1 UNBRIEFED=0"
   proves: >
     That the manager mode still encodes clause 10 AND its stamp instruction, and
-    that of the returns stamped in the log, this many carry all five parts. It
-    does NOT prove a brief on every return, on two counts. First, the count is
-    0 of 0: no return has been stamped yet, and a ratio with no returns in it is
-    not evidence that anything is kept. Second, a return the manager session
-    never recorded at all leaves no trace on either side of the ratio — nothing
-    but the returning session keeps that record, so the probe cannot see a
-    return that was never written down.
+    that every return stamped in the log carries all five parts — one return
+    recorded, one briefed, none unbriefed. The ratio has a denominator now and
+    the two sides agree, which is what this clause asks and what the row was red
+    for the absence of.
+    IT DOES NOT PROVE A BRIEF ON EVERY RETURN IN THE WORLD, and the reason is
+    unchanged by the row going green: a return the manager session never
+    recorded at all leaves no trace on either side of the ratio — nothing but
+    the returning session keeps that record, so the probe cannot see a return
+    that was never written down. What it proves is the strongest thing anything
+    in this tree can: of the returns that ARE recorded, every one is briefed.
+    THE COUNT IS STILL THE PIN, IN BOTH DIRECTIONS. It goes red the moment a
+    stamped return goes unbriefed (UNBRIEFED rises), and it goes red on the next
+    briefed return too (STAMPED and BRIEFED both rise) — which is a re-read, not
+    a regression, and the row must be re-derived rather than bumped. That is the
+    same bargain every counted row here makes: a number that cannot move without
+    being noticed.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=4. DRIFT BACK TOWARD
     SPEC, RECORDED: at seed this row's probe asserted the log's ABSENCE, and it was
@@ -2108,7 +2327,38 @@
     item as the thing that will fix it. converge-8er carries the two honest ways to
     close this one: a manager session runs a real return, or the steward ratifies in
     writing that the clause is kept by the mode's standing instruction plus the log.
-  work: converge-8er
+    ────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-g82, the standing reconcile after wave 8).
+    GAP → CONFORMS. THE FIRST OF converge-8er's TWO WAYS HAPPENED: a manager
+    session ran a real return. RAN → CLAUSE-10-STAMPED-RETURNS=1
+    BRIEFED-RETURNS=1 UNBRIEFED=0.
+    THE ROW WENT RED TO GET HERE, WHICH IS THE POINT OF PINNING THE COUNT. It
+    was pinned at 0/0 and `ledger/checks/verify.py` failed naming it —
+    "CVG-020 expect NOT met (exit=0, stdout='CLAUSE-10-STAMPED-RETURNS=1
+    BRIEFED-RETURNS=1 UNBRIEFED=0')". The note above prescribed this outcome
+    word for word — "The row goes green when STAMPED-RETURNS equals
+    BRIEFED-RETURNS and STAMPED-RETURNS is above zero" — and the probe met it.
+    WHAT THE RETURN ACTUALLY IS, read from the log rather than from a report:
+    `docs/workflow/OWNER-RETURN-LOG.md` gained `## 2026-09-04 13:49 - return`
+    at the close of wave 8 (commit 51da070), stamped in the heading at the
+    moment the steward's message arrived, and carrying all five parts under it
+    in sentences — **Time away** ("Since your word 'loosely, ratified, go'
+    about ten hours ago, one wave ran: forty-nine lanes"), **Finished**,
+    **Stuck** ("Nothing is stuck"), **Needs you** (six candidates, three pinned
+    rows, one host setting), **Anything quietly broken** (the settings file the
+    CLI's update check corrupted at 09:24 UTC). Nine older briefs sit above the
+    first stamp and are still uncounted, exactly as the log's own header says:
+    the count begins at the first stamped entry, because before the stamp
+    nothing recorded that a return HAPPENED.
+    THE `work` REF IS DROPPED, NOT RE-POINTED. A kept promise owes nobody work,
+    and `verify.py` fails a CONFORMS row carrying a ref. converge-8er asked for
+    a real return or a ratification; the first arrived. Closing 8er itself is
+    its owner's sentence to write, not this file's — this row records only what
+    the log now says.
+    WHAT IS STILL NOT PROVEN is in `proves` above and did not move: a return
+    nobody recorded is invisible to any check that could be written against this
+    tree. The clause is kept as far as anything here can see it, and that limit
+    is stated rather than dissolved by the disposition.
 
 - id: CVG-021
   title: four calls reach the steward
@@ -2119,26 +2369,32 @@
       **Four calls reach the steward.** Ratify a direction change · an
       irreversible action · a check only a person or device can perform ·
       priority or stop. Anything else is a defect to file.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 11 - " modes/converge-manager.md && python3 ledger/checks/turnkey_clause.py CVG-021 SKIP "cannot say the calls that reached the steward were the four" | grep -q "ASSERTS-THIS"; then echo CLAUSE-11-CALLS-PARTLY-CLASSIFIED-AND-STEP-J-COUNTS-THE-REST; else echo CLAUSE-11-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 11 - " modes/converge-manager.md && python3 ledger/checks/turnkey_clause.py CVG-021 PASS "call(s) recorded in the plan record is one of the four" | grep -q "ASSERTS-THIS"; then echo CLAUSE-11-EVERY-RECORDED-CALL-IS-ONE-OF-THE-FOUR; else echo CLAUSE-11-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-11-CALLS-PARTLY-CLASSIFIED-AND-STEP-J-COUNTS-THE-REST"
+      stdout_contains: "CLAUSE-11-EVERY-RECORDED-CALL-IS-ONE-OF-THE-FOUR"
   proves: >
-    That the mode still encodes this clause, AND that step (j)'s reading of it
-    still declines — but on a countable remainder now, not on a missing
-    instrument: the recorded calls ARE classified into the four, and some of
-    them name none, so this run cannot say the calls that reached the steward
-    were the four. NOT that every owner-facing prompt fell inside the four, and
-    NOT that any of them fell outside: a call stamped as something that is none
-    of the four is a FAIL, so the reading can go red, and it has nothing to go
-    red on yet.
-    This row is now red on a countable gap. It fails its expect in BOTH
-    directions — the day every recorded call names its kind (the reading turns
-    PASS and this row must move to CONFORMS), and the day one names a fifth kind
-    (the reading turns FAIL and this row must move to VIOLATION).
+    That the mode still encodes this clause, AND that step (j)'s live reading of
+    it now answers PASS: every call recorded in the plan record names which of
+    the four it is, and none names a fifth kind.
+    WHAT IT DOES NOT PROVE, and this is the whole of the limit: that no OTHER
+    call reached the steward. A call nobody stamped leaves no trace, and this
+    reads what a wave left behind. The clause is kept as far as the record can
+    show it — which is the strongest claim available, not a claim about every
+    conversation that ever happened.
+    THE FRAGMENT IS DELIBERATELY COUNT-FREE. The reading's sentence is "every
+    one of N call(s) recorded in the plan record is one of the four", and this
+    row pins the phrase after N, never N itself. Pinning the count would turn
+    the next ordinary park entry into a false alarm — a row going red because
+    the wave carried on working is not drift, and CVG-020 pins a count only
+    because there the count IS the promise.
+    IT STILL FAILS IN BOTH DIRECTIONS. The day an entry records a call and names
+    none of the four, the reading drops back to SKIP; the day one is stamped as
+    a fifth kind, it turns FAIL and this row must move to VIOLATION. Either way
+    the probe misses its expect and `verify.py` names this row.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-11. Measuring this clause means counting
     owner-facing prompt events across a real wave. evaluations/ratchet does
@@ -2211,7 +2467,46 @@
     row to match the resolution or the resolution to match the row, the
     remaining two entries are named exactly in converge-bdt, with both ways to
     close them and whose call that is.
-  work: converge-bdt
+    ────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-bdt). GAP → CONFORMS. THE TWO UNNAMED
+    ENTRIES WERE TYPED, WHICH WAS converge-bdt's OPTION 1, AND THE READING
+    MOVED. Live, `uv run evaluations/turnkey/run.py --env local --steps j
+    --workspace ~/dev/hw-converge --project converge`, verbatim:
+      Core 11 (CVG-021) PASS: every one of 6 call(s) recorded in the plan record
+      is one of the four (ratify: 5, irreversible: 1) — a call stamped as
+      anything else would be the defect this clause names, and none is; a call
+      nobody stamped leaves no trace here either way
+    WHAT WAS ACTUALLY CHANGED, AND WHY IT IS NOT A REWRITE OF HISTORY. Two
+    entries in the plan record were park sentences with no call word in them:
+      2026-09-03T08:17:33Z  "Parked: protocol-terms."
+      2026-09-03T08:29:04Z  "protocol-terms parked on lane/w6-protocol-terms for
+                             the steward."
+    Both park the SAME thing the entries either side of them already classify —
+    08:12:12Z calls it "parked as a ratify card for the steward" and 08:15:15Z
+    writes "Parked: protocol-terms (steward ratify card)". So the type was
+    already recorded twice in the same record about the same park; these two
+    entries simply did not say it. They now read "(steward ratify card)" and
+    "for the steward to ratify" — the neighbours' own words, in the park's own
+    sentence, which is where the loose form is read from. No entry gained a fact
+    the record did not already carry, and no timestamp, lane or outcome moved.
+    THE TALLY MOVED ratify: 3 → 5, WHICH IS THE ARITHMETIC OF EXACTLY THOSE TWO
+    AND NOTHING ELSE. 6 calls before, 6 calls after; classified 4 → 6;
+    unclassified 2 → 0; outside_the_four 0 → 0 throughout. If the edit had
+    invented a call or reclassified a real one, one of those first two numbers
+    would have moved too.
+    THE PROBE IS RE-KEYED FROM THE SKIP SENTENCE TO THE PASS SENTENCE, and this
+    row's predecessor note explains why that has to happen rather than be
+    avoided: pinned to a sentence the harness has stopped saying, a row stays
+    confidently green while the reading says something else. The old key
+    ("cannot say the calls that reached the steward were the four") stopped
+    being true the moment the two entries were typed, and `verify.py` failed
+    naming this row — CLAUSE-11-STATE-CHANGED-REREAD-THIS-ROW — before the row
+    was allowed to move.
+    THE `work` REF IS DROPPED. converge-bdt is the item this pass resolves, a
+    CONFORMS row may not carry a ref, and there is no successor: the clause is
+    kept as far as the plan record can show it. What remains unprovable is in
+    `proves` above — a call nobody stamped — and that is a limit of any reading
+    of a record, not an open task.
 
 - id: CVG-022
   title: the queue is the shared one, with custody
@@ -3125,7 +3420,7 @@
     ref: 'awk ''FNR==1{if(n>4)t++;n=0;c=0} /^## Core \(the teeth\)/{c=1;next} /^## /{if(n>4)t++;n=0;c=0;next} c&&/^[0-9]+\. /{if(n>4)t++;n=1;next} c&&NF&&n{n++} END{if(n>4)t++;print "CLAUSES-PAST-THREE-LINES=" t+0}'' contracts/*.md'
     expect:
       exit: 0
-      stdout_contains: "CLAUSES-PAST-THREE-LINES=28"
+      stdout_contains: "CLAUSES-PAST-THREE-LINES=29"
   justification: >
     RAN 2026-09-02 → CLAUSES-PAST-THREE-LINES=8. Rule 1e checks only that a clause
     continues in bold; nothing enforces the limit. Measured: composition Core 6 (5
@@ -3156,6 +3451,25 @@
     may want: a clause that recites another contract is a different thing from a
     clause that explains itself at length. Still OPEN-PINNED; still no decision
     forged; still no work filed, because filing it would presume the reading.
+    RE-DERIVED 2026-09-04 (converge-g82, the standing reconcile after wave 8):
+    28 → 29, and the row is re-pinned at 29. The count is the pin and it flipped,
+    which is the row working. ONE CLAUSE MOVED AND THE LEDGER CAN NAME IT: the
+    steward's ratified amendment to composition.v1 Core 4 (PR #25, commit
+    0b00fda) replaced a four-line clause with a five-line one. Measured before
+    and after, per contract, by the same awk the probe runs:
+      composition  4, 6   (4 is new; 6 was already over)
+      documents    4, 8, 12, 14 · operation 4, 5, 7 · surface 3, 5, 9
+      experience   1, 11, 15 · experience-direction 6, 7, 11 ·
+      experience-collaboration 2 · platform-web 1, 2 · platform-ios 1, 2 ·
+      platform-android 1, 2 · platform-macos 1, 2 · platform-windows 1, 2
+    That is 29 clauses in 14 contracts, and the delta against the 2026-09-03
+    list is exactly composition Core 4 — nothing else lengthened or shortened.
+    THE READING IS STILL UNDECIDED AND STILL NOT FORGED HERE: whether "lines"
+    means SOURCE lines or RENDERED sentences. Worth noting for whoever settles
+    it, because this is the second time it has come up in evidence: the clause
+    that pushed the count to 29 is one the steward personally ratified in its
+    five-line form, on the same day, having read it. That is not a decision —
+    it is one more fact for the person who will make it.
 
 - id: CVG-046
   title: every kit's rule table is numbered to its contract's Core clauses
@@ -4581,7 +4895,7 @@
   disposition: OPEN-PINNED
   assertion:
     kind: probe
-    ref: 'if grep -rlE "sqlite3|shelve|pickle\.dump" app/*.py | grep -q .; then echo APP-KEEPS-A-DATABASE; elif [ "$(grep -rlE "\.write_text\(|json\.dump\(" app/*.py | sort | tr "\n" " ")" != "app/state_store.py app/writes.py " ]; then echo A-THIRD-MODULE-WRITES-FILES; elif ! grep -q "DEFAULT_STATE_PATH = Path.home() / \".amplifier\" / \"converge-app.state.json\"" app/state_store.py; then echo THE-READING-STORE-MOVED; elif [ "$(grep -cE "mine\.setdefault\(" app/state_store.py)" != "2" ]; then echo THE-STORE-HOLDS-MORE-THAN-A-READ-POINT-AND-KEPT-MARKS; else echo ONE-PER-STEWARD-READING-STORE-OUTSIDE-THE-REPOSITORY; fi'
+    ref: 'if grep -rlE "sqlite3|shelve|pickle\.dump" app/*.py | grep -q .; then echo APP-KEEPS-A-DATABASE; elif [ "$(grep -rlE "\.write_text\(|json\.dump\(" app/*.py | sort | tr "\n" " ")" != "app/feedback_voice.py app/state_store.py app/writes.py " ]; then echo A-MODULE-OUTSIDE-THE-THREE-WRITES-FILES; elif ! grep -q "DEFAULT_STATE_PATH = Path.home() / \".amplifier\" / \"converge-app.state.json\"" app/state_store.py; then echo THE-READING-STORE-MOVED; elif [ "$(grep -cE "mine\.setdefault\(" app/state_store.py)" != "2" ]; then echo THE-STORE-HOLDS-MORE-THAN-A-READ-POINT-AND-KEPT-MARKS; else echo ONE-PER-STEWARD-READING-STORE-OUTSIDE-THE-REPOSITORY; fi'
     expect:
       exit: 0
       stdout_contains: "ONE-PER-STEWARD-READING-STORE-OUTSIDE-THE-REPOSITORY"
@@ -4611,12 +4925,17 @@
     steward answers: ratified / ratified with edits / declined / later. Tracked as
     converge-71q.
   proves: >
-    That the app keeps no database, shelf or pickled state; that exactly two
-    modules in app/ write files at all - app/writes.py, which writes into the
-    steward's repository (CVG-186 asserts that path), and app/state_store.py,
-    which writes the reading store; that the reading store is at
-    ~/.amplifier/converge-app.state.json; and that it holds exactly two things per
-    steward and no third.
+    That the app keeps no database, shelf or pickled state; that exactly three
+    modules in app/ write files at all - app/writes.py and app/feedback_voice.py,
+    which both write into the steward's REPOSITORY (CVG-186 asserts that path),
+    and app/state_store.py, which writes the reading store; that the reading
+    store is at ~/.amplifier/converge-app.state.json; and that it holds exactly
+    two things per steward and no third.
+    THE THREE ARE NOT THREE EQUAL THINGS, and the split is the whole reading of
+    this clause: two of them write into the project's own repository, where the
+    truth already lives and a commit is how it is kept, and ONE writes a file of
+    the app's own. Only that one is what "the app holds no data of its own" is
+    about. A fourth module writing anywhere at all is the tripwire.
     THE ROW NOW ASSERTS WHAT THE STORE HOLDS, NOT THAT NO STORE EXISTS. The
     previous probe grepped app/*.py for `sqlite3|shelve|pickle.dump` and would
     never have caught this: a plain JSON file is none of those three words, so the
@@ -4629,6 +4948,43 @@
     claims source by source, and no machine here checks it. Nor does it read the
     store's contents at runtime - it reads the code that decides them.
   notes: >
+    RE-DERIVED 2026-09-04 (converge-g82, the standing reconcile after wave 8).
+    STILL OPEN-PINNED, AND THE PROBE FIRED CORRECTLY ON A THIRD WRITER.
+    `verify.py` failed naming this row - "CVG-106 expect NOT met (exit=0,
+    stdout='A-THIRD-MODULE-WRITES-FILES')" - because `app/feedback_voice.py`
+    landed in wave 8 (converge-rj1) and writes files. The branch did its job: a
+    new writer in app/ cannot appear without this row going red first.
+    THE NEW WRITER WAS READ BEFORE THE ROW WAS TOUCHED, and it is not a second
+    copy of the truth. `app/feedback_voice.py` writes the voice half of the
+    feedback write into `Path(repo)/.converge/feedback` - the steward's own
+    REPOSITORY, the same folder `app/writes.py:record_feedback` has already
+    written `<stamp>.md` into by the time that route is called. Measured:
+      $ grep -rlE "\.write_text\(|json\.dump\(" app/*.py | sort
+      app/feedback_voice.py
+      app/state_store.py
+      app/writes.py
+      $ grep -rlE "sqlite3|shelve|pickle\.dump" app/*.py   -> (nothing)
+    Its own module docstring is explicit that this is the same write and not a
+    sixth one: the route is POST /api/managers/{mid}/feedback/{form}, the form
+    is a path parameter so `write_tail` still reads the write as `feedback`, and
+    `experience.v1` Core 4's five writes are unchanged. So the clause's TEETH -
+    "a second copy of the truth is a defect, not a cache" - are untouched: a
+    recording dropped into the project's repository is the project's record, not
+    the app's cache of it.
+    THE PROBE IS RE-PINNED TO THE THREE WRITERS BY NAME, AND ITS MESSAGE IS
+    CORRECTED. It read A-THIRD-MODULE-WRITES-FILES, which was the right alarm
+    for a two-writer world and is now the wrong words for the answer: with three
+    legitimate writers the interesting event is a FOURTH, so the branch says
+    A-MODULE-OUTSIDE-THE-THREE-WRITES-FILES. The set is still pinned by exact
+    name and sort order, so a new writer - or one of these three disappearing -
+    still turns this row red before anyone may call the clause kept.
+    THE DISPOSITION DOES NOT MOVE, because nothing about the undecided question
+    moved. The reading store is still the app's own file, `experience.v1`'s own
+    Reserved section still asks where the reading cursor belongs, and
+    `contracts/experience.v1-candidate.md` still waits on the steward's word
+    (converge-71q). A third repository-writing module changes what the probe
+    must expect; it changes nothing about whose data the read point is.
+    ────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-dgc, the reconcile after wave 8). CONFORMS ->
     OPEN-PINNED. The disposition moved because the CODE moved and the old probe
     could not see it, not because the reading of the clause changed.
