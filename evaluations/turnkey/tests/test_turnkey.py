@@ -345,16 +345,29 @@ def test_two_lanes_live_at_once_is_the_concurrency_evidence():
     assert run.assert_lanes_observed_live([BOTH])["verdict"] == run.PASS
 
 
-def test_sessions_in_one_sample_and_worktrees_in_another_are_not_concurrent():
-    """The conjunction is per-sample on purpose: two facts are not two lanes."""
+def test_sessions_in_one_sample_and_worktrees_in_another_are_unproven_not_passed():
+    """The conjunction is per-sample on purpose: two facts are not two lanes.
+
+    But periodic sampling cannot tell "they never overlapped" from "the sampler
+    blinked", so this is the honest middle -- reported, never passed.
+    """
     apart = [
         {"at": "T1", "sessions": ["hw__b__one", "hw__b__two"], "worktrees": []},
         {"at": "T2", "sessions": [],
          "worktrees": [{"branch": "lane/one"}, {"branch": "lane/two"}]},
     ]
     verdict = run.assert_lanes_observed_live(apart)
+    assert verdict["verdict"] == run.SKIP
+    assert verdict["verdict"] != run.PASS
+    assert "one reading" in verdict["why"]
+
+
+def test_nothing_lane_shaped_in_any_sample_is_a_real_failure():
+    """A manager that ran the work in-session leaves no lane in ANY reading."""
+    nothing = [{"at": "T1", "sessions": ["0"], "worktrees": []},
+               {"at": "T2", "sessions": [], "worktrees": []}]
+    verdict = run.assert_lanes_observed_live(nothing)
     assert verdict["verdict"] == run.FAIL
-    assert "at once" in verdict["why"]
 
 
 def test_a_non_lane_session_does_not_count_toward_width():

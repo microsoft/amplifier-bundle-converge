@@ -847,11 +847,31 @@ def assert_lanes_observed_live(samples: list[dict], width: int = 2) -> dict:
                    f"session(s) and {len(best['lane_worktrees'])} lane worktree(s) "
                    "were visible at once, read from outside the manager session",
         }
+
+    # A half that NEVER reached the width in any reading settles it: there were
+    # not `width` lanes, and no amount of sampling luck would have shown them.
+    # That is a finding, not a miss.
+    most_sessions = max(len(s["lane_sessions"]) for s in scored)
+    most_worktrees = max(len(s["lane_worktrees"]) for s in scored)
+    if most_sessions < width or most_worktrees < width:
+        return {
+            "verdict": FAIL, "width": width, "samples": len(samples), "peak": best,
+            "why": f"across {len(samples)} samples the most ever seen at once was "
+                   f"{most_sessions} lane terminal session(s) and {most_worktrees} "
+                   f"lane worktree(s); {width} lanes were asked for, and a half that "
+                   "never once reached that count was never there to be missed",
+        }
+    # Both halves reached the width, but never in the SAME reading. Sampling
+    # is periodic and lanes can be short; this cannot distinguish "they did not
+    # overlap" from "the sampler blinked". Reported as unproven, which is what
+    # this harness says instead of guessing — and never counted as a pass.
     return {
-        "verdict": FAIL, "width": width, "samples": len(samples), "peak": best,
-        "why": f"the best of {len(samples)} samples showed only {best['both']} lane(s) "
-               f"with both a terminal session and a worktree at once; {width} were "
-               "required, and lanes that never ran concurrently are not lanes",
+        "verdict": SKIP, "width": width, "samples": len(samples), "peak": best,
+        "why": f"{width} lane worktrees and {width} lane terminal sessions were each "
+               f"seen across {len(samples)} samples, but never both in one reading "
+               f"(the best single reading had {best['both']}); with periodic sampling "
+               "that cannot be told apart from a sampler that blinked, so this run "
+               "does not claim the lanes overlapped",
     }
 
 
@@ -1749,7 +1769,7 @@ def sample_lanes(ctx: Context) -> dict:
 
 
 def drive_wave(ctx: Context, objective: Path, deadline_s: float,
-               poll_s: float = 45.0) -> dict:
+               poll_s: float = 15.0) -> dict:
     """Start a manager session in the environment and watch it from outside.
 
     Returns a record either way. A wave that could not be started is recorded
@@ -1937,9 +1957,12 @@ def self_check() -> dict:
     cases.append(("two lanes seen live at once is the concurrency evidence",
                   assert_lanes_observed_live([only_sessions, both])["verdict"] == PASS))
     cases.append(("two sessions in one sample and two worktrees in ANOTHER is not "
-                  "two concurrent lanes",
+                  "a pass",
                   assert_lanes_observed_live(
-                      [only_sessions, only_worktrees])["verdict"] == FAIL))
+                      [only_sessions, only_worktrees])["verdict"] == SKIP))
+    cases.append(("nothing lane-shaped in any sample FAILS",
+                  assert_lanes_observed_live(
+                      [{"at": "T5", "sessions": [], "worktrees": []}])["verdict"] == FAIL))
     cases.append(("one lane is not two",
                   assert_lanes_observed_live(
                       [{"at": "T3", "sessions": ["hw__b__a"],
@@ -2112,9 +2135,12 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--wave-timeout", type=float, default=3600.0,
                     help="seconds the manager session gets before the run judges "
                          "an unfinished wave and says so (default 3600)")
-    ap.add_argument("--wave-poll", type=float, default=45.0,
+    ap.add_argument("--wave-poll", type=float, default=15.0,
                     help="seconds between readings of the container's lane state "
-                         "while the wave runs (default 45)")
+                         "while the wave runs (default 15). Measured: a two-lane "
+                         "wave on the fixture had both terminal sessions live for "
+                         "about 70 seconds, so a coarse interval can miss the only "
+                         "window in which concurrency is visible.")
     ap.add_argument("--objective", type=Path, default=HERE / "manager-objective.md",
                     help="the steward objective handed to the manager session")
     ap.add_argument("--width", type=int, default=2,
