@@ -26,6 +26,33 @@
 # them: converge-2ro, converge-6mi, converge-7ym, converge-do8. The same pass
 # taught verify.py to FAIL a red row that cites a resolved item, so the rule stops
 # needing a person — it had been enforced by hand three times.
+# RE-DERIVED AGAIN 2026-09-04 (converge-yjn) — THIRTY-FIVE ROWS CITING FINISHED
+# WORK, AFTER THE EXPORT REFRESH. The tripwire converge-0gb built is what found
+# them: the work-item export was refreshed (converge-94i) and eight wave-8 items
+# it had just marked resolved were still named as the fix by 35 red rows
+# (do8 · q66 · 6cc · 9mq · er6 · d3n · jdm · wrx · lwa · tfu · scb · 719). The
+# work item that opened this pass named three; the rule named thirty-five, which
+# is the whole point of it being a rule.
+# EVERY ONE WAS RE-RUN, NONE RE-POINTED. The five experience kits were run live
+# against the app at 127.0.0.1:8788 and the surface kit against the page it
+# renders: 26 rows went GREEN on the kit's own output, 6 stayed red with a live
+# item now naming what would close them, and 2 (CVG-183, CVG-187) moved on the
+# half that is asserted while recording, in `proves`, the half a kit here cannot
+# reach at all.
+# THREE ROWS WERE WRONG IN A WAY NO CITE-CHECK COULD SEE, and each was found by
+# comparing a rule's live verdict against the disposition beside it:
+#   CVG-103  its cited rule PASSES while the clause is broken. Following the cite
+#            would have turned "exactly five writes" green with one write missing
+#            and ten surplus. Re-pointed at the rules that judge the clause.
+#   CVG-111  CONFORMS while its own cited rule FAILs — drift toward red, which
+#            nothing in this repository fails loudly for.
+#   CVG-051  disagreed with ITSELF: CONFORMS with an expect of PASS, and a
+#            `proves` three lines below saying the rule returns FAIL.
+# AND ONE PROBE HAD STOPPED MEANING WHAT IT SAID: CVG-210 grepped for "Could
+# not" in actions.js as evidence of a raw fetch error; that string is now the
+# app's own words in front of the service worker's plain offline sentence. The
+# string survived and its meaning inverted. A grep cannot see that; the probe
+# now walks the whole chain in three files.
 # WHAT THE INTEGRATOR WILL SEE, MEASURED IN A SCRATCH MERGE RATHER THAN GUESSED.
 # converge-0gb branched at f718a20; main then moved 26 commits and edited
 # contracts/operation.v1.md. Merging this lane into main in a throwaway worktree
@@ -2542,23 +2569,29 @@
       **The whole operation in view.** Lanes running against lanes intended, with
       the fill control · running against waiting-on-you · truly ready against
       waiting on you · the plan in order with reasons
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'uv run --extra web --with httpx python ledger/checks/surface_clause9.py 2>/dev/null'
     expect:
       exit: 0
-      stdout_contains: "SURFACE-CLAUSE-9-IN-VIEW=6-OF-8-GAUGE=SKIP"
+      stdout_contains: "SURFACE-CLAUSE-9 SHIPPED-FIXTURE=6-OF-8-GAUGE=SKIP READABLE-SUBJECT=8-OF-8-GAUGE=PASS"
   proves: >
-    That the SHIPPED surface kit's rule 9b, imported from where it lives and not
-    reimplemented, finds six of the eight things this clause puts in view on the
-    app's own rendered /operation page — and that its companion rule 9a declines,
-    because the fixture project it is pointed at has no lanes for the gauge to
-    count. THE COUNT IS THE PIN: the verdict word alone could not tell six-of-eight
-    from two-of-eight, so a page that got better would go on reporting the same
-    word and drift toward spec would be enjoyed unrecorded (LEDGER-FORMAT §3).
-    NOT that the assertion lives in the live suite — the kit is retired, which is
-    a fact about the check's home, recorded below, the same one CVG-066 carries.
+    That the SHIPPED surface kit's rules 9a and 9b, imported from where they live
+    and not reimplemented, find ALL EIGHT things this clause puts in view on the
+    app's own rendered /operation page, and a gauge that states a number, WHEN THE
+    PAGE IS GIVEN A SUBJECT IT CAN READ — a lanes directory and a work queue that
+    answers. And, in the same line, that the kit's own shipped fixture — no lanes,
+    no queue — still shows six of eight with the gauge declining.
+    BOTH COUNTS ARE THE PIN, and they fail in opposite directions: a page that
+    regresses moves READABLE-SUBJECT, and a subject quietly swapped for a
+    flattering one moves SHIPPED-FIXTURE. A verdict word alone could tell neither
+    (LEDGER-FORMAT §3).
+    NOT that this machine's work queue reads — the queue is a stub on PATH, named
+    as one in the probe. What is proved is what the PAGE does with a readable
+    queue, which is what the clause asks. NOT that the assertion lives in the live
+    suite either — the kit is retired, a fact about the check's home recorded
+    below, the same one CVG-066 carries.
   notes: >
     RAN 2026-09-02 → NO-TEST-FILE-FOR-CLAUSE-9. The app ships with a test file per
     clause for 1, 2, 3, 4, 5, 6, 7 and 10 — and none for 9, the longest clause in
@@ -2601,7 +2634,37 @@
     so this clause is now watched by machinery that is deliberately outside the
     live suite. CVG-066 records the same fact for rule 8c, and converge-f1l is
     where a live home for both would be built.
-  work: converge-do8
+    ───────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-yjn). GAP → CONFORMS, AND THE OLD READING WAS
+    A FACT ABOUT THE SUBJECT, NOT THE PAGE. RAN →
+    SURFACE-CLAUSE-9 SHIPPED-FIXTURE=6-OF-8-GAUGE=SKIP READABLE-SUBJECT=8-OF-8-GAUGE=PASS
+    THE PREVIOUS PASS SUSPECTED THIS AND SAID SO, THEN LEFT IT UNTESTED. Its own
+    note above reads "RULE 9a DECLINES, AND THAT IS A FACT ABOUT THE FIXTURE, NOT
+    THE PAGE" — and then took 9b's two absences, in the same reading from the same
+    lane-less fixture, at face value. pages.py returns BOTH the queue card and the
+    plan card empty exactly when the work queue cannot be read, which is what the
+    fixture has. One suspicion, applied to one half of one reading.
+    MEASURED HERE RATHER THAN BELIEVED. converge-do8, the item this row cited,
+    closed saying the same thing. This lane did not take its word for it: the probe
+    now renders the page TWICE — once from the shipped fixture untouched, once from
+    that same fixture inside a lanes directory (manifest.tsv, .width, two lane
+    worktrees) with a stub answering the work-tracker command — and runs the kit
+    over both. The second reading is 9a PASS, "the gauge says 2 of 3 running, and
+    the fill control posts to /do/steer", and 9b PASS, "all 8 parts of the
+    operation are on one page, and nothing on the board stops anything", each of
+    the eight named individually.
+    BOTH READINGS ARE PINNED, ON PURPOSE. Reporting only the flattering one is how
+    a subject gets quietly swapped; reporting only the fixture's is how a kept
+    clause goes on being recorded as broken. The two numbers move in opposite
+    directions, so neither mistake survives.
+    WHAT IS STILL NOT PROVED, PLAINLY: that this machine's work queue reads. The
+    queue is a stub. This row says the PAGE puts all eight in view when the queue
+    is readable — the clause's own question. The shipped fixture cannot exercise
+    it, and after today that is recorded as the fixture's limit rather than
+    charged to the page.
+    THE `work` REF IS GONE, NOT MOVED. converge-do8 is resolved, and the reading
+    that resolved it is now reproduced here from a run rather than cited from a
+    note. A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2).
 
 - id: CVG-039
   title: phone first, companion first
@@ -3252,32 +3315,36 @@
     file: contracts/documents.v1.md
     clause: "Core 9"
     quote: "**A work item names its contract** in one line, defines done in plain words,"
-  disposition: CONFORMS
+  disposition: GAP
   assertion:
     kind: probe
     ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"work_item_names_a_contract\"][0];n=len([f for f in r.get(\"files\",[]) if f[\"status\"]==\"FAIL\"]);print(\"WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT\" if r[\"status\"]==\"SKIP\" and \"no work-item export\" in r.get(\"reason\",\"\") else \"WORK-ITEM-CHECK-NOW-RUNS-\"+r[\"status\"]+\"-ITEMS=\"+str(n))"'
     expect:
       exit: 0
-      stdout_contains: "WORK-ITEM-CHECK-NOW-RUNS-PASS"
+      stdout_contains: "WORK-ITEM-CHECK-NOW-RUNS-FAIL-ITEMS=12"
   proves: >
-    That rule 9a RUNS against this repository's exported queue, returns FAIL, and
-    fails on exactly two items. It proves the promise is broken, not merely
-    unchecked — and it now pins HOW broken, so the row moves when the breakage
-    does, in either direction.
-    THE COUNT IS PART OF THE PIN, DELIBERATELY. The verdict word alone could not
-    tell 9-of-42 from 2-of-65: the queue got healthier by a factor of six and this
-    row would have gone on quietly reporting FAIL, which is drift toward spec
-    going unrecorded (LEDGER-FORMAT §3). Fixing the last two flips this row to
-    PASS-ITEMS=0 and forces the re-read that turns it green; a new item that names
-    no contract flips it the other way. Either way it cannot be silently enjoyed.
-    THE READING THIS ROW USED TO CARRY, KEPT FOR THE RECORD —
-    Only that rule 9a is present, mechanical, and still has nothing to read in
-    this tree. It proves NOTHING about whether this repository's work items name
-    their contract or define done in plain words — that is the promise, and it is
-    unasserted here, which is what GAP says. The probe is written to flip the
-    moment the gap closes: land a work-queue export and it reports
-    WORK-ITEM-CHECK-NOW-RUNS-PASS or -FAIL instead, forcing this row to be
-    re-derived rather than quietly enjoying a check that started passing.
+    That rule 9a RUNS against this repository's exported queue, returns
+    FAIL, and
+    fails on exactly twelve items. It proves the promise is broken, not
+    merely
+    unchecked -- and it pins HOW broken, so the row moves when the breakage
+    does, in
+    either direction.
+    THE COUNT IS PART OF THE PIN, DELIBERATELY. The verdict word alone could
+    not
+    tell 2-of-42 from 12-of-151: the queue can get healthier or worse by a
+    factor of
+    six and go on reporting the same word. It also makes the row's own bump
+    falsifiable -- a count changed without a run is caught by verify.py
+    running the
+    ref.
+    NOT that the twelve are the same twelve tomorrow, and not that the other
+    139 are
+    well written -- rule 9a reads two mechanical things (does line one name
+    a
+    contract that exists, is done defined in plain words), never whether the
+    item is
+    worth doing.
   notes: >
     RAN 2026-09-03 (converge-njn) → rule 9a (`work_item_names_a_contract`) SKIP,
     "no work-item export at docs/work-items.json and none named with
@@ -3383,7 +3450,25 @@
     CONFORMS, drop the `work` ref (a green row carries none), and close
     converge-a5r, whose acceptance ("rule 9a reports PASS") is then met. If it
     says anything else, re-read rather than assume; the number is the point.
-
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn). CONFORMS -> GAP, AND THE ROW HAD
+    BEEN DISAGREEING WITH ITSELF. Its disposition said CONFORMS and its
+    expect said WORK-ITEM-CHECK-NOW-RUNS-PASS, while its own `proves` text
+    three lines below said the rule "returns FAIL, and fails on exactly two
+    items". Both cannot be true. verify.py's executable-ref tripwire is what
+    caught it -- the row's ref was RUN, and did not meet its expect.
+    RAN 2026-09-04 -> WORK-ITEM-CHECK-NOW-RUNS-FAIL-ITEMS=12. The check no
+    longer SKIPs for a missing subject: docs/work-items.json exists
+    (converge-94i exports it) and rule 9a reads 151 items and faults twelve.
+    Seven name a contract that is not in contracts/; three define done with
+    the machine word CONFORMS; two define done not at all. Named one by one
+    in converge-rreh, which now carries this row.
+    THE COUNT IS THE PIN, and it is honest about being a moving one: items
+    are filed and corrected daily, so a bump without a run would be exactly
+    the drift this ledger's standing rule exists to catch. Re-run, then
+    bump.
+  work: converge-rreh
 - id: CVG-069
   title: a work item quotes the feedback or gap it came from — telling a quotation from a cited filename needs a reader
   contract:
@@ -4107,19 +4192,48 @@
       **The anchor is a manager session, not a repository.** One manager session
       may register several repositories and several work queues. Home is the list
       of manager sessions you run, sorted by which one needs you — how many things
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: 'conformance/experience-operation/run.py (rule 13)'
+    ref: 'conformance/experience-operation/run.py (rule 13) + conformance/experience/run.py (rule 1)'
   proves: >
-    Rule 13 asserts the home list, its sort by which manager needs you, and the
-    one message that reaches all of them. It PASSes the first two halves and
-    FAILs the third, which is why this row is GAP and not CONFORMS.
+    Rule 13 asserts all three halves of this clause on the operation board — the
+    home list, its sort by which manager needs you, and the one message that
+    reaches all of them. The umbrella's own rule 1 asserts the same list on HOME,
+    where the clause puts it, and what each card must carry. Two kits, two
+    surfaces, one clause: the third half is what was missing, and it is the half
+    a single passing rule elsewhere could not have covered.
+    NOT that the sort is right when there is more than one to sort. This target
+    runs ONE manager session, so the ordering is unfalsifiable here — recorded
+    below rather than counted as proved.
   notes: >
     Measured 2026-09-03 (converge-pq2) against the app running at
     127.0.0.1:8788. Rule 13 FAIL: every manager session is listed and sorted by
     need; there is no way to tell them all at once.
-  work: converge-q66
+    ───────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-yjn) against the same app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. RAN →
+    "13 PASS all 1 manager session(s) listed, sorted by which needs you, with one
+    message that reaches all" (experience-operation, verdict PASS, 15 rules), and
+    "1 PASS home lists 1 manager session(s), sorted by which needs you, each card
+    carrying the count, the lanes, the last brief line and its quiet-or-silent
+    state" (experience umbrella).
+    THE THIRD HALF LANDED. The missing piece was "tell them all at once"; the
+    board now carries one message that reaches every manager session. That is what
+    moved this row, and it was read from the kit's own output rather than from the
+    resolution of the item that did the work.
+    A SECOND RULE WAS ADDED TO THE CITE, DELIBERATELY. Rule 13 lives in the
+    operation kit and judges the board; this clause puts the list on HOME. One
+    rule passing on one surface is a thinner claim than the clause makes, so the
+    umbrella's rule 1 — the one that reads home's own cards — is now cited beside
+    it. Either going red takes the row red.
+    WHAT ONE SESSION CANNOT SHOW: the sort. Both rules report "1 manager
+    session(s)", and one thing is in order however you order it. A second
+    registered manager session is what would put "sorted by which one needs you"
+    under a check; until then the sort is asserted by code nothing here can
+    falsify. Named as a limit rather than folded into the pass.
+    THE `work` REF IS GONE. converge-q66 is resolved; a CONFORMS row carries no
+    tracker ref (LEDGER-FORMAT §2).
 - id: CVG-101
   title: "two places, and only two"
   contract:
@@ -4169,16 +4283,49 @@
   disposition: GAP
   assertion:
     kind: indexed
-    ref: 'conformance/experience-direction/run.py (rule 9)'
+    ref: 'conformance/experience/run.py (rules 4a, 4b)'
   proves: >
-    Rule 9 asserts the FIFTH write - Ask - and its proposal-returning route.
-    It proves that write is absent, not that the other four are right.
+    Rules 4a and 4b assert BOTH halves of this clause, read from the app's own
+    /openapi.json: 4a that each of the five writes the clause names exists, 4b
+    that nothing else writes. Together they are the clause; either one red keeps
+    the row red.
+    NOT that the four writes that do exist behave correctly once called — a route
+    table settles which writes are declared, never what they do.
   notes: >
     Measured 2026-09-03 (converge-pq2) against the app running at
     127.0.0.1:8788. Rule 9 FAIL: the app's own /openapi.json lists three POST
     routes (decision, feedback, steer). The umbrella names five: answer with a
     word, raise or lower a priority, drop feedback, steer, ask. Two are missing.
-  work: converge-6cc
+    ───────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788. STILL
+    GAP — AND THE CITE IT CARRIED WOULD HAVE TURNED IT GREEN WRONGLY. RAN →
+    "4a FAIL the app declares no route for raise or lower a priority (`priority`)
+    — the clause names five writes and this body offers 4" and
+    "4b FAIL 10 route(s) beyond the five write something".
+    THE OLD ASSERTION NOW PASSES WHILE THE CLAUSE IS BROKEN, which is the exact
+    hazard LEDGER-FORMAT §8 names. This row cited experience-direction rule 9, and
+    rule 9 says today: "Ask is offered at all three scopes and its write returns a
+    proposal" — PASS. Ask landed (converge-6cc did that). Had this pass followed
+    the cite rather than the clause, CVG-103 would have moved to CONFORMS on a
+    clause with a missing write and ten surplus ones. The row's own `proves` had
+    warned in writing that rule 9 "proves that write is absent, not that the other
+    four are right"; the cite was still the only thing watching the clause.
+    THE ASSERTION MOVED TO THE RULES THAT ACTUALLY JUDGE CORE 4: the umbrella's
+    own 4a and 4b, which read the five writes and the surplus from the app's route
+    table. Two of the three counts the old note gave are now wrong anyway — the
+    app declares four of the five, not three.
+    TWO ITEMS, BECAUSE THERE ARE TWO FAILURES AND THEY ARE NOT THE SAME KIND.
+    `work` is converge-a5g: the `priority` write does not exist, in any surface or
+    in app/writes.py — a plain absence, and the one that must close for the clause
+    to be kept. converge-ism (filed by this lane) holds 4b, which is NOT an
+    ordinary gap: the kit's own detail says editing, restoring and per-change
+    choices are experience-direction.v1 clauses 5, 6 and 8, so the family's
+    section contracts ask for writes the umbrella forbids. That disagreement is
+    between contracts and is the steward's to settle, not a lane's.
+    WHAT IS NOT WRONG HERE: the app says the limit out loud. Umbrella rule 14
+    PASSes — "this body cannot do ['raise or lower a priority (`priority`)'], and
+    says so in the app". Saying a limit is Core 14 kept; it is not Core 4 kept.
+  work: converge-a5g
 - id: CVG-104
   title: "at most five things ask for your word at once, and every answer lands in a dated record"
   contract:
@@ -4245,7 +4392,7 @@
       **Plain state words everywhere.** Contracts: *Kept · Not yet · Broken ·
       Pinned open · Can't check*. Work: *Truly ready · Waiting on you · Working ·
       Stuck · Done*. Lanes: *Working · Quiet · Silent — may have died*.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-operation/run.py (rule 8)'
@@ -4258,7 +4405,24 @@
     'Done' and 'Stuck' are WORK words here, not lane words, which is the exact
     confusion a fixed vocabulary exists to prevent. If a finished lane genuinely
     needs a word, that is a candidate amendment to this clause, not a kit edit.
-  work: converge-q66
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-q66, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-operation rule 8 PASS: "every one of 7 working
+    lane(s) reads as a plain lane word (['Working']) and every one of 92
+    reported lane(s) reads as a plain work word (['Done', 'Stuck']); all
+    carry evidence to open, and no lane is in both lists"
+    THE RULE ALSO GREW WHILE THIS ROW WAS RED. Its old note recorded 42
+    lanes reading 'done' outside the lane vocabulary; rule 8 now reads BOTH
+    lists the payload carries -- lanes still at work in the lane words,
+    lanes that have reported back in the work words -- and faults a lane id
+    appearing in both. The 92 reported lanes it judges today were, until
+    2026-09-04, judged by nothing at all.
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-106
   title: "the app holds no data of its own"
   contract:
@@ -4378,23 +4542,31 @@
       **Whatever you can do here, the manager session can do too.** Every write
       names a manager-session operation that does the same thing, so nothing the
       project needs is reachable only by a person at a screen.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience/run.py (rule 8)'
   proves: >
-    That for every write the body offers, the served surface must name the
-    manager-session operation that does the same thing - and that none of them
-    does. Rule 8 reads the writes the app actually declares and looks for the
-    operation naming on what the app serves, so a reader cannot check the
-    clause's claim at all.
-    THIS IS A WIDER READ THAN THE PROBE IT REPLACES. The old ref grepped
-    app/templates and app/static for two literal phrases and asserted the count
-    was 0 - the absence of a word, not the absence of the mapping. A mapping
-    published under any other wording would have left the row red while the
-    clause was kept.
-    WHAT IT DOES NOT PROVE: that the manager-session operations are unreachable.
-    They may well exist; the surface never says which they are.
+    That for every write the body offers, the served surface names the
+    manager-session operation that does the same thing -- and that today all
+    four do.
+    Rule 8 reads the writes the app actually declares and looks for the
+    operation
+    naming on what the app serves, so what a reader can check is the
+    clause's own
+    claim: whatever you can do here, the manager session can do too.
+    THIS IS A WIDER READ THAN THE PROBE IT REPLACED. The old ref grepped
+    app/templates and app/static for two literal phrases and asserted the
+    count was
+    0 -- the absence of a word, not the absence of the mapping. A mapping
+    published
+    under any other wording would have left the row red while the clause was
+    kept.
+    WHAT IT DOES NOT PROVE: that the named manager-session operations do the
+    same
+    thing when actually run. The surface names them; a route table and a
+    served page
+    cannot follow one into a session.
   notes: >
     RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW UMBRELLA KIT. Stays GAP;
     kind: probe -> kind: indexed, and the work ref moves. converge-f1l built
@@ -4409,7 +4581,17 @@
     127.0.0.1:8788 - the superseded surface kit checked exactly this and the old
     app published the mapping behind a Details fold; the app that shipped does
     not.
-  work: converge-9mq
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-9mq, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience rule 8 PASS: "every write this body offers names
+    the manager-session operation that does the same thing (answer with a
+    word, drop feedback, steer, ask for a proposal)"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-108
   title: "every behavior carries one of four words"
   contract:
@@ -4447,7 +4629,22 @@
     The count is unchanged from 2026-09-03 (converge-pq2): experience-direction
     tags all 11 of its clauses and experience-operation all 13; the other two tag
     none. What changed is that a kit rule now says so rather than a grep.
-  work: converge-er6
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788.
+    STILL GAP, AND THE READING HAS NOT MOVED AT ALL. RAN -> "9 FAIL section
+    contracts with behaviors carrying none of ['REQUIRED', 'IDIOM',
+    'OPTIONAL', 'EXCLUDED']: experience-collaboration.v1.md (10 of 10);
+    experience-console.v1.md (10 of 10)" -- the same two contracts, the same
+    ten of ten each, as when the row was last written.
+    THE CITE MOVED converge-er6 -> converge-pip. converge-er6 is resolved
+    and this rule reports exactly what it did before that item closed. An
+    item can close for reasons of its own; what it may not do is leave a red
+    row pointing at finished work, because a reader following the cite
+    learns nothing about what would close the row. converge-pip carries this
+    clause and Core 13 together, as er6 did, and says in its own text: re-
+    run both rules, do not read a resolution and conclude.
+  work: converge-pip
 - id: CVG-109
   title: "IDIOM means the behavior is required and its shape is not"
   contract:
@@ -4537,31 +4734,28 @@
       **A body may exceed this umbrella in idiom, never in features.** Richer
       gestures and better affordances are welcome everywhere. A feature in one
       body and nowhere else is either a behavior that belongs in this family or
-  disposition: CONFORMS
+  disposition: GAP
   assertion:
     kind: indexed
     ref: 'conformance/experience/run.py (rule 12)'
   proves: >
-    That every write this body offers beyond the five the umbrella names is named
-    by a contract in the family - so none of them is debt. Rule 12 carries a
-    HAND-WRITTEN table of route-to-clause citations and RE-READS EVERY CITATION
-    AGAINST THE REPOSITORY ON EVERY RUN, so a clause that moved or was reworded
-    makes the citation stale and the write falls back to being reported as debt.
-    THE RE-READ IS THE LOAD-BEARING PART, and it exists because the rule got this
-    wrong once. The kit's README records that an earlier form linked a route to a
-    clause by searching for the route's own word, and produced three fabricated
-    PASSes - `.../changes/{id}/keep` "cited" a clause about keeping a teammate a
-    first-class participant, `.../ask` "cited" a clause about a question being
-    asked. A contract names behaviors in prose; it does not name routes.
-    `test_a_keyword_is_not_a_citation` and
-    `test_every_citation_still_reads_true_in_this_repository` hold both halves.
-    WHAT IT DOES NOT PROVE, named so it is not read as more: the clause's own
-    two-body test - "a feature in one body and nowhere else is either a behavior
-    that belongs in this family or it is debt" - is not what is checked here.
-    With one body, that comparison still cannot be made. What rule 12 checks is
-    the half that IS decidable from one body: whether a contract names the
-    feature. A feature named by no contract would be reported as debt whatever a
-    second body did.
+    That every write this body offers beyond the five the umbrella names is
+    named by
+    a contract in the family -- and that six of them are named by none. Rule
+    12
+    carries a HAND-WRITTEN table of route-to-clause citations and RE-READS
+    EVERY
+    CITATION AGAINST THE REPOSITORY ON EVERY RUN, so a clause that moved or
+    was
+    reworded takes the rule red rather than leaving a stale citation
+    standing.
+    WHAT IT DOES NOT DECIDE: which side is wrong. "A feature in one body and
+    nowhere
+    else is either a behavior that belongs in this family or it is debt --
+    there is
+    no third thing it can be" is the rule's own wording, and choosing
+    between those
+    two is a contract decision, not a lane's (converge-slpj).
   notes: >
     RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW UMBRELLA KIT.
     NOT-ASSERTABLE -> CONFORMS, kind: none -> kind: indexed. This is the largest
@@ -4589,6 +4783,28 @@
     nowhere else, and the clause's own test cannot separate the two cases." That
     reading is still true of the two-body test, and is preserved in `proves`
     above as what this row does NOT assert.
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn). CONFORMS -> GAP. THIS IS DRIFT IN
+    THE DIRECTION NOTHING FAILS LOUDLY FOR. RAN -> "12 FAIL 6 feature(s)
+    this body offers are named by no contract in the family:
+    ['/api/collab/webhooks/host', '/api/collab/{mid}/pulls/{number}/answer',
+    '/api/collab/{mid}/pulls/{number}/comments',
+    '/api/managers/{mid}/docs/{repo_ident}/{doc_ident}/lock',
+    '/api/managers/{mid}/presence', '/api/managers/{mid}/presence/queue']".
+    HOW IT WAS FOUND, BECAUSE THE METHOD IS THE POINT. This row was not on
+    the list of rows this pass was sent to re-derive; nothing about it had
+    been reported. It was caught by re-running every kit rule the ledger
+    cites and comparing each verdict against the disposition beside it -- a
+    green row whose own cited rule now FAILs. A body grows features quietly,
+    and no test in this repository fails when it does. LEDGER-FORMAT section
+    3 says drift is bidirectional; this is the direction that goes
+    unnoticed.
+    WHAT IS LIKELY WRONG IS THE CONTRACTS, NOT THE APP. Three of the six are
+    the collaboration bridge that experience-collaboration.v1 governs but
+    never names as routes; the lock is experience-direction.v1 Core 11's own
+    control; presence is its Core 10. converge-slpj carries it, and says so.
+  work: converge-slpj
 - id: CVG-112
   title: "three surface classes, and every behavior placed against all three"
   contract:
@@ -4632,7 +4848,23 @@
     Unchanged from 2026-09-03 (converge-pq2) in substance: the five platform
     contracts do name the classes; the sections, where the behaviors live, do
     not. What changed is that a kit rule now says so rather than a grep.
-  work: converge-er6
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788.
+    STILL GAP, READING UNMOVED. RAN -> "13 FAIL experience-
+    collaboration.v1.md places behavior against none; experience-
+    console.v1.md places behavior against none; experience-direction.v1.md
+    places behavior against none; experience-operation.v1.md places behavior
+    against none -- the three classes are ['full app', 'quick-access',
+    'notification']".
+    NOTE THE SCOPE DIFFERENCE FROM CVG-108, which the shared item now
+    carries in writing: rule 9 faults TWO contracts, rule 13 faults ALL
+    FOUR. Direction and operation already tag their behaviors with one of
+    the four words; neither places one against a surface class. The two
+    halves are one sentence's two ends, but they are not the same size.
+    THE CITE MOVED converge-er6 -> converge-pip; er6 is resolved and neither
+    reading moved with it.
+  work: converge-pip
 - id: CVG-113
   title: "where a body genuinely cannot do a thing, it says so in the app"
   contract:
@@ -4641,25 +4873,39 @@
     quote: |
       **Where a body genuinely cannot do a thing, it says so in the app** — what
       the limit is, and what to do instead. Silence is the only wrong answer.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience/run.py (rule 14)'
   proves: >
-    That for each thing this body genuinely cannot do, the app must state the
-    limit and what to do instead somewhere it serves - and that for two such
-    things it states nothing. Rule 14 COMPUTES the absences rather than being
-    told them: writes among the five with no route, and feedback forms the body
-    does not offer. Then, for each, it looks for the limit on the served surface.
-    Silence is the only wrong answer the clause names, and silence is what it
-    found.
-    THE RE-POINT IS THE POINT OF THIS PASS. This row was indexed to
+    That for each thing this body genuinely cannot do, the app states the
+    limit and
+    what to do instead somewhere it serves. Rule 14 COMPUTES the absences
+    rather
+    than being told them: writes among the five with no route, and feedback
+    forms
+    the body does not offer. Then, for each, it looks for the limit on the
+    served
+    surface. Silence is the only wrong answer the clause names, and today
+    there is
+    none -- the one absence it computes (raise or lower a priority) is
+    spoken for.
+    THE RE-POINT IS WHAT MADE THIS CHECKABLE. This row was indexed to
     experience-operation rule 10, whose verdict DISAGREED with the row on
-    purpose: rule 10 PASSes (feedback works in every form the body claims) and
-    only its report's incidental naming of the absent form was the evidence. A
-    reader following that cite landed on a green rule and had to be told in prose
-    why the row was red. Rule 14 judges this umbrella's clause directly and FAILs
-    on it, so the cite and the row now agree.
+    purpose:
+    rule 10 PASSes (feedback works in every form the body claims) and only
+    its
+    report's incidental naming of the absent form was the evidence. A reader
+    following that cite landed on a green rule and had to be told in prose
+    why the
+    row was red. Rule 14 judges this umbrella's clause directly, so the cite
+    and the
+    row now move together in both directions.
+    WHAT IT DOES NOT PROVE: that the absence itself is acceptable. Core 14
+    is kept
+    by SAYING the limit; Core 4 is still red for the same missing write
+    (CVG-103,
+    converge-a5g).
   notes: >
     RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW UMBRELLA KIT. Stays GAP;
     the indexed ref moves from conformance/experience-operation/run.py (rule 10)
@@ -4682,7 +4928,16 @@
     browser only and that restoring past the read point is not offered, each
     naming the item that would change it. The two absences above have no such
     sentence.
-  work: converge-9mq
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-9mq, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience rule 14 PASS: "this body cannot do ['raise or
+    lower a priority (`priority`)'], and says so in the app for each"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-114
   title: "this umbrella governs a family — and two of the contracts it names do not exist"
   contract:
@@ -4747,7 +5002,23 @@
     *ratified* flips the count to 5/5 and fails the `expect` above, which is the
     re-review the SYNC row exists to force; *declined* leaves the count at 6/4 and
     the row red for the reason it has always been red.
-  work: converge-d3n
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn), both ways. RAN ->
+    "CLAUSE-15-NAMED-CONTRACTS NAMED=6 PRESENT=4 MISSING=platform-
+    browser.v1,platform-web-app.v1" (this row's own probe, which reads the
+    clause rather than a list kept here), and the umbrella kit
+    independently: "15 FAIL the umbrella names 6 contract(s) in its family
+    and 2 do not exist: ['platform-browser.v1', 'platform-web-app.v1']. A
+    family member named and unwritten is a promise nothing keeps." Two
+    checks, two homes, same answer.
+    STILL GAP AND STILL THE STEWARD'S CALL. converge-d3n is resolved; the
+    reading did not move with it. The cite moves to converge-cho, which
+    restates both readings and the two shapes a decision could take -- amend
+    clause 15 to name platform-web.v1 as built, or split platform-web.v1
+    into the two the clause names. A lane may not pick between two ratified
+    readings.
+  work: converge-cho
 
 # ────────────────────────────────────────────────────────────────────────────
 # experience-direction.v1 - 11 rows, one per Core clause. SEEDED 2026-09-03 by
@@ -4804,7 +5075,7 @@
       **A reader can copy, download, zoom, and choose the width.** *(IDIOM)* Copy
       as rendered, copy as source, download the source, read at page width or full
       screen. The controls follow the platform; the four abilities do not.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-direction/run.py (rule 3)'
@@ -4817,7 +5088,17 @@
     (as rendered, and as source) - that one control is called `copyRendered` and
     copies the SOURCE, which is why the rule counts copy controls rather than
     matching them by name.
-  work: converge-jdm
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-jdm, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-direction rule 3 PASS: "all five abilities have a
+    control: two copy controls (copyRendered, copySource), download the
+    source, zoom, page width or full screen"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-123
   title: "four views: Reading, Changes, Review, History"
   contract:
@@ -4846,7 +5127,7 @@
       **Direct editing is offered exactly where it is legal, and the guard is the
       law.** *(REQUIRED)* A draft document may be edited in place, click to save.
       A locked one may not, and the refusal comes from the guard that refuses —
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-direction/run.py (rule 5)'
@@ -4855,7 +5136,19 @@
     127.0.0.1:8788. Rule 5 FAIL: no edit control anywhere the app serves, and no
     write route
     that saves a document. Offered nowhere is not offered where legal.
-  work: converge-6cc
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-6cc, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-direction rule 5 PASS: "editing is offered and
+    reaches a document-saving write; the guard beyond it is the
+    repository's, not this kit's to prove"
+    The old reading was 'no edit control anywhere the app serves, and no
+    write route that saves a document'. Both now exist.
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-125
   title: "restoring from history is a real action"
   contract:
@@ -4865,7 +5158,7 @@
       **Restoring from history is a real action, and it routes through a proposal
       when the target is locked.** *(REQUIRED)* Restore a wording, a paragraph, a
       section, or the whole document. On a locked document the same gesture
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-direction/run.py (rule 6)'
@@ -4876,7 +5169,16 @@
     and their handler reaches no write the app declares - it shows a message and
     forgets. So a restore on a locked document cannot produce the proposal this
     clause requires, because it cannot produce anything.
-  work: converge-wrx
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-wrx, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-direction rule 6 PASS: "restore reaches a write
+    the app declares; on a locked document that write is the proposal path"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-126
   title: "a proposal looks the same whoever proposed it"
   contract:
@@ -4905,7 +5207,7 @@
       **Accepting and reverting individual changes constructs "ratified with
       edits."** *(REQUIRED)* A steward keeps six changes, drops one, fixes three
       words, and answers once. The granular choices are not a new kind of
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-direction/run.py (rule 8)'
@@ -4918,7 +5220,22 @@
     message
     contains the word 'decision' - and the kit now blanks string literals before
     reading a handler.
-  work: converge-wrx
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-wrx, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-direction rule 8 PASS: "per-change choices reach
+    a write the app declares; whether that write folds them into the one
+    answer is beyond a static read"
+    The old reading was that the per-change controls reached no write, so a
+    steward's kept-and-dropped choices were shown and discarded. What a
+    static read still cannot settle is whether that write folds them into
+    the one answer -- the rule says so itself, and this row claims no more
+    than the rule does.
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-128
   title: "Ask is a scoped request whose output is always a proposal"
   contract:
@@ -4928,7 +5245,7 @@
       **Ask is a scoped request whose output is always a proposal.** *(REQUIRED)*
       Point at a paragraph, a document, or every document, say what you want, and
       what returns is a proposal to review — never a silent edit, never a chat.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-direction/run.py (rule 9)'
@@ -4936,7 +5253,16 @@
     Measured 2026-09-03 (converge-pq2) against the app running at
     127.0.0.1:8788. Rule 9 FAIL: Ask is offered nowhere, and no write route
     returns a proposal.
-  work: converge-6cc
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-6cc, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-direction rule 9 PASS: "Ask is offered at all
+    three scopes and its write returns a proposal"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-129
   title: "concurrent editing is met with courtesy presence and reconciliation"
   contract:
@@ -4946,7 +5272,7 @@
       **Concurrent editing is met with courtesy presence and reconciliation.**
       *(IDIOM)* While a person is editing a section that is shown softly, and the
       manager session backs off and queues rather than fights. If changes do
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-direction/run.py (rule 10)'
@@ -4957,7 +5283,19 @@
     presence has nothing to attach to, and none of Use combined / Keep mine /
     Review both appears. The row is separate from CVG-124 because the clause is,
     and because the two close at different moments.
-  work: converge-6cc
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-6cc, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-direction rule 10 PASS: "editing shows courtesy
+    presence and offers all three collision choices"
+    This row was red by derivation -- there was no editing surface for
+    presence to attach to (CVG-124). The surface arrived and presence came
+    with it, so the derived gap closed with its cause.
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-130
   title: "the lock control is gated on the four conditions, and they are shown"
   contract:
@@ -4967,7 +5305,7 @@
       **The lock control is gated on the four conditions, and they are shown.**
       *(REQUIRED)* It says what it means · it carries a real example of right and
       wrong · it can be checked against reality · the steward has read it and
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-direction/run.py (rule 11)'
@@ -4977,7 +5315,22 @@
     conditions appears
     anywhere the app serves - so a steward reading a DRAFT contract is never
     shown why it is not yet lockable.
-  work: converge-jdm
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-jdm, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-direction rule 11 PASS: "the gate states all four
+    conditions with a control beside them (a disabled state is expressed:
+    True); that the control's live/inert state tracks the conditions at
+    runtime is beyond a static read"
+    The rule's own caveat is this row's limit too: that the control's
+    live/inert state tracks the four conditions at runtime is beyond a
+    static read. What is proved is that the gate states all four with a
+    control beside them.
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 
 # ────────────────────────────────────────────────────────────────────────────
 # experience-operation.v1 - 13 rows, one per Core clause. SEEDED 2026-09-03 by
@@ -5014,7 +5367,7 @@
       **The plan is shown in waves, with the lanes inside them, and every grouping
       carries its reason.** *(REQUIRED)* A wave says what a batch of work is for;
       a lane is one piece being carried out inside it. When the plan is redrawn,
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-operation/run.py (rules 2a, 2b)'
@@ -5025,7 +5378,22 @@
     is its own lane names joined by commas, which is a list of members and not a
     statement of what the batch is for; and nothing shows why the plan was
     redrawn.
-  work: converge-lwa
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-lwa, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-operation rule 2a PASS: "12 wave(s), each with
+    the lanes inside it; all 7 lane(s) name their wave"  experience-
+    operation rule 2b PASS: "all 12 waves carry a reason, and a redraw shows
+    why"
+    The old reading was that waves carried lists rather than reasons. A wave
+    title whose comma-separated parts are its own lane names is still
+    counted as a list, not a reason -- the rule that caught it is the rule
+    that passes now.
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-142
   title: "the return brief is the first thing a returning steward reads"
   contract:
@@ -5035,7 +5403,7 @@
       **The return brief is the first thing a returning steward reads.**
       *(REQUIRED)* Time away · what finished · what is stuck · what needs your
       word · what quietly changed. The story is told in sentences, never inferred
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-operation/run.py (rule 3)'
@@ -5044,7 +5412,16 @@
     127.0.0.1:8788. Rule 3 FAIL: the brief never says what finished and never
     says what is
     stuck. It is six narrative sentences where the clause fixes five parts.
-  work: converge-lwa
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-lwa, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-operation rule 3 PASS: "the brief is 10
+    sentence(s) and carries all five parts, above the lists of work"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-143
   title: "each turn in the confidence timeline opens onto its evidence"
   contract:
@@ -5054,7 +5431,7 @@
       **A confidence timeline gives the narrative of the operation, and each turn
       in it opens onto its evidence.** *(REQUIRED)* It records the moments that
       changed how sure the manager session is — and how sure it now is — not every
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-operation/run.py (rule 4)'
@@ -5064,7 +5441,16 @@
     They say
     confidence moved and give a reader no way to inspect why, which is the half
     that makes a timeline worth reading.
-  work: converge-lwa
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-lwa, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-operation rule 4 PASS: "all 9 timeline entries
+    open onto their evidence"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-144
   title: "throughput is shown as flow, and never offered as outcome"
   contract:
@@ -5074,7 +5460,7 @@
       **Throughput is shown as flow, and never offered as outcome.** *(REQUIRED)*
       Work derived, resolved, verified, reopened, and stuck say whether things are
       moving. Whether reality is moving toward the agreement is a separate reading,
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-operation/run.py (rules 5a, 5b)'
@@ -5085,7 +5471,18 @@
     never summed. Rule 5a FAIL - the flow reading shows derived, resolved,
     verified and reopened, and never says stuck. Four of the five measures the
     clause names.
-  work: converge-q66
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-q66, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-operation rule 5a PASS: "all five flow measures
+    are shown: derived, resolved, verified, reopened, stuck"  experience-
+    operation rule 5b PASS: "flow and the outcome reading are two separate
+    readings, never summed into one number"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-145
   title: "lanes running against lanes intended, with the fill control"
   contract:
@@ -5112,7 +5509,7 @@
       **Work truly ready is shown against work waiting on you.** *(REQUIRED)* The
       second number is the steward's own backlog, and seeing it is what keeps the
       operation from stalling politely behind a person.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-operation/run.py (rule 7)'
@@ -5122,7 +5519,16 @@
     number is the one
     that says whether the operation is stalled behind the steward or genuinely
     out of ready work.
-  work: converge-q66
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-q66, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-operation rule 7 PASS: "both numbers are shown —
+    work truly ready, and work waiting on you"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-147
   title: "each lane carries a plain state word and evidence you can open"
   contract:
@@ -5132,7 +5538,7 @@
       **Each lane carries a plain state word and evidence you can open.**
       *(REQUIRED)* Working · Quiet · Silent — may have died. Underneath sits what
       the lane actually produced, so a claim can be inspected rather than believed.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-operation/run.py (rule 8)'
@@ -5143,7 +5549,20 @@
     'done' and 2 read 'stuck', outside this clause's three-word vocabulary.
     Recorded here and at CVG-105, which is the umbrella's half of the same
     finding.
-  work: converge-q66
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-q66, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-operation rule 8 PASS: "every one of 7 working
+    lane(s) reads as a plain lane word (['Working']) and every one of 92
+    reported lane(s) reads as a plain work word (['Done', 'Stuck']); all
+    carry evidence to open, and no lane is in both lists"
+    Read over both lists of lanes, and no lane id in both. The 92 reported
+    lanes were unjudged by this rule until 2026-09-04.
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-148
   title: "Watch session opens that worker session's live view"
   contract:
@@ -5191,7 +5610,7 @@
       **Steering sets the limits and never assigns the work.** *(REQUIRED)*
       Objective, budget, lane count, fill the lanes, and have the manager session
       review this. Planning stays with the manager session, which is what makes
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-operation/run.py (rule 11)'
@@ -5201,7 +5620,16 @@
     and fill the
     lanes, and no way to say 'have the manager session review this'. Four of
     five. Nothing assigns work, which is the half that matters most.
-  work: converge-q66
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-q66, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-operation rule 11 PASS: "steering offers exactly
+    the five limits and no way to assign work"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-151
   title: "stopping something is never a board button"
   contract:
@@ -5228,7 +5656,7 @@
       **Every manager session you run is listed, sorted by which one needs you,
       and you can tell them all at once.** *(REQUIRED)* Several projects run at
       once, and one message to all of them beats visiting each in turn.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-operation/run.py (rule 13)'
@@ -5236,7 +5664,19 @@
     Measured 2026-09-03 (converge-pq2) against the app running at
     127.0.0.1:8788. Rule 13 FAIL: listed and sorted, but there is no way to tell
     them all at once.
-  work: converge-q66
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-q66, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-operation rule 13 PASS: "all 1 manager session(s)
+    listed, sorted by which needs you, with one message that reaches all"
+    One manager session is listed, so the sort by which one needs you is
+    unfalsifiable in this target -- the same limit CVG-100 records for the
+    same reading.
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 
 # ────────────────────────────────────────────────────────────────────────────
 # experience-console.v1 - 10 rows, one per Core clause. SEEDED 2026-09-03 by
@@ -5289,7 +5729,7 @@
       **One console, one manager session, and it *is* that session.** What you type
       there is what the manager session receives, not a summary the app relays — so
       there is no second conversation to keep in step with the first.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-console/run.py (rule 3)'
@@ -5302,7 +5742,18 @@
     The app says 'read-only in this version' in its own footer, which is what
     keeps CVG-168 green - a known limit, honestly stated, is still the clause
     unmet.
-  work: converge-tfu
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-tfu, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-console rule 3 PASS: "the console takes input and
+    a route carries it to the session
+    (['/api/tmux/{socket}/{session}/keys']); that the line arrives is a live
+    round trip beyond this kit"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-163
   title: "a resizable pane when wide, a sliding tray when small"
   contract:
@@ -5312,7 +5763,7 @@
       **Wide screen: a resizable pane. Small screen: a sliding tray.** This is
       idiom, and the umbrella governs it — the shape follows the platform; the
       behaviors (stays open, keeps its conversation, gets out of the way on demand)
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-console/run.py (rule 4)'
@@ -5324,7 +5775,17 @@
     wide. Read from the stylesheet's own rules; a rendered layout at two widths
     is
     not judged by this kit, and CVG-213 records that separately.
-  work: converge-tfu
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-tfu, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-console rule 4 PASS: "a resizable pane on a wide
+    screen and a dismissible sliding tray at a small one, read from the
+    stylesheet's own rules"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-164
   title: "Watch session reuses this pane"
   contract:
@@ -5424,7 +5885,7 @@
       **It shows one manager session's own work and reaches nothing else.** The
       machine may hold other terminal sessions, checkouts, and queues; none of
       them appear merely because they exist.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-console/run.py (rule 10)'
@@ -5436,7 +5897,17 @@
     other lanes, and other manager sessions' work. The console PANE shows only
     this manager's own targets and the client never calls that route, so the
     defect is the reach, not the display.
-  work: converge-tfu
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-tfu, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-console rule 10 PASS: "the console reaches only
+    this manager session's own targets (8), and no route enumerates anything
+    else"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 
 # ────────────────────────────────────────────────────────────────────────────
 # experience-collaboration.v1 - 10 rows. SEEDED 2026-09-03 by converge-pq2.
@@ -5549,24 +6020,40 @@
       **Pull-request comments are a two-way bridge.** A question asked in Converge
       arrives as a comment; the reply arrives back inside the same review. The
       teammate never leaves their tools, and the steward never copies a judgment
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-collaboration/run.py (rules 4a, 4b)'
   proves: >
-    THE ROW IS SPLIT ALONG THE CLAUSE'S TWO HALVES, WHICH IS THE WHOLE CHANGE
-    HERE, and each half is named so neither is mistaken for the other.
-    ASSERTED, AND RED - rule 4a: a question asked in Converge must be able to
-    reach the host as a comment. This needs no second person to settle. Either
-    the app declares a route addressing a pull request or its comments, or a code
-    path posts one, or it does not. It does not.
-    STILL CAN'T CHECK - rule 4b: that the reply arrives back inside the same
-    review, with the teammate's name on it. A comment written by a person on a
-    real host cannot be produced by any file in this tree. Rule 4b is a declared
-    SKIP with that reason, pinned by `test_skip_set_is_pinned`, and it points at
-    4a as the half that IS checked.
-    WHAT WOULD SETTLE THE SKIPPED HALF: one question asked in the app, found on
-    the host, and one reply written on the host, found back in the review.
+    THE ROW IS SPLIT ALONG THE CLAUSE'S TWO HALVES, and each half is named
+    so
+    neither is mistaken for the other.
+    ASSERTED, AND GREEN -- rule 4a: a question asked in Converge can reach
+    the host
+    as a comment. This needs no second person to settle. Either the app
+    declares a
+    route addressing a pull request or its comments, or it does not. It
+    does, and
+    the rule names them.
+    STILL CAN'T CHECK -- rule 4b: that the reply arrives back inside the
+    same review,
+    with the teammate's name on it. A comment written by a person on a real
+    host
+    cannot be produced by any file in this tree. Rule 4b is a declared SKIP
+    with that
+    reason, pinned by `test_skip_set_is_pinned`, and it points at 4a as the
+    half that
+    IS checked.
+    SO THE ROW CLAIMS EXACTLY ONE HALF. CONFORMS here means the outbound
+    bridge
+    exists as the clause requires; it does not mean the round trip has been
+    seen. THE
+    SKIPPED HALF IS NOT EVIDENCE OF ANYTHING -- neither that it works nor
+    that it
+    does not.
+    WHAT WOULD SETTLE IT: one question asked in the app, found on the host,
+    and one
+    reply written on the host, found back in the review.
   notes: >
     RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW COLLABORATION KIT.
     NOT-ASSERTABLE -> GAP, kind: none -> kind: indexed. The old justification
@@ -5585,7 +6072,26 @@
       [SKIP] 4b  a comment written by a teammate on a real repository host,
                  arriving back inside the review with their name on it, cannot be
                  produced by any file in this tree.
-  work: converge-scb
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788.
+    GAP -> CONFORMS ON THE ASSERTED HALF. RAN -> "4a PASS a path to the
+    host's own comments exists (routes: ['/api/collab/{mid}/pulls',
+    '/api/collab/{mid}/pulls/{number}',
+    '/api/collab/{mid}/pulls/{number}/comments', ...])", and "4b SKIP a
+    comment written by a teammate on a real repository host, arriving back
+    inside the review with their name on it, cannot be produced by any file
+    in this tree."
+    THE ABSENCE THIS ROW RECORDED IS GONE: the bridge the previous pass
+    found missing is declared by the app itself. converge-scb built it and
+    is resolved; this row moved on the kit's output, not on that item's
+    account of itself.
+    A HALF-SKIPPED CLAUSE IS RECORDED AS A HALF, NOT ROUNDED UP. The row
+    carries no tracker ref because there is no known defect to fix -- what
+    is missing is a live host and a second person, which is a verification
+    only a person can perform, not work a lane can do. `proves` says which
+    half is claimed and which is not; a reader who needs the round trip
+    proved must go and do it.
 - id: CVG-184
   title: "your answer returns where the proposal came from"
   contract:
@@ -5595,7 +6101,7 @@
       **Your answer returns where the proposal came from.** *ratified · ratified
       with edits · declined · later* — written to the dated ratification record and
       posted back to the origin, in the steward's own words.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-collaboration/run.py (rules 5a, 5b)'
@@ -5635,7 +6141,24 @@
     KEPT FOR THE RECORD - what would settle the part no file can: one proposal
     that arrived from a host, answered here, with the answer found on the host
     afterwards.
-  work: converge-scb
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-scb, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-collaboration rule 5a PASS: "the answer write
+    names the dated ratification record, and 2 record(s) exist
+    (docs/workflow/owner-ratifications-2026-09-02.md, docs/workflow/owner-
+    ratifications-2026-09-03.md)"  experience-collaboration rule 5b PASS: "a
+    path posts the steward's word back to the origin (['a call that posts
+    the answer back']); that it arrives in the steward's own words is beyond
+    a static read"
+    Both halves are read, and the second is honest about its edge: that the
+    steward's word arrives at the origin in their own words is beyond a
+    static read.
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-185
   title: "inbound changes arrive without you asking for them"
   contract:
@@ -5645,7 +6168,7 @@
       **Inbound changes arrive without you asking for them.** Webhooks where the
       host offers them, polling as the honest fallback. Freshness is never made the
       steward's job, and the fallback is named rather than assumed.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-collaboration/run.py (rules 6a, 6b)'
@@ -5687,7 +6210,25 @@
                  "checked every N minutes", not "webhook", not "polling".
     6a is one piece of work with CVG-183's 4a and CVG-184's 5b - the same missing
     half, a path to the repository host. converge-scb carries all three.
-  work: converge-scb
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-scb, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-collaboration rule 6a PASS: "an inbound change
+    arrives without the steward asking, by ['a webhook the host calls']"
+    experience-collaboration rule 6b PASS: "the surface names how it stays
+    fresh in plain words ('Polling')"
+    Both halves pass: the inbound change arrives without the steward asking,
+    and the surface names how it stays fresh in plain words. converge-7cs
+    holds a separate live finding about WHICH mechanism does the arriving --
+    that the host cannot reach its own webhook through the sign-in gate, so
+    polling is what keeps the surface fresh. This row is not red for it:
+    rule 6b's requirement is that the body SAY how it stays fresh, and it
+    says 'Polling'.
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-186
   title: "the manager session is not in the hot path"
   contract:
@@ -5826,25 +6367,40 @@
       **One steward per manager session.** Whose word counts is settled when the
       session is registered, not inferred from whoever is looking. Everyone else is
       a teammate, whose proposals get the same reading and none of the authority.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-collaboration/run.py (rules 8a, 8b)'
   proves: >
-    THE ROW IS SPLIT ALONG THE CLAUSE'S TWO HALVES, and the half that needed no
-    second person turns out to be decided rather than a reading.
-    ASSERTED, AND RED - rule 8a: the registration must name a steward. It does
-    not. The clause's own words are "settled when the session is registered, NOT
-    inferred from whoever is looking", and this body infers - the rule reports
-    who it inferred, which on this target was 'bkrabach'. That the registration
-    carries no steward field is a fact, not a judgment about whether a machine
-    account is good enough.
-    STILL CAN'T CHECK - rule 8b: whether a second person's word ever reached the
-    ratification record. That needs two people answering on one manager session.
-    Rule 8b is a declared SKIP with that reason, pinned by
-    `test_skip_set_is_pinned`, and it points at 8a as the half that IS checked.
-    WHAT WOULD SETTLE THE SKIPPED HALF: a second person signing in to the same
-    manager session, and the ratification record showing whose word was written.
+    THE ROW IS SPLIT ALONG THE CLAUSE'S TWO HALVES.
+    ASSERTED, AND GREEN -- rule 8a: the registration names a steward. The
+    clause's
+    own words are "settled when the session is registered, NOT inferred from
+    whoever
+    is looking", and the registration now settles it: `steward = "bkrabach"`
+    in the
+    app's own config, read directly on 2026-09-04 and not only through the
+    rule.
+    STILL CAN'T CHECK -- rule 8b: whether a second person's word ever
+    reached the
+    ratification record. That needs two people answering on one manager
+    session. Rule
+    8b is a declared SKIP with that reason, pinned by
+    `test_skip_set_is_pinned`, and
+    it points at 8a as the half that IS checked.
+    A KNOWN WEAKNESS IN THE ASSERTED HALF, NAMED RATHER THAN LEANED ON:
+    converge-isf
+    records that rule 8a reads the steward KEY and not its VALUE, so an
+    unfinished
+    registration -- the key present and empty -- would still pass it. That
+    is why the
+    value was read out of the config by hand this pass. Until isf lands,
+    this row's
+    green rests on a rule that would not catch an empty steward.
+    WHAT WOULD SETTLE THE SKIPPED HALF: a second person signing in to the
+    same
+    manager session, and the ratification record showing whose word was
+    written.
   notes: >
     RE-DERIVED 2026-09-04 (converge-5yu) AGAINST THE NEW COLLABORATION KIT.
     NOT-ASSERTABLE -> GAP, kind: none -> kind: indexed. The old justification
@@ -5862,7 +6418,24 @@
                  record needs two people answering on one manager session.
     8a is the small, separable one of converge-scb's four failures - a field on
     the manager registration, not a path to a host.
-  work: converge-scb
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788.
+    GAP -> CONFORMS ON THE ASSERTED HALF. RAN -> "8a PASS 1 manager
+    session(s) each name exactly one steward, settled at registration", and
+    "8b SKIP whether a second person's word ever reached the ratification
+    record needs two people answering on one manager session."
+    AND THE VALUE WAS READ, NOT JUST THE VERDICT. ~/.amplifier/converge-
+    app.toml carries `steward = "bkrabach"` on the one registered session,
+    with the clause's own reason written beside it. This matters because
+    converge-isf reports that rule 8a checks the key's PRESENCE rather than
+    its content -- so the rule alone could not tell a named steward from an
+    empty field. Two readings agree here; the rule's weakness is recorded in
+    `proves` rather than relied on.
+    THE OLD READING WAS 'the registration carries no steward field, so this
+    body infers whose word counts'. converge-scb closed that, and this lane
+    confirmed it against the file rather than against its resolution. No
+    tracker ref: the remaining half needs two people, not a fix.
 - id: CVG-188
   title: "a ratification is a change to the repository, made the ordinary way"
   contract:
@@ -5933,7 +6506,7 @@
       **Everything the umbrella requires is present here, in the browser's shape.**
       The anchor is a manager session; the home is the list of them sorted by which
       needs you; Direction and Operation are the two places; the Manager Console is
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-direction/run.py (rule 9)'
@@ -5944,7 +6517,16 @@
     offered nowhere and no route returns a proposal, so 'all five writes work'
     is
     false. CVG-103 carries the umbrella's half of the same finding.
-  work: converge-6cc
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-6cc, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-direction rule 9 PASS: "Ask is offered at all
+    three scopes and its write returns a proposal"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-201
   title: "what the umbrella asks of every body, this body keeps"
   contract:
@@ -5954,7 +6536,7 @@
       **What the umbrella asks of every body, this body keeps.** It holds no data
       of its own; whatever you can do here, the manager session can do too; state
       words stay plain; evidence is shown rather than claimed, with technical
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-direction/run.py (rule 11)'
@@ -5964,7 +6546,18 @@
     its own'. Direction rule 11 FAIL: there is no lock control and none of the
     four conditions is shown anywhere. The rest of the list is asserted by the
     rows above and below rather than here.
-  work: converge-jdm
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-jdm, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-direction rule 11 PASS: "the gate states all four
+    conditions with a control beside them (a disabled state is expressed:
+    True); that the control's live/inert state tracks the conditions at
+    runtime is beyond a static read"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-202
   title: "idioms satisfy behaviors; they never subtract them"
   contract:
@@ -6030,7 +6623,7 @@
       **The Manager Console is a right pane on the laptop and a sheet that slides
       up on the phone — IDIOM.** It stays live while you move between Direction and
       Operation. On the laptop you drag it wider; on the phone you pull it up when
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience-console/run.py (rule 4)'
@@ -6040,7 +6633,17 @@
     exists (fixed position and a translate at 980 pixels, with a dismiss
     control)
     and nothing makes the pane resizable when wide.
-  work: converge-tfu
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn) against the app at 127.0.0.1:8788,
+    signed in with the app's own signer. GAP → CONFORMS. The cite it
+    carried, converge-tfu, is resolved; this row moved on the kit's own
+    output today, read back from a run, and not on that item's resolution
+    note. RAN → experience-console rule 4 PASS: "a resizable pane on a wide
+    screen and a dismissible sliding tray at a small one, read from the
+    stylesheet's own rules"
+    A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2), so the `work`
+    line is gone rather than re-pointed.
 - id: CVG-206
   title: "a proposal opens full-screen on the phone and beside its evidence on the laptop"
   contract:
@@ -6188,10 +6791,26 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'grep -q ''Could not'' app/static/js/actions.js && echo OFFLINE-WRITES-FAIL-AS-A-FETCH-ERROR || echo OFFLINE-REFUSAL-CHANGED'
+    ref: 'python3 ledger/checks/offline_refusal.py'
     expect:
       exit: 0
-      stdout_contains: "OFFLINE-WRITES-FAIL-AS-A-FETCH-ERROR"
+      stdout_contains: "OFFLINE-REFUSAL=PLAIN-SENTENCE-RELAYED WRITES-NAMED=4-OF-5 MISSING=priority"
+  proves: >
+    That the offline refusal chain is whole and produces a PLAIN SENTENCE, not a
+    fetch error: the service worker makes it (a lead that never claims the wrong
+    failure, an ending per write path naming what to do instead), api.js carries
+    that sentence out with the thrown error rather than replacing it with a status
+    code, and actions.js relays it instead of inventing a cause. And that FOUR of
+    the five writes this clause covers have such a sentence, while the fifth does
+    not exist to refuse — which is why a chain that works leaves the row red.
+    THE COUNT IS WHY THIS ROW IS GAP WITH A PASSING PROBE. The probe passes because
+    it found what it looked for; what it found is 4-OF-5. A row that flipped green
+    on the chain alone would record a clause about five writes as kept while one of
+    them cannot be refused at all.
+    NOT that a browser with the network pulled shows the sentence. That is a live
+    round trip, driven in app/tests/ with a real service worker. A static read
+    settles that the sentence exists, names what to do, and is relayed whole —
+    never that it reaches a screen.
   notes: >
     Measured 2026-09-03 (converge-pq2). A failed write surfaces as 'Could not
     record the decision: <message>' - a
@@ -6199,7 +6818,37 @@
     offline and the write will not happen. Two of the five writes do not exist
     at
     all (CVG-103), so this clause cannot be fully kept before that one is.
-  work: converge-719
+    ────────────────────────────────────────────────────────────────────────
+    ───
+    RE-DERIVED 2026-09-04 (converge-yjn). STILL GAP -- BUT FOR THE OPPOSITE
+    REASON, AND THE OLD PROBE HAD STOPPED MEANING WHAT IT SAID. RAN ->
+    "OFFLINE-REFUSAL=PLAIN-SENTENCE-RELAYED WRITES-NAMED=4-OF-5
+    MISSING=priority".
+    THE STRING SURVIVED; ITS MEANING INVERTED. The old ref was `grep -q
+    'Could not' app/static/js/actions.js`, reported as OFFLINE-WRITES-FAIL-
+    AS-A-FETCH-ERROR, and it still matches today -- because "Could not ask:
+    ..." is now the app's own words in FRONT of the service worker's plain
+    sentence ("you are offline, so nothing was asked -- reconnect and ask
+    again, or tell the manager session directly"), not a bare fetch error. A
+    grep cannot see a meaning change, so the check went on reporting a gap
+    that had been closed. converge-719 closed it; this row would have gone
+    on calling it broken.
+    THE NEW PROBE WALKS THE WHOLE CHAIN, in three files, because no one file
+    settles the clause: sw.js MAKES the sentence (a lead that never claims
+    the wrong failure, an ending per write path naming what to do instead),
+    api.js carries it OUT as the thrown error rather than a status code, and
+    actions.js RELAYS err.message instead of inventing a cause. It was
+    driven red three ways before being left green: drop one write's ending
+    -> 3-OF-5; replace the plain lead with 'ERR_NET' -> CHANGED-REREAD-THIS-
+    ROW; stop relaying the message -> the same.
+    WHY IT IS STILL RED: four of the five writes have a sentence of their
+    own; the fifth, raise or lower a priority, has no route to refuse
+    (CVG-103). A write that does not exist cannot be refused in a plain
+    sentence, so this clause cannot be kept before converge-a5g is -- which
+    is why the cite moves to that item rather than to the resolved
+    converge-719. The count is the pin, so this row moves the moment the
+    write lands and needs its own ending.
+  work: converge-a5g
 - id: CVG-211
   title: "the Manager Console is live or plainly disconnected, never in between"
   contract:
