@@ -36,7 +36,7 @@ Everything on the screens. No fixtures, no placeholders:
 | a card's section | the heading path above the line, plus its numbered item |
 | a card's source | `git blame` on the line: subject · short sha · date |
 | your read point, your kept marks | `~/.amplifier/converge-app.state.json`, per steward |
-| proposals | `*-candidate.md` beside the document |
+| proposals | `*-candidate.md` beside the document — including the ones an ask makes |
 | kept / gap / draft, confidence | `ledger/rows.yaml` (`draft` = nothing watches it yet) |
 | throughput | `amplifier-work-tracker status`, merged lanes, `REOPENED` entries |
 
@@ -77,10 +77,42 @@ wording is written to `<doc-stem>.vN-candidate.md` beside it, in the three-part
 shape `documents.v1` §8 requires. The check is made in `app/writes.py`, on the
 file, so forcing the control in the browser changes nothing.
 
-The four other writes are real too: a decision appends to
+The other writes are real too: a decision appends to
 `docs/workflow/owner-ratifications-<date>.md`, feedback creates
 `.converge/feedback/<ts>.md`, a steer rewrites `.width` and appends to
 `HIGHWAY.md`. Nothing here has a demo mode.
+
+## Ask: a scoped question, answered as a proposal
+
+`POST /api/managers/{mid}/ask` with `{scope, repoId, docId, section, text}`,
+where scope is `paragraph` · `document` · `all`. It answers with the proposal
+it made — `{ok, scope, proposal, file, path, document, documentUntouched,
+merged, drafted, draftedBy, said}` — so the client can send the steward to
+Review to answer it.
+
+`experience-direction.v1` clause 9 says the output of an ask is *always* a
+proposal: never a silent edit, never a chat. So at every scope, locked document
+or draft, this writes one file and only one file — the same
+`<doc-stem>.vN-candidate.md` beside the document that a locked-document edit
+produces, in the three-part shape `documents.v1` §8 requires. The document is
+never opened for writing, and the answer says so (`documentUntouched`). A
+second ask about the same document joins the open proposal, carrying its own
+change *and* its own evidence, so the record never names one ask while the body
+carries three.
+
+Where the wording comes from is a choice, and the proposal always says which:
+
+| `CONVERGE_ASK_DRAFTER` | What the replacement fence carries |
+|---|---|
+| unset (default) | the steward's own words, marked as not yet drafted |
+| `agent` | wording from a headless `amplifier run` in the repository |
+
+The drafting session reads `--output-format json` and takes only its `response`
+— measured on 2026-09-04, reading all of stdout put the CLI's banner, its
+token-usage table and its colour codes into a proposal as if a session had
+proposed them. A session that fails, times out, is missing, or reports anything
+but success does not lose the ask: the proposal is still written from the
+steward's own words and names what went wrong.
 
 The terminal pane is **read-only in this version** — it shows a lane's tmux
 session and takes no keystrokes. Its router (`app/tmux_view.py`) is optional:
