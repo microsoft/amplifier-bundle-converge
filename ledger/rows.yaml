@@ -649,11 +649,17 @@
   disposition: CONFORMS
   assertion:
     kind: indexed
-    ref: conformance/composition/run.py (rules 6a, 6b)
+    ref: conformance/composition/run.py (rules 6a, 6b, 6c)
   proves: >
     That no top-level `spawn:` key exists in the composed files — the static
-    absence. Not that a neighbouring session keeps its tools when Converge is
-    installed beside it; that is CVG-009.
+    absence, which is rule 6a and rule 6a only. NOT that a neighbouring session
+    keeps its tools when this tree is installed beside it (rule 6b, whose
+    verdict is CVG-009's). NOT that the release of this product ALREADY
+    INSTALLED on the host keeps them (rule 6c, whose verdict is CVG-071's, and
+    which is red on this machine today). Core 6 has three kit rules; this row
+    carries the teeth of exactly one of them, and names the other two so a
+    reader can find where their verdicts live rather than assuming this row
+    covers them.
   notes: >
     RAN 2026-09-03: rule 6a PASS — "no top-level 'spawn:' key in 2 composed
     file(s)" (bundle.md frontmatter, behaviors/converge.yaml). Rule 6b is the
@@ -670,7 +676,34 @@
     RULE IDS RE-POINTED 2026-09-03 by converge-hng, and the row RE-RUN at the new
     ids. The ref read `(rule 1d)`, which after the renumbering names nothing at
     all in the composition table — a dangling ref the path-existence check could
-    not see, because run.py was still there. Core 6's rows today are 6a and 6b.
+    not see, because run.py was still there. Core 6's rows on 2026-09-03 were
+    6a and 6b.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-bv7), AND THE REF NOW NAMES ALL THREE OF
+    CORE 6'S RULES. It read `(rules 6a, 6b)`. The kit grew a third rule for this
+    clause on lane/w8-neighbour — 6c, `installed_release_keeps_neighbour_tools`
+    — and a ref naming two of a clause's three rules is not a dangling ref. The
+    rule-id tripwire sees nothing wrong, because 6a and 6b both still exist. It
+    is silently NARROW, which is the harder defect: nothing looks broken, and
+    the clause quietly has a row fewer than it has rules.
+    RAN 2026-09-04, `uv run conformance/composition/run.py .`, verbatim, this
+    repository — all three of Core 6's rows:
+      [PASS] 6a  no_session_wide_tool_stripping: no top-level 'spawn:' key in 2 composed file(s)
+      [PASS] 6b  unrelated_session_keeps_tools: across 2 install path(s), an unrelated session's spawned helper keeps shell, delegation, skills (tool-bash, tool-delegate, tool-skills) -- control and treatment measured side by side
+      [FAIL] 6c  installed_release_keeps_neighbour_tools: on this host the neighbour's helper loses shell (tool-bash), delegation (tool-delegate), skills (tool-skills) -- carried by 1 app-installed release(s) of this repository: git+https://github.com/bkrabach/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml -> spawn {'exclude_tools': ['tool-delegate', 'tool-skills', 'tool-bash']}
+    Kit verdict on that run: FAIL — 12 PASS, 1 FAIL, 0 SKIP.
+    6c IS NAMED HERE BECAUSE IT IS CORE 6'S THIRD ROW, NOT BECAUSE THIS ROW
+    PROVES IT — the identical reason 6b was named here on 2026-09-03 while it
+    was still a SKIP, and the same discipline: a named rule whose status this
+    row does not carry is a signpost, never a soft pass.
+    WHY THIS ROW IS STILL CONFORMS WITH A RED RULE IN ITS REF. 6a's teeth are a
+    claim about THIS REPOSITORY'S FILES: no top-level `spawn:` key in either
+    composed file. That claim is unchanged by what a DIFFERENT release of the
+    product does on this machine — the kit's own README says it in those words,
+    "6c's verdict is a fact about the machine, not about the repository". The
+    machine's verdict is recorded, red, at CVG-071, with converge-2a9 as the
+    decision that closes it. Reading this row's green as covering the host is
+    exactly the mistake `proves` above exists to refuse.
 
 - id: CVG-007
   title: the guard admits both proposal names and refuses every other write
@@ -809,13 +842,23 @@
       exit: 0
       stdout_contains: "NEIGHBOUR-CHECK-NOW-PASS"
   proves: >
-    That the composition kit's rule 6b stands up an UNRELATED session twice —
-    once on the lean base alone as a control, once per install path with this
-    repository installed beside it — and finds the spawned helper keeps its
-    shell, delegation and skills tools in every treatment. NOT that no bundle
-    anywhere strips them: this reading is of THIS repository's two install
-    paths. A different Converge bundle on the same host can and did break the
-    same promise (converge-w3v), and this row would stay green through it.
+    THIS ROW RUNS RULE 6b AND NOTHING ELSE, and 6b is one of the two halves of
+    the sentence quoted above. 6b stands up an UNRELATED session twice — once
+    on the lean base alone as a control, once per install path with THIS
+    WORKING TREE installed beside it — and finds the spawned helper keeps its
+    shell, delegation and skills tools in every treatment. That is the tree
+    half: composing this repository takes nothing away.
+    IT DOES NOT PROVE THE SENTENCE. "After installing Converge beside other
+    work" is a claim about a HOST, and what a user installed is a release, not
+    this tree. That half is rule 6c, and its verdict lives at CVG-071, which is
+    Not yet — on this machine, right now, a published release of this product
+    is stripping exactly those three tools from every spawned helper in every
+    session (converge-w3v; the decision is converge-2a9).
+    UNTIL 2026-09-04 THIS PARAGRAPH ENDED "and this row would stay green
+    through it", NAMING A HOLE WITH NO CHECK IN IT. The hole now has one. The
+    text is kept rather than deleted because a row that recorded its own blind
+    spot, and can now point at the rule that closed it, is worth more than one
+    that reads as though it was never blind.
   notes: >
     RAN 2026-09-02 → NEIGHBOUR-CHECK-STILL-SKIPPED. Kit rule 3 reports SKIP,
     "needs two live Amplifier sessions (Converge plus unrelated work) side by
@@ -864,6 +907,120 @@
     (converge-w3v, still open). This row asserts THIS repository's install
     paths; it is not a statement about the machine.
     THE `work` REF IS GONE, because a green row may not carry one.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-bv7). RAN → NEIGHBOUR-CHECK-NOW-PASS. The
+    probe, the rule it keys on and the disposition are all unchanged; what
+    changed is what this row is allowed to imply.
+    THE PARAGRAPH DIRECTLY ABOVE STOPPED BEING THIS ROW'S PROBLEM, AND THAT IS
+    THE WHOLE EDIT. It said what this row does not witness — a different
+    published Converge bundle, app-installed on this host, stripping the three
+    tools — and then left the reader with nothing to go and read. The
+    composition kit grew rule 6c on lane/w8-neighbour precisely to witness it,
+    and the verdict has its own row now: CVG-071, Not yet, work converge-2a9.
+    `proves` above is rewritten to route a reader there instead of ending on
+    the admission.
+    VERBATIM, THIS REPOSITORY, 2026-09-04 — the rule this row runs, beside the
+    rule it does not:
+      [PASS] 6b  unrelated_session_keeps_tools: across 2 install path(s), an unrelated session's spawned helper keeps shell, delegation, skills (tool-bash, tool-delegate, tool-skills) -- control and treatment measured side by side
+      [FAIL] 6c  installed_release_keeps_neighbour_tools: on this host the neighbour's helper loses shell (tool-bash), delegation (tool-delegate), skills (tool-skills) -- carried by 1 app-installed release(s) of this repository: git+https://github.com/bkrabach/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml -> spawn {'exclude_tools': ['tool-delegate', 'tool-skills', 'tool-bash']}
+    6b's own structured evidence on that run: control `spawn_policy` null and
+    carrying all three promised tools; both treatments (bundle.md and
+    behaviors/converge.yaml) `spawn_policy_seen` null, `lost: []`.
+    THE UNCOMFORTABLE READING, STATED ONCE SO NOBODY HAS TO REDERIVE IT: the
+    green above and the red below are both true at the same moment, about the
+    same promise, on the same machine. The tree keeps the promise; the release
+    a user is running does not. That is not a contradiction in the ledger — it
+    is the reason 6b alone was never enough, and the reason this row may not be
+    read as covering the sentence it quotes.
+
+- id: CVG-071
+  title: the neighbour promise on the HOST — the installed release strips a neighbour's tools
+  contract:
+    file: contracts/composition.v1.md
+    clause: "Conformance kit asserts, bullet 3"
+    quote: |
+      After installing Converge beside other work, a helper in an unrelated session
+      keeps its shell, delegation, and skills tools.
+  disposition: GAP
+  work: converge-2a9
+  assertion:
+    kind: probe
+    ref: 'uv run conformance/composition/run.py . --json-only | python3 -c "import json,sys;r={x[\"id\"]:x[\"status\"] for x in json.load(sys.stdin)[\"results\"]};print(\"HOST-NEIGHBOUR-CHECK-\"+r[\"installed_release_keeps_neighbour_tools\"])"'
+    expect:
+      exit: 0
+      stdout_contains: "HOST-NEIGHBOUR-CHECK-FAIL"
+  proves: >
+    That the composition kit's rule 6c composes the unrelated session THE WAY
+    THIS HOST ACTUALLY DOES IT — the lean base plus the host's whole app-bundle
+    list, exactly as the installed CLI's `runtime/config.py` hands
+    `get_app_bundles()` to `load_and_prepare_bundle` — and finds the spawned
+    helper LOSING its shell, delegation and skills tools; then loads each app
+    entry alone until it can name the one carrying the policy.
+    THE PROBE PASSES AND THE ROW IS RED, WHICH IS NOT A CONTRADICTION. The
+    probe asserts the kit still answers FAIL for this rule. The disposition
+    records what that answer MEANS about the promise: on this machine, right
+    now, it is not kept. Read `expect` as "the harm is still measurable", never
+    as "this row is fine".
+    THAT IS ALSO WHY IT IS KEYED ON FAIL RATHER THAN ON THE HARM ITSELF. The
+    day converge-2a9 is decided and acted on, 6c answers PASS or SKIP, this
+    probe misses its expect, `ledger/checks/verify.py` fails NAMING THIS ROW,
+    and the row must be re-read before it may go green. Movement back toward
+    spec is drift too (LEDGER-FORMAT §3), and a row that could only notice
+    movement in one direction would let the fix land silently.
+    NOT PROVEN HERE: that this repository's tree is at fault. It is not — 6a
+    and 6b are both PASS on the same run (CVG-006, CVG-009). The carrier is a
+    published sibling release of the same product, app-installed on this host.
+  notes: >
+    ADDED 2026-09-04 by converge-bv7, the ledger residual of converge-w3v.
+    Before this row, composition Core 6 had three kit rules and two ledger
+    rows: 6a's static absence (CVG-006) and 6b's tree-half measurement
+    (CVG-009). 6c had no row at all — and a missing row is invisible, because
+    nothing looks wrong. This is that row.
+    WHY 6c EXISTS AT ALL, IN ONE SENTENCE: the tree a maintainer reads and the
+    release a user runs are different repository states, and only the second is
+    what the neighbour actually experiences.
+    RAN 2026-09-04 → HOST-NEIGHBOUR-CHECK-FAIL. Verbatim from that run:
+      [FAIL] 6c  installed_release_keeps_neighbour_tools: on this host the neighbour's helper loses shell (tool-bash), delegation (tool-delegate), skills (tool-skills) -- carried by 1 app-installed release(s) of this repository: git+https://github.com/bkrabach/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml -> spawn {'exclude_tools': ['tool-delegate', 'tool-skills', 'tool-bash']}
+    Kit verdict on that run: FAIL — 12 PASS, 1 FAIL, 0 SKIP. Structured
+    evidence the rule carried with it: `app_bundle_count` 22;
+    `app_bundle_source` "the installed CLI's own
+    get_settings().get_app_bundles()"; `host_spawn_policy`
+    {'exclude_tools': ['tool-delegate', 'tool-skills', 'tool-bash']};
+    `host_lost` [tool-bash, tool-delegate, tool-skills]; and
+    `app_bundles_naming_this_repository` listing BOTH forks —
+    bkrabach/amplifier-bundle-converge and microsoft/amplifier-bundle-converge
+    — of which the per-entry attribution pass found exactly ONE carrying a
+    `spawn` policy at all. The microsoft entry reads null. Twenty-one of the
+    twenty-two app entries read null.
+    THE CAUSE IS NAMED AND IT IS NOT THIS TREE. converge-2a9 carries the full
+    four-arm measurement (control / treatment / attribution / removal control)
+    and a ready-to-file upstream issue. Its removal control is the arm that
+    settles attribution: the host app list MINUS that one entry composes to
+    `spawn: null`, and the helper keeps all three tools.
+    WHAT WOULD CLOSE THIS ROW IS IN THE STEWARD'S HANDS, NOT A LANE'S.
+    converge-2a9's three options — the fork drops its `spawn:` block; or the
+    entry leaves this host's app list (`amplifier bundle remove` /
+    ~/.amplifier/settings.yaml); or the steward rules the two bundles are one
+    product and one is stale, in which case both follow. No lane can take the
+    first (another repository) or the second (host-wide shared state, with
+    other lanes live on it). That is why this is Not yet with a work ref, and
+    not a lane's unfinished task.
+    A GREEN RECORDED BEFORE THAT DECISION WOULD BE THE EXACT SILENT DRIFT THE
+    RATCHET EXISTS TO REFUSE — the sentence converge-bv7's handoff asked to be
+    written down here, written down here.
+    HONEST LIMIT, THE SAME ONE THE KIT STATES ABOUT ITSELF: this row's verdict
+    is a fact about THIS MACHINE at THIS MOMENT. The identical commit would
+    read PASS on a clean laptop and SKIP on a CI runner that installs no app
+    bundles. That is not a weakness in the rule; it is what "after installing
+    Converge beside other work" means. It does mean this row may not be read as
+    a claim about the repository — CVG-006 and CVG-009 are the rows that make
+    those, and both are green.
+    ONE THING THIS ROW DOES NOT SETTLE: whether a fork under a different owner
+    is "this repository". The kit ruled that it is, and reports FAIL rather
+    than the SKIP it reserves for a foreign carrier. That ruling is the kit's,
+    made on lane/w8-neighbour; it is recorded here because it is load-bearing
+    for this row's colour, and because converge-2a9's option 3 puts the same
+    question to the steward in different words.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # operation.v1 — 15 rows.  The contract names its own gate "**Red today** —
