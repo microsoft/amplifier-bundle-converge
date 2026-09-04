@@ -44,7 +44,7 @@ stdlib-only and needs no install beyond `uv run`.
 | f | `lanes` | **two REAL lanes**, tended, judged | `git worktree list`, `tmux list-panes` on the launcher's own socket, `/proc/<pid>/cwd` of every item's holder, commits beyond each lane's base — live where they can still be read, and from readings taken during the wave where they cannot |
 | g | `integrated` | results integrated and verified | merge commits naming `lane/*` on the integration branch |
 | h | `rechecked` | contracts re-checked | the contract kits, re-run **by this harness** after integration |
-| i | `brief` | a plain-sentence return brief | `docs/workflow/OWNER-RETURN-LOG.md` — dated, five parts, written in sentences |
+| i | `brief` | a plain-sentence return brief | `docs/workflow/OWNER-RETURN-LOG.md` — its **newest dated entry**, which is the return this run produced: five labelled parts under one heading, written in sentences. Beside it, stamped returns (`## <date> <HH:MM>`) counted against complete briefs, because clause 10 is a brief on *every* return. The file's header is not an entry and never counts as a brief |
 
 Output is a JSON report on stdout, a human summary on stderr, exit 0 when no
 step FAILs and 1 when any does.
@@ -140,8 +140,8 @@ Two deliberate refusals in that code:
 An assertion nobody can make fail proves nothing.
 
 ```sh
-uv run evaluations/turnkey/run.py --self-check      # 24 cases, no environment needed
-uv run --with pytest pytest evaluations/turnkey -q  # 57 tests
+uv run evaluations/turnkey/run.py --self-check      # 29 cases, no environment needed
+uv run --with pytest pytest evaluations/turnkey -q  # 72 tests
 ```
 
 `--self-check` runs every `assert_*` function against synthetic evidence that
