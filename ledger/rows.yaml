@@ -838,6 +838,40 @@
 # not distinguish "unbuilt" from "built-but-unobserved", and 14 rows in the very
 # first seed hit that. PROTOCOL.md is RATIFIED; changing it is a §5 CANDIDATE
 # that only the owner ratifies, and one seed does not clear the evidence bar.
+#
+# RE-READ AGAIN 2026-09-04 (converge-saz), AFTER TWO NEW HARNESS STEPS.  The
+# turnkey grew step (j), which reads what a wave LEFT BEHIND, and step (k),
+# which reads WHO produced an artifact rather than only that it exists
+# (converge-2ro, converge-6mi).  Ten rows here were still probing
+# modes/converge-manager.md, which proves the rule is written down and nothing
+# else.  All ten now read the recorded step: FIVE MOVED GAP -> CONFORMS
+# (CVG-012, CVG-014, CVG-016, CVG-022, CVG-023) and FIVE STAYED GAP with the
+# observation each still waits on named in the harness's own words (CVG-013,
+# CVG-019, CVG-021 -> converge-5vz; CVG-017, CVG-018 -> converge-blg).
+#
+# EACH PROBE PINS ITS CLAUSE'S VERDICT WORD -- `Core 6 (CVG-016) PASS` -- AND
+# NOT THE COUNTS IN THE SENTENCE AFTER IT.  Those counts are of one wave: "4
+# lane brief(s)", "79 resolution(s)", "11 of its 35 dated decisions".  A row
+# keyed on them goes red on the next honest re-run, which is noise that reads
+# exactly like drift; a row keyed on the verdict word goes red when the
+# harness's answer for THAT CLAUSE changes, in either direction, which is the
+# movement the ratchet exists to catch.  The sentence itself is quoted in each
+# row's notes, where a reader can check what the verdict was earned on.
+#
+# THE RED ROWS ARE KEYED THE SAME WAY, ON `SKIP`, AND THAT IS THE BIGGER
+# CHANGE.  A red row that greps a file which has not moved since 2026-09-02
+# cannot notice its own clause being kept.  These five now read the step that
+# declines them, so the day the harness answers PASS for one of them, that row
+# fails its expect and must be re-read.  Drift toward spec is caught by the
+# same tripwire as drift away from it.
+#
+# ONE CHARACTER STOOD IN THE WAY, AND IT IS WORTH RECORDING AS A DEFECT CLASS.
+# ledger/checks/turnkey_step.py accepted step letters `[a-i]` -- correct when
+# the harness had nine steps, silently wrong the day it grew two more.  Asked
+# for step (j) it answered "no step (j) is recorded in
+# evaluations/turnkey/RESULT.md" while (j) sat in that file, four lines below
+# (i): a false "the record changed", indistinguishable from real drift by
+# anything except opening the file.  The class is now `[a-z]`.
 # ─────────────────────────────────────────────────────────────────────────────
 
 - id: CVG-010
@@ -976,16 +1010,22 @@
     quote: |
       **The plan is visible.** Order, dependencies, collisions, and opportunistic
       picks are shown with reasons.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 2 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-2 || echo MODE-LOST-CLAUSE-2'
+    ref: 'if grep -q "^## Clause 2 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 2 (CVG-012) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-2-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J; else echo CLAUSE-2-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-2"
+      stdout_contains: "CLAUSE-2-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:51) — not that any
-    plan was ever shown.
+    That the mode still encodes this clause, AND that the turnkey's step (j)
+    read a wave's own leavings and recorded Core 2 PASS — the lane briefs each
+    declare the paths their lane owns, and the plan record gives REASONS for
+    dated decisions rather than only announcing them. NOT that every plan is
+    visible. The recorded reading is four briefs and 11 of 35 dated decisions,
+    on one host on one day; the clause names four things — order, dependencies,
+    collisions, opportunistic picks — and this reading covers ownership and
+    reasons. A decision nobody wrote down is invisible to it.
   notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-2. See CVG-010 for the shared cause.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-2. The
@@ -1001,8 +1041,26 @@
     dependencies, collisions and opportunistic picks were shown with reasons,
     because a wave that ran leaves no artifact saying what was shown before it.
     converge-2ro carries this clause and six others in the same position, with
-    what each one would need observed."
-  work: converge-2ro
+    what each one would need observed.
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz) AND MOVED GAP → CONFORMS. RAN →
+    CLAUSE-2-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J.
+    THE STEP THIS ROW SAID DID NOT EXIST NOW EXISTS. Four lines up this row
+    reads 'not one of them reads a plan'. converge-2ro landed step (j), which
+    reads what a wave left behind, and evaluations/turnkey/RESULT.md records its
+    reading of this clause: Core 2 (CVG-012) PASS: 4 lane brief(s) each declare
+    the paths that lane owns, and the plan record at
+    /home/bkrabach/dev/hw-converge/HIGHWAY.md gives reasons for 11 of its 35
+    dated decisions.
+    THE PROBE NOW READS THAT, AND NOT THE MODE FILE ALONE, so this row flips if
+    the harness's answer for this clause changes. It pins the verdict word and
+    not the counts — the section header above CVG-010 says why, and the counts
+    are quoted here instead.
+    ELEVEN OF THIRTY-FIVE IS NOT THIRTY-FIVE OF THIRTY-FIVE. The clause asks for
+    order, dependencies, collisions and opportunistic picks with reasons; this
+    reading covers the ownership half of a brief and the reason half of a plan
+    entry, on one wave, on one host. `proves` says so.
+    THE `work` REF IS GONE, because a green row may not carry one."
 
 - id: CVG-013
   title: never the bottleneck
@@ -1015,13 +1073,18 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 3 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-3 || echo MODE-LOST-CLAUSE-3'
+    ref: 'if grep -q "^## Clause 3 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 3 (CVG-013) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-3-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS; else echo CLAUSE-3-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-3"
+      stdout_contains: "CLAUSE-3-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:62) — not that the
-    steward was never the bottleneck, which is measurable only across a real wave.
+    That the mode still encodes this clause, AND that the harness's own reading
+    of it still DECLINES, in the words step (j) recorded: it can see that work
+    was parked on the steward's word and that other lanes kept running, which is
+    the clause's shape and not its promise. NOT that the steward was never the
+    bottleneck. A red row keyed on a declining reading is worth more than one
+    keyed on a file that has not moved since 2026-09-02 — this one fails its
+    expect the day the harness answers PASS here, and forces a re-read.
   notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-3. See CVG-010.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-3. The
@@ -1038,8 +1101,27 @@
     measurement — an unattended run proves nothing was ASKED, never that
     everything askable was maximised.
     converge-2ro carries this clause and six others in the same position, with
-    what each one would need observed."
-  work: converge-2ro
+    what each one would need observed.
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz). STILL GAP, AND NOW RED FOR A REASON A
+    CHECK CAN STATE. RAN → CLAUSE-3-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS.
+    THE CLAUSE HAS A READER NOW, AND THE READER DECLINED. converge-2ro landed
+    step (j); evaluations/turnkey/RESULT.md records what it said here: Core 3
+    (CVG-013) SKIP: this run can see that work was parked on the steward's word
+    and that other lanes kept running (5 plan entries record a park), which is
+    the clause's shape but not its promise.
+    WHY THAT IS NOT A PASS, IN THE HARNESS'S OWN LOGIC: the clause is a
+    MAXIMISATION, and a maximisation is a comparison against the work that could
+    have proceeded. Five parks in a plan record show that parking happened; what
+    continued beside each park, and what could have, is stored nowhere.
+    WHAT THE ROW GAINED BY MOVING ITS PROBE: it can now notice being kept. The
+    old probe grepped a mode file unchanged since 2026-09-02 and would have gone
+    on printing green through any wave whatsoever.
+    THE `work` REF MOVED converge-2ro → converge-5vz. converge-2ro is RESOLVED
+    — it gave all seven clauses a runner — and closed without a successor for
+    the three that runner could not reach. converge-5vz is that successor, and
+    names the missing observation for each of the three separately."
+  work: converge-5vz
 
 - id: CVG-014
   title: feedback is signal, not a ticket
@@ -1050,17 +1132,22 @@
       **Feedback is signal, not a ticket.** Before filing: read and quote the
       evidence; confirm which version was seen; merge reports sharing a cause and
       split one hiding several
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 4 - " modes/converge-manager.md && [ -f context/manager/feedback-intake.md ]; then echo MODE-ENCODES-CLAUSE-4-WITH-INTAKE; else echo MODE-LOST-CLAUSE-4-OR-INTAKE; fi'
+    ref: 'if grep -q "^## Clause 4 - " modes/converge-manager.md && [ -f context/manager/feedback-intake.md ] && python3 ledger/checks/turnkey_step.py j "Core 4 (CVG-014) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-4-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J; else echo CLAUSE-4-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-4-WITH-INTAKE"
+      stdout_contains: "CLAUSE-4-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J"
   proves: >
-    The mode (modes/converge-manager.md:71) plus context/manager/feedback-intake.md
-    encode all eight intake rules — not that any raw report was actually enriched
-    before filing.
+    That the mode plus context/manager/feedback-intake.md still encode the eight
+    intake rules, AND that step (j) held a raw report and its filed item side by
+    side and recorded Core 4 PASS — the item quotes the report and names the
+    version it was said about. NOT the whole clause. The reading covers the
+    first two intake rules (quote the evidence, confirm the version) on ONE
+    filed item; MERGING reports that share a cause and SPLITTING one that hides
+    several is read by nothing, and the same run recorded a triage naming no
+    item at all, reported unresolved rather than passed.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-4-WITH-INTAKE. The kit assert "No raw
     feedback becomes work without a quoted source and enrichment" has no runner
@@ -1081,7 +1168,24 @@
     all. Measuring this needs a raw report and its filed item side by side.
     converge-2ro carries this clause and six others in the same position, with
     what each one would need observed.
-  work: converge-2ro
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz) AND MOVED GAP → CONFORMS. RAN →
+    CLAUSE-4-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J.
+    THE MEASUREMENT THIS ROW ASKED FOR WAS TAKEN, IN THE WORDS IT ASKED FOR IT.
+    Two lines up: "Measuring this needs a raw report and its filed item side by
+    side." Step (j) does exactly that, and evaluations/turnkey/RESULT.md records
+    it: Core 4 (CVG-014) PASS: 1 item(s) filed from feedback quote the report and
+    name the version it was said about (converge-f5f); 1 triage(s) name no item
+    and are unresolved, not passed.
+    THE SECOND HALF OF THAT SENTENCE IS WHY THE READING IS WORTH SOMETHING. A
+    triage that named no item was NOT counted as a pass; the step reports it
+    unresolved. A check that can only find what it is looking for would have
+    reported one of one.
+    WHAT IS STILL UNREAD, AND IT IS HALF THE CLAUSE: "merge reports sharing a
+    cause and split one hiding several". One item cannot demonstrate a merge or
+    a split. `proves` says so, and this row is green on the quoting-and-version
+    half only.
+    THE `work` REF IS GONE, because a green row may not carry one.
 
 - id: CVG-015
   title: lanes are real sessions
@@ -1157,17 +1261,21 @@
       **Width is a collision decision.** Lanes fill to the steward's count only
       with items that provably touch different files; adjacent items run as one
       lane.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 6 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-6 || echo MODE-LOST-CLAUSE-6'
+    ref: 'if grep -q "^## Clause 6 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 6 (CVG-016) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-6-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J; else echo CLAUSE-6-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-6"
+      stdout_contains: "CLAUSE-6-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:120) — not that lanes
-    were ever filled only with disjoint items, nor that a shortfall ever surfaced
-    as the repair card rather than silently.
+    That the mode still encodes this clause, AND that step (j) judged four lanes
+    running at once and recorded Core 6 PASS on the DECLARED half — each brief
+    declares paths that collide with no other lane's. NOT the ACTUAL half: the
+    same reading says only one of the four had commits yet, so the files the
+    lanes really touched could not be compared, and two empty branches share no
+    file by not having one. NOT the shortfall half either — a width shortfall
+    surfacing as a repair the steward answers with a word is read by nothing.
   notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-6. See CVG-010.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-6. The
@@ -1186,8 +1294,25 @@
     interval becoming a repair the steward answers with a word — is read by
     nothing either.
     converge-2ro carries this clause and six others in the same position, with
-    what each one would need observed."
-  work: converge-2ro
+    what each one would need observed.
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz) AND MOVED GAP → CONFORMS. RAN →
+    CLAUSE-6-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J.
+    REACHING A WIDTH AND EARNING IT ARE STILL DIFFERENT FACTS, AND THE SECOND
+    ONE IS NOW READ. Above, this row says step (f) checks only that the wave
+    REACHED its width. Step (j) asks the other question, and
+    evaluations/turnkey/RESULT.md records the answer: Core 6 (CVG-016) PASS: 4
+    lanes ran at once, each brief declares paths that collide with no other
+    lane's, and the actual half is unmeasured: only 1 of them has commits yet,
+    and two empty branches share no file by not having one.
+    THE STEP REPORTS ITS OWN BLIND SPOT IN THE SAME SENTENCE, which is why the
+    green is worth taking: a check that counted two empty branches as disjoint
+    would have claimed four of four. This one says unmeasured.
+    WHAT IS STILL UNREAD: the files the lanes actually changed (three of the
+    four had no commits at read time), and the clause's shortfall half — a
+    shortfall past a bounded interval becoming a repair card. `proves` carries
+    both.
+    THE `work` REF IS GONE, because a green row may not carry one."
 
 - id: CVG-017
   title: done means the manager session re-ran the check
@@ -1200,13 +1325,19 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 7 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-7 || echo MODE-LOST-CLAUSE-7'
+    ref: 'if grep -q "^## Clause 7 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py k "Core 7 (CVG-017) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-7-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY; else echo CLAUSE-7-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-7"
+      stdout_contains: "CLAUSE-7-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:133) — not that any
-    marker was ever checked against its branch.
+    That the mode still encodes this clause, AND that step (k) — which reads WHO
+    produced an artifact — still declines its subject, for a reason it states:
+    the newest record of a check run came in through a lane merge, so this
+    wave's verification is unattributed. The step's own line also carries the
+    half that IS measured, from step (f): a marker on an unchanged branch is
+    recorded stuck. NOT that the manager session re-ran anything. Red on the
+    subject of the sentence, green on its parenthetical, and the probe now says
+    which.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-7. This is the clause the ledger most
     wants asserted, because it is the one a lane can most easily fake: the kit
@@ -1237,7 +1368,30 @@
     OBSERVED run, which needs a wave to be running at that moment; a probe keyed
     on it would go red whenever this workspace happened to be idle — a false
     alarm, not drift. It is recorded here in the words the run printed instead.
-  work: converge-6mi
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz). STILL GAP, AND THE PROBE NO LONGER
+    READS THE MODE ALONE. RAN → CLAUSE-7-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY.
+    THE PARAGRAPH ABOVE IS SUPERSEDED, AND IT IS WORTH SAYING WHY IT WAS RIGHT
+    THEN. It reasoned that a probe keyed on an OBSERVED run goes red whenever
+    the workspace is idle. converge-6mi's step (k) writes its reading into
+    evaluations/turnkey/RESULT.md, and ledger/checks/turnkey_step.py reads THE
+    RECORDED RUN, not a live one — the same route CVG-011 and CVG-015 already
+    take. A file does not go idle. The objection applied to re-running the
+    harness, never to reading what it recorded.
+    WHAT STEP (k) SAID HERE: Core 7 (CVG-017) SKIP: step (f) PASS: a marker on
+    an unchanged branch is recorded stuck; and on the subject of the sentence —
+    the newest record of a check run (ledger/rows.yaml at 36bd6572) came in
+    through a lane merge, so this wave's verification is unattributed here; the
+    integrator has written 6 such record(s) before, most recently 2921181e.
+    THE MISSING OBSERVATION IS NOW PRECISE, WHICH IT WAS NOT ON 2026-09-02. It
+    is no longer 'an artifact does not record which process produced it' — it
+    does, and the step reads it. It is: on this host the newest check record
+    arrived through a lane merge, so there is nothing of the MANAGER session's
+    own to attribute. That is a condition of the wave, not a defect in the step.
+    THE `work` REF MOVED converge-6mi → converge-blg. converge-6mi is RESOLVED
+    — it built the step — and closed without a successor for the half the step
+    could not reach. converge-blg is that successor and carries both routes.
+  work: converge-blg
 
 - id: CVG-018
   title: integrate, verify, re-check
@@ -1251,14 +1405,19 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 8 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-8 || echo MODE-LOST-CLAUSE-8'
+    ref: 'if grep -q "^## Clause 8 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py k "Core 8 (CVG-018) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-8-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY; else echo CLAUSE-8-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-8"
+      stdout_contains: "CLAUSE-8-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:150) — not that a
-    manager session re-runs the contract check after a merge, nor that a
-    post-merge gate fires for a multi-lane merge.
+    That the mode still encodes this clause, AND that step (k) carries its three
+    parts separately: the post-merge gate fires when two or more lanes land
+    (step (g) PASS), the contract check follows it (step (h) PASS, by the
+    harness, which is the gate and not the manager session), and WHOSE
+    verification it was is still unread — the newest record of a check run came
+    in through a lane merge. NOT that the manager session's own verification is
+    the one that happens. The clause's opening words remain the unmeasured part,
+    and the step now names why rather than leaving it to a reader.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-8. The "contract check" half is now
     RUNNABLE for three of four contracts (conformance/composition, /documents,
@@ -1287,7 +1446,29 @@
     CVG-017 gives. The probe still reads only the mode, for the same reason too:
     an observed run needs a live wave, and a row keyed on one would go red on a
     quiet afternoon.
-  work: converge-6mi
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz). STILL GAP, AND THE PROBE NOW READS THE
+    STEP THAT JUDGES THIS CLAUSE. RAN →
+    CLAUSE-8-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY.
+    THE 'QUIET AFTERNOON' OBJECTION ABOVE IS ANSWERED, NOT OVERRULED. It applied
+    to keying a row on RE-RUNNING an observed harness. This probe reads what the
+    harness RECORDED, in evaluations/turnkey/RESULT.md — the file
+    contracts/operation.v1.md itself names as the gate's evidence, and the same
+    route CVG-011 and CVG-015 already take.
+    WHAT STEP (k) SAID HERE: Core 8 (CVG-018) SKIP: step (g) PASS: two or more
+    lanes landed in one repository; step (h) PASS: the contract check was re-run
+    after integration — by this harness, which is the post-merge gate and not
+    the manager session; and on whose verification it was — the newest record of
+    a check run (ledger/rows.yaml at 36bd6572) came in through a lane merge, so
+    this wave's verification is unattributed here.
+    TWO OF THREE PARTS GREEN IS STILL NOT THE CLAUSE. 'The manager session's own
+    verification, never the worker session's' is the opening phrase and the one
+    a lane can most easily fake; it stays unasserted, and it is now unasserted
+    for a reason a check states rather than for a reason a reader supplies.
+    THE `work` REF MOVED converge-6mi → converge-blg, RESOLVED converge-6mi's
+    successor for the attribution half, which carries CVG-017 for the same
+    reason and by the same reading.
+  work: converge-blg
 
 - id: CVG-019
   title: stalls are decisions, not loops
@@ -1301,13 +1482,16 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 9 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-9 || echo MODE-LOST-CLAUSE-9'
+    ref: 'if grep -q "^## Clause 9 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 9 (CVG-019) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-9-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS; else echo CLAUSE-9-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-9"
+      stdout_contains: "CLAUSE-9-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:164) — not that any
-    stall was ever declared stuck rather than retried.
+    That the mode still encodes this clause, AND that step (j)'s reading of it
+    RAN and found nothing to judge — no lane ended without commits, so no stall
+    existed for the reading to judge. NOT that a stall would be declared stuck
+    rather than retried. An empty denominator is not a pass, and the difference
+    between the two is exactly what this row exists to hold open.
   notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-9. See CVG-010.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-9. The
@@ -1324,8 +1508,22 @@
     what happens when work stops moving. This one needs a wave deliberately
     made to stall.
     converge-2ro carries this clause and six others in the same position, with
-    what each one would need observed."
-  work: converge-2ro
+    what each one would need observed.
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz). STILL GAP, AND THE READING NOW RUNS.
+    RAN → CLAUSE-9-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS.
+    THE READER EXISTS AND FOUND NOTHING, WHICH IS NOT THE SAME AS PASSING.
+    evaluations/turnkey/RESULT.md records step (j)'s words: Core 9 (CVG-019)
+    SKIP: no lane ended without commits, so no stall exists for this reading to
+    judge — the reading ran and found nothing.
+    THAT IS THE HONEST SHAPE OF THIS CLAUSE'S PROBLEM, AND IT HAS NOT CHANGED
+    SINCE 2026-09-02: every wave so far finished. A gate that has only ever seen
+    work move cannot say what happens when work stops. What it needs is a wave
+    deliberately made to stall — named in converge-5vz as the cheapest of the
+    three routes there, because it is the only one that needs no new event store.
+    THE `work` REF MOVED converge-2ro → converge-5vz, which is RESOLVED
+    converge-2ro's successor for the three clauses its step could not reach."
+  work: converge-5vz
 
 - id: CVG-020
   title: a brief on every return — returns and briefs are countable now, and there are none of either
@@ -1443,13 +1641,17 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 11 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-11 || echo MODE-LOST-CLAUSE-11'
+    ref: 'if grep -q "^## Clause 11 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 11 (CVG-021) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-11-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS; else echo CLAUSE-11-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-11"
+      stdout_contains: "CLAUSE-11-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:186) — not that
-    owner-facing prompts across a real wave all fell inside the four.
+    That the mode still encodes this clause, AND that step (j)'s reading of it
+    still declines for a stated reason: nothing in the run reads a prompt as an
+    EVENT, so the four calls cannot be counted or classified. NOT that every
+    owner-facing prompt fell inside the four. This row is red on a missing
+    instrument, not on a missing wave — the waves happened; nobody recorded the
+    prompts as countable things.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-11. Measuring this clause means counting
     owner-facing prompt events across a real wave. evaluations/ratchet does
@@ -1473,7 +1675,23 @@
     every prompt falling inside the four.
     converge-2ro carries this clause and six others in the same position, with
     what each one would need observed.
-  work: converge-2ro
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz). STILL GAP, AND THE MISSING PIECE IS
+    NAMED BY A CHECK NOW. RAN →
+    CLAUSE-11-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS.
+    evaluations/turnkey/RESULT.md records step (j)'s words: Core 11 (CVG-021)
+    SKIP: nothing in this run reads a prompt as an event, so the four calls
+    cannot be counted or classified.
+    THAT IS THE SAME DIAGNOSIS THIS ROW MADE ON 2026-09-02, NOW MADE BY THE
+    HARNESS RATHER THAN BY A READER. evaluations/ratchet counts exactly these
+    events for the reconciler; nothing counts them for a manager session, and a
+    headless run that never prompted is still not the same fact as every prompt
+    falling inside the four.
+    THE `work` REF MOVED converge-2ro → converge-5vz. converge-2ro is RESOLVED;
+    converge-5vz is its successor for the three clauses the step could not reach,
+    and asks first whether the ratchet's counter can be pointed at a manager
+    session at all.
+  work: converge-5vz
 
 - id: CVG-022
   title: the queue is the shared one, with custody
@@ -1483,17 +1701,22 @@
     quote: |
       **The queue is the shared one, with custody.** Atomic claim, heartbeat while
       held, resolution written for whoever asked.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 12 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-12 || echo MODE-LOST-CLAUSE-12'
+    ref: 'if grep -q "^## Clause 12 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py k "Core 12 (CVG-022) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-12-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-K; else echo CLAUSE-12-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-12"
+      stdout_contains: "CLAUSE-12-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-K"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:199) — not that a
-    MANAGER session uses the queue this way, and not that any resolution was
-    written for whoever asked.
+    That the mode still encodes this clause, AND that step (k) read every
+    resolution in the queue and judged each one written in sentences that answer
+    the ASKER rather than pointing at a commit — the last third of the sentence,
+    which nothing read until now. The first two thirds rest on step (f)'s
+    placement of 60 held items from outside their holding processes, recorded
+    below. NOT that a resolution is CORRECT, and not that the asker agreed: the
+    reading judges the shape of the writing, which is what the clause asks for
+    and is not the same as the reader being served.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-12. The queue mechanism is real and in
     use: install-check reports "Work queue command  ok" and "Work queue service
@@ -1521,7 +1744,24 @@
     and may not stay cited. converge-6mi names this remainder explicitly rather
     than folding it in with the other two, which are about attribution; this one
     is about a record nobody writes.
-  work: converge-6mi
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz) AND MOVED GAP → CONFORMS. RAN →
+    CLAUSE-12-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-K.
+    THE RECORD NOBODY WROTE IS NOW WRITTEN, AND IT IS THE WHOLE REASON THIS ROW
+    MOVED. Above: 'Resolution written for whoever asked is read by nothing …
+    Nothing in this repository could fail on it today.' converge-6mi's step (k)
+    reads exactly that, and evaluations/turnkey/RESULT.md records the reading:
+    Core 12 (CVG-022) PASS: all 79 resolution(s) in the queue are written in
+    sentences that answer the asker rather than pointing at a commit.
+    SEVENTY-NINE OF SEVENTY-NINE, AND THE DENOMINATOR IS THE POINT: this is not
+    one sampled resolution, it is every resolution the shared queue holds.
+    THE OTHER TWO THIRDS ARE STILL STEP (f)'s, NOT STEP (k)'s. Atomic claim and
+    custody-while-held rest on the 60 holders placed from outside their
+    processes, recorded above. This row is green on three parts asserted by two
+    different steps, and neither one asserts the others.
+    WHAT IT DOES NOT PROVE: that a resolution is TRUE, or that the person who
+    asked was satisfied. A shape can be judged; being served cannot.
+    THE `work` REF IS GONE, because a green row may not carry one.
 
 - id: CVG-023
   title: hand off when done
@@ -1531,16 +1771,20 @@
     quote: |
       **Hand off when done.** A manager session that has lost its footing says so,
       writes a hand-off a fresh session can resume from, and stops.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 13 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-13 || echo MODE-LOST-CLAUSE-13'
+    ref: 'if grep -q "^## Clause 13 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 13 (CVG-023) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-13-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J; else echo CLAUSE-13-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-13"
+      stdout_contains: "CLAUSE-13-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:211) — not that any
-    hand-off was ever written.
+    That the mode still encodes this clause, AND that step (j) read the recorded
+    closes of a real wave and found each one names what REMAINED — residuals,
+    what was parked, what was still live — so a fresh session could resume from
+    the record alone. NOT that a manager session which LOST ITS FOOTING wrote
+    one: two closes were read, both of sessions that finished. The clause's
+    hardest case, the session that stops badly, has still never been observed.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-13. The kit assert "a hand-off exists for
     every manager session that ended by choice" has no runner and no artifact to
@@ -1560,7 +1804,25 @@
     tell "none was owed" from "one was owed and not written".
     converge-2ro carries this clause and six others in the same position, with
     what each one would need observed.
-  work: converge-2ro
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz) AND MOVED GAP → CONFORMS. RAN →
+    CLAUSE-13-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J.
+    THERE IS AN ARTIFACT TO COUNT NOW, AND A CHECK THAT JUDGES ITS CONTENT.
+    Above, this row says the kit assert has no runner and no artifact to count.
+    evaluations/turnkey/RESULT.md records step (j)'s reading: Core 13 (CVG-023)
+    PASS: each of 2 recorded close(s) names what remained — residuals, what was
+    parked, or what was still live — so a fresh session could pick the run up
+    from the record alone.
+    IT JUDGES THE CONTENT, NOT THE EXISTENCE, which is the whole difficulty of
+    this clause: converge-2ro's own resolution records that a close listing only
+    what FINISHED fails the reading. A hand-off that says what went well is not
+    a hand-off.
+    WHAT IT STILL DOES NOT PROVE, AND IT IS THE CLAUSE'S FIRST WORDS: 'a manager
+    session that has LOST ITS FOOTING says so'. Both closes read were of sessions
+    that finished. The harness still has no way to tell 'none was owed' from
+    'one was owed and not written' — it can now only judge the ones that were
+    written. `proves` carries that.
+    THE `work` REF IS GONE, because a green row may not carry one.
 
 - id: CVG-024
   title: declared dependencies are verified at install, each absence named with its cost
