@@ -19,7 +19,6 @@ Two habits are load-bearing, both from the field guide:
 
 from __future__ import annotations
 
-import difflib
 import json
 import re
 import subprocess
@@ -602,66 +601,20 @@ def proposals_for(path: Path, repo: Path) -> list[dict]:
 
 
 # --------------------------------------------------------------------------
-# sentence-level change since the last commit
+# sentence-level change since the steward last read
 # --------------------------------------------------------------------------
 
 
-def _sentences_with_section(text: str) -> list[tuple[str, str]]:
-    out: list[tuple[str, str]] = []
-    section = ""
-    for line in (text or "").splitlines():
-        if line.startswith("## "):
-            section = line[3:].strip()
-            continue
-        if line.startswith("# "):
-            section = section or line[2:].strip()
-            continue
-        stripped = line.strip()
-        if not stripped or stripped.startswith(("|", "```", "<!--")):
-            continue
-        stripped = re.sub(r"^[-*+]\s+", "", stripped)
-        for piece in _SENTENCE.split(stripped):
-            piece = piece.strip()
-            if piece:
-                out.append((section, piece))
-    return out
+def changes_for(repo: Path, path: Path, since: str = "", limit: int = 40) -> list[dict]:
+    """What moved in this document since `since`, sentence by sentence.
 
+    The reading itself lives in `app/changes.py`, which starts from git's own
+    hunks rather than from a flat sentence diff. It is imported here rather
+    than at the top of the module because that module reads this one's `git`.
+    """
+    from . import changes as change_reading
 
-def changes_for(repo: Path, path: Path, limit: int = 12) -> list[dict]:
-    """What changed in this document between its last two commits, by sentence."""
-    rel = Path(path).relative_to(repo).as_posix()
-    log = git(repo, "log", "--follow", "--format=%H%x1f%s", "-n", "2", "--", rel)
-    entries = [line.split("\x1f", 1) for line in log.splitlines() if "\x1f" in line]
-    if len(entries) < 2:
-        return []
-    (new_sha, subject), (old_sha, _older) = entries[0], entries[1]
-    new_text = git(repo, "show", f"{new_sha}:{rel}")
-    old_text = git(repo, "show", f"{old_sha}:{rel}")
-    if not new_text and not old_text:
-        return []
-    new_pairs = _sentences_with_section(new_text)
-    old_pairs = _sentences_with_section(old_text)
-    matcher = difflib.SequenceMatcher(None, [s for _, s in old_pairs], [s for _, s in new_pairs])
-    made: list[dict] = []
-    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-        if tag == "equal":
-            continue
-        before = [s for _, s in old_pairs[i1:i2]]
-        now = [s for _, s in new_pairs[j1:j2]]
-        section = (new_pairs[j1][0] if j1 < len(new_pairs) else "") or (old_pairs[i1][0] if i1 < len(old_pairs) else "")
-        for index in range(max(len(before), len(now))):
-            made.append(
-                {
-                    "id": len(made) + 1,
-                    "section": section,
-                    "before": before[index] if index < len(before) else "",
-                    "now": now[index] if index < len(now) else "",
-                    "source": subject,
-                }
-            )
-            if len(made) >= limit:
-                return made
-    return made
+    return change_reading.changes_for(repo, path, since=since, limit=limit)
 
 
 def history_for(repo: Path, path: Path, limit: int = 8) -> list[dict]:
@@ -875,7 +828,16 @@ def find_doc(mc: ManagerConfig, repo_ident: str, doc_ident: str) -> tuple[Path, 
     return None
 
 
-def doc_payload(repo: Path, path: Path) -> dict:
+def doc_payload(repo: Path, path: Path, *, since: str = "", kept: set[str] | None = None) -> dict:
+    """One document as a screen reads it, from that steward's own last reading.
+
+    `since` is the commit this steward has already read up to and `kept` the
+    changes they have already answered for. Both are the caller's to supply,
+    because both belong to a person rather than to the document.
+    """
+    from . import changes as change_reading
+    from . import writes
+
     repo, path = Path(repo), Path(path)
     try:
         raw = path.read_text(encoding="utf-8")
@@ -884,6 +846,11 @@ def doc_payload(repo: Path, path: Path) -> dict:
     short, full = doc_title(path)
     updated = git(repo, "log", "-1", "--format=%ad by %an", "--date=format:%b %-d, %Y", "--", path.relative_to(repo).as_posix()).strip()
     state = doc_state(repo, path)
+    already = kept or set()
+    moved = changes_for(repo, path, since=since)
+    for one in moved:
+        one["kept"] = one["id"] in already
+    lock = writes.document_lock(path)
     return {
         "path": path.relative_to(repo).as_posix(),
         "title": full or short,
@@ -891,9 +858,12 @@ def doc_payload(repo: Path, path: Path) -> dict:
         "state": state["state"],
         "standing": state["standing"],
         "standingSentence": state["standingSentence"],
+        "locked": lock,
+        "editable": not lock,
         "sections": sections_of(raw),
         "raw": raw,
-        "changes": changes_for(repo, path),
+        "changes": moved,
+        "reading": change_reading.reading_point(repo, path, since),
         "proposals": proposals_for(path, repo),
         "history": history_for(repo, path),
     }

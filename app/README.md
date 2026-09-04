@@ -4,7 +4,7 @@
 
 On the LAN: <http://spark-1:8788> (192.168.1.5). As a service: `cp
 app/converge-app.service ~/.config/systemd/user/ && systemctl --user enable
---now converge-app`. Tests: `uv run --extra app pytest app/tests/test_api.py`.
+--now converge-app`. Tests: `uv run --extra app --with pytest --with httpx pytest -q app/tests`.
 
 **Sign-in is your machine account, checked by PAM** — the same check `login`
 makes; the app keeps no passwords. What it keeps is a signed cookie naming
@@ -32,12 +32,52 @@ Everything on the screens. No fixtures, no placeholders:
 | objective, deadline, steers | `HIGHWAY.md` |
 | return brief, timeline | `docs/workflow/OWNER-RETURN-LOG.md` |
 | sections, history | the file itself · `git log --follow` |
-| what changed | sentence diff of the file's last two commits |
+| what changed | `git diff <your read point> <last commit> -U0`, hunk by hunk |
+| a card's section | the heading path above the line, plus its numbered item |
+| a card's source | `git blame` on the line: subject · short sha · date |
+| your read point, your kept marks | `~/.amplifier/converge-app.state.json`, per steward |
 | proposals | `*-candidate.md` beside the document |
 | kept / gap / draft, confidence | `ledger/rows.yaml` (`draft` = nothing watches it yet) |
 | throughput | `amplifier-work-tracker status`, merged lanes, `REOPENED` entries |
 
-The four writes are real too: a decision appends to
+## Changes: since you last read
+
+The Changes view answers "what moved since **you** last read this", not "what
+moved in the last two commits". Your read point is a commit, kept per steward
+in `~/.amplifier/converge-app.state.json` (`--state` overrides the path), and
+**Mark all as read** moves it to the document's latest commit — after which the
+list is empty until the document changes again. A steward who has never opened
+a document starts at the commit before its last one, so a first visit shows the
+most recent change rather than a blank page.
+
+Between those two commits the reading is **git's own**: `git diff <since>
+<head> -U0`, one hunk at a time. A hunk with no removed lines is **New** and
+has no Before; one with no added lines is **Removed**; a hunk with both is
+paired by how alike the sentences actually are, in order, so a sentence
+inserted in the middle stays unpaired instead of shifting every Before/Now
+couple after it. Each card says two different things and does not confuse
+them: **section** is the heading path plus the numbered item it sits in
+(`Principles › 8`), and **source** is the commit `git blame` names for that
+line — subject · short sha · date.
+
+Four things a steward can do to a card, and each one writes:
+
+| On the card | What happens |
+|---|---|
+| Keep this change | remembered for you, server-side — it survives a reload and a different browser |
+| Edit wording… | your words replace the sentence |
+| Restore | the previous wording goes back — an addition is taken back out, a removal is put back |
+| Mark all as read | your read point advances to the current commit |
+
+Edit and Restore take one of two paths, and **the document decides which**. If
+its H1 carries no locking word the file is rewritten and committed, authored
+`<you> via Converge`, with a subject naming the document and the section. If
+the H1 says `FROZEN` or `RATIFIED`, the document is not touched at all: the
+wording is written to `<doc-stem>.vN-candidate.md` beside it, in the three-part
+shape `documents.v1` §8 requires. The check is made in `app/writes.py`, on the
+file, so forcing the control in the browser changes nothing.
+
+The four other writes are real too: a decision appends to
 `docs/workflow/owner-ratifications-<date>.md`, feedback creates
 `.converge/feedback/<ts>.md`, a steer rewrites `.width` and appends to
 `HIGHWAY.md`. Nothing here has a demo mode.

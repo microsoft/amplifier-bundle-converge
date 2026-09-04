@@ -197,7 +197,15 @@ def project(tmp_path: Path) -> dict:
         'tmux_socket = "test-socket-that-does-not-exist"\n',
         encoding="utf-8",
     )
-    return {"repo": repo, "batch": batch, "config": conf, "secret": tmp_path / "secret"}
+    return {
+        "repo": repo,
+        "batch": batch,
+        "config": conf,
+        "secret": tmp_path / "secret",
+        # Never the real ~/.amplifier: a test must not move a steward's own
+        # read point or drop their kept marks.
+        "state": tmp_path / "state.json",
+    }
 
 
 class _FakePam:
@@ -211,7 +219,9 @@ class _FakePam:
 @pytest.fixture
 def client(project, monkeypatch) -> TestClient:
     monkeypatch.setattr(auth.pam_module, "pam", _FakePam)
-    made = serve.create_app(config_path=project["config"], secret_path=project["secret"])
+    made = serve.create_app(
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+    )
     return TestClient(made, follow_redirects=False)
 
 
@@ -307,8 +317,14 @@ def test_a_document_carries_its_real_sections_changes_and_history(client: TestCl
     assert any("<p>" in html for _title, html in payload["sections"])
     assert payload["changes"], "two commits touch the vision; a change must be found"
     change = payload["changes"][0]
-    assert change["source"] == "vision: the console becomes a place"
+    # Where it lives and which commit changed it are two different labels, and
+    # the card carries both: the heading path, and subject + sha + date.
+    assert change["section"] in {"Where this is going", "Principles"}
+    assert change["source"].startswith("vision: the console becomes a place \u00b7 ")
+    assert change["sourceSubject"] == "vision: the console becomes a place"
+    assert change["kind"] in {"new", "changed", "removed"}
     assert change["before"] != change["now"]
+    assert payload["reading"]["headSha"]
     assert payload["history"][0]["id"] == "now"
     assert len(payload["history"]) == 2
     assert payload["proposals"] == []

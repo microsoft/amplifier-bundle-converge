@@ -73,6 +73,11 @@ export async function selectDoc(repoId, docId) {
   renderDirection();
 }
 
+export async function reloadDoc() {
+  await loadDoc();
+  renderDirection();
+}
+
 export async function reloadManager() {
   if (!state.managerId) return;
   try {
@@ -155,6 +160,7 @@ async function boot() {
   hooks.selectManager = selectManager;
   hooks.selectDoc = selectDoc;
   hooks.reloadManager = reloadManager;
+  hooks.reloadDoc = reloadDoc;
   wire();
 
   let bootData;
