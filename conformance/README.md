@@ -1,25 +1,35 @@
 # Conformance kits
 
-Five runnable kits, one per contract that has a checkable body. Each is the
+Seven runnable kits, one per contract that has a checkable body. Each is the
 **executable version of the promises its contract makes** — point it at a target
-and it reports, rule by rule, whether they are kept. All five number their rules
+and it reports, rule by rule, whether they are kept. All seven number their rules
 to their contract's Core clauses; see *Numbering follows the contract* below.
 
 | Kit | Contract | Target | What it judges |
 |---|---|---|---|
 | [`composition/`](composition/) | [`composition.v1`](../contracts/composition.v1.md) | a repository root | Does this repository sit lightly on its host, and does its guard protect a locked contract? |
 | [`documents/`](documents/) | [`documents.v1`](../contracts/documents.v1.md) | a repository root | Do this repository's contracts, vision, proposals, and participant kit keep their shape? |
+| [`experience/`](experience/) | [`experience.v1`](../contracts/experience.v1.md) | the companion app **and** the repository | The umbrella's own clauses: are there exactly five writes, is a limit ever left unsaid, and does the family carry the four words and the three surface classes? |
 | [`experience-direction/`](experience-direction/) | [`experience-direction.v1`](../contracts/experience-direction.v1.md) | the companion app | Can a steward read the agreement, see what moved, answer a proposal and ask for one, without leaving? |
 | [`experience-operation/`](experience-operation/) | [`experience-operation.v1`](../contracts/experience-operation.v1.md) | the companion app | Does the operation show what is being pursued, how it is going, and the evidence behind the claim? |
 | [`experience-console/`](experience-console/) | [`experience-console.v1`](../contracts/experience-console.v1.md) | the companion app | Is the console a pane beside the work — carrying the manager session, ratifying nothing, reaching nothing else? |
+| [`experience-collaboration/`](experience-collaboration/) | [`experience-collaboration.v1`](../contracts/experience-collaboration.v1.md) | the companion app **and** the repository | Does the seam hold — git as the protocol, a bridge to the host, and no channel between two manager sessions? |
 
 There is no `operation/` kit here. That contract's promises are about a running
 system, and closing them needs the turnkey harness (`converge-qtp`), not a file
-scan. There is no `experience/` or `experience-collaboration/` kit either, and no
-`platform-*` kit: the umbrella's clauses are kept by the section contracts that
-hang off it, collaboration's boundary is a repository-host question, and four of
-the five platform bodies do not exist. `ledger/rows.yaml` says so row by row
-rather than leaving the silence unexplained.
+scan. There is no `platform-*` kit either: four of the five platform bodies do
+not exist. `ledger/rows.yaml` says so row by row rather than leaving the silence
+unexplained.
+
+The last two kits arrived on 2026-09-04 (`converge-f1l`). Until then the
+umbrella and collaboration had none, and the ledger recorded that silence
+clause by clause. **Both read a second half — the repository — beside the app**,
+because their contracts make promises about how the family is *written* and what
+the write path actually runs, not only about what a steward sees. That half is
+resolved by convention rather than passed as a flag, so both keep the single
+command line below; a captured snapshot with no `repo/` makes every
+repository-reading rule SKIP naming the missing half, rather than silently
+judging whatever checkout the kit sits in.
 
 [`_superseded/`](_superseded/) holds kits whose contract has been superseded.
 They are kept for the record and are **not** part of this suite —
@@ -32,12 +42,14 @@ superseded by the experience family.
 uv run conformance/composition/run.py .
 uv run conformance/documents/run.py .
 
-# the three experience kits read the running app
+# the five experience kits read the running app
 uv run --extra app python -m app.serve --port 8788 &
 export CONVERGE_APP_COOKIE="…"          # see below
-uv run conformance/experience-direction/run.py http://127.0.0.1:8788
-uv run conformance/experience-operation/run.py http://127.0.0.1:8788
-uv run conformance/experience-console/run.py  http://127.0.0.1:8788
+uv run conformance/experience/run.py               http://127.0.0.1:8788
+uv run conformance/experience-direction/run.py     http://127.0.0.1:8788
+uv run conformance/experience-operation/run.py     http://127.0.0.1:8788
+uv run conformance/experience-console/run.py       http://127.0.0.1:8788
+uv run conformance/experience-collaboration/run.py http://127.0.0.1:8788
 ```
 
 Every kit behaves the same way, on purpose:
@@ -47,8 +59,10 @@ Every kit behaves the same way, on purpose:
 - **exit 0** when no rule FAILs, **exit 1** when any does
 - `--json-only` to suppress the summary
 
-The three experience kits get that shape from one place —
-[`kitreport.py`](kitreport.py) — so the promise cannot drift kit by kit.
+The five experience kits get that shape from one place —
+[`kitreport.py`](kitreport.py) — so the promise cannot drift kit by kit. The two
+that also read a repository share that convention from one place too,
+[`experience/repotarget.py`](experience/repotarget.py), for the same reason.
 
 The documents kit's rule 9a reads the work queue, which is not a file in this
 tree — refresh its export with `uv run scripts/export-work-items.py --project
@@ -101,12 +115,14 @@ kit emits either FAILs on `sample-bad` or is a declared SKIP with a reason.**
 A rule nobody can make fail proves nothing. That test is what stops this
 directory from becoming decoration.
 
-The three experience kits' fixtures are **captured app snapshots** — the same
+The five experience kits' fixtures are **captured app snapshots** — the same
 shape `--capture` writes — so a fixture is judged through exactly the code path a
-live app is. They are rewritten in place by
-[`experience-fixtures/make_fixtures.py`](experience-fixtures/make_fixtures.py),
-which is how they are kept in step when a rule is added; it is not a build step
-anyone has to run first.
+live app is. The three section kits' are rewritten in place by
+[`experience-fixtures/make_fixtures.py`](experience-fixtures/make_fixtures.py);
+`experience/` and `experience-collaboration/` each carry their own
+`make_fixtures.py` beside the kit, because their fixtures are a **pair** — the
+app snapshot plus a `repo/` half — and one file writing both halves is what
+keeps them from drifting apart. Neither is a build step anyone has to run first.
 
 ```sh
 uv run --with pytest pytest conformance/ -q             # every live kit
@@ -123,16 +139,18 @@ one row per promise, lettered inside it (`1a`, `1b`, …) — a failure names th
 exact promise rather than a whole paragraph. Each kit's README carries the full
 table with the contract sentence quoted beside each row.
 
-**All five kits anchor to their contract's Core clauses**, and every clause has
+**All seven kits anchor to their contract's Core clauses**, and every clause has
 a row:
 
 | Kit | Core clauses | Rule ids | Every clause has a row |
 |---|---|---|---|
 | `composition/` | 1–7 | 1a–7b | `test_every_core_clause_has_a_row` |
 | `documents/` | 1–14 | 1–14 | `test_every_core_clause_has_a_row` |
+| `experience/` | 1–15 | 1–15 (4a–6b lettered) | `test_every_core_clause_has_a_row` |
 | `experience-direction/` | 1–11 | 1–11 | `test_every_core_clause_has_a_row` |
 | `experience-operation/` | 1–13 | 1–13 | `test_every_core_clause_has_a_row` |
 | `experience-console/` | 1–10 | 1–10 | `test_every_core_clause_has_a_row` |
+| `experience-collaboration/` | 1–10 | 1–10 (4a–8b lettered) | `test_every_core_clause_has_a_row` |
 
 It was not always one anchor. Two kits were numbered to their contract's
 *Conformance kit asserts* bullets, and that **hid a real gap**: a contract's
@@ -170,8 +188,8 @@ the kit to be tuned away. File it; do not weaken the rule.
 The kits deliberately avoid several *fabricated* findings, and each exemption is
 documented in the kit's README and covered by its own test — a template's own
 instruction comment, a status quoted as an illustration, a project's name
-matching a jargon term, another kit's deliberately-broken fixture. The three
-experience kits added three more, each caught while they were being built and
+matching a jargon term, another kit's deliberately-broken fixture. The five
+experience kits added six more, each caught while they were being built and
 each now a test:
 
 - **A write is a call, not a word in a message.** The app's per-change handler
@@ -183,6 +201,18 @@ each now a test:
 - **A function is read from its definition, not its import.** `fillLanes` first
   appears in `import { … } from './actions.js'`, and reading the brace after it
   reported the fill control reaching no write when it calls `api.steer`.
+- **A keyword is not a citation.** `experience/` rule 12 linked a route to the
+  contract clause that names it by searching for the route's own word: `keep`
+  matched *"**keeps** a teammate on plain tooling a first-class participant"*.
+  A contract names behaviors in prose, not routes — the citations are now
+  hand-written and re-read against the repository on every run.
+- **A word in a comment is not a channel.** `experience-collaboration/` rule 2
+  read `app/serve.py`'s *"no exemption for a loopback **peer**"* as a channel
+  between two manager sessions. Docstrings, string literals and `#` comments are
+  blanked before the source is read.
+- **A comparator's own parentheses are not the end of the sort.** `experience/`
+  rule 1 read `.sort\([^)]*needs` and stopped at the comparator's closing
+  bracket, reporting a correctly-sorted home as unsorted.
 
 ## What each kit will not claim
 
@@ -190,6 +220,8 @@ each now a test:
 |---|---|
 | `composition/` | it reads a repository's files, never a live session's tool set |
 | `documents/` | it reads documents, never the app's markup — rule 11b SKIPs and says where the app-side promise is judged instead |
+| `experience/` | it never proves what a write records once it lands, never judges a render, and never claims a contract names a feature without quoting the sentence that does |
 | `experience-direction/` | it never proves what a write records once it lands, and never judges a render |
 | `experience-operation/` | the same, and it reads the brief's five parts as a keyword pass over the brief's own sentences |
 | `experience-console/` | it never claims a typed line **arrived** (rule 3 judges only that a path exists), and rule 4 reads the stylesheet's rules, not a viewport |
+| `experience-collaboration/` | it never claims a comment **landed** on a host or came back attributed, and never claims a second person's word was or was not recorded — both need a live host and a second party, and both SKIP saying so |
