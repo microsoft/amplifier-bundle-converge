@@ -19,8 +19,10 @@ The kit declares no dependencies, so the plain interpreter is enough.
 
 import json
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 KIT = Path(__file__).resolve().parent.parent          # conformance/experience-operation/
@@ -65,6 +67,40 @@ def kit_module():
 
 def by_rule(report):
     return {r["rule"]: r for r in report["results"]}
+
+
+def run_kit_on_a_changed_good(change):
+    """`sample-good`, with its operation payload changed, judged as a target.
+
+    The fixture on disk is written by `../../experience-fixtures/make_fixtures.py`
+    and is deliberately NOT hand-edited here: an edit would be erased the next
+    time that script runs, and this kit's own proof would quietly stop proving
+    anything. So the change is made to a copy, at the moment it is needed, and
+    goes through exactly the code path a live app does.
+    """
+    tmp = tempfile.mkdtemp(prefix="experience-operation-kit-")
+    try:
+        target = Path(tmp) / "snapshot"
+        shutil.copytree(GOOD, target)
+        payload_path = target / "api__managers__m1__operation.json"
+        payload = json.loads(payload_path.read_text(encoding="utf-8"))
+        change(payload)
+        payload_path.write_text(json.dumps(payload, indent=1), encoding="utf-8")
+        return run_kit(target)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def a_reported_lane(lane_id, word="Done", evidence="2 commits"):
+    """One entry of the `reported` list.
+
+    Both `outcome` and `outcomeLabel` carry the word: which of the two the kit
+    reads is decided by what the body's own client hands to `laneCard`, and this
+    file is testing the RULE, not the fixture's stub client.
+    """
+    return {"id": lane_id, "title": f"the {lane_id} thing", "worker": lane_id,
+            "wave": "Wave 1", "age": "3h", "evidence": evidence,
+            "outcome": word, "outcomeLabel": word}
 
 
 def readme_rule_ids():
@@ -190,6 +226,88 @@ def test_the_lane_vocabulary_is_the_contracts_not_the_kits():
     (`Done`) is reported, not quietly accepted."""
     kit = kit_module()
     assert kit.LANE_WORDS == ("working", "quiet", "silent")
+
+
+def test_the_work_vocabulary_is_the_contracts_not_the_kits():
+    """Done · Stuck — `experience.v1` Core 6's WORK words, which are what a lane
+    that has already come back is read in."""
+    kit = kit_module()
+    assert kit.WORK_WORDS == ("done", "stuck")
+
+
+def test_a_well_formed_reported_lane_is_accepted():
+    """The control for the three faults below: adding a sound `reported` list to
+    a passing body must not make anything go red, or the faults prove nothing."""
+    code, report = run_kit_on_a_changed_good(
+        lambda p: p.update({"reported": [a_reported_lane("w1-done"),
+                                         a_reported_lane("w1-stopped", word="Stuck")]}))
+    row = by_rule(report)["8"]
+    assert row["status"] == "PASS", f"a sound reported list was faulted: {row['detail']}"
+    assert row["reported_words_shown"], "the rule did not read the reported list at all"
+    assert code == 0
+
+
+def test_a_reported_lane_is_judged_like_a_working_one():
+    """converge-0w2, in its own words.
+
+    "GIVEN an operation payload whose `reported` list carries a lane with a word
+    outside the work vocabulary, or no evidence, or an id that also appears in
+    `lanes` WHEN the kit runs THEN it reports FAIL naming that lane."
+
+    Each fault is introduced alone, into a body that otherwise keeps every
+    promise, so a red row can only be the fault under test. Each is asserted to
+    name the offending LANE — the reader's next question after "something is
+    wrong" is always "which one?".
+    """
+    # 1. a word outside the work vocabulary. `Working` is a real plain word, and
+    #    still wrong here: it is the LANE vocabulary, and a lane that has come
+    #    back is not answering the lane question at all.
+    _, report = run_kit_on_a_changed_good(
+        lambda p: p.update({"reported": [a_reported_lane("w1-astray", word="Working")]}))
+    row = by_rule(report)["8"]
+    assert row["status"] == "FAIL", "a reported lane read in a lane word was accepted"
+    assert "w1-astray" in row["detail"], f"the failure did not name the lane: {row['detail']}"
+    assert "'Working'" in row["detail"], f"the failure did not quote the word: {row['detail']}"
+
+    # 2. no evidence to open. Core 8: "Underneath sits what the lane actually
+    #    produced, so a claim can be inspected rather than believed."
+    _, report = run_kit_on_a_changed_good(
+        lambda p: p.update({"reported": [a_reported_lane("w1-unproven", evidence="")]}))
+    row = by_rule(report)["8"]
+    assert row["status"] == "FAIL", "a reported lane with nothing to open was accepted"
+    assert "w1-unproven" in row["detail"], f"the failure did not name the lane: {row['detail']}"
+
+    # 3. an id in both lists. Each list is read in a different vocabulary, so a
+    #    lane in both is told in two states at once — and is one rename away
+    #    from being judged by neither.
+    def in_both(payload):
+        first = (payload.get("lanes") or [{}])[0].get("id")
+        assert first, "sample-good stopped carrying a lane at work"
+        payload["reported"] = [a_reported_lane(first)]
+
+    _, report = run_kit_on_a_changed_good(in_both)
+    row = by_rule(report)["8"]
+    assert row["status"] == "FAIL", "a lane in both lists was accepted"
+    assert "w1-kit" in row["detail"], f"the failure did not name the lane: {row['detail']}"
+    assert row["in_both_lists"] == ["w1-kit"], row
+
+
+def test_a_list_nobody_judges_is_a_place_to_hide_a_lane():
+    """The regression this rule exists to stop.
+
+    Before converge-0w2 the rule read `op["lanes"]` and nothing else, so moving
+    an offending lane into `reported` turned a FAIL into a PASS. Measured
+    against the live app on 2026-09-04: 75 lanes sat in `reported`, judged by
+    nothing at all.
+    """
+    _, report = run_kit_on_a_changed_good(
+        lambda p: p.update({"reported": [a_reported_lane("w1-hidden", word="RESOLVED",
+                                                         evidence="")]}))
+    row = by_rule(report)["8"]
+    assert row["status"] == "FAIL", (
+        "a lane carrying the machine's own word and no evidence passed unseen because it "
+        "sat in the list the rule did not read")
+    assert "w1-hidden" in row["detail"]
 
 
 if __name__ == "__main__":
