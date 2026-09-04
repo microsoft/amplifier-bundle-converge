@@ -19,6 +19,14 @@ block per manager session naming its `batch_dir`, `repos`, `tracker_project`,
 and the explicit `tmux_socket` its lanes run on. With no file, every
 `~/dev/hw-*/HIGHWAY.md` is discovered as a manager instead.
 
+One more key on that block says **whose word counts**: `steward = "<name>"`.
+`experience-collaboration.v1` Core 8 asks for that to be settled when the
+session is registered, so it is read from the block and from nowhere else — a
+block that names no steward answers with an empty one rather than with the name
+of whoever is signed in. Everyone else is a teammate: their proposals get the
+same reading and none of the authority. A discovered manager names no steward,
+because it was never registered.
+
 ## What is real
 
 Everything on the screens. No fixtures, no placeholders:
