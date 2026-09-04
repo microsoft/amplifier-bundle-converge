@@ -22,7 +22,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from fastapi.staticfiles import StaticFiles
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound, select_autoescape
 
-from . import auth, changes, config, data, state_store, writes
+from . import auth, changes, config, data, presence, state_store, writes
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -67,6 +67,10 @@ def create_app(
     # Where each steward's read point and kept marks live, so leaving the
     # page and coming back does not throw their answers away.
     app.state.store = state_store.Store(state_path)
+    # Who has an editor open on which section, right now. In memory on
+    # purpose: a mark is true for the next minute and a restart should forget
+    # it (app/presence.py says why at length).
+    app.state.presence = presence.Presence()
 
     templates = Environment(
         loader=FileSystemLoader(str(HERE / "templates")),
@@ -278,6 +282,93 @@ def create_app(
     async def restore_change(mid: str, repo_ident: str, doc_ident: str, change_id: str, request: Request) -> JSONResponse:
         """The wording that was there before, back where it was."""
         return await _reword(mid, repo_ident, doc_ident, change_id, request, "restore")
+
+    # ------------------------------------------- who is editing what, right now
+    #
+    # `experience-direction.v1` clause 10. The three routes below are the whole
+    # channel: a browser says what it has open, anyone may read what is open,
+    # and a writer that is not a browser asks whether to write or to wait.
+    #
+    # None of them is a lock. Nothing here refuses a write, and there is no
+    # route that could -- what keeps two writes from overwriting each other is
+    # the collision path in `app/writes.py`, which is untouched by this lane.
+
+    @app.post("/api/managers/{mid}/presence")
+    async def presence_beat(mid: str, request: Request) -> JSONResponse:
+        """A browser saying what it has open. An empty section is goodbye.
+
+        The same call refreshes and releases, so a browser cannot forget to
+        say goodbye -- and one that is closed mid-sentence stops beating,
+        which the expiry covers.
+        """
+        mc = manager_or_none(mid)
+        if mc is None:
+            return JSONResponse({"error": f"no manager named {mid}"}, status_code=404)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        body = body if isinstance(body, dict) else {}
+        repo_ident = str(body.get("repoId") or "")
+        doc_ident = str(body.get("docId") or "")
+        if not repo_ident or not doc_ident:
+            return JSONResponse({"error": "a presence mark names a repository and a document"}, status_code=400)
+        user = who(request)
+        app.state.presence.editing(
+            user=user, repo=repo_ident, doc=doc_ident, section=str(body.get("section") or "")
+        )
+        here = app.state.presence.here(repo=repo_ident, doc=doc_ident)
+        return JSONResponse({"ok": True, "you": user, **here,
+                             "others": [one for one in here["editing"] if one["user"] != user]})
+
+    @app.get("/api/managers/{mid}/presence")
+    def presence_here(mid: str, request: Request, repoId: str = "", docId: str = "") -> JSONResponse:
+        """Who has an editor open on this document, and who is waiting on it."""
+        mc = manager_or_none(mid)
+        if mc is None:
+            return JSONResponse({"error": f"no manager named {mid}"}, status_code=404)
+        if not repoId or not docId:
+            return JSONResponse({"error": "name a repository and a document to read presence for"}, status_code=400)
+        user = who(request)
+        here = app.state.presence.here(repo=repoId, doc=docId)
+        return JSONResponse({"ok": True, "you": user, **here,
+                             "others": [one for one in here["editing"] if one["user"] != user]})
+
+    @app.post("/api/managers/{mid}/presence/queue")
+    async def presence_queue(mid: str, request: Request) -> JSONResponse:
+        """The manager session's half: ask before writing, and wait if told to.
+
+        This is the app holding up its end of clause 10. It answers whether a
+        section is held and by whom, and records the wait so the steward can
+        see that something is queued behind them. It does not write, defer, or
+        replay the caller's work -- the caller keeps its own write and asks
+        again. A session that asks and writes anyway is beyond what a server
+        can honestly promise; being told plainly is what makes backing off
+        cheap enough to actually do.
+        """
+        mc = manager_or_none(mid)
+        if mc is None:
+            return JSONResponse({"error": f"no manager named {mid}"}, status_code=404)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        body = body if isinstance(body, dict) else {}
+        repo_ident = str(body.get("repoId") or "")
+        doc_ident = str(body.get("docId") or "")
+        section = str(body.get("section") or "")
+        if not repo_ident or not doc_ident or not section:
+            return JSONResponse(
+                {"error": "a queued write names a repository, a document and a section"}, status_code=400
+            )
+        user = who(request)
+        if body.get("release"):
+            app.state.presence.unqueue(user=user, repo=repo_ident, doc=doc_ident, section=section)
+            return JSONResponse({"ok": True, "queued": False, "released": True, "section": section})
+        answer = app.state.presence.queue(
+            user=user, repo=repo_ident, doc=doc_ident, section=section, note=str(body.get("note") or "")
+        )
+        return JSONResponse({"ok": True, "you": user, **answer})
 
     @app.get("/api/needs/{mid}")
     def needs(mid: str) -> JSONResponse:

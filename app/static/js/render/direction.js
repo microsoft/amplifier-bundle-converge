@@ -16,6 +16,7 @@
 import { $, qsa, state, data, escapeHtml, currentRepo, currentDoc, readBookmark } from '../state.js';
 import { hooks } from '../refresh.js';
 import { handleDecision, keepChange, saveChangeEdit, restoreChange, restoreScope, markAllRead, editDoc, reconcile, openAsk, copyText, confirmLock } from '../actions.js';
+import { startPresence, holdSection, paintPresence, presenceLineHtml, presenceStanding } from '../presence.js';
 
 const DECISION_BUTTONS = [
   ['ratified', 'Ratify', 'primary-button'],
@@ -286,6 +287,10 @@ function wireDocTools() {
   $('lockButton').addEventListener('click', requestLock);
   readZoom();
   applyZoom();
+  // §10: start beating into the presence channel. Once, here, rather than in
+  // main.js — main.js is not this lane's file, and the Direction surface is
+  // the only place an editor is opened.
+  startPresence();
 }
 
 export function renderRepoTree() {
@@ -326,15 +331,17 @@ function shorten(text, limit = 64) {
 
 // experience-direction.v1 §10: while a person is editing, the section is shown
 // softly and a collision is met with a choice rather than a lost sentence.
-// What is honest here today: the soft marking and the three choices are real,
-// and the presence is this browser's own. There is no channel that carries a
-// second person's editing, which is why the fold below says so instead of
-// implying a company that is not there. The channel is converge-wmh.
+// The soft marking now carries a second person: `app/presence.py` keeps a mark
+// per section per steward, this browser beats into it while its editor is open
+// (presence.js), and a mark that stops being refreshed stops standing after a
+// minute. The marking is courtesy and nothing else — no control here is
+// disabled by someone else's mark, and the collision path is what actually
+// keeps two writes from overwriting each other.
 function editPanel(doc, card) {
   const lock = doc.locked || '';
   const clash = state.collision && String(state.collision.section) === String(card.section) ? state.collision : null;
   return `<div class="change-edit" data-editing="${escapeHtml(card.id)}">
-      <p class="muted lock-note">You are editing this section. It is shown softly while you write — that is the presence, so a change landing underneath you is offered as a choice rather than applied over you.${lock ? ` This document is ${escapeHtml(lock)}, so saving writes a proposal beside it and the document itself is not touched.` : ''}</p>
+      <p class="muted lock-note">You are editing this section. Anyone else reading this document sees it shown softly, with your name on it, while you write — that is the presence, so a change landing underneath you is offered as a choice rather than applied over you.${lock ? ` This document is ${escapeHtml(lock)}, so saving writes a proposal beside it and the document itself is not touched.` : ''}</p>
       <label for="read-edit-${escapeHtml(card.id)}">The wording you want instead</label>
       <textarea id="read-edit-${escapeHtml(card.id)}" rows="3">${escapeHtml(card.now || card.before)}</textarea>
       ${clash ? collisionPanel(clash) : ''}
@@ -342,7 +349,7 @@ function editPanel(doc, card) {
         <button class="outline-button" data-edit="cancel" type="button">Cancel</button>
         <button class="primary-button" data-edit="save" data-change-id="${escapeHtml(card.id)}" type="button">${lock ? 'Propose this wording' : 'Save'}</button>
       </div>
-      <details><summary class="muted">Details</summary><p class="muted">Presence is this browser only: the app carries no signal for someone else editing the same section, and the manager session is not told to queue. Filed as converge-wmh.</p></details>
+      <details><summary class="muted">Details</summary><p class="muted" data-presence-standing>${escapeHtml(presenceStanding())}</p></details>
     </div>`;
 }
 
@@ -381,9 +388,17 @@ export function renderRead() {
   const sectionHtml = (doc.sections || []).map(([title, content]) => {
     const mine = cards.filter((c) => sectionHead(c) === title);
     const editing = mine.some((c) => String(c.id) === String(state.editingChangeId));
+    // §10 presence. `is-editing` is this browser's own open editor;
+    // `is-editing-elsewhere` is somebody else's, carried by the channel in
+    // app/presence.py. Both are soft marks and neither disables anything.
+    // `data-section` is what presence.js repaints against between renders —
+    // it never rebuilds this HTML, because doing so while a steward is typing
+    // would throw their sentence away.
+    const elsewhere = presenceLineHtml(title);
     return `
-      <section class="${changedSections.has(title) ? 'marked-change' : ''}${editing ? ' is-editing' : ''}">
+      <section data-section="${escapeHtml(title)}" class="${changedSections.has(title) ? 'marked-change' : ''}${editing ? ' is-editing' : ''}${elsewhere ? ' is-editing-elsewhere' : ''}">
         <h2>${escapeHtml(title)}</h2>
+        ${elsewhere}
         ${content}
         ${sectionFooter(doc, title, mine)}
       </section>`;
@@ -589,6 +604,12 @@ export function renderDirection() {
     btn.setAttribute('aria-selected', active ? 'true' : 'false');
   });
 
+  // §10: say what this browser has open before drawing, so the mark this
+  // steward sets and the marks they are shown come from the same moment.
+  // Scoped to the Reading view's editor, which is the one the clause is about.
+  const openCard = ((doc && doc.changes) || []).find((c) => String(c.id) === String(state.editingChangeId));
+  holdSection(state.docMode === 'read' && openCard ? sectionHead(openCard) : '');
+
   let html = '';
   if (state.docMode === 'read') html = renderRead();
   if (state.docMode === 'changes') html = renderChanges();
@@ -596,6 +617,7 @@ export function renderDirection() {
   if (state.docMode === 'history') html = renderHistory();
   $('documentModeContent').innerHTML = html;
   attachDocumentModeHandlers();
+  paintPresence();
   renderProposalMini();
   renderLockGate();
   syncObjective();
