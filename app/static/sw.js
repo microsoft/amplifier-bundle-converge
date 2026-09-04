@@ -39,6 +39,28 @@ const SHELL_KEY = '/';
 const SYNCED_AT = 'X-Converge-Synced-At';
 const FROM_CACHE = 'X-Converge-Offline';
 
+// Every first-party stylesheet and script the app loads, so a browser that
+// installs this worker and goes offline BEFORE it has fetched them still opens.
+// Runtime caching alone is not enough for that cold case: it fills as things are
+// fetched, and a module never fetched online is not there when the network is.
+//
+// This list is hand-kept and it has drifted twice: `presence.js` (converge-9ke)
+// and, found with it, `tmux.js`, `render/collab.js` and `css/collab.css`.
+// Missing `presence.js` did not cost only presence -- `render/direction.js`
+// imports it, and a module whose import fails does not run, so the whole
+// Direction surface would have gone down offline.
+//
+// `app/tests/test_web_polish.py` now derives the list the app actually loads --
+// every `/static/` reference in the templates, plus every module reachable from
+// `main.js`'s imports -- and fails if this array is missing one, so the third
+// drift is caught by a check rather than by a steward offline. It also checks
+// every entry below resolves to a real file: `cache.addAll` is all-or-nothing
+// and its rejection is swallowed here, so ONE bad path would silently precache
+// NOTHING.
+//
+// `/static/vendor/xterm/*` is deliberately absent: it is 488K, and it is only
+// needed by the terminal viewer, which by rule 2 above is disconnected while the
+// network is down anyway (§12). It stays runtime-cached.
 const PRECACHE = [
   '/static/css/tokens.css',
   '/static/css/shell.css',
@@ -46,17 +68,21 @@ const PRECACHE = [
   '/static/css/operation.css',
   '/static/css/console.css',
   '/static/css/dialogs.css',
+  '/static/css/collab.css',
   '/static/js/main.js',
   '/static/js/state.js',
   '/static/js/api.js',
   '/static/js/refresh.js',
   '/static/js/actions.js',
   '/static/js/offline.js',
+  '/static/js/presence.js',
+  '/static/js/tmux.js',
   '/static/js/render/top.js',
   '/static/js/render/home.js',
   '/static/js/render/direction.js',
   '/static/js/render/operation.js',
   '/static/js/render/console.js',
+  '/static/js/render/collab.js',
   '/manifest.webmanifest',
   '/branding/icons/converge-icon-64.png',
   '/branding/favicons/favicon-32.png',
