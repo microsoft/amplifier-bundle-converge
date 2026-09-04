@@ -1,0 +1,68 @@
+{
+  "base": "/home/bkrabach/dev/hw-converge/lanes/w7-ratchet-family/amplifier-bundle-converge/conformance/experience-console/fixtures/sample-bad",
+  "captured": "fixture",
+  "manager": "m1",
+  "note": "the same promises with nothing behind them \u2014 every checkable rule FAILs",
+  "routes": [
+    {
+      "route": "/",
+      "file": "index.html",
+      "kind": "html"
+    },
+    {
+      "route": "/openapi.json",
+      "file": "openapi.json",
+      "kind": "openapi"
+    },
+    {
+      "route": "/api/boot",
+      "file": "api__boot.json",
+      "kind": "json"
+    },
+    {
+      "route": "/api/managers/m1",
+      "file": "api__managers__m1.json",
+      "kind": "json"
+    },
+    {
+      "route": "/api/managers/m1/operation",
+      "file": "api__managers__m1__operation.json",
+      "kind": "json"
+    },
+    {
+      "route": "/api/needs/m1",
+      "file": "api__needs__m1.json",
+      "kind": "json"
+    },
+    {
+      "route": "/static/js/main.js",
+      "file": "static__js__main.js",
+      "kind": "js"
+    },
+    {
+      "route": "/static/js/actions.js",
+      "file": "static__js__actions.js",
+      "kind": "js"
+    },
+    {
+      "route": "/static/js/render/operation.js",
+      "file": "static__js__render__operation.js",
+      "kind": "js"
+    },
+    {
+      "route": "/static/js/render/console.js",
+      "file": "static__js__render__console.js",
+      "kind": "js"
+    },
+    {
+      "route": "/static/js/render/top.js",
+      "file": "static__js__render__top.js",
+      "kind": "js"
+    },
+    {
+      "route": "/static/css/shell.css",
+      "file": "static__css__shell.css",
+      "kind": "css"
+    }
+  ]
+}

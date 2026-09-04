@@ -1,0 +1,50 @@
+<!doctype html><html><head><title>Converge</title>
+<link rel="stylesheet" href="/static/css/shell.css"></head><body>
+<div id="app" class="app-shell">
+<header class="topbar">
+
+  <div id="workspaceSwitch" class="workspace-switch" role="tablist">
+    <button class="workspace-tab" id="directionTab" role="tab" type="button">Direction</button>
+    <button class="workspace-tab" id="operationTab" role="tab" type="button">Operation</button>
+    <button class="workspace-tab" id="consoleTab" role="tab" type="button">Console</button>
+  </div>
+</header>
+<div class="body-grid"><main class="workspace">
+
+  <section id="directionView" class="view direction-view" aria-label="Direction">
+    <select id="repoFilter"><option value="r1">Repo one</option></select>
+    <div class="doc-tools"><button id="copyRendered" type="button">Copy</button></div>
+    <div class="mode-tabs">
+      <button data-doc-mode="read" type="button">Read</button>
+      <button data-doc-mode="changes" type="button">Changes</button>
+    </div>
+    <div class="change-card">
+      <button data-change-action="keep" type="button">Keep this change</button></div>
+    <div class="history-actions">
+      <button data-restore="document" type="button">Restore this document</button></div>
+  </section>
+
+  <section id="operationView" class="view operation-view" aria-label="Operation">
+    <strong id="opObjectiveText"></strong>
+    <h2 id="strategyHeadline">&mdash;</h2>
+    <div id="returnBrief" class="brief-list"></div>
+    <section class="throughput-card"><h2>Flow today</h2>
+      <div><span>Derived</span><strong id="throughputDerived">8</strong></div></section>
+    <section class="waves-card"><div id="wavesGrid" class="waves-grid"></div></section>
+    <section class="lanes-card"><div id="lanesGrid" class="lanes-grid"></div>
+      <button id="stopLaneButton" type="button">Stop this lane</button></section>
+    <p class="muted">Open the console to see what is happening.</p>
+  </section>
+</main>
+  <aside class="manager-console" id="managerConsole" aria-label="Manager Console">
+    <div id="consoleBody" class="console-body"></div>
+    <form id="consoleForm" class="console-form">
+      <input id="consoleInput" disabled />
+      <button type="submit" disabled>Send</button>
+    </form>
+    <div class="console-decisions">
+      <button data-decision="ratified" type="button">Ratified</button>
+      <button data-decision="declined" type="button">Declined</button>
+    </div>
+  </aside>
+</div></div><script src="/static/js/main.js"></script></body></html>

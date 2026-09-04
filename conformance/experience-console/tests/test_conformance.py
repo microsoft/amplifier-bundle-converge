@@ -1,0 +1,191 @@
+"""Self-test for the experience-console.v1 conformance kit.
+
+The kit is only as trustworthy as its own demonstration: it must go GREEN
+against a body that keeps the promises (``fixtures/sample-good``) and RED — with
+named rule failures — against one that does not (``fixtures/sample-bad``). Both
+fixtures are **captured app snapshots**, the same shape ``run.py --capture``
+writes, so they are judged through exactly the code path a live app is.
+
+The load-bearing test is ``test_every_rule_has_a_negative_fixture``: a rule
+nobody can make fail is a rule that proves nothing. The SKIP set is pinned, so a
+rule cannot quietly drift into SKIP to dodge a failure.
+
+Runnable two ways (the assertions are identical):
+  * with pytest:  uv run --with pytest pytest conformance/experience-console/tests/ -q
+  * no deps:      python3 conformance/experience-console/tests/test_conformance.py
+
+The kit declares no dependencies, so the plain interpreter is enough.
+"""
+
+import json
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+KIT = Path(__file__).resolve().parent.parent          # conformance/experience-console/
+RUN = KIT / "run.py"
+REPO = KIT.parent.parent                              # the repository root
+CONTRACT = REPO / "contracts" / "experience-console.v1.md"
+README = KIT / "README.md"
+GOOD = KIT / "fixtures" / "sample-good"
+BAD = KIT / "fixtures" / "sample-bad"
+
+#: Rows this kit declares un-judgeable from a served snapshot. Pinned here so a
+#: rule cannot be moved into SKIP to dodge a failure without this test going red.
+EXPECTED_SKIPS = set()
+
+
+def run_kit(target):
+    proc = subprocess.run(
+        [sys.executable, str(RUN), str(target), "--json-only"],
+        capture_output=True, text=True, timeout=300, check=False,
+    )
+    assert proc.stdout.strip(), f"kit produced no JSON report; stderr:\n{proc.stderr}"
+    return proc.returncode, json.loads(proc.stdout)
+
+
+def by_rule(report):
+    return {r["rule"]: r for r in report["results"]}
+
+
+def readme_rule_ids():
+    """The first column of the README's rule table — what `ledger/checks/verify.py`
+    resolves a ledger row's `run.py (rule N)` reference against."""
+    return set(re.findall(r"(?m)^\|\s*([\w.]+)\s*\|", README.read_text(encoding="utf-8")))
+
+
+def core_clause_numbers():
+    body = CONTRACT.read_text(encoding="utf-8").split("## Core (the teeth)")[1].split("\n## ")[0]
+    return [int(n) for n in re.findall(r"(?m)^(\d+)\.\s", body)]
+
+
+# --------------------------------------------------------------------------- #
+# the two fixtures                                                             #
+# --------------------------------------------------------------------------- #
+def test_sample_good_passes():
+    code, report = run_kit(GOOD)
+    failed = [r for r in report["results"] if r["status"] == "FAIL"]
+    assert not failed, "sample-good should keep every promise: " + json.dumps(failed, indent=2)
+    assert report["verdict"] == "PASS"
+    assert code == 0
+
+
+def test_sample_bad_fails():
+    code, report = run_kit(BAD)
+    assert report["verdict"] == "FAIL"
+    assert code == 1
+
+
+def test_every_rule_has_a_negative_fixture():
+    """Every rule the kit emits either FAILs on sample-bad or is a declared SKIP."""
+    _, bad = run_kit(BAD)
+    unprovable = [rid for rid, r in by_rule(bad).items()
+                  if r["status"] != "FAIL" and rid not in EXPECTED_SKIPS]
+    assert not unprovable, f"rules nobody can make fail: {unprovable}"
+
+
+def test_every_skip_says_why():
+    for fixture in (GOOD, BAD):
+        _, report = run_kit(fixture)
+        for r in report["results"]:
+            if r["status"] == "SKIP":
+                assert r.get("reason"), f"{r['rule']} SKIPs with no reason"
+
+
+def test_skip_set_is_pinned():
+    _, good = run_kit(GOOD)
+    _, bad = run_kit(BAD)
+    seen = {r["rule"] for rep in (good, bad) for r in rep["results"] if r["status"] == "SKIP"}
+    assert seen <= EXPECTED_SKIPS, f"a rule drifted into SKIP: {sorted(seen - EXPECTED_SKIPS)}"
+
+
+def test_no_skip_still_claims_the_app_is_unbuilt():
+    """The companion app ships in `app/`. A reason that says otherwise is stale."""
+    for fixture in (GOOD, BAD):
+        _, report = run_kit(fixture)
+        for r in report["results"]:
+            reason = (r.get("reason") or "").lower()
+            assert "not built" not in reason and "unbuilt" not in reason, \
+                f"{r['rule']} claims the app is unbuilt: {reason}"
+
+
+# --------------------------------------------------------------------------- #
+# the kit against its contract                                                 #
+# --------------------------------------------------------------------------- #
+def test_every_core_clause_has_a_row():
+    """A clause with no row is invisible — nothing looks wrong when it is missing."""
+    _, report = run_kit(GOOD)
+    judged = {r["clause"] for r in report["results"]}
+    missing = [n for n in core_clause_numbers() if n not in judged]
+    assert not missing, f"Core clauses with no rule row: {missing}"
+
+
+def test_rule_ids_match_the_readme_table():
+    """`ledger/checks/verify.py` resolves a ledger row's `(rule N)` against this
+    table, and a ref pointing confidently at the wrong rule is worse than one
+    that dangles."""
+    _, report = run_kit(GOOD)
+    emitted = {r["rule"] for r in report["results"]}
+    listed = readme_rule_ids()
+    assert emitted <= listed, f"rules the README never lists: {sorted(emitted - listed)}"
+
+
+def test_the_report_shape_is_the_shared_one():
+    _, report = run_kit(GOOD)
+    for key in ("kit", "contract", "target", "results", "summary", "verdict"):
+        assert key in report, f"the report is missing {key}"
+    assert set(r["status"] for r in report["results"]) <= {"PASS", "FAIL", "SKIP"}
+
+
+# --------------------------------------------------------------------------- #
+# the lessons this kit paid for                                                #
+# --------------------------------------------------------------------------- #
+def test_a_live_round_trip_is_never_claimed():
+    """Rule 3 judges whether a path exists for a typed line, never that the line
+    arrives. The detail must say so rather than implying a round trip was made."""
+    _, report = run_kit(GOOD)
+    row = by_rule(report)["3"]
+    assert "live round trip" in row["detail"]
+
+
+def test_rule_4_reads_the_stylesheet_and_says_so():
+    """No browser is launched, so the tray and the pane are read from the
+    stylesheet's own rules. A rendered layout at two widths is not judged."""
+    _, report = run_kit(BAD)
+    row = by_rule(report)["4"]
+    assert row["status"] == "FAIL"
+    assert "stylesheet" in row["detail"]
+
+
+def test_rule_4_skips_rather_than_fails_when_no_stylesheet_was_served(tmp_path=None):
+    """A target with no CSS cannot be judged on shape — that is a SKIP with a
+    reason, never a FAIL against a body that may well be fine."""
+    sys.path.insert(0, str(KIT))
+    sys.path.insert(0, str(KIT.parent))
+    import run as kit  # noqa: E402
+    from appsnapshot import AppSnapshot  # noqa: E402
+    bare = AppSnapshot("bare", "snapshot", {"/": "<html></html>"}, ["/"], {"manager": "m1"})
+    row = kit.check_pane_when_wide_tray_when_small(bare)
+    assert row["status"] == "SKIP" and row["reason"]
+
+
+def test_a_word_in_a_message_is_not_a_write():
+    sys.path.insert(0, str(KIT))
+    import run as kit  # noqa: E402
+    assert not kit.reaches_a_write("{ toast('recorded your decision'); }", {"decision"})
+    assert kit.reaches_a_write("{ api.decision(mid, {}); }", {"decision"})
+
+
+if __name__ == "__main__":
+    failures = []
+    for name, fn in sorted(list(globals().items())):
+        if name.startswith("test_") and callable(fn):
+            try:
+                fn()
+                print(f"  ok    {name}")
+            except AssertionError as exc:
+                failures.append(name)
+                print(f"  FAIL  {name}: {exc}")
+    print(f"\n{len(failures)} failure(s)")
+    raise SystemExit(1 if failures else 0)

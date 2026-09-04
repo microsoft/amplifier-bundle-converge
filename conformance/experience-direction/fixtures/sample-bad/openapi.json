@@ -1,0 +1,63 @@
+{
+ "openapi": "3.1.0",
+ "paths": {
+  "/": {
+   "get": {
+    "summary": "/"
+   }
+  },
+  "/api/boot": {
+   "get": {
+    "summary": "/api/boot"
+   }
+  },
+  "/api/managers/{mid}": {
+   "get": {
+    "summary": "/api/managers/{mid}"
+   }
+  },
+  "/api/managers/{mid}/operation": {
+   "get": {
+    "summary": "/api/managers/{mid}/operation"
+   }
+  },
+  "/api/managers/{mid}/docs/{repo}/{doc}": {
+   "get": {
+    "summary": "/api/managers/{mid}/docs/{repo}/{doc}"
+   }
+  },
+  "/api/managers/{mid}/decision": {
+   "post": {
+    "summary": "/api/managers/{mid}/decision"
+   }
+  },
+  "/api/managers/{mid}/feedback": {
+   "post": {
+    "summary": "/api/managers/{mid}/feedback"
+   }
+  },
+  "/api/managers/{mid}/steer": {
+   "post": {
+    "summary": "/api/managers/{mid}/steer"
+   }
+  },
+  "/api/tmux/sessions": {
+   "get": {
+    "summary": "/api/tmux/sessions"
+   }
+  },
+  "/api/tmux/{socket}/{session}": {
+   "get": {
+    "summary": "/api/tmux/{socket}/{session}"
+   }
+  },
+  "/login": {
+   "get": {
+    "summary": "/login"
+   },
+   "post": {
+    "summary": "/login"
+   }
+  }
+ }
+}

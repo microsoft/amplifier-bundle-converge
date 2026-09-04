@@ -1,0 +1,42 @@
+{
+ "path": "docs/VISION.md",
+ "title": "Vision",
+ "state": "draft",
+ "standing": "Not yet",
+ "sections": [
+  [
+   "Where this is going",
+   "<p>The agreement is <strong>one body of work</strong>.</p><table><tr><th>Promise</th><th>State</th></tr><tr><td>one place</td><td>Not yet</td></tr></table><p><a href=\"contracts/experience.v1.md\">the umbrella</a></p>"
+  ]
+ ],
+ "raw": "# Vision\n\nThe agreement is **one body of work**.\n\n| Promise | State |\n|---|---|\n| one place | Not yet |\n\nSee [the umbrella](contracts/experience.v1.md).\n",
+ "changes": [
+  {
+   "id": 1,
+   "section": "Where this is going",
+   "source": "proposal 4",
+   "before": "People align in documents.",
+   "now": "People align in documents, and Git is the protocol."
+  }
+ ],
+ "proposals": [
+  {
+   "id": "P4",
+   "source": "a pull request",
+   "title": "name the protocol",
+   "why": "a teammate asked",
+   "unchanged": "every other clause",
+   "evidence": [
+    "the teammate's comment"
+   ]
+  }
+ ],
+ "history": [
+  {
+   "id": "now",
+   "label": "Current",
+   "date": "Sep 3",
+   "note": "ratified"
+  }
+ ]
+}
