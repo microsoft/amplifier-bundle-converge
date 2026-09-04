@@ -14,19 +14,25 @@ Here the handle is actually dragged at 1280 and the column actually moves, and
 at 390 the handle is gone and the pane is a tray — with the page never wider
 than the viewport in either state (the regression converge-c4s pinned).
 
-Everything runs on the tmux socket ``cvlive``; the only destructive command is
-``tmux -L cvlive kill-server``.  Skips cleanly, with a manual procedure printed,
-where tmux or a browser is unavailable.
+The tmux socket is named for **this run** -- ``cvlive-<pid>-<random>`` -- and the
+only destructive command is ``tmux -L <that socket> kill-server``.  A fixed name
+is machine-wide, and this file's own defect report is what a busy host does to
+it: ten lanes running the suite at once would kill each other's ``mgr`` session
+and blame whichever run lost (``conftest.py`` records the measurement).  Skips
+cleanly, with a manual procedure printed, where tmux or a browser is
+unavailable.
 """
 
 from __future__ import annotations
 
+import os
 import shutil
 import socket as socketlib
 import subprocess
 import sys
 import threading
 import time
+import uuid
 from pathlib import Path
 
 import pytest
@@ -35,7 +41,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from app import auth, serve  # noqa: E402
 
-SOCKET = "cvlive"
+#: One server per run, never a fixed machine-wide name.  The convention and the
+#: measurement behind it are in ``conftest.py``; the pid is what its end-of-run
+#: reaper looks for.
+SOCKET = f"cvlive-{os.getpid()}-{uuid.uuid4().hex[:8]}"
 SESSION = "mgr"
 USER = "tester"
 TYPED = "ZZTYPEDINBROWSERZZ"
@@ -45,10 +54,11 @@ MANUAL PROCEDURE — run this by hand if tmux or Playwright is unavailable.
 Each step says what you must SEE; seeing anything else is a failure.
 
 Setup
-  tmux -L cvlive new -d -s mgr cat
+  CVSOCK="cvlive-$$"           # your own socket, never a name another run shares
+  tmux -L "$CVSOCK" new -d -s mgr cat
   Point ~/.amplifier/converge-app.toml at a manager with
-    tmux_socket = "cvlive"
-    manager_tmux = "cvlive:mgr"
+    tmux_socket = "$CVSOCK"
+    manager_tmux = "$CVSOCK:mgr"
   uv run --extra app python -m app.serve --host 127.0.0.1 --port 8788
   Open http://127.0.0.1:8788/ at exactly 1280 CSS px wide.
 
@@ -56,7 +66,7 @@ Check 1 — the console IS the session (Core 3)
   a. SEE: the Manager Console's input is typeable, not greyed out, and the
      footer note reads "not a chat — this pane is the manager session itself".
   b. Type ZZTYPEDINBROWSERZZ and press Enter.
-  c. Run: tmux -L cvlive capture-pane -p -t '=mgr:'
+  c. Run: tmux -L "$CVSOCK" capture-pane -p -t '=mgr:'
   d. SEE: ZZTYPEDINBROWSERZZ in that output.
   FAILS IF: the input is disabled, or the pane does not contain the line —
      then the app relayed a summary, or nothing, rather than being the session.
@@ -73,7 +83,7 @@ Check 3 — it is a tray when small (Core 4)
      gone, and closing it slides it away.
 
 Teardown
-  tmux -L cvlive kill-server
+  tmux -L "$CVSOCK" kill-server
 """
 
 
@@ -130,12 +140,24 @@ def _pane() -> str:
 def tmux_server():
     if SKIP:
         pytest.skip(SKIP)
-    _tmux("kill-server")
-    # `cat` echoes what it receives, so the pane's own text is the proof.
-    _tmux("new", "-d", "-s", SESSION, "cat", check=True)
-    time.sleep(1.0)
-    yield
-    _tmux("kill-server")
+    found = _tmux("ls")
+    if found.returncode == 0:
+        # Say so and stop, rather than kill a server this run did not start.
+        # On a per-run socket name this should be unreachable.
+        pytest.fail(
+            f"a tmux server is already running on socket {SOCKET!r}, which this run "
+            f"expected to have to itself. Refusing to kill it. Sessions found:\n"
+            f"{found.stdout.strip()}"
+        )
+    # try/finally, not a bare yield: a `check=True` failure below would
+    # otherwise skip the teardown and leak this run's server.
+    try:
+        # `cat` echoes what it receives, so the pane's own text is the proof.
+        _tmux("new", "-d", "-s", SESSION, "cat", check=True)
+        time.sleep(1.0)
+        yield
+    finally:
+        _tmux("kill-server")
 
 
 def _git(repo: Path, *args: str) -> None:
@@ -245,6 +267,28 @@ def _boot(browser, project, server, width, height, errors):
     return ctx, page
 
 
+def _field_still_holding(page, seconds: float = 6.0) -> str | None:
+    """``None`` once the console's field is empty; else what it is still holding.
+
+    The field is cleared when the *send resolves*, which is not the same tick as
+    the line landing in the pane.  Reading it once passed on a quiet machine and
+    failed on a busy one with the line demonstrably delivered -- measured
+    2026-09-04, ``1 failed, 291 passed`` while three other browser jobs ran, the
+    same test alone ``1 passed`` (converge-0we).  So wait on the observable.
+
+    It returns rather than raises so the assertion that follows still carries
+    the meaning, and so the kept value appears in the failure text.
+    """
+    deadline = time.time() + seconds
+    value = ""
+    while time.time() < deadline:
+        value = page.evaluate("() => document.querySelector('#consoleForm input').value")
+        if value == "":
+            return None
+        page.wait_for_timeout(100)
+    return value
+
+
 def _console_column(page) -> float:
     return page.evaluate(
         "() => parseFloat(getComputedStyle(document.querySelector('.body-grid'))"
@@ -319,8 +363,11 @@ def test_a_line_typed_in_the_browser_arrives_in_the_manager_session(
         "the line typed in the browser never reached the tmux session — the pane is showing "
         "the session but is not it"
     )
-    assert page.evaluate("() => document.querySelector('#consoleForm input').value") == "", (
-        "a delivered line clears the field; a kept line would mean it was not sent"
+    kept = _field_still_holding(page)
+    print(f"the console field cleared: {kept is None}")
+    assert kept is None, (
+        f"a delivered line clears the field; it still holds {kept!r} after waiting, "
+        "which would mean it was not sent"
     )
     # And the app shows it because the PANE echoed it, not because we typed it.
     page.wait_for_timeout(1200)
