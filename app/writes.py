@@ -485,6 +485,27 @@ def _ask_block(*, scope: str, section: str, current: str, wanted: str, drafted: 
     )
 
 
+def _ask_evidence(
+    *,
+    rel: str,
+    scope: str,
+    question: str,
+    covers: list[str],
+    drafted_note: str,
+    when: datetime,
+) -> list[str]:
+    """What an ask puts on the record: who asked what, at what scope, and when."""
+    lines = [
+        f"The steward asked for this in Converge on {when.strftime('%Y-%m-%d')}, reading `{rel}`.",
+        f'What they asked, verbatim: "{question.strip()}"',
+        f"The ask covers {ASK_SCOPES.get(scope, scope)}.",
+    ]
+    if scope == "all" and covers:
+        lines.append("The documents in scope: " + ", ".join(f"`{one}`" for one in covers) + ".")
+    lines.append(f"Where the wording came from: {drafted_note}")
+    return lines
+
+
 def _ask_candidate_text(
     *,
     rel: str,
@@ -492,9 +513,7 @@ def _ask_candidate_text(
     lock: str,
     block: str,
     scope: str,
-    question: str,
-    covers: list[str],
-    drafted_note: str,
+    evidence: list[str],
     user: str,
     when: datetime,
 ) -> str:
@@ -503,10 +522,6 @@ def _ask_candidate_text(
         if lock
         else "Nothing in the document has been touched."
     )
-    covering = ASK_SCOPES.get(scope, scope)
-    scope_line = f"- The ask covers {covering}.\n"
-    if scope == "all" and covers:
-        scope_line += "- The documents in scope: " + ", ".join(f"`{one}`" for one in covers) + ".\n"
     return (
         f"# {title} — asked for\n\n"
         f"target: {rel}\n"
@@ -518,13 +533,26 @@ def _ask_candidate_text(
         "## The exact change\n\n"
         f"{block}\n"
         "## The evidence\n\n"
-        f"- The steward asked for this in Converge on {when.strftime('%Y-%m-%d')}, reading `{rel}`.\n"
-        f'- What they asked, verbatim: "{question.strip()}"\n'
-        f"{scope_line}"
-        f"- Where the wording came from: {drafted_note}\n\n"
-        "## What does not change\n\n"
+        + "".join(f"- {line}\n" for line in evidence)
+        + "\n## What does not change\n\n"
         f"Every other sentence in `{rel}` stands exactly as it is until this is answered.\n"
     )
+
+
+def _merge_ask(existing: str, block: str, evidence: list[str]) -> str:
+    """Add one more ask to an open proposal — its change *and* its evidence.
+
+    Merging only the change would quietly drop what the steward asked and at
+    what scope, leaving a proposal whose evidence names one ask and whose body
+    carries three. The two go in together or the record is a half-truth.
+    """
+    whole = _merge_candidate(existing, block)
+    marker = "\n## What does not change"
+    at = whole.find(marker)
+    added = "\n".join(f"- {line}" for line in evidence) + "\n"
+    if at < 0:
+        return whole.rstrip("\n") + "\n\n## The evidence\n\n" + added
+    return whole[:at].rstrip("\n") + "\n" + added + whole[at:]
 
 
 def record_ask(
@@ -595,25 +623,25 @@ def record_ask(
         drafted=bool(wording),
     )
 
+    evidence = _ask_evidence(
+        rel=rel, scope=scope, question=question, covers=covers, drafted_note=drafted_note, when=when
+    )
     lock = document_lock(path)
     target = candidate_path(path)
-    title = path.stem
     if target.exists():
         try:
-            whole = _merge_candidate(target.read_text(encoding="utf-8"), block)
+            whole = _merge_ask(target.read_text(encoding="utf-8"), block, evidence)
         except OSError:
             return {"ok": False, "error": f"could not read {target.name}"}
         merged = True
     else:
         whole = _ask_candidate_text(
             rel=rel,
-            title=title,
+            title=path.stem,
             lock=lock,
             block=block,
             scope=scope,
-            question=question,
-            covers=covers,
-            drafted_note=drafted_note,
+            evidence=evidence,
             user=user,
             when=when,
         )

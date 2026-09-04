@@ -257,6 +257,20 @@ def test_a_second_ask_joins_the_open_proposal_in_order(client) -> None:
     assert text.index("## The exact change") < text.index("Second ask.") < text.index("## The evidence")
 
 
+def test_a_joined_ask_puts_its_own_evidence_on_the_record(client) -> None:
+    """A proposal whose evidence names one ask and whose body carries two is a half-truth."""
+    sign_in(client)
+    ask(client, docId="vision", scope="document", text="First ask.")
+    second = ask(client, docId="vision", scope="all", text="Second ask.")[1]
+
+    text = Path(second["path"]).read_text(encoding="utf-8")
+    evidence = text[text.index("## The evidence"):text.index("## What does not change")]
+    assert 'verbatim: "First ask."' in evidence
+    assert 'verbatim: "Second ask."' in evidence
+    assert "The ask covers every document in this repository." in evidence
+    assert text.index("## The evidence") < text.index("## What does not change")
+
+
 def test_an_ask_about_a_locked_document_still_only_writes_beside_it(client, project) -> None:
     sign_in(client)
     doc = project["repo"] / "contracts" / "locked.v1.md"
