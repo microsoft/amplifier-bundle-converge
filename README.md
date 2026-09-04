@@ -75,9 +75,10 @@ This composes the root `bundle.md`, which assembles on the lean **anchors** base
 and pulls in `amplifier-work-tracker` **and** the same behavior. Use this to run
 the `seed-reconcile` recipe end-to-end against a target repo.
 
-> **Host requirement.** None beyond Amplifier itself: the recipe declares and
-> pins the bundles that ship its helpers (`schema_version: 2`), so it runs the
-> same on any host — it never borrows the calling session's agents.
+> **Host requirement.** The `seed-reconcile` recipe declares its own helpers
+> (`schema_version: 2`) and resolves them only from that declared closure, never
+> from the session it runs in, so it needs no particular host, not even the lean
+> `anchors` base the rest of Converge assembles on.
 
 ### What differs between the two paths (honestly)
 
@@ -85,7 +86,7 @@ the `seed-reconcile` recipe end-to-end against a target repo.
 |---|---|---|
 | 4 agents · 5 skills · guard hook · awareness | ✅ | ✅ |
 | Session base + everyday tools | supplied by whatever bundle is already active | ✅ the lean `anchors` base, pulled in by `bundle.md` |
-| `seed-reconcile` recipe runnable | ✅ the recipe brings its own pinned helpers (`schema_version: 2`), so the host's base does not matter | ✅ |
+| `seed-reconcile` recipe runnable | ✅ the recipe declares its own helpers (`schema_version: 2`) and resolves them from that closure, so this path no longer has to supply them | ✅ |
 | `work-tracker` present (reconciler's `work_*` filing) | ✅ the behavior includes the work-tracker **behavior**, so `reconciler` gets `work_*` filing on this path too | ✅ pulled in by `bundle.md` |
 | Agents' "no delegate / no skills / no shell" rules | behavioral — agent body instructions + explicit `tools:` blocks (per-role structural spawn policy is an upstream feature request) | behavioral (same) |
 

@@ -21,10 +21,11 @@ the helpers they need.
    no step secretly depends on the heavy package.
 3. **Its own helpers carry a small local rulebook** — stop honestly when a thing
    cannot be proven; sign commits; cite locations — and borrow nothing else.
-4. **Automated steps bring their own helpers.** The recipe names the bundles
-   that ship each helper it uses, pinned to a release, and resolves helpers only
-   from that list — never from whatever session happens to run it. *For you:*
-   Converge's recipe runs on any host, and the README says so in one sentence.
+4. **The host requirement is one sentence in the README.** A step that declares
+   no helpers of its own can use only those present in the session it runs in,
+   and needs Converge's own full setup or a host on the same lean base; a step
+   that declares its helpers resolves them from that closure instead, and asks
+   nothing of its host.
 5. **The shared work queue rides on both install paths,** so the contract
    checker can file and read work anywhere.
 6. **Nothing touches the tools of other work in your session.** A setting that
@@ -49,14 +50,14 @@ the helpers they need.
 - No reference to the heavy package in anything loaded; no automated step names
   a heavy-package helper; the lean base is named where Converge assembles; no
   session-wide tool-stripping setting anywhere.
-- The recipe declares `schema_version: 2` and a `dependencies` list naming every
-  helper it uses under the bundle that ships it; `recipe-runner validate`
-  reports schema_version 2 with no errors; a plan resolves every named helper.
 - A Converge session reaches a lean-base helper and one of Converge's own.
 - After installing Converge beside other work, a helper in an unrelated session
   keeps its shell, delegation, and skills tools.
 - The guard denies a write to a locked contract and admits a `*.vN-candidate.md`
   beside it.
+- A step that declares its own helpers resolves them from that closure, not
+  from the calling session: the recipe validates at `schema_version: 2` and its
+  plan names every helper against the dependency that supplies it.
 
 ## Reserved / open questions (NOT frozen)
 
@@ -67,4 +68,4 @@ the helpers they need.
 
 | Date | Change | Evidence |
 |---|---|---|
-| 2026-09-04 | Amended (still v1, DRAFT — ratified by the steward, word: "ratified … merge it", PR #25): clause 4 replaced — automated steps bring their own pinned helpers instead of borrowing the host session's; the "when the engine supports it" item leaves the not-frozen list; a new not-frozen item tracks a tagged lean-base release; a kit assert covers the manifest | `recipes/seed-reconcile.yaml` v1.4.0 failed on a non-anchors host with "Agent 'anchors:explorer' not found in configuration" (2026-09-04); the engine now supports self-declared helpers (amplifier-recipe-runner 0.1.0, `recipe-runner validate` → schema_version 2, ok) |
+| 2026-09-04 | Amended (still v1, DRAFT): clause 4's second sentence names the two cases — a step that declares no helpers uses the session's; a step that declares its helpers resolves them from that closure; the "when the engine supports it" item leaves the not-frozen list (condition met); a new not-frozen item tracks a tagged lean-base release; one kit assert added. Proposal: `contracts/composition.v1-candidate.md` (converge-qwk), kept as `docs/workflow/composition.v1-candidate.ratified.md`. Steward's word, verbatim: `ratified, and go ahead w/ that PR, merge it` (PR #25, converge-may). | The recipe failed on a non-anchors host with "Agent 'anchors:explorer' not found in configuration" (2026-09-04); the engine now supports declared helpers — `recipe-runner validate` → schema_version 2, ok; `plan` names both helpers against their suppliers |
