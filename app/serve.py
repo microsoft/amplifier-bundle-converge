@@ -13,6 +13,7 @@ Run it:
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 from urllib.parse import quote
 
@@ -28,6 +29,13 @@ REPO_ROOT = HERE.parent
 
 #: Paths that answer without a sign-in. Everything else needs the cookie.
 PUBLIC_PREFIXES = ("/login", "/static/", "/branding/", "/favicon", "/manifest.webmanifest", "/sw.js", "/healthz")
+
+#: Who drafts the wording an ask proposes. `agent` runs a headless Amplifier
+#: session per ask; anything else writes the proposal from the steward's own
+#: words with no session at all, which is what the tests run and what an ask
+#: falls back to when a session fails. Off by default: a route that shells out
+#: to a minutes-long session on every call should be asked for, not assumed.
+ASK_DRAFTER = os.environ.get("CONVERGE_ASK_DRAFTER", "fixture").strip().lower()
 
 
 def _is_public(path: str) -> bool:
@@ -317,6 +325,46 @@ def create_app(
             image_data_url=str(body.get("imageDataUrl") or ""),
         )
         return JSONResponse(result)
+
+    @app.post("/api/managers/{mid}/ask")
+    async def ask(mid: str, request: Request) -> JSONResponse:
+        """A scoped ask, answered with a proposal and nothing else.
+
+        The fifth write `experience.v1` §4 names. It takes the scope the
+        steward chose — a paragraph, this document, or every document in the
+        repository — and returns the proposal it made, by name, so the client
+        can send them to Review to answer it. It never edits the document: the
+        writer does not open it for writing at any scope.
+        """
+        mc = manager_or_none(mid)
+        if mc is None:
+            return JSONResponse({"error": f"no manager named {mid}"}, status_code=404)
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        body = body if isinstance(body, dict) else {}
+        repo_ident = str(body.get("repoId") or "")
+        doc_ident = str(body.get("docId") or "")
+        found = data.find_doc(mc, repo_ident, doc_ident)
+        if found is None:
+            return JSONResponse(
+                {"error": f"no document {doc_ident or '(none named)'} in {repo_ident or '(no repository named)'} to ask about"},
+                status_code=404,
+            )
+        repo, path = found
+        scope = str(body.get("scope") or "")
+        result = writes.record_ask(
+            Path(repo),
+            Path(path),
+            scope=scope,
+            text=str(body.get("text") or ""),
+            section=str(body.get("section") or ""),
+            documents=data.repo_docs(Path(repo)) if scope == "all" else (),
+            user=who(request),
+            drafter=ASK_DRAFTER,
+        )
+        return JSONResponse(result, status_code=200 if result.get("ok") else 400)
 
     @app.post("/api/managers/{mid}/steer")
     async def steer(mid: str, request: Request) -> JSONResponse:

@@ -17,6 +17,18 @@ It checks, in order:
                vocabulary; `justification` on OPEN-PINNED / NOT-ASSERTABLE;
                `work` on GAP / VIOLATION and on nothing green;
                `assertion.kind: none` only for NOT-ASSERTABLE
+  live work    no GAP / VIOLATION row cites a work item that is already CLOSED.
+               Added 2026-09-04 by converge-0gb, the third time this rule had to
+               be enforced by hand: fifteen red rows were still naming
+               converge-qtp and converge-fmz, both resolved, and one of the two
+               was closed with a resolution that CONTRADICTED the row it was
+               cited by. The `work`-ref check above saw nothing wrong, because a
+               ref that exists is not the same as a ref that is still live. A
+               reader who follows a closed cite lands on finished work and learns
+               nothing about what would close the row. Read against
+               `docs/work-items.json`; an id absent from that export is reported,
+               not failed, because the export is a snapshot and a row may
+               legitimately cite an item filed after it was taken
   refs         every executable ref RUNS AND MEETS ITS `expect` — not merely
                resolves. This is the tripwire that matters: on 2026-09-02 the
                ledger passed a resolve-only check while 13 of its ~32 refs
@@ -83,6 +95,30 @@ chk(all(not (r["assertion"].get("kind")=="none" and r["disposition"]!="NOT-ASSER
     "assertion kind:none used only for NOT-ASSERTABLE")
 chk(all(not r.get("work") for r in rows[1:] if r["disposition"] == "CONFORMS"),
     "no CONFORMS row carries a `work` ref (a tracker ref must not imply red)")
+
+# --- a red row may not cite a CLOSED item as the thing that will fix it ---
+# bd's status vocabulary: open / blocked / deferred are live; resolved is not.
+EXPORT = pathlib.Path("docs/work-items.json")
+if EXPORT.is_file():
+    import json
+    status_of = {i["id"]: i.get("status", "") for i in json.loads(EXPORT.read_text())}
+    closed, unknown = [], []
+    for r in red:
+        ref = r.get("work")
+        if ref not in status_of:
+            unknown.append((r["id"], ref))
+        elif status_of[ref] == "resolved":
+            closed.append(f"{r['id']} cites {ref}, which is already resolved")
+    for line in closed:
+        print(f"  [FAIL] {line}")
+    chk(not closed, f"no GAP/VIOLATION row cites a resolved work item "
+                    f"({len(red)} red rows read against {EXPORT})")
+    if unknown:
+        print(f"[INFO] {len(unknown)} red row(s) cite an item not in {EXPORT} — newer than the "
+              f"export, or a typo; re-export to judge: "
+              + ", ".join(f"{rid}→{ref}" for rid, ref in unknown[:8]))
+else:
+    print(f"[INFO] {EXPORT} is absent, so no red row's cite could be checked for being closed")
 
 # --- THE NEW TRIPWIRE: every probe/absence ref must MEET ITS expect ---
 print("\nEXECUTABLE REFS — does each one actually assert its expectation?")

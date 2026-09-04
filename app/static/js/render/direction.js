@@ -15,7 +15,7 @@
 // (converge-ddt) rather than looking like it did something.
 import { $, qsa, state, data, escapeHtml, currentRepo, currentDoc, readBookmark } from '../state.js';
 import { hooks } from '../refresh.js';
-import { handleDecision, keepChange, saveChangeEdit, restoreChange, markAllRead, editDoc, reconcile, openAsk } from '../actions.js';
+import { handleDecision, keepChange, saveChangeEdit, restoreChange, restoreScope, markAllRead, editDoc, reconcile, openAsk } from '../actions.js';
 
 const DECISION_BUTTONS = [
   ['ratified', 'Ratify', 'primary-button'],
@@ -168,6 +168,20 @@ function changeSides(c) {
   return `<div class="change-comparison"><div class="change-side"><span>Before</span><p>${escapeHtml(c.before)}</p></div><div class="change-side added"><span>Now</span><p>${escapeHtml(c.now)}</p></div></div>`;
 }
 
+// §8: the granular choices are not a new kind of ratification — they build the
+// one word already in the vocabulary. So the answer is offered where the
+// choices are made, and it is the same `[data-decision]` control the Review
+// sheet carries, reaching the same decision write. When no proposal is open
+// there is nothing to answer, and the line says that rather than offering a
+// button that would refuse.
+function answerFromChoices(doc) {
+  const open = (doc && doc.proposals) || [];
+  if (!open.length) {
+    return '<span class="muted">Your keeping is remembered for you, and goes into the record with your word when a proposal is open.</span>';
+  }
+  return `<button class="outline-button" data-decision="ratified-with-edits" data-decision-label="Ratify with edits" type="button">Answer with these choices</button>`;
+}
+
 export function renderChanges() {
   const doc = data.doc;
   const changeRows = (doc && doc.changes) || [];
@@ -184,6 +198,7 @@ export function renderChanges() {
         <span class="muted">${escapeHtml(reading.sinceSource || 'the previous version of this document')}</span></div>
       <div class="changes-banner-actions">
         <span class="kept-count">${keptCount} of ${changeRows.length} kept</span>
+        ${answerFromChoices(doc)}
         <button class="${allKept ? 'primary-button' : 'outline-button'}" data-change-all="read" type="button">Mark all as read</button>
       </div>
     </div>`;
@@ -241,15 +256,47 @@ export function renderReview() {
     </article>`;
 }
 
+// §6: restoring from history is a real action at four scopes — a wording, a
+// paragraph, a section, the whole document. Each control below is the app's own
+// restore write over the sentences that scope covers; none of them stages
+// anything or reports an outcome of its own. What the scopes are made of is
+// this reading's change cards: `section` is the heading path ("Principles › 8"),
+// so its head is the section and the whole path is the paragraph.
+//
+// The panel names the one snapshot a restore can actually reach — the
+// steward's own read point — because that is the only earlier wording the
+// server can still find. Restoring to any other row in the list needs a route
+// the app does not answer; it is converge-4pq, and saying so is the honest
+// alternative to a control that would look like time travel and not be.
+function restorePanel(doc) {
+  const cards = (doc && doc.changes) || [];
+  const point = (doc && doc.reading) || {};
+  const lock = (doc && doc.locked) || '';
+  const at = point.sinceShort ? `${escapeHtml(point.sinceShort)}` : 'your read point';
+  if (!cards.length) {
+    return `<div class="history-actions"><p class="muted">Nothing has moved in this document since ${at}, so there is no earlier wording to put back. When something moves, restoring it at any of the four scopes appears here.</p></div>`;
+  }
+  const paragraphs = [...new Set(cards.map((c) => String(c.section || 'This document')))];
+  const sections = [...new Set(cards.map(sectionHead))].filter(Boolean);
+  const button = (scope, key, label) =>
+    `<button class="outline-button" data-restore="${escapeHtml(scope)}" data-restore-key="${escapeHtml(key)}" type="button">${label}</button>`;
+  return `<div class="history-actions">
+      <p class="muted">Restore puts wording back as it stood at <strong>${at}</strong> — ${escapeHtml(point.sinceSource || 'the version you last read')}. ${lock ? `This document is ${escapeHtml(lock)}, so each restore writes a proposal beside it and the document itself is not touched.` : 'Each restore goes into the document and is committed in your name.'}</p>
+      ${button('document', '', `Restore the whole document (${plural(cards.length, 'sentence')})`)}
+      ${sections.map((s) => button('section', s, `Restore section “${escapeHtml(shorten(s, 28))}”`)).join('')}
+      ${paragraphs.map((p) => button('paragraph', p, `Restore paragraph “${escapeHtml(shorten(p, 28))}”`)).join('')}
+      ${cards.map((c) => button('wording', c.id, `Restore wording “${escapeHtml(shorten(c.before || c.now, 28))}”`)).join('')}
+      <details><summary class="muted">Details</summary><p class="muted">Restoring to a snapshot older than your read point is not offered, because the app answers no route that reads a document at an arbitrary commit — only the sentences in this reading can be put back. Filed as converge-4pq.</p></details>
+    </div>`;
+}
+
 export function renderHistory() {
-  const historyRows = (data.doc && data.doc.history) || [];
+  const doc = data.doc;
+  const historyRows = (doc && doc.history) || [];
   if (!historyRows.length) return '<p class="muted">No recorded history for this document yet.</p>';
   const snap = historyRows.find((h) => h.id === state.historyId) || historyRows[0];
-  // Restoring is done sentence by sentence in Changes, where it is a real
-  // write. The three buttons that used to sit here only ever showed a message,
-  // so they are a pointer now rather than a promise nothing keeps.
   return `<div class="history-layout"><div class="history-list">${historyRows.map((h) => `<button class="history-item ${h.id === snap.id ? 'active' : ''}" data-history="${escapeHtml(h.id)}" type="button"><strong>${escapeHtml(h.label)}</strong><br><span>${escapeHtml(h.date)}</span></button>`).join('')}</div>
-      <div class="history-snapshot"><span class="eyebrow">${escapeHtml(snap.date)}</span><h3>${escapeHtml(snap.label)}</h3><p>${escapeHtml(snap.note)}</p>${snap.sha ? `<details><summary class="muted">Details</summary><p><code>${escapeHtml(snap.sha)}</code></p></details>` : ''}<div class="history-actions"><p class="muted">Restoring earlier wording is done change by change in <strong>Changes</strong>, where each restore is a real write.</p><button class="outline-button" data-inline-mode="changes" type="button">Open Changes</button></div></div></div>`;
+      <div class="history-snapshot"><span class="eyebrow">${escapeHtml(snap.date)}</span><h3>${escapeHtml(snap.label)}</h3><p>${escapeHtml(snap.note)}</p>${snap.sha ? `<details><summary class="muted">Details</summary><p><code>${escapeHtml(snap.sha)}</code></p></details>` : ''}${restorePanel(doc)}</div></div>`;
 }
 
 export function renderProposalMini() {
@@ -315,6 +362,12 @@ export function attachDocumentModeHandlers() {
     renderDirection();
   }));
   qsa('[data-change-all]').forEach((btn) => btn.addEventListener('click', markAllRead));
+  // §6: one wiring for all four restore scopes. Nothing is staged and nothing
+  // is decided here — the scope names which sentences, and actions.js makes
+  // the app's own restore write for each of them.
+  qsa('[data-restore]').forEach((btn) => btn.addEventListener('click', () => {
+    restoreScope(btn.dataset.restore, btn.dataset.restoreKey || '');
+  }));
   qsa('[data-change-action]').forEach((btn) => btn.addEventListener('click', () => {
     const card = btn.closest('.change-card');
     if (!card) return;
