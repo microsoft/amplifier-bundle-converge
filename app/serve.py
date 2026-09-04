@@ -374,11 +374,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8788)
     parser.add_argument("--config", default=None, help="Path to converge-app.toml")
+    parser.add_argument(
+        "--state",
+        default=None,
+        help="Path to the read-point and kept-mark store (default ~/.amplifier/converge-app.state.json)",
+    )
     args = parser.parse_args(argv)
 
     import uvicorn
 
-    made = create_app(Path(args.config) if args.config else None)
+    made = create_app(
+        Path(args.config) if args.config else None,
+        state_path=Path(args.state) if args.state else None,
+    )
     found = made.state.settings
     print(f"config: {found.source}", flush=True)
     for one in found.managers:

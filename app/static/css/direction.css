@@ -82,6 +82,9 @@
 .change-kind.new { background:#e8f8f0; color:#12734c; }
 .change-kind.removed { background:#fdecec; color:#a03038; }
 .change-kind.changed { background:#f0edff; color:#5540b4; }
+/* The sha and the date never shrink — they are what identifies the commit —
+   and the subject takes whatever room is left on the line below. */
+.change-stamp { margin-left:auto; flex:0 0 auto; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10px; color:#5b677b; background:#eef2f8; border-radius:999px; padding:2px 8px; white-space:nowrap; }
 .change-source { flex:1 1 100%; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .change-comparison.one-sided { grid-template-columns:1fr; }
 .change-side { border-right:0; background:#fff8f8; }

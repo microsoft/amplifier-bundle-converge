@@ -3,9 +3,9 @@
 // Nothing in the Changes view is staged, mocked, or acknowledged with a message
 // and then forgotten. Keep, Edit, Restore and Mark all as read each call the
 // server and each re-read the document afterwards, so what is on the screen is
-// what is on disk. That is why no handler here shows a toast of its own: every
-// one of them hands off to actions.js, which makes the request and reports what
-// actually happened.
+// what is on disk. That is why no handler in this file reports an outcome of
+// its own: every one of them hands off to actions.js, which makes the request
+// and then says what the server actually did.
 import { $, qsa, state, data, escapeHtml, currentRepo, currentDoc, readBookmark } from '../state.js';
 import { hooks } from '../refresh.js';
 import { handleDecision, keepChange, saveChangeEdit, restoreChange, markAllRead } from '../actions.js';
@@ -112,7 +112,8 @@ export function renderChanges() {
         <div class="change-card-header">
           <strong>${escapeHtml(c.section || 'This document')}</strong>
           <span class="change-kind ${escapeHtml(c.kind)}">${KIND_WORD[c.kind] || 'Changed'}</span>
-          <span class="muted change-source" title="${escapeHtml(c.source)}">${escapeHtml(c.source)}</span>
+          <span class="change-stamp" title="${escapeHtml(c.source)}">${escapeHtml(c.sourceSha)} · ${escapeHtml(c.sourceDate)}</span>
+          <span class="muted change-source" title="${escapeHtml(c.source)}">${escapeHtml(c.sourceSubject)}</span>
         </div>
         ${changeSides(c)}
         <div class="change-edit hidden">
