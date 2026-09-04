@@ -99,13 +99,48 @@ def run_view(browser, view, width, height):
     ctx = browser.new_context(viewport={"width": width, "height": height})
     page = boot_page(ctx, errors)
 
-    # --- console is open on boot and shows the tmux delegation notice ---
+    # --- console is open on boot, attached to the manager's own session ---
+    #
+    # These four checks were written in the read-only era and every one of them
+    # was false by the time converge-hw5 was filed: the console has taken
+    # keystrokes since converge-tfu, the terminal viewer loads, and the footer
+    # no longer says "read-only in this version" in either of its two live
+    # states.  They assert the CLAIM the app makes now, not one exact sentence,
+    # so tuning the wording again does not turn this red.
     closed = page.evaluate("() => document.querySelector('.body-grid').classList.contains('console-closed')")
     check(f"[{view}] console open on boot", not closed)
-    body = page.text_content("#consoleBody")
-    check(f"[{view}] terminal tab degrades to 'terminal viewer not loaded'", "terminal viewer not loaded" in body, body.strip()[:60])
-    check(f"[{view}] console input is disabled", page.get_attribute("#consoleInput", "disabled") is not None)
-    check(f"[{view}] read-only note visible", "read-only in this version" in page.text_content(".console-footer"))
+
+    # Wait on the observable rather than a sleep: the pane attaches on its
+    # first render, and the fixture names a manager session for it to attach to.
+    try:
+        page.wait_for_selector("#terminalHost", timeout=5000)
+    except Exception:
+        pass
+    console = page.evaluate("""() => {
+      const form = document.getElementById('consoleForm');
+      const field = form.querySelector('input, textarea');
+      const send = form.querySelector('button[type="submit"]');
+      const view = window.ConvergeTmux && window.ConvergeTmux.current();
+      return {
+        host: !!document.getElementById('terminalHost'),
+        attached: view ? view.socket + ':' + view.session : null,
+        field: !field.disabled, send: !send.disabled,
+        footer: document.querySelector('.console-footer').textContent.trim(),
+        body: document.getElementById('consoleBody').innerText.trim().slice(0, 70),
+      };
+    }""")
+    check(f"[{view}] terminal tab attaches to the manager's session",
+          console["host"] and console["attached"] is not None,
+          f"attached={console['attached']!r}; the pane reads {console['body']!r}")
+    check(f"[{view}] console takes keystrokes (experience-console.v1 Core 3)",
+          console["field"] and console["send"],
+          f"field live={console['field']} send live={console['send']}")
+    # Core 9 asks the pane to say what it is. Both live states say "not a chat";
+    # what differs is whether a session is on the other end.
+    check(f"[{view}] the pane says it is not a chat (Core 9)",
+          "not a chat" in console["footer"], console["footer"])
+    check(f"[{view}] the pane never claims to be read-only",
+          "read-only" not in console["footer"].lower(), console["footer"])
     page.click('[data-console-tab="notes"]')
     page.wait_for_selector("#consoleBody .context-note")
     check(f"[{view}] console Context tab shows the manager's own objective",
