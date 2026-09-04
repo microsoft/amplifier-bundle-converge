@@ -175,6 +175,103 @@ def _append_weave_in(highway: Path, line: str) -> bool:
     return True
 
 
+#: The two directions a priority can move. Anything else is refused by name
+#: rather than guessed at, because "up-ish" is not an ordering.
+PRIORITY_DIRECTIONS = ("raise", "lower")
+
+#: What this write does NOT touch, said once so every caller is told the same
+#: thing. The queue keeps a priority number of its own, and it is the number
+#: `work_claim` orders by -- but `amplifier-work-tracker`, the only queue
+#: command this app runs, exposes no verb that sets it: `add`, `edit`,
+#: `defer`, `block`, `dep`, `resolve`, `reopen`, `move` and `erratum` are the
+#: writes it has, and not one of them takes a priority. Measured 2026-09-04 by
+#: reading `--help` on every one of them and `adapter.Beads.edit_item`, which
+#: amends title/description/acceptance/design and nothing else.
+#:
+#: So the call is recorded where the manager session reads it and acts on it --
+#: the same standing a steer has, and for the same stated reason -- and the
+#: answer says so rather than implying a number moved in the queue's own
+#: record. Filed as `converge-t6fp` rather than worked around.
+PRIORITY_QUEUE_NOTE = (
+    "The queue's own priority number is not written from here: the work-tracker "
+    "command line offers no verb that sets one. This is recorded in the weave-in "
+    "log the manager session reads, which is what orders the work."
+)
+
+
+def record_priority(
+    batch_dir: Path,
+    *,
+    item: str,
+    direction: str,
+    note: str = "",
+    title: str = "",
+    user: str = "",
+    when: datetime | None = None,
+) -> dict:
+    """Raise or lower one item's priority, written where the run is ordered.
+
+    The second of the five writes `experience.v1` Core 4 names, and the one
+    that was missing until now (`converge-a5g`). `surface.v1` clause 3 spells
+    it "raise or lower a priority, **with a note**", so the note travels with
+    the call rather than being a second message about it.
+
+    Where it lands is the same place a steer lands, and for the same reason
+    `steer` gives above: **the manager session is what acts on it.** This
+    appends one line to the batch's `HIGHWAY.md` weave-in log -- the running
+    account that session already reads before it briefs the next lane -- so a
+    priority given here and a priority said in the Manager Console arrive at
+    one place, in one shape, and cannot disagree.
+
+    Nothing is overwritten and nothing is reordered behind anyone's back: the
+    call is appended, stamped, and attributed, so the record can be read later
+    as a record. What it deliberately does not do is claim to have moved the
+    queue's own priority number -- see `PRIORITY_QUEUE_NOTE`.
+    """
+    when = when or _now()
+    wanted = (direction or "").strip().lower()
+    if wanted not in PRIORITY_DIRECTIONS:
+        return {
+            "ok": False,
+            "error": (
+                f"a priority is raised or lowered; {direction.strip() or '(nothing)'} is "
+                "neither"
+            ),
+        }
+    named = (item or "").strip()
+    if not named:
+        return {"ok": False, "error": "name the item whose priority is moving"}
+
+    highway = Path(batch_dir) / "HIGHWAY.md"
+    if not highway.is_file():
+        return {
+            "ok": False,
+            "error": f"there is no HIGHWAY.md at {highway}, so a priority has nowhere to land",
+        }
+
+    said = f"{wanted} {named}"
+    if title.strip():
+        said += f" \u2014 {title.strip()}"
+    if note.strip():
+        said += f"; note: {note.strip()}"
+    line = f"- {_stamp(when)} priority ({user or 'unknown'}): {said}"
+    if not _append_weave_in(highway, line):
+        return {"ok": False, "error": f"{highway} could not be read, so nothing was written"}
+
+    return {
+        "ok": True,
+        "direction": wanted,
+        "item": named,
+        "title": title.strip(),
+        "note": note.strip(),
+        "line": line,
+        "highway": str(highway),
+        "recordedIn": "the weave-in log the manager session reads before it briefs the next lane",
+        "queueNumberUntouched": True,
+        "queueNote": PRIORITY_QUEUE_NOTE,
+    }
+
+
 def steer(
     batch_dir: Path,
     *,

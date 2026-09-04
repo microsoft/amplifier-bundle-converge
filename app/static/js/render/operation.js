@@ -195,6 +195,94 @@ function wireFeedbackDrop() {
   });
 }
 
+// --------------------------------------------------------------------------
+// Core 4's second write — raise or lower a priority, with a note
+// --------------------------------------------------------------------------
+//
+// It sits where the queue is already being read: the two Core 7 numbers are
+// drawn just below this card, and these rows are the front of that same queue
+// in the order it will be claimed. Nothing is held here — every row comes from
+// the payload, which reads the queue's own command line fresh (Core 7 again).
+//
+// What the buttons write is one line in the run's weave-in log. The card says
+// that in so many words rather than letting a steward believe a number moved
+// somewhere they cannot see; `app/writes.py` says the same thing back in the
+// answer, and converge-t6fp holds the gap.
+
+function priorityRow(row) {
+  const id = escapeHtml(row.id);
+  return `<div class="priority-row" style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid rgba(128,128,128,.2)">
+      <div style="flex:1;min-width:0">
+        <strong style="${WRAP};font-size:12px">${escapeHtml(row.title || row.id)}</strong>
+        <p class="muted" style="${WRAP};font-size:10px;margin:2px 0 0">${id}</p>
+      </div>
+      <button class="text-button" type="button" data-raise="${id}">Raise</button>
+      <button class="text-button" type="button" data-lower="${id}">Lower</button>
+    </div>`;
+}
+
+function askPriority(item, direction, title) {
+  const m = currentManager();
+  if (!m) { toast('No manager session is selected.'); return; }
+  const word = direction === 'raise' ? 'Raise' : 'Lower';
+  openDialog(`${word} the priority of ${item}`, 'Priority', `
+      <div class="dialog-field"><label for="priorityNoteText">Why now? (the note travels with the call)</label><textarea id="priorityNoteText" placeholder="This blocks the experience kit going green\u2026"></textarea></div>
+      <p class="muted">This lands in the run&rsquo;s weave-in log, where the manager session reads it before it briefs the next lane. The queue&rsquo;s own priority number is not set from here &mdash; converge-t6fp.</p>`, [
+    { label: 'Cancel', kind: 'outline', action: closeDialog },
+    {
+      label: `${word} it`,
+      kind: 'primary',
+      action: async () => {
+        const note = $('priorityNoteText') ? $('priorityNoteText').value.trim() : '';
+        closeDialog();
+        try {
+          const answer = await api.priority(m.id, { item, direction, note, title: title || '' });
+          toast(answer && answer.line ? `Recorded: ${answer.line}` : `${word}d ${item}.`);
+          await hooks.reloadManager();
+        } catch (err) {
+          toast(`Could not record that: ${err.message}`);
+        }
+      },
+    },
+  ]);
+}
+
+function renderPriorityQueue(op) {
+  const list = $('priorityList');
+  const note = $('priorityNote');
+  if (!list || !note) return;
+  const queue = (op && op.queueItems) || {};
+  const rows = queue.items || [];
+
+  if (!queue.available) {
+    note.textContent = queue.why || 'The work queue could not be read, so nothing can be ordered from here.';
+    list.innerHTML = '';
+  } else if (!rows.length) {
+    note.textContent = 'Nothing is waiting in the queue right now.';
+    list.innerHTML = '';
+  } else {
+    const total = Number(queue.total) || rows.length;
+    note.textContent = total > rows.length
+      ? `The front of the queue \u2014 ${rows.length} of ${total} waiting, claimed top first.`
+      : `${rows.length} waiting, claimed top first.`;
+    list.innerHTML = rows.map(priorityRow).join('');
+    const byId = new Map(rows.map((r) => [String(r.id), r.title || '']));
+    qsa('[data-raise]').forEach((b) => wire(b, () => askPriority(b.dataset.raise, 'raise', byId.get(b.dataset.raise))));
+    qsa('[data-lower]').forEach((b) => wire(b, () => askPriority(b.dataset.lower, 'lower', byId.get(b.dataset.lower))));
+  }
+
+  // The calls already made, read back out of the same log they were written
+  // into. This is how a steward sees that a call landed at all, rather than
+  // taking a toast's word for it.
+  const calls = (op && op.priorityCalls) || [];
+  const recorded = $('priorityCallList');
+  if (recorded) {
+    recorded.innerHTML = calls.length
+      ? calls.map((c) => `<p class="muted" style="${WRAP};font-size:11px;margin:6px 0 0"><strong>${escapeHtml(c.direction === 'raise' ? 'Raised' : 'Lowered')} ${escapeHtml(c.item)}</strong>${c.who ? ` \u00b7 ${escapeHtml(c.who)}` : ''}${c.said ? ` \u2014 ${escapeHtml(c.said)}` : ''}</p>`).join('')
+      : '<p class="muted" style="font-size:11px;margin:6px 0 0">No priority has been raised or lowered on this run.</p>';
+  }
+}
+
 // Core 13 — "Every manager session you run is listed, sorted by which one
 // needs you, and you can tell them all at once." The shell's rail lists them
 // too; what was missing is the list on this page, beside the one message that
@@ -454,6 +542,9 @@ export function renderOperation() {
       ? redraws.map((r) => `<p class="muted" style="${WRAP};font-size:11px;margin:6px 0 0"><strong>${escapeHtml(r.when || 'Undated')}</strong> — ${escapeHtml(r.why)}</p>`).join('')
       : '<p class="muted" style="font-size:11px;margin:6px 0 0">The plan has not been redrawn on this run.</p>';
   }
+
+  // Core 4's second write, immediately above the two numbers it is about.
+  renderPriorityQueue(op);
 
   // Core 7 — the two numbers, side by side, above the lanes.
   const queue = op.queue || {};

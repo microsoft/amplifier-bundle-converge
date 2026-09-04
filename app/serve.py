@@ -30,6 +30,36 @@ REPO_ROOT = HERE.parent
 #: Paths that answer without a sign-in. Everything else needs the cookie.
 PUBLIC_PREFIXES = ("/login", "/static/", "/branding/", "/favicon", "/manifest.webmanifest", "/sw.js", "/healthz")
 
+#: The one path that answers without a cookie and is still a write, listed
+#: apart from the prefixes above because it is matched WHOLE.
+#:
+#: `experience-collaboration.v1` Core 6 asks for webhooks where the host offers
+#: them, and polling as the honest fallback. The route exists and works
+#: (`app/collab.py`), but a repository host carries no `cv_session` cookie, so
+#: the gate answered 401 and the host could never reach its own webhook --
+#: measured 2026-09-04 on 127.0.0.1:8846, and the reason the freshness sentence
+#: on the surface has always said polling. That is `converge-7cs`.
+#:
+#: What stands in for the cookie here is the route's own shared-secret check,
+#: which is why this list must never grow a second entry casually and why the
+#: check inside `collab.host_called` must never be relaxed at the same time.
+#: Relax both and the app has gained an unauthenticated write.
+#:
+#: Matched whole rather than as a prefix on purpose: a prefix would also open
+#: `/api/collab/webhooks/host/anything-at-all`, which is not what Core 6 asks
+#: for and not what the secret check was written to cover.
+#:
+#: The string is taken from `collab.WEBHOOK_PATH` rather than written out again,
+#: so the door and the route it opens cannot drift apart. The collab module is
+#: optional here -- the mount below already treats it as optional -- and with it
+#: absent there is no webhook route to open and nothing is public.
+try:  # pragma: no cover - exercised by which modules are installed
+    from . import collab as _collab
+
+    PUBLIC_PATHS: tuple[str, ...] = (_collab.WEBHOOK_PATH,)
+except ImportError:  # pragma: no cover - the collab surface is another lane's file
+    PUBLIC_PATHS = ()
+
 #: Who drafts the wording an ask proposes. `agent` runs a headless Amplifier
 #: session per ask; anything else writes the proposal from the steward's own
 #: words with no session at all, which is what the tests run and what an ask
@@ -39,6 +69,8 @@ ASK_DRAFTER = os.environ.get("CONVERGE_ASK_DRAFTER", "fixture").strip().lower()
 
 
 def _is_public(path: str) -> bool:
+    if path in PUBLIC_PATHS:
+        return True
     return path == "/login" or any(path.startswith(prefix) for prefix in PUBLIC_PREFIXES)
 
 
@@ -525,6 +557,40 @@ def create_app(
         )
         return JSONResponse(result)
 
+    @app.post("/api/managers/{mid}/priority")
+    async def priority(mid: str, request: Request) -> JSONResponse:
+        """Raise or lower one item's priority — `experience.v1` Core 4's second write.
+
+        It lands in the batch's weave-in log, which is where the manager
+        session reads what to do next; `writes.record_priority` says at length
+        why that is the honest destination and what it deliberately does not
+        claim to have changed. The refusals are the writer's own words, so
+        forcing the control in the browser reaches the same sentence a bad
+        payload does.
+        """
+        mc = manager_or_none(mid)
+        if mc is None:
+            return JSONResponse({"error": f"no manager named {mid}"}, status_code=404)
+        if not mc.batch_dir:
+            return JSONResponse(
+                {"error": "this manager has no batch directory to record a priority in"},
+                status_code=400,
+            )
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        body = body if isinstance(body, dict) else {}
+        result = writes.record_priority(
+            Path(mc.batch_dir),
+            item=str(body.get("item") or ""),
+            direction=str(body.get("direction") or ""),
+            note=str(body.get("note") or ""),
+            title=str(body.get("title") or ""),
+            user=who(request),
+        )
+        return JSONResponse(result, status_code=200 if result.get("ok") else 400)
+
     @app.post("/api/managers/{mid}/ask")
     async def ask(mid: str, request: Request) -> JSONResponse:
         """A scoped ask, answered with a proposal and nothing else.
@@ -616,6 +682,16 @@ def create_app(
             from app import collab as _collab
 
             app.include_router(_collab.router)
+
+        except ImportError:
+
+            pass
+
+        try:
+
+            from app import feedback_voice as _fv
+
+            app.include_router(_fv.router)
 
         except ImportError:
 
