@@ -32,6 +32,48 @@ function reflectScreen() {
   if (shell) shell.classList.toggle('screen-home', state.screen === 'home');
 }
 
+// Is the console pane inert where the steward is standing? Read off the pane
+// itself rather than re-deriving the breakpoint here: `console.css` owns the
+// rule, and a second copy of a rule is a second thing to keep in step.
+export function consoleIsStowedHere() {
+  const pane = $('managerConsole');
+  if (!pane || typeof getComputedStyle !== 'function') return false;
+  return getComputedStyle(pane).pointerEvents === 'none';
+}
+
+const CONSOLE_IS_ELSEWHERE =
+  'The Manager Console is a pane beside Direction and Operation. Open a manager '
+  + 'session to read it.';
+
+// The control must not say "on" over a screen with no pane on it (converge-30aw).
+//
+// `render/console.js` sets `aria-pressed` and `active` from `state.consoleOpen`,
+// which is the console's own open state and is deliberately NOT changed by Home
+// -- converge-nxf stows the SHEET on Home and leaves the state alone, so the
+// pane is exactly as the steward left it the moment they open a manager
+// session. Both halves are right on their own and wrong together: measured
+// 2026-09-04 at 390x844 on Home, `{pointerEvents: 'none', gridClosed: false,
+// togglePressed: 'true'}` -- the control read "on" while nothing was drawn, and
+// a steward tapping it saw nothing change on that screen.
+//
+// So the STATE stays untouched and the CONTROL tells the truth about the screen
+// it is on: not pressed, and a title naming where the pane actually is. This
+// runs after `renderConsole()` rather than inside it, because `console.js` is
+// another lane's file.
+function reflectConsoleControl() {
+  const btn = $('consoleToggle');
+  if (!btn) return;
+  const elsewhere = state.screen === 'home' && consoleIsStowedHere();
+  btn.classList.toggle('console-elsewhere', elsewhere);
+  if (elsewhere) {
+    btn.setAttribute('aria-pressed', 'false');
+    btn.classList.remove('active');
+    btn.setAttribute('title', CONSOLE_IS_ELSEWHERE);
+  } else {
+    btn.removeAttribute('title');
+  }
+}
+
 export function renderAll() {
   renderTop();
   renderSessions();
@@ -41,6 +83,7 @@ export function renderAll() {
   renderConsole();
   renderManagerMenu();
   reflectScreen();
+  reflectConsoleControl();
 }
 
 function pickDoc() {
@@ -141,8 +184,23 @@ function wire() {
     renderAll();
   });
   $('feedbackButton').addEventListener('click', openFeedback);
-  $('consoleToggle').addEventListener('click', () => { state.consoleOpen = !state.consoleOpen; renderConsole(); });
-  $('consoleClose').addEventListener('click', () => { state.consoleOpen = false; renderConsole(); });
+  $('consoleToggle').addEventListener('click', () => {
+    // The gesture `platform-web.v1` §6 names -- pull it up, push it down -- is
+    // untouched: the state flips wherever the steward taps, so the pane is as
+    // they left it when they next open a manager session.
+    const wasStowedHere = state.screen === 'home' && consoleIsStowedHere();
+    state.consoleOpen = !state.consoleOpen;
+    renderConsole();
+    reflectConsoleControl();
+    // On Home below the overlay width nothing is drawn to change, so the tap
+    // would otherwise be silent (converge-30aw). Say where the pane is and what
+    // just happened to it, rather than leaving the steward tapping a control
+    // that appears dead.
+    if (wasStowedHere) {
+      toast(`${CONSOLE_IS_ELSEWHERE} It is now ${state.consoleOpen ? 'open' : 'closed'} there.`);
+    }
+  });
+  $('consoleClose').addEventListener('click', () => { state.consoleOpen = false; renderConsole(); reflectConsoleControl(); });
   $('managerSelectButton').addEventListener('click', () => $('managerMenu').classList.toggle('hidden'));
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#managerMenu') && !e.target.closest('#managerSelectButton')) $('managerMenu').classList.add('hidden');
