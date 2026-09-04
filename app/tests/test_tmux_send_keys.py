@@ -6,9 +6,13 @@ relays".  The conformance kit deliberately cannot prove that: a static read can
 only see whether a route exists at all, and says so in its own detail.  **This
 file is where the round trip is actually proved**, against a real tmux server.
 
-Everything here runs on the socket ``cvsend`` and nothing touches another one.
-The only destructive command in this file is ``tmux -L cvsend kill-server``;
-there is no ``pkill``/``pgrep -f`` anywhere, a pattern that kills your own shell.
+The socket is named for **this run** -- ``cvsend-<pid>-<random>`` -- and nothing
+here ever touches another socket: the only destructive command in this file is
+``tmux -L <that socket> kill-server``.  A fixed name would be machine-wide, and
+two lanes testing at once would kill each other's sessions and report the loss
+as a failure in a file neither had touched; ``conftest.py`` records the
+measurement.  There is no ``pkill``/``pgrep -f`` anywhere, a pattern that kills
+your own shell.
 
 What is covered, and why each one is here:
 
@@ -27,10 +31,12 @@ What is covered, and why each one is here:
 from __future__ import annotations
 
 import asyncio
+import os
 import shutil
 import subprocess
 import sys
 import time
+import uuid
 from pathlib import Path
 
 import pytest
@@ -41,7 +47,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from app import tmux_view as tv  # noqa: E402
 
-SOCKET = "cvsend"
+#: One server per run, never a fixed machine-wide name.  The convention and the
+#: measurement behind it are in ``conftest.py``; the pid is what its end-of-run
+#: reaper looks for.
+SOCKET = f"cvsend-{os.getpid()}-{uuid.uuid4().hex[:8]}"
 MARKER = "ZZSENTZZ"
 
 pytestmark = pytest.mark.skipif(shutil.which("tmux") is None, reason="tmux is not installed")
@@ -66,19 +75,41 @@ def _pane(session: str) -> str:
     return _tmux("capture-pane", "-p", "-t", f"={session}:").stdout
 
 
+def _refuse_if_a_server_is_already_up() -> None:
+    """Say so and stop, rather than kill a server this run did not start.
+
+    On a per-run socket name this should be unreachable.  If it ever fires,
+    the naming is wrong, and the honest answer is to report that -- not to
+    ``kill-server`` and take someone else's sessions out from under them
+    (``contracts/operation.v1.md``: a check that cannot run says so, rather
+    than reporting a failure someone else caused).
+    """
+    found = _tmux("ls")
+    if found.returncode == 0:
+        pytest.fail(
+            f"a tmux server is already running on socket {SOCKET!r}, which this run "
+            f"expected to have to itself. Refusing to kill it. Sessions found:\n"
+            f"{found.stdout.strip()}"
+        )
+
+
 @pytest.fixture(scope="module", autouse=True)
 def cvsend_server():
-    _tmux("kill-server")
-    # `cat` echoes its own input, so the pane's text is proof the keystrokes
-    # arrived at the process, not merely at tmux.
-    _tmux("new", "-d", "-s", "typist", "cat", check=True)
-    _tmux("new", "-d", "-s", "closer", "cat", check=True)
-    _tmux("new", "-d", "-s", "shortest", "cat", check=True)
-    _tmux("new", "-d", "-s", "bulk", "cat", check=True)
-    _tmux("new", "-d", "-s", "router", "cat", check=True)
-    time.sleep(1.0)
-    yield
-    _tmux("kill-server")
+    _refuse_if_a_server_is_already_up()
+    # try/finally, not a bare yield: a `check=True` failure below would
+    # otherwise skip the teardown and leak this run's server.
+    try:
+        # `cat` echoes its own input, so the pane's text is proof the keystrokes
+        # arrived at the process, not merely at tmux.
+        _tmux("new", "-d", "-s", "typist", "cat", check=True)
+        _tmux("new", "-d", "-s", "closer", "cat", check=True)
+        _tmux("new", "-d", "-s", "shortest", "cat", check=True)
+        _tmux("new", "-d", "-s", "bulk", "cat", check=True)
+        _tmux("new", "-d", "-s", "router", "cat", check=True)
+        time.sleep(1.0)
+        yield
+    finally:
+        _tmux("kill-server")
 
 
 def send(session: str, keys: str, enter: bool = False) -> dict:
