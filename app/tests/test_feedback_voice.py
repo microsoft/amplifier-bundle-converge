@@ -56,6 +56,11 @@ from app import auth, feedback_voice, serve  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ACTIONS_JS = REPO_ROOT / "app" / "static" / "js" / "actions.js"
+#: The voice half moved out of `actions.js` into its own client module on
+#: 2026-09-04 (converge-s7e9): the field, the recording and the one POST
+#: that carries it. `actions.js` still owns the dialog that grows the field,
+#: so the assertions below read whichever file each thing actually lives in.
+VOICE_JS = REPO_ROOT / "app" / "static" / "js" / "feedback_voice.js"
 DIALOGS_CSS = REPO_ROOT / "app" / "static" / "css" / "dialogs.css"
 
 GOOD_USER = "tester"
@@ -484,16 +489,21 @@ def test_the_feedback_dialog_offers_voice_beside_text_and_a_screenshot() -> None
     be no offer at all on the machine this app actually runs on.
     """
     js = ACTIONS_JS.read_text(encoding="utf-8")
+    voice = VOICE_JS.read_text(encoding="utf-8")
     head, _, dialog = js.partition("export function openFeedback")
     assert dialog, "openFeedback is no longer in actions.js"
     body = dialog.split("\nexport ")[0]
 
     for offer in ('id="feedbackText"', 'accept="image/*"', "${voiceField()}"):
         assert offer in body, f"the feedback dialog no longer offers {offer}"
+    assert "from './feedback_voice.js'" in js, (
+        "actions.js no longer imports the voice module, so `voiceField()` in the dialog "
+        "above would be undefined at run time (converge-s7e9)"
+    )
     for mark in ('id="feedbackVoice"', 'accept="audio/*"', "MediaRecorder", "getUserMedia"):
-        assert mark in js, f"actions.js carries no {mark}"
+        assert mark in voice, f"feedback_voice.js carries no {mark}"
 
-    field = js.partition("function voiceField()")[2].split("\nfunction ")[0]
+    field = voice.partition("export function voiceField()")[2].split("\nexport ")[0]
     assert 'type="file" accept="audio/*"' in field, (
         "the file input is no longer drawn unconditionally, so a browser that cannot "
         "record is offered nothing at all"
