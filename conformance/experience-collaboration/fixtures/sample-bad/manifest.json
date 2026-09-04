@@ -1,0 +1,38 @@
+{
+  "base": "/home/bkrabach/dev/hw-converge/lanes/w8-umbrella-kits/amplifier-bundle-converge/conformance/experience-collaboration/fixtures/sample-bad",
+  "captured": "fixture",
+  "manager": "m1",
+  "note": "the seam broken every way at once: a channel between manager sessions, a review per origin, no bridge to the host, an answer that goes nowhere, freshness left to the steward, writes relayed through a terminal session, no steward, and a tracker of Converge's own",
+  "routes": [
+    {
+      "route": "/",
+      "file": "index.html",
+      "kind": "html"
+    },
+    {
+      "route": "/openapi.json",
+      "file": "openapi.json",
+      "kind": "openapi"
+    },
+    {
+      "route": "/api/boot",
+      "file": "api__boot.json",
+      "kind": "json"
+    },
+    {
+      "route": "/api/managers/m1",
+      "file": "api__managers__m1.json",
+      "kind": "json"
+    },
+    {
+      "route": "/static/js/main.js",
+      "file": "static__js__main.js",
+      "kind": "js"
+    },
+    {
+      "route": "/static/js/render/direction.js",
+      "file": "static__js__render__direction.js",
+      "kind": "js"
+    }
+  ]
+}

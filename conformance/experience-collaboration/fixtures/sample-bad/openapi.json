@@ -1,0 +1,46 @@
+{
+ "openapi": "3.1.0",
+ "paths": {
+  "/": {
+   "get": {
+    "summary": "/"
+   }
+  },
+  "/api/boot": {
+   "get": {
+    "summary": "/api/boot"
+   }
+  },
+  "/api/managers/{mid}": {
+   "get": {
+    "summary": "/api/managers/{mid}"
+   }
+  },
+  "/api/managers/{mid}/decision": {
+   "post": {
+    "summary": "/api/managers/{mid}/decision"
+   }
+  },
+  "/api/managers/{mid}/peers/{other}": {
+   "post": {
+    "summary": "/api/managers/{mid}/peers/{other}"
+   }
+  },
+  "/api/issues": {
+   "get": {
+    "summary": "/api/issues"
+   },
+   "post": {
+    "summary": "/api/issues"
+   }
+  },
+  "/login": {
+   "get": {
+    "summary": "/login"
+   },
+   "post": {
+    "summary": "/login"
+   }
+  }
+ }
+}
