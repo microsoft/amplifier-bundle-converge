@@ -17,6 +17,9 @@ async function request(url, options = {}) {
 
 const post = (url, payload) => request(url, { method: 'POST', body: JSON.stringify(payload) });
 
+const docBase = (mid, repoId, docId) =>
+  `/api/managers/${encodeURIComponent(mid)}/docs/${encodeURIComponent(repoId)}/${encodeURIComponent(docId)}`;
+
 export const api = {
   boot: () => request('/api/boot'),
   manager: (mid) => request(`/api/managers/${encodeURIComponent(mid)}`),
@@ -27,4 +30,11 @@ export const api = {
   decision: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/decision`, payload),
   feedback: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/feedback`, payload),
   steer: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/steer`, payload),
+  markRead: (mid, repoId, docId) => post(`${docBase(mid, repoId, docId)}/read`, {}),
+  keepChange: (mid, repoId, docId, changeId, kept) =>
+    post(`${docBase(mid, repoId, docId)}/changes/${encodeURIComponent(changeId)}/keep`, { kept }),
+  editChange: (mid, repoId, docId, changeId, text) =>
+    post(`${docBase(mid, repoId, docId)}/changes/${encodeURIComponent(changeId)}/edit`, { text }),
+  restoreChange: (mid, repoId, docId, changeId) =>
+    post(`${docBase(mid, repoId, docId)}/changes/${encodeURIComponent(changeId)}/restore`, {}),
 };

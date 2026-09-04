@@ -21,7 +21,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from fastapi.staticfiles import StaticFiles
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound, select_autoescape
 
-from . import auth, config, data, writes
+from . import auth, changes, config, data, state_store, writes
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -47,11 +47,18 @@ def _placeholder(name: str, why: str) -> HTMLResponse:
     )
 
 
-def create_app(config_path: Path | None = None, secret_path: Path | None = None) -> FastAPI:
+def create_app(
+    config_path: Path | None = None,
+    secret_path: Path | None = None,
+    state_path: Path | None = None,
+) -> FastAPI:
     app = FastAPI(title="Amplifier Converge", docs_url=None, redoc_url=None)
     app.state.config_path = Path(config_path) if config_path else None
     app.state.settings = config.load(app.state.config_path)
     app.state.sessions = auth.Sessions(auth.read_or_make_secret(secret_path))
+    # Where each steward's read point and kept marks live, so leaving the
+    # page and coming back does not throw their answers away.
+    app.state.store = state_store.Store(state_path)
 
     templates = Environment(
         loader=FileSystemLoader(str(HERE / "templates")),
@@ -177,15 +184,92 @@ def create_app(config_path: Path | None = None, secret_path: Path | None = None)
             return JSONResponse({"error": f"no manager named {mid}"}, status_code=404)
         return JSONResponse(data.operation_payload(mc))
 
-    @app.get("/api/managers/{mid}/docs/{repo_ident}/{doc_ident}")
-    def document(mid: str, repo_ident: str, doc_ident: str) -> JSONResponse:
+    def doc_or_none(mid: str, repo_ident: str, doc_ident: str):
         mc = manager_or_none(mid)
         if mc is None:
-            return JSONResponse({"error": f"no manager named {mid}"}, status_code=404)
+            return None, JSONResponse({"error": f"no manager named {mid}"}, status_code=404)
         found = data.find_doc(mc, repo_ident, doc_ident)
         if found is None:
-            return JSONResponse({"error": f"no document {doc_ident} in {repo_ident}"}, status_code=404)
-        return JSONResponse(data.doc_payload(*found))
+            return None, JSONResponse({"error": f"no document {doc_ident} in {repo_ident}"}, status_code=404)
+        return found, None
+
+    @app.get("/api/managers/{mid}/docs/{repo_ident}/{doc_ident}")
+    def document(mid: str, repo_ident: str, doc_ident: str, request: Request) -> JSONResponse:
+        found, refusal = doc_or_none(mid, repo_ident, doc_ident)
+        if refusal is not None:
+            return refusal
+        user = who(request)
+        store = app.state.store
+        return JSONResponse(
+            data.doc_payload(
+                *found,
+                since=store.read_point(user, repo_ident, doc_ident),
+                kept=store.kept(user, repo_ident, doc_ident),
+            )
+        )
+
+    # --------------------------------------------------- since you last read
+    @app.post("/api/managers/{mid}/docs/{repo_ident}/{doc_ident}/read")
+    def mark_read(mid: str, repo_ident: str, doc_ident: str, request: Request) -> JSONResponse:
+        """Move this steward's read point to where the document stands now.
+
+        The point is the document's own last commit rather than the branch
+        tip, so "empty until it changes again" is exactly true: the next card
+        appears when the next commit touches this file and not before.
+        """
+        found, refusal = doc_or_none(mid, repo_ident, doc_ident)
+        if refusal is not None:
+            return refusal
+        repo, path = found
+        head = changes.head_of(repo, Path(path).relative_to(repo).as_posix())
+        if not head:
+            return JSONResponse({"error": "this document has never been committed"}, status_code=400)
+        app.state.store.set_read_point(who(request), repo_ident, doc_ident, head)
+        return JSONResponse({"ok": True, "sha": head, "short": head[:7]})
+
+    @app.post("/api/managers/{mid}/docs/{repo_ident}/{doc_ident}/changes/{change_id}/keep")
+    async def keep_change(mid: str, repo_ident: str, doc_ident: str, change_id: str, request: Request) -> JSONResponse:
+        found, refusal = doc_or_none(mid, repo_ident, doc_ident)
+        if refusal is not None:
+            return refusal
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        on = bool(body.get("kept", True)) if isinstance(body, dict) else True
+        here = app.state.store.keep(who(request), repo_ident, doc_ident, change_id, on)
+        return JSONResponse({"ok": True, "kept": on, "keptIds": sorted(here)})
+
+    async def _reword(mid, repo_ident, doc_ident, change_id, request, action) -> JSONResponse:
+        found, refusal = doc_or_none(mid, repo_ident, doc_ident)
+        if refusal is not None:
+            return refusal
+        repo, path = found
+        user = who(request)
+        since = app.state.store.read_point(user, repo_ident, doc_ident)
+        card = changes.find_change(repo, path, change_id, since=since)
+        if card is None:
+            return JSONResponse({"error": "that change is not in this reading any more"}, status_code=404)
+        if action == "edit":
+            try:
+                body = await request.json()
+            except Exception:
+                body = {}
+            wanted = str((body or {}).get("text") or "")
+        else:
+            wanted = card["before"]
+        result = writes.apply_change(Path(repo), Path(path), change=card, text=wanted, action=action, user=user)
+        return JSONResponse(result, status_code=200 if result.get("ok") else 400)
+
+    @app.post("/api/managers/{mid}/docs/{repo_ident}/{doc_ident}/changes/{change_id}/edit")
+    async def edit_change(mid: str, repo_ident: str, doc_ident: str, change_id: str, request: Request) -> JSONResponse:
+        """The steward's own wording, in place of what the change proposed."""
+        return await _reword(mid, repo_ident, doc_ident, change_id, request, "edit")
+
+    @app.post("/api/managers/{mid}/docs/{repo_ident}/{doc_ident}/changes/{change_id}/restore")
+    async def restore_change(mid: str, repo_ident: str, doc_ident: str, change_id: str, request: Request) -> JSONResponse:
+        """The wording that was there before, back where it was."""
+        return await _reword(mid, repo_ident, doc_ident, change_id, request, "restore")
 
     @app.get("/api/needs/{mid}")
     def needs(mid: str) -> JSONResponse:
