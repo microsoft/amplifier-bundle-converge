@@ -1,19 +1,25 @@
-# The turnkey harness — operation.v1's red gate
+# The turnkey harness — operation.v1's gate
 
 `contracts/operation.v1.md` closes with a conformance list whose first bullet is
 the whole system in one sentence:
 
 > **Turnkey:** fresh environment → one install → start a project, derive from a
 > sample gap, run two lanes, tend, judge, integrate, re-check, brief → green.
-> **Red today** — this is the work list.
+> **First green 2026-09-04** — nine of nine steps, twice, in fresh containers,
+> with a manager session that was not the integrator
+> (`evaluations/turnkey/RESULT.md`); it re-runs on every merge.
 
 This directory is the runnable version of that sentence.
 
-**As of 2026-09-04 it runs green** — nine of nine, twice, in fresh containers
-([`RESULT.md`](RESULT.md)). The contract still records the gate as red; a
-contract changes by proposal and the steward's word, never because a harness
-went green, so that line is left exactly as it is and this is the evidence
-under it.
+**It ran green on 2026-09-04** — nine of nine, twice, in fresh containers
+([`RESULT.md`](RESULT.md)) — and the steward ratified the sentence above on the
+same day, which is how the contract came to record it. The contract changed by
+proposal and the owner's word, never because a harness went green; this is the
+evidence the sentence points at.
+
+The nine steps are that sentence and only that sentence. Two further steps,
+(j) and (k), read the Core clauses the sentence never reaches; they are tallied
+apart and described under [Two more steps](#two-more-steps--the-clauses-the-sentence-does-not-reach).
 
 ```sh
 ./evaluations/turnkey/run.sh                        # fresh container, real wave
@@ -48,6 +54,45 @@ stdlib-only and needs no install beyond `uv run`.
 
 Output is a JSON report on stdout, a human summary on stderr, exit 0 when no
 step FAILs and 1 when any does.
+
+## Two more steps — the clauses the sentence does not reach
+
+`operation.v1` has thirteen Core clauses. The nine steps above reach three of
+them: clause 1 (work is derived), clause 5 (lanes are real sessions) and
+clause 10 (a brief on every return). The ledger's probes for the other ten all
+read whether `modes/converge-manager.md` still carries the clause's own section
+heading — which proves the rule was written down and says nothing about whether
+any manager session followed it.
+
+| | Step | Reads | Clauses |
+|---|---|---|---|
+| j | `clauses` | the lane briefs the manager session wrote, its own plan record in the workspace, git, the queue | 2 · 3 · 4 · 6 · 9 · 11 · 13 |
+| k | `attribution` | which side of a lane merge a check-run record arrived on, and the queue's own resolution text | 7 · 8 · 12 |
+
+**They are not part of the turnkey sentence and never change its verdict.**
+The report carries two tallies — `turnkey` (a–i) and `clauses` (j–k) — so a
+clause reading going red can never be mistaken for the gate going red, and the
+exit code still follows the whole run, because a broken promise is a broken
+promise.
+
+Each clause reports PASS, FAIL or SKIP on its own, carrying the ledger row it
+would let a reconciler re-derive (`CVG-012` … `CVG-023`). A SKIP **names the
+observation it is still waiting on**, in words, in the report — and a clause
+that was never exercised (no lane stalled, no feedback arrived) is a SKIP that
+says exactly that, never a PASS.
+
+The attribution in (k) is structural rather than nominal: every session in this
+system commits as the same person, so an author field settles nothing. A lane
+commits on its own branch, so its work reaches the integration branch only as
+the second parent of a `merge lane/…` commit — `M^1..M^2` is exactly what that
+merge carried in, and a commit outside every such set was the integrator's own
+hand. The cheaper "is it on the first-parent line?" test is wrong here and was
+measured wrong: lanes merge onto an integration branch that reaches main
+through a pull-request merge, so main's first-parent line is almost entirely PR
+merges and an integrator's own commit sits off it.
+
+What each reading actually read on a live run, and what the six SKIPs wait on,
+is in [`RESULT.md`](RESULT.md) under *Two more steps*.
 
 ## Three statuses, and a SKIP is never a soft pass
 
@@ -140,8 +185,8 @@ Two deliberate refusals in that code:
 An assertion nobody can make fail proves nothing.
 
 ```sh
-uv run evaluations/turnkey/run.py --self-check      # 29 cases, no environment needed
-uv run --with pytest pytest evaluations/turnkey -q  # 75 tests
+uv run evaluations/turnkey/run.py --self-check      # 55 cases, no environment needed
+uv run --with pytest pytest evaluations/turnkey -q  # 115 tests
 ```
 
 `--self-check` runs every `assert_*` function against synthetic evidence that

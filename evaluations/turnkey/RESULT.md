@@ -437,3 +437,197 @@ denominator — `stamped_returns` and `complete_briefs`, in its evidence, on eve
 run. Repointing the row is `converge-4xg`'s job and the ledger is not this
 lane's to edit. The same row's note still cites the self-check as "16 of 16",
 which was already stale before this change and is now 29.
+
+---
+
+# Two more steps — the clauses the sentence does not reach — 2026-09-04
+
+**Verdict: the clause readings are PASS, 2·0·0, and four of the ten clauses now
+carry a live reading of what a manager session did.** The other six say what
+they are still waiting on, in words, and none of them says PASS.
+
+`contracts/operation.v1.md` has thirteen Core clauses. The turnkey sentence
+above runs nine steps, and between them they reach three of the thirteen —
+clause 1 (work is derived), clause 5 (lanes are real sessions) and clause 10
+(a brief on every return). The ledger's probes for the other ten all read the
+same thing: whether `modes/converge-manager.md` still carries the clause's own
+section heading. That proves the rule was written down. It says nothing about
+whether any manager session followed it, and both `converge-2ro` and
+`converge-6mi` were filed to say so.
+
+Two steps now read what a wave actually left behind.
+
+```
+$ uv run evaluations/turnkey/run.py --env local \
+      --workspace ~/dev/hw-converge --project converge --steps e,f,g,h,i,j,k
+
+[PASS] (j) clauses: 4 of 7 clauses carry a live reading of what a manager session did,
+           and 3 name the observation they still wait on. Core 2 (CVG-012) PASS: 4 lane
+           brief(s) each declare the paths that lane owns, and the plan record at
+           /home/bkrabach/dev/hw-converge/HIGHWAY.md gives reasons for 11 of its 35
+           dated decisions · Core 3 (CVG-013) SKIP: this run can see that work was
+           parked on the steward's word and that other lanes kept running (5 plan
+           entries record a park), which is the clause's shape but not its promise ·
+           Core 4 (CVG-014) PASS: 1 item(s) filed from feedback quote the report and
+           name the version it was said about (converge-f5f); 1 triage(s) name no item
+           and are unresolved, not passed · Core 6 (CVG-016) PASS: 4 lanes ran at once,
+           each brief declares paths that collide with no other lane's, and the actual
+           half is unmeasured: only 1 of them has commits yet, and two empty branches
+           share no file by not having one · Core 9 (CVG-019) SKIP: no lane ended
+           without commits, so no stall exists for this reading to judge — the reading
+           ran and found nothing · Core 11 (CVG-021) SKIP: nothing in this run reads a
+           prompt as an event, so the four calls cannot be counted or classified · Core
+           13 (CVG-023) PASS: each of 2 recorded close(s) names what remained —
+           residuals, what was parked, or what was still live — so a fresh session could
+           pick the run up from the record alone
+
+[PASS] (k) attribution: 1 of 3 clauses carry a reading of who produced the artifact, not
+           only that it exists. Core 7 (CVG-017) SKIP: step (f) PASS: a marker on an
+           unchanged branch is recorded stuck; and on the subject of the sentence — the
+           newest record of a check run (ledger/rows.yaml at 36bd6572) came in through a
+           lane merge, so this wave's verification is unattributed here; the integrator
+           has written 6 such record(s) before, most recently 2921181e ('ledger:
+           operation.v1 SYNC + quote follow the line-77 repair') · Core 8 (CVG-018)
+           SKIP: step (g) PASS: two or more lanes landed in one repository; step (h)
+           PASS: the contract check was re-run after integration — by this harness,
+           which is the post-merge gate and not the manager session; and on whose
+           verification it was — the newest record of a check run (ledger/rows.yaml at
+           36bd6572) came in through a lane merge, so this wave's verification is
+           unattributed here; the integrator has written 6 such record(s) before, most
+           recently 2921181e ('ledger: operation.v1 SYNC + quote follow the line-77
+           repair') · Core 12 (CVG-022) PASS: all 79 resolution(s) in the queue are
+           written in sentences that answer the asker rather than pointing at a commit
+
+  VERDICT: FAIL  (pass=5 fail=2 skip=0)
+  the turnkey sentence (a-i): FAIL 3·2·0   ·   the clause readings (j-k): PASS 2·0·0
+```
+
+**Only (j) and (k) are pasted in that block, and that is deliberate.**
+`ledger/checks/turnkey_step.py` keys a row on the newest `[STATUS] (letter)`
+line in this file. Pasting an observed run's steps (a)–(i) here would silently
+re-point CVG-011 and CVG-015 away from the green driven run they were derived
+from and onto this host's workspace — a ledger row moved by an editing
+decision rather than by a measurement. The two red steps of the same run are
+quoted in prose further down instead.
+
+**Observed, on this host's own wave — not driven.** The readings above are of
+the W8 wave running in `~/dev/hw-converge` on 2026-09-04: seven lanes launched,
+four still live at read time, forty lane branches merged into main. Nothing was
+stood up for it and nothing was torn down; a driven run would answer the same
+questions about a fixture wave instead.
+
+## What each live reading actually read
+
+**Core 2 — the plan is visible.** Two artifacts, both written by the manager
+session before this harness looked: every lane brief in `goals/` carries a
+`File ownership — edit ONLY:` line naming the paths that lane owns, and
+`HIGHWAY.md` carries dated entries that give the REASON for a width or a
+refill — "No refill: every ready item collides with a live lane", "Under-width
+by 1 justified: no ready work". A brief with no ownership split fails this; so
+does a plan record whose entries only announce what happened. The ownership
+line is read to the first sentence break, because the same line names the OTHER
+lanes' paths for context and reading the whole line would hand every lane its
+neighbours' paths and manufacture a collision in every pair.
+
+**Core 4 — feedback is signal.** The raw report and its filing, side by side.
+`HIGHWAY.md` records "steward feedback on the app (Changes view) triaged →
+converge-f5f"; the item itself carries "Source — the steward's feedback on the
+running app at http://spark-1:8788 (build b7ed3f0, 2026-09-03), quoted: 'The
+diff is misaligned …'". Quoted evidence, and the version it was said about. A
+triage that names no item id is recorded unresolved and is not a pass.
+
+**Core 6 — width is a collision decision.** The lanes running at the same time,
+from the multiplexer's own session list, judged twice: their briefs' declared
+paths must not collide, and the files their commits actually changed must not
+overlap. On this run four lanes were live and only one had commits yet, so the
+second half is reported unmeasured rather than passed — two empty branches
+share no file by not having one.
+
+**Core 13 — hand off when done.** Every close recorded in the plan record names
+what REMAINED, not only what finished: "Residuals: CVG-051/CVG-020 verify
+expectations (pre-existing, honest); gitea mirror needs one push …". A close
+that lists only what landed fails this, because a fresh session has nothing to
+resume from.
+
+**Core 12 — the resolution was written for whoever asked.** All 79 resolutions
+in the queue are written in sentences that answer a person. The queue stores a
+string and judges nothing about it, so "done", a bare sha, or an empty
+resolution all look closed from every angle; each of those fails here.
+
+## What the six SKIPs are waiting on
+
+| Clause | Row | Waiting on |
+|---|---|---|
+| Core 3 · never the bottleneck | CVG-013 | a count of the items parked on the steward's word, taken at each park, beside the work that continued — the maximisation is a comparison against work that COULD have proceeded, and nothing stores a park event |
+| Core 9 · stalls are decisions | CVG-019 | a lane that ends with an unchanged branch. The reading ran; no lane on this host ended with nothing on its branch, so there was no stall to have been declared |
+| Core 11 · four calls reach the steward | CVG-021 | the manager session's owner-facing prompt events, classified into the four. `evaluations/ratchet` counts exactly these — for the reconciler, not for a manager session |
+| Core 7 · the manager session re-ran the check | CVG-017 | a check-run record written outside every lane after the newest lane merge, or a reading taken while the check runs of the process running it |
+| Core 8 · integrate, verify, re-check | CVG-018 | the same attribution. Its other two parts ARE measured here: step (g) PASS, step (h) PASS |
+
+Clause 9's SKIP and clause 11's SKIP are different animals and the report says
+so. Clause 9's reading ran and found nothing to judge; clause 11 has no reading
+at all yet. Neither is a pass.
+
+## The attribution, and why it is a SKIP rather than a FAIL
+
+Clause 7's subject is "the MANAGER SESSION re-ran the check" and clause 8's is
+"the manager session's own verification, never the worker session's". An
+artifact does not record which process made it — but git records which side of
+a merge a commit arrived on, and that is enough to tell a lane's own green from
+the integrator's.
+
+A lane commits on its own branch, so its work reaches the integration branch
+only as the second parent of a `merge lane/…` commit. `M^1..M^2` is exactly the
+set that merge carried in; a commit outside every such set was made by whoever
+was integrating. The obvious cheaper test — "is it on the first-parent line?" —
+is wrong here and was measured wrong: lanes merge onto an integration branch
+which reaches main through a pull-request merge, so main's first-parent line is
+almost entirely PR merges and the integrator's own commits sit off it.
+
+On this run the newest check-run record (`ledger/rows.yaml` at `36bd6572`) came
+in through `merge lane/w8-ledger-followups`, and the integrator has written six
+such records before it, most recently `2921181` ("ledger: operation.v1 SYNC +
+quote follow the line-77 repair"). That is a SKIP and deliberately not a FAIL:
+an integrator who re-ran the check after the last merge and wrote nothing down
+leaves exactly this trace, and calling it broken would be a fabricated red of
+the kind run C produced three of. A repository where NO check record was ever
+written outside a lane does fail, and the self-check proves it.
+
+## The two red steps above are this host's, not these steps'
+
+The same command reports `[FAIL] (e)` — one queue item of forty
+(`converge-791`) names no contract and states no done — and `[FAIL] (i)` — the
+newest return-log entry is a single paragraph with none of the five labelled
+parts. Both are pre-existing readings of this workspace that step (e) and step
+(i) have made since before this change; neither is caused by, or judged by, the
+new steps. They are named here because a run that prints two reds and does not
+say what they are is a run nobody can check. Lanes `w8-return-brief` and
+`w8-brief-convention` hold the brief convention; `converge-791` is the queue's.
+
+## For the reconciler: what these steps let a row re-derive
+
+`ledger/` is not this lane's to edit. What the rows would need is written out
+in the work items and repeated here: the readings are addressable exactly the
+way CVG-015 already addresses step (f), through
+`ledger/checks/turnkey_step.py`, which reads this file.
+
+One residual, and it is one character: that helper's `STEP` regex accepts step
+letters `[a-i]`, so it cannot see `(j)` or `(k)` yet. Until it accepts `[a-k]`,
+a row keyed on a clause reading reports `CHANGED-REREAD-THIS-ROW`. The step
+lines above are written in exactly the form it parses, so the change is the
+regex and nothing else.
+
+```
+$ uv run --with pytest pytest evaluations/turnkey -q
+115 passed in 0.14s
+
+$ uv run evaluations/turnkey/run.py --self-check
+verdict: PASS | passed: 55 | failed: []
+```
+
+Seven new assertions, twenty-six new self-check cases, forty new tests. Every
+assertion is exercised against evidence that must make it fail: two lanes given
+the same path, a plan record that only announces, a stall nobody named, a
+feedback item with no quoted source, a close that lists only what finished, a
+resolution reading "Fixed in abc1234.", and a repository whose check records
+were only ever written inside a lane.
