@@ -9,4 +9,5 @@ export const hooks = {
   selectManager() {},
   selectDoc() {},
   reloadManager() {},
+  reloadDoc() {},
 };

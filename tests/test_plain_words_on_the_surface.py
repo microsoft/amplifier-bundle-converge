@@ -7,7 +7,7 @@ GAP rows — and then walked for terms a colleague who is not an engineer would
 have to look up.
 
 Two spans of text are set aside, and they are the same two the shipped
-`conformance/surface/run.py` sets aside, for the same stated reason:
+`conformance/_superseded/surface/run.py` sets aside, for the same stated reason:
 
 * **inside a Details fold** — that is exactly where the contract puts
   technical detail (surface.v1 clause 8, documents.v1 clause 11);
@@ -37,7 +37,7 @@ import pytest
 from amplifier_converge import words
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-FIXTURE = REPO_ROOT / "conformance" / "surface" / "fixtures" / "app"
+FIXTURE = REPO_ROOT / "conformance" / "_superseded" / "surface" / "fixtures" / "app"
 WEB_PACKAGE = REPO_ROOT / "src" / "amplifier_converge" / "web"
 
 
@@ -401,7 +401,7 @@ def _surface_kit():
     """The kit as shipped, imported from where it lives. Read, never changed."""
     import importlib.util
 
-    path = REPO_ROOT / "conformance" / "surface" / "run.py"
+    path = REPO_ROOT / "conformance" / "_superseded" / "surface" / "run.py"
     spec = importlib.util.spec_from_file_location("surface_kit", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -409,7 +409,7 @@ def _surface_kit():
 
 
 def test_the_shipped_kit_reports_rule_8c_pass_on_every_page(loud_client, loud_project, tmp_path):
-    """`conformance/surface/run.py`, run at the app rather than at the mockup.
+    """`conformance/_superseded/surface/run.py`, run at the app rather than at the mockup.
 
     Rule 8c is the one this walks alongside: *no internal vocabulary outside
     Details folds*, the surface kit's row for surface.v1 clause 8. The kit is

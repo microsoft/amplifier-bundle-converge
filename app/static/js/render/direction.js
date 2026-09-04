@@ -1,7 +1,14 @@
 // Direction: the living agreement — read, what changed, one worked-out decision, history.
-import { $, qsa, state, data, escapeHtml, toast, currentRepo, currentDoc, readBookmark } from '../state.js';
+//
+// Nothing in the Changes view is staged, mocked, or acknowledged with a message
+// and then forgotten. Keep, Edit, Restore and Mark all as read each call the
+// server and each re-read the document afterwards, so what is on the screen is
+// what is on disk. That is why no handler in this file reports an outcome of
+// its own: every one of them hands off to actions.js, which makes the request
+// and then says what the server actually did.
+import { $, qsa, state, data, escapeHtml, currentRepo, currentDoc, readBookmark } from '../state.js';
 import { hooks } from '../refresh.js';
-import { handleDecision } from '../actions.js';
+import { handleDecision, keepChange, saveChangeEdit, restoreChange, markAllRead } from '../actions.js';
 
 const DECISION_BUTTONS = [
   ['ratified', 'Ratify', 'primary-button'],
@@ -47,7 +54,9 @@ export function renderRead() {
   const doc = data.doc;
   if (!doc) return '<p class="muted">Loading document…</p>';
   if (state.raw) return `<pre class="raw-view">${escapeHtml(doc.raw || '')}</pre>`;
-  const changedSections = new Set((doc.changes || []).map((c) => c.section));
+  // A card's section is a path — "Principles › 8" — and a rendered section is
+  // its own heading, so the top of the path is what marks the section changed.
+  const changedSections = new Set((doc.changes || []).map((c) => String(c.section || '').split(' › ')[0]));
   const sectionHtml = (doc.sections || []).map(([title, content]) => `
       <section class="${changedSections.has(title) ? 'marked-change' : ''}">
         <h2>${escapeHtml(title)}</h2>
@@ -59,14 +68,67 @@ export function renderRead() {
   return banner + (sectionHtml || '<p class="muted">This document has no sections yet.</p>');
 }
 
+const KIND_WORD = { new: 'New', changed: 'Changed', removed: 'Removed' };
+const RESTORE_WORD = {
+  new: 'Take this addition back out',
+  changed: 'Restore previous wording',
+  removed: 'Put this sentence back',
+};
+
+function changeSides(c) {
+  if (c.kind === 'new') {
+    return `<div class="change-comparison one-sided"><div class="change-side added"><span>New — nothing stood here before</span><p>${escapeHtml(c.now)}</p></div></div>`;
+  }
+  if (c.kind === 'removed') {
+    return `<div class="change-comparison one-sided"><div class="change-side"><span>Removed</span><p>${escapeHtml(c.before)}</p></div></div>`;
+  }
+  return `<div class="change-comparison"><div class="change-side"><span>Before</span><p>${escapeHtml(c.before)}</p></div><div class="change-side added"><span>Now</span><p>${escapeHtml(c.now)}</p></div></div>`;
+}
+
 export function renderChanges() {
-  const changeRows = (data.doc && data.doc.changes) || [];
-  if (!changeRows.length) return '<p class="muted">Nothing changed in this document since the previous version.</p>';
-  return `<div class="change-list">${changeRows.map((c) => `
-      <article class="change-card" data-change-id="${escapeHtml(c.id)}">
-        <div class="change-card-header"><strong>${escapeHtml(c.section)}</strong><span class="muted">${escapeHtml(c.source)}</span></div>
-        <div class="change-comparison"><div class="change-side"><span>Before</span><p>${escapeHtml(c.before)}</p></div><div class="change-side"><span>Now</span><p>${escapeHtml(c.now)}</p></div></div>
-        <div class="change-actions"><button class="outline-button" data-change-action="restore" type="button">Restore previous wording</button><button class="primary-button" data-change-action="keep" type="button">Keep this change</button></div>
+  const doc = data.doc;
+  const changeRows = (doc && doc.changes) || [];
+  const reading = (doc && doc.reading) || {};
+  const lock = doc && doc.locked ? doc.locked : '';
+  if (!changeRows.length) {
+    return `<div class="changes-banner"><div><strong>You are up to date.</strong>
+        <span class="muted">Nothing has changed in this document since you last read it${reading.sinceSource ? ` — ${escapeHtml(reading.sinceSource)}` : ''}.</span></div></div>`;
+  }
+  const keptCount = changeRows.filter((c) => c.kept).length;
+  const allKept = keptCount === changeRows.length;
+  const banner = `<div class="changes-banner ${allKept ? 'all-kept' : ''}" data-all-kept="${allKept ? 'true' : 'false'}">
+      <div><strong>Since you last read${reading.sinceShort ? ` · ${escapeHtml(reading.sinceShort)}` : ''}</strong>
+        <span class="muted">${escapeHtml(reading.sinceSource || 'the previous version of this document')}</span></div>
+      <div class="changes-banner-actions">
+        <span class="kept-count">${keptCount} of ${changeRows.length} kept</span>
+        <button class="${allKept ? 'primary-button' : 'outline-button'}" data-change-all="read" type="button">Mark all as read</button>
+      </div>
+    </div>`;
+  const lockNote = lock
+    ? `<p class="muted lock-note">This document is ${escapeHtml(lock)}. Editing or restoring here writes a proposal beside it — the document itself is not touched.</p>`
+    : '';
+  return banner + lockNote + `<div class="change-list">${changeRows.map((c) => `
+      <article class="change-card ${c.kept ? 'kept' : ''}" data-change-id="${escapeHtml(c.id)}">
+        <div class="change-card-header">
+          <strong>${escapeHtml(c.section || 'This document')}</strong>
+          <span class="change-kind ${escapeHtml(c.kind)}">${KIND_WORD[c.kind] || 'Changed'}</span>
+          <span class="change-stamp" title="${escapeHtml(c.source)}">${escapeHtml(c.sourceSha)} · ${escapeHtml(c.sourceDate)}</span>
+          <span class="muted change-source" title="${escapeHtml(c.source)}">${escapeHtml(c.sourceSubject)}</span>
+        </div>
+        ${changeSides(c)}
+        <div class="change-edit hidden">
+          <label for="edit-${escapeHtml(c.id)}">The wording you want instead</label>
+          <textarea id="edit-${escapeHtml(c.id)}" rows="4">${escapeHtml(c.now || c.before)}</textarea>
+          <div class="change-edit-actions">
+            <button class="outline-button" data-change-action="cancel-edit" type="button">Cancel</button>
+            <button class="primary-button" data-change-action="save-edit" type="button">${lock ? 'Propose this wording' : 'Save and commit'}</button>
+          </div>
+        </div>
+        <div class="change-actions">
+          <button class="outline-button" data-change-action="edit" type="button">Edit wording…</button>
+          <button class="outline-button" data-change-action="restore" type="button">${RESTORE_WORD[c.kind] || 'Restore previous wording'}</button>
+          <button class="${c.kept ? 'kept-button' : 'primary-button'}" data-change-action="keep" type="button">${c.kept ? '✓ Kept' : 'Keep this change'}</button>
+        </div>
       </article>`).join('')}</div>`;
 }
 
@@ -100,8 +162,11 @@ export function renderHistory() {
   const historyRows = (data.doc && data.doc.history) || [];
   if (!historyRows.length) return '<p class="muted">No recorded history for this document yet.</p>';
   const snap = historyRows.find((h) => h.id === state.historyId) || historyRows[0];
+  // Restoring is done sentence by sentence in Changes, where it is a real
+  // write. The three buttons that used to sit here only ever showed a message,
+  // so they are a pointer now rather than a promise nothing keeps.
   return `<div class="history-layout"><div class="history-list">${historyRows.map((h) => `<button class="history-item ${h.id === snap.id ? 'active' : ''}" data-history="${escapeHtml(h.id)}" type="button"><strong>${escapeHtml(h.label)}</strong><br><span>${escapeHtml(h.date)}</span></button>`).join('')}</div>
-      <div class="history-snapshot"><span class="eyebrow">${escapeHtml(snap.date)}</span><h3>${escapeHtml(snap.label)}</h3><p>${escapeHtml(snap.note)}</p>${snap.sha ? `<details><summary class="muted">Details</summary><p><code>${escapeHtml(snap.sha)}</code></p></details>` : ''}<div class="history-actions"><button class="outline-button" data-restore="paragraph" type="button">Restore a paragraph…</button><button class="outline-button" data-restore="section" type="button">Restore a section…</button><button class="primary-button" data-restore="document" type="button">Restore this document</button></div></div></div>`;
+      <div class="history-snapshot"><span class="eyebrow">${escapeHtml(snap.date)}</span><h3>${escapeHtml(snap.label)}</h3><p>${escapeHtml(snap.note)}</p>${snap.sha ? `<details><summary class="muted">Details</summary><p><code>${escapeHtml(snap.sha)}</code></p></details>` : ''}<div class="history-actions"><p class="muted">Restoring earlier wording is done change by change in <strong>Changes</strong>, where each restore is a real write.</p><button class="outline-button" data-inline-mode="changes" type="button">Open Changes</button></div></div></div>`;
 }
 
 export function renderProposalMini() {
@@ -166,22 +231,40 @@ export function attachDocumentModeHandlers() {
     state.docMode = btn.dataset.inlineMode;
     renderDirection();
   }));
+  qsa('[data-change-all]').forEach((btn) => btn.addEventListener('click', markAllRead));
   qsa('[data-change-action]').forEach((btn) => btn.addEventListener('click', () => {
     const card = btn.closest('.change-card');
-    card.style.opacity = '.55';
-    toast(btn.dataset.changeAction === 'restore'
-      ? 'Restore staged for the next proposal decision.'
-      : 'Change marked to keep.');
+    if (!card) return;
+    const id = card.dataset.changeId;
+    const row = ((data.doc && data.doc.changes) || []).find((c) => String(c.id) === String(id));
+    const panel = card.querySelector('.change-edit');
+    switch (btn.dataset.changeAction) {
+      case 'edit':
+        panel.classList.remove('hidden');
+        card.querySelector('.change-actions').classList.add('hidden');
+        panel.querySelector('textarea').focus();
+        break;
+      case 'cancel-edit':
+        panel.classList.add('hidden');
+        card.querySelector('.change-actions').classList.remove('hidden');
+        break;
+      case 'save-edit':
+        saveChangeEdit(id, panel.querySelector('textarea').value);
+        break;
+      case 'restore':
+        restoreChange(id);
+        break;
+      case 'keep':
+        keepChange(id, !(row && row.kept));
+        break;
+      default:
+        break;
+    }
   }));
   qsa('[data-decision]').forEach((btn) => btn.addEventListener('click', () =>
     handleDecision(btn.dataset.decision, btn.dataset.decisionLabel)));
   qsa('[data-history]').forEach((btn) => btn.addEventListener('click', () => {
     state.historyId = btn.dataset.history;
     renderDirection();
-  }));
-  qsa('[data-restore]').forEach((btn) => btn.addEventListener('click', () => {
-    const historyRows = (data.doc && data.doc.history) || [];
-    const snap = historyRows.find((h) => h.id === state.historyId);
-    toast(`Restoring the ${btn.dataset.restore} from ${snap ? snap.label : 'history'} opens a proposal for your word.`);
   }));
 }

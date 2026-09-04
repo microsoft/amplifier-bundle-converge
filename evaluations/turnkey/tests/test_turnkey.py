@@ -325,3 +325,273 @@ def test_a_skip_always_carries_a_reason():
             head = chunk[:200]
             if head.lstrip().startswith("SKIP") or "\n            SKIP" in head:
                 assert "reason=" in chunk[:600], f"{name} builds a SKIP with no reason"
+
+
+# ---------------------------------------------------------------------------
+# clause 5, in the present tense — two lanes seen running AT ONCE, from outside
+# ---------------------------------------------------------------------------
+#
+# Every other lane assertion reads what a lane LEFT BEHIND, and everything a
+# lane leaves behind can be produced by a session that never left itself. These
+# cover the one reading that cannot: the container's own live session list and
+# git's own live worktree list, sampled while the manager session was working.
+
+
+BOTH = {"at": "T0", "sessions": ["hw__b__one", "hw__b__two"],
+        "worktrees": [{"branch": "lane/one"}, {"branch": "lane/two"}]}
+
+
+def test_two_lanes_live_at_once_is_the_concurrency_evidence():
+    assert run.assert_lanes_observed_live([BOTH])["verdict"] == run.PASS
+
+
+def test_sessions_in_one_sample_and_worktrees_in_another_are_unproven_not_passed():
+    """The conjunction is per-sample on purpose: two facts are not two lanes.
+
+    But periodic sampling cannot tell "they never overlapped" from "the sampler
+    blinked", so this is the honest middle -- reported, never passed.
+    """
+    apart = [
+        {"at": "T1", "sessions": ["hw__b__one", "hw__b__two"], "worktrees": []},
+        {"at": "T2", "sessions": [],
+         "worktrees": [{"branch": "lane/one"}, {"branch": "lane/two"}]},
+    ]
+    verdict = run.assert_lanes_observed_live(apart)
+    assert verdict["verdict"] == run.SKIP
+    assert verdict["verdict"] != run.PASS
+    assert "one reading" in verdict["why"]
+
+
+def test_nothing_lane_shaped_in_any_sample_is_a_real_failure():
+    """A manager that ran the work in-session leaves no lane in ANY reading."""
+    nothing = [{"at": "T1", "sessions": ["0"], "worktrees": []},
+               {"at": "T2", "sessions": [], "worktrees": []}]
+    verdict = run.assert_lanes_observed_live(nothing)
+    assert verdict["verdict"] == run.FAIL
+
+
+def test_a_non_lane_session_does_not_count_toward_width():
+    noise = [{"at": "T3", "sessions": ["probe", "0", "hw__b__one"],
+              "worktrees": [{"branch": "lane/one"}, {"branch": "lane/two"}]}]
+    assert run.assert_lanes_observed_live(noise)["verdict"] == run.FAIL
+
+
+def test_a_non_lane_branch_does_not_count_toward_width():
+    noise = [{"at": "T4", "sessions": ["hw__b__one", "hw__b__two"],
+              "worktrees": [{"branch": "lane/one"}, {"branch": "main"}]}]
+    assert run.assert_lanes_observed_live(noise)["verdict"] == run.FAIL
+
+
+def test_no_samples_is_a_skip_with_a_reason_never_a_pass():
+    verdict = run.assert_lanes_observed_live([])
+    assert verdict["verdict"] == run.SKIP
+    assert verdict["why"]
+
+
+def test_width_is_honoured():
+    assert run.assert_lanes_observed_live([BOTH], width=3)["verdict"] == run.FAIL
+
+
+# ---------------------------------------------------------------------------
+# the objective handed to the manager session
+# ---------------------------------------------------------------------------
+
+
+OBJECTIVE_FIELDS = {
+    "fixture_repo": "/workspace/lumen-fixture", "project": "turnkey", "width": "2",
+    "deadline_minutes": "60", "check_command": "python3 check.py .",
+    "launcher": "/usr/local/launch_lane.sh", "batch_dir": "/workspace/turnkey-batch",
+    "tmux_socket": "hw", "return_log": "docs/workflow/OWNER-RETURN-LOG.md",
+}
+
+
+def test_the_objective_the_repository_ships_can_actually_be_composed():
+    """A field the harness cannot fill must be caught here, not at 3am in a DTU."""
+    text, why = run.objective_text(TURNKEY / "manager-objective.md", OBJECTIVE_FIELDS)
+    assert why is None, why
+    assert "{" not in text.replace("{}", "")
+    assert "/workspace/lumen-fixture" in text
+
+
+def test_the_objectives_editorial_preamble_is_never_sent():
+    text, _ = run.objective_text(TURNKEY / "manager-objective.md", OBJECTIVE_FIELDS)
+    assert "This file is what the turnkey harness hands" not in text
+
+
+def test_a_missing_field_is_named_rather_than_formatted_into_nonsense(tmp_path):
+    draft = tmp_path / "objective.md"
+    draft.write_text("preamble\n---\nwork in {nowhere}\n", encoding="utf-8")
+    text, why = run.objective_text(draft, OBJECTIVE_FIELDS)
+    assert text == ""
+    assert "{nowhere}" in why
+
+
+# ---------------------------------------------------------------------------
+# the lane socket — a reading that looks at the wrong socket reports no lanes
+# ---------------------------------------------------------------------------
+
+
+class _FakeEnv(run.Env):
+    """An environment where only the `-L hw` socket has anything on it."""
+
+    def __init__(self):
+        self.argvs = []
+
+    def run(self, argv, cwd=None, timeout=120.0, env=None):
+        self.argvs.append(argv)
+        if argv[:3] == ["tmux", "-L", "hw"]:
+            return run.Ran(0, "hw__b__one\t/w/lanes/one\n", "", argv=argv)
+        return run.Ran(1, "", "no server running", argv=argv)
+
+
+def test_lanes_on_the_launchers_socket_are_seen():
+    """The launcher uses `-L hw`; a default-socket-only reading sees nothing."""
+    env = _FakeEnv()
+    panes = run.read_tmux_panes(env)
+    assert [p["session"] for p in panes] == ["hw__b__one"]
+    assert panes[0]["socket"] == "hw"
+
+
+def test_both_sockets_are_actually_asked():
+    env = _FakeEnv()
+    run.read_tmux_panes(env)
+    assert any("-L" not in a for a in env.argvs)
+    assert any(a[:3] == ["tmux", "-L", "hw"] for a in env.argvs)
+
+
+# ---------------------------------------------------------------------------
+# a finished wave tidies up — and a tidy repository is not an empty one
+# ---------------------------------------------------------------------------
+
+
+CLEANED_LANE = run.Lane("units-fix", "/w/batch/lanes/units-fix/repo", "lane/units-fix",
+                        "base0000", "hw__batch__units-fix")
+WHILE_RUNNING = [{"at": "T0", "sessions": ["hw__batch__units-fix"],
+                  "worktrees": [{"branch": "lane/units-fix"}]}]
+
+
+def test_a_merged_and_cleaned_up_lane_is_ended_not_a_fabrication():
+    """The measured regression: two real merged lanes reported as 'no lanes'."""
+    verdict = run.assert_lane_is_real(CLEANED_LANE, [], [], WHILE_RUNNING)
+    assert verdict["state"] == run.ENDED
+    assert verdict["ok"] is True
+    assert verdict["observed_running"]["at"] == "T0"
+
+
+def test_a_lane_never_seen_running_and_with_no_worktree_is_still_not_a_lane():
+    assert run.assert_lane_is_real(CLEANED_LANE, [], [], [])["state"] == run.NOT_A_LANE
+
+
+def test_half_an_observation_does_not_resurrect_a_lane():
+    """Session seen but its worktree never was: that is not the clause-5 bar."""
+    half = [{"at": "T0", "sessions": ["hw__batch__units-fix"], "worktrees": []}]
+    assert run.assert_lane_is_real(CLEANED_LANE, [], [], half)["state"] == run.NOT_A_LANE
+
+
+def test_another_lanes_observation_does_not_vouch_for_this_one():
+    other = [{"at": "T0", "sessions": ["hw__batch__index-fix"],
+              "worktrees": [{"branch": "lane/index-fix"}]}]
+    assert run.assert_lane_is_real(CLEANED_LANE, [], [], other)["state"] == run.NOT_A_LANE
+
+
+# ---------------------------------------------------------------------------
+# a dated brief is dated whether or not a time follows the date
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("heading", ["## 2026-09-04T04:01Z", "## 2026-09-04",
+                                     "on 2026-09-04, at last"])
+def test_an_iso_timestamp_counts_as_a_dated_entry(heading):
+    import re
+    pattern = re.compile(r"\b20\d{2}-\d{2}-\d{2}(?![-\d])")
+    assert pattern.search(heading), heading
+
+
+def test_the_brief_check_actually_uses_that_pattern():
+    import inspect
+    assert r"(?![-\d])" in inspect.getsource(run.step_brief)
+
+
+# ---------------------------------------------------------------------------
+# the holder question, asked at the only time it can be answered
+# ---------------------------------------------------------------------------
+#
+# A holder's working directory is readable only while that process is alive.
+# Measured on run D: every holder on a finished wave was unresolved, so the
+# strongest evidence against in-session execution existed only mid-flight.
+
+
+HELD_ONE = [{"id": "x-1", "status": "resolved", "holder": "agent-spark-1-111"}]
+IN_LANE_AT_T0 = [{"at": "T0", "holders": [{"item": "x-1", "pid": 111,
+                                           "cwd": "/w/lanes/a/repo"}]}]
+
+
+def test_an_exited_holder_read_inside_a_lane_while_it_ran_passes():
+    verdict = run.assert_no_subagent_held_work(
+        HELD_ONE, {111: None}, ["/w/lanes/a/repo"], None, IN_LANE_AT_T0)
+    assert verdict["verdicts"][0]["verdict"] == run.PASS
+    assert verdict["verdicts"][0]["read_at"] == "T0"
+    assert verdict["unresolved"] == []
+
+
+def test_an_exited_holder_read_outside_every_lane_while_it_ran_still_fails():
+    """The observation is evidence, not amnesty."""
+    outside = [{"at": "T0", "holders": [{"item": "x-1", "pid": 111, "cwd": "/w"}]}]
+    verdict = run.assert_no_subagent_held_work(
+        HELD_ONE, {111: None}, ["/w/lanes/a/repo"], None, outside)
+    assert verdict["ok"] is False
+    assert verdict["offenders"]
+
+
+def test_an_observation_of_a_different_pid_does_not_place_this_holder():
+    other = [{"at": "T0", "holders": [{"item": "x-9", "pid": 999,
+                                       "cwd": "/w/lanes/a/repo"}]}]
+    verdict = run.assert_no_subagent_held_work(
+        HELD_ONE, {111: None}, ["/w/lanes/a/repo"], None, other)
+    assert verdict["verdicts"][0]["verdict"] == run.SKIP
+
+
+def test_a_live_reading_still_wins_over_an_observation():
+    """Present-tense evidence is preferred; the observation is the fallback."""
+    live = {111: {"pid": 111, "cwd": "/w/lanes/a/repo", "cmdline": "amplifier"}}
+    verdict = run.assert_no_subagent_held_work(
+        HELD_ONE, live, ["/w/lanes/a/repo"], None, IN_LANE_AT_T0)
+    assert verdict["verdicts"][0]["verdict"] == run.PASS
+    assert "read_at" not in verdict["verdicts"][0]
+
+
+# ---------------------------------------------------------------------------
+# base..branch is a question about refs, not about a directory
+# ---------------------------------------------------------------------------
+
+
+class _RepoOnlyEnv(run.Env):
+    """A worktree that has been removed; the main repository still has both refs."""
+
+    def __init__(self, alive="/w/repo"):
+        self.alive = alive
+        self.asked = []
+
+    def run(self, argv, cwd=None, timeout=120.0, env=None):
+        where = argv[argv.index("-C") + 1]
+        self.asked.append(where)
+        if where == self.alive:
+            return run.Ran(0, "3\n", "", argv=argv)
+        return run.Ran(128, "", f"cannot change to '{where}'", argv=argv)
+
+
+def test_a_removed_worktree_falls_back_to_the_repository_that_still_has_the_refs():
+    env = _RepoOnlyEnv()
+    assert run.commits_beyond(env, "/w/gone/lane", "base", "lane/a", "/w/repo") == 3
+    assert env.asked == ["/w/gone/lane", "/w/repo"]
+
+
+def test_the_lanes_own_worktree_is_asked_first():
+    env = _RepoOnlyEnv(alive="/w/gone/lane")
+    assert run.commits_beyond(env, "/w/gone/lane", "base", "lane/a", "/w/repo") == 3
+    assert env.asked == ["/w/gone/lane"]
+
+
+def test_no_repository_that_can_answer_is_still_unmeasured_not_zero():
+    env = _RepoOnlyEnv(alive="/nowhere")
+    assert run.commits_beyond(env, "/w/gone/lane", "base", "lane/a", "/w/repo") is None

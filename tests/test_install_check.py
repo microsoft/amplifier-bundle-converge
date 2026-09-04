@@ -209,10 +209,35 @@ def test_work_queue_service_ok_from_managed_service(ctx, empty_path):
 
 
 def test_work_queue_service_missing_when_inactive(ctx, empty_path):
-    fake_command(empty_path, "amplifier-work-tracker", always(SERVICE_DOWN))
+    # Inactive managed unit AND no unmanaged server answering: that is MISSING.
+    fake_command(
+        empty_path,
+        "amplifier-work-tracker",
+        [
+            {"match": "service", "out": SERVICE_DOWN, "rc": 0},
+            {"match": "instances", "out": "connection refused\n", "rc": 1},
+        ],
+    )
     result = ic.check_work_queue_service(ctx)
     assert result.status == ic.MISSING
     assert "not active" in result.detail
+
+
+def test_work_queue_service_ok_when_unmanaged_server_answers(ctx, empty_path):
+    # Inactive managed unit but `instances` answers: reachable, unmanaged, OK —
+    # the container case the turnkey run measured (systemd --user unavailable).
+    fake_command(
+        empty_path,
+        "amplifier-work-tracker",
+        [
+            {"match": "service", "out": SERVICE_DOWN, "rc": 0},
+            {"match": "instances", "out": "[]\n", "rc": 0},
+        ],
+    )
+    result = ic.check_work_queue_service(ctx)
+    assert result.status == ic.OK
+    assert result.extra["reachable_unmanaged"] is True
+    assert "unmanaged" in result.detail
 
 
 def test_work_queue_service_ok_from_live_query(ctx, empty_path):

@@ -6,13 +6,15 @@ description: >
   evidence a reader can still see afterwards — a file on disk or printed command
   output, never a tool call's arguments — a stated falsity condition on every
   criterion whose evidence the lane itself authors, an explicit file-ownership
-  split, two exits and no third, the terminal marker outside the worktree, and
+  split, two exits and no third — with a criterion outside the lane's own
+  ownership recorded as a residual rather than a blocker, so the outcome stays
+  A — the terminal marker outside the worktree, and
   completion credited from commits rather than from liveness or self-report. Use
   when briefing a worker session, when deciding whether a lane is actually done,
   or when a run looks successful but may have produced nothing or produced
   something false. Applies operation.v1 §5 (lanes are real sessions) and §7
   (done means the manager session re-ran the check).
-version: 0.3.1
+version: 0.3.2
 ---
 
 # Lane briefs and honest completion
@@ -190,7 +192,7 @@ The lane does three things, in this order:
 They look like these — each naming a file or a command, and each naming its
 falsifier:
 
-- `skills/lane-brief/SKILL.md` frontmatter reads `version: 0.3.1`. **False if**
+- `skills/lane-brief/SKILL.md` frontmatter reads `version: 0.3.2`. **False if**
   the committed file reads any other version, or its frontmatter no longer
   parses.
 - `docs/workspace-template/GOAL-FILE.md.template` exists and carries the
@@ -230,6 +232,25 @@ continue to the next.
 If every deliverable is committed, its evidence is on disk or in printed output,
 and no stated falsifier is tripped, the outcome is A. A lane that writes BLOCKED
 over finished work has reported a result that did not happen.
+
+**A criterion the lane cannot satisfy from inside its own file ownership is a
+residual, not a blocker — and the outcome is still A.** Record it in the
+marker's `residuals` list, naming what is left, which lane or person owns the
+path, and what a reader runs to see the remainder. Exit B is for a cause the
+lane cannot clear *that stops every deliverable*; a criterion belonging to
+someone else's files stops one item, and the brief already has the place to say
+so. Two lanes in one week wrote BLOCKED over work that was finished, committed
+and verified, because a single criterion could only be met by touching a path
+their own brief forbade them — a result that did not happen, reported because
+the rule was not written where the lane reads it.
+
+Two consequences worth stating plainly, because both were guessed wrong:
+
+- **The residual is the lane's to name, not to fix.** Writing it down is the
+  whole obligation. Reaching outside the ownership split to clear it is the
+  worse failure of the two.
+- **A brief that hands a lane a criterion outside its ownership has a defect in
+  the brief.** Record that as work against the brief, never against the lane.
 
 ## The terminal marker lives OUTSIDE the worktree
 

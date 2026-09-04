@@ -4,7 +4,7 @@
     "title": "Re-derive CVG-052, CVG-053, CVG-057 and CVG-066 — wave 4 moved them toward spec and their probes went red",
     "status": "resolved",
     "description": "Contract: documents.v1 §5, §9 (ledger rows re-derived from the documents kit). Serves documents.v1 (CVG-052/053), surface.v1 (CVG-057/066). Found while working converge-jc9, which owned only the six rows named in that item and deliberately did not guess at these four.",
-    "acceptance": null,
+    "acceptance": "GIVEN ledger rows CVG-052, CVG-053, CVG-057 and CVG-066, whose probes went red after wave 4 moved each of them toward its spec, WHEN every one of the four is re-derived from an actual run of the shipped kit that judges its clause, THEN each row carries the disposition its own run supports plus a line naming that run and the verdict it printed, and `uv run --with pyyaml ledger/checks/verify.py` prints and exits 0 with every executable reference meeting its expectation. Falsified by: a disposition taken from this item's summary rather than from a run shown, or a row left citing a probe that no longer exists.",
     "design": null,
     "contract_named_on_line_one": true
   },
@@ -54,6 +54,15 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-3l7",
+    "title": "PROTOCOL.md: four terms of art first appear in the Sources bibliography, above §0",
+    "status": "resolved",
+    "description": "Contract: documents.v1 clause 1 (terms of art defined at first use or not used).\n\nThe ratified v3 candidate places section 0 \"Words used here\" after line 10 - i.e. AFTER the front matter's Supersedes/Sources block. That block (candidate A2: \"Lines 4-10 ... are untouched\") credits each source document by naming what was taken from it, and in doing so uses four terms of art before section 0 defines them:\n\n  L11  cortex-core - ... ~40-lane integration evidence; convergent/divergent change pricing\n  L13  better-attractor - conformance matrix, CANDIDATE amendment protocol, disposition vocabulary, ...\n\nSo \"lane\" (L11), \"convergent\"/\"divergent\" (L11), \"CANDIDATE\" (L13) and \"disposition\" (L13) each occur once before their section 0 row. Every other term of art, and every one of these four in the protocol's own prose, is defined at first use - measured with a first-occurrence scan of the committed file (lane commit 5c37269).\n\nThis is a residual of applying the candidate exactly as ratified, not a defect introduced by the lane: moving section 0 above the bibliography, or glossing those two lines, would both be unratified edits to text the candidate holds untouched.\n\nTwo remedies, either of which is a wording-only proposal against PROTOCOL.md:\n  (a) move section 0 to sit directly after the \"Who this is for\" line, above Supersedes/Sources; or\n  (b) add one lead-in line before the Sources list saying these entries name what each source contributed, in that source's own vocabulary, defined in section 0 below.\n\nNote: this item was filed twice with malformed markup that leaked stray tags into its own text, and its acceptance field was lost as a result. This edit restores both.",
+    "acceptance": "GIVEN docs/PROTOCOL.md WHEN a first-occurrence scan is run for lane, CANDIDATE, disposition, convergent and divergent THEN each term's first occurrence in the file carries or is preceded by its definition, and the change lands as a ratified proposal (never a direct edit), leaving every rule unchanged in meaning.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-426",
     "title": "W2 install check: verify declared dependencies with per-absence degradation",
     "status": "resolved",
@@ -67,7 +76,7 @@
     "title": "W3 ledger: seed our own ledger with the reconciler (SYNC row + rows)",
     "status": "resolved",
     "description": "Contract: operation.v1 §8 (the ratchet — this repository's own ledger seeded). Contract operation.v1 §8 / ratchet. Run converge:reconciler in SEED mode on this repo against the four contracts → ledger/rows.yaml per LEDGER-FORMAT.md with CXC-000 SYNC row (sha256 per contract) and one row per checkable clause; GAP rows become work items.",
-    "acceptance": "GIVEN ledger/rows.yaml THEN every contract clause has a row with disposition + evidence pointer; SYNC hashes match; GAP/VIOLATION rows link to tracker items.",
+    "acceptance": "GIVEN ledger/rows.yaml THEN every contract clause has a row with disposition + evidence pointer; SYNC hashes match; rows that read \"not yet\" or \"broken\" link to tracker items.",
     "design": null,
     "contract_named_on_line_one": true
   },
@@ -90,6 +99,15 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-6cc",
+    "title": "Direction: direct editing and Ask are absent from the app",
+    "status": "open",
+    "description": "Contract: experience-direction.v1 Core 5, 9, 10 (and experience.v1 Core 4, which names `ask` as the fifth write).\n\nMeasured 2026-09-03 by `uv run conformance/experience-direction/run.py http://127.0.0.1:8788` against the running companion app:\n\n- rule 5 FAIL — no edit control anywhere in what the app serves, and no write route that saves a document. `grep -rniE \"data-edit|editDoc|saveDoc|contenteditable\" app/templates app/static/js` returns nothing. A DRAFT document cannot be edited in place at all, so editing is not \"offered exactly where it is legal\" — it is offered nowhere.\n- rule 9 FAIL — Ask is offered nowhere and no write route returns a proposal. The app's own `/openapi.json` lists three POST routes (`decision`, `feedback`, `steer`); the umbrella names five writes.\n- rule 10 FAIL — derived from rule 5: with no editing surface, the courtesy presence and the three collision choices (Use combined · Keep mine · Review both) have nothing to attach to, and none of them appears.\n\nOwner: whoever owns `app/`. This lane owns `ledger/` and `conformance/` only and did not edit `app/`.",
+    "acceptance": "GIVEN the running app WHEN `conformance/experience-direction/run.py <app>` runs THEN rules 5, 9 and 10 report PASS: a draft document offers an edit control reaching a document-saving write, Ask is offered at paragraph/document/every-document scope and its write returns a proposal, and concurrent editing shows presence with all three collision choices.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-6s8",
     "title": "The app never says whether a contract is Kept — Direction shows Draft/Locked only (surface.v1 Core 8, kit rule 8b)",
     "status": "resolved",
@@ -97,6 +115,15 @@
     "acceptance": "GIVEN the companion app reading a project whose ledger is seeded WHEN Direction is opened THEN each contract shows one of Kept · Not yet · Broken · Pinned open · Can't check against reality, alongside its own Draft/Locked status; AND `uv run conformance/surface/run.py <the running app>` reports rule 8b PASS.",
     "design": null,
     "contract_named_on_line_one": false
+  },
+  {
+    "id": "converge-719",
+    "title": "platform-web: offline the app shows nothing and says nothing",
+    "status": "open",
+    "description": "Contract: platform-web.v1 Core 10 (\"Offline it reads what it last synced, and says when that was\") and Core 11 (\"Offline it refuses the five writes in a plain sentence\").\n\nRead from `app/static/sw.js` as committed:\n\n    //   2. /api is network-first and is never written to the cache at all, so a stale\n    //      decision or lane state can never be shown as if it were live.\n\nThat rule is a good one and it is the reason both clauses are unmet. Static assets are precached, so offline the shell loads — but every payload behind it comes from `/api`, which is never cached, so the shell renders empty. There is nothing that \"was last synced\" to read, nothing that says when, and no plain sentence refusing a write: `api.js` turns a failed fetch into a toast reading `Could not refresh: <message>`.\n\nThe two clauses and the service worker's rule are not actually in conflict — the clause asks for *what was last synced, labelled with when*, which is a different thing from a stale value shown as if it were live. Closing this is a design call about which payloads may be cached with a visible timestamp, not a one-line change.\n\nOwner: whoever owns `app/`. This lane owns `ledger/` and `conformance/` only. No kit rule covers either clause today — no experience kit takes the network away — so the ledger rows are GAP citing this item rather than a rule id.",
+    "acceptance": "GIVEN the installed app with the network off WHEN it is opened THEN it shows what it last synced with a visible \"as of &lt;time&gt;\", and any of the five writes attempted is refused in one plain sentence rather than a failed-request message.",
+    "design": null,
+    "contract_named_on_line_one": true
   },
   {
     "id": "converge-8fl",
@@ -112,7 +139,7 @@
     "title": "Documents: Core 9, 10 and 11 have no conformance rule (ledger GAP rows CVG-051/052/053)",
     "status": "resolved",
     "description": "Contract: documents.v1 §9–11 (kit rules for clauses 9, 10, 11). Seeding ledger/rows.yaml (converge-5m8) found three documents.v1 Core clauses with no rule in conformance/documents/, and no other check on disk:",
-    "acceptance": "GIVEN conformance/documents/ WHEN run against this repo THEN it reports a real PASS/FAIL (not SKIP, not absence) for documents.v1 Core 9, Core 10 and Core 11; AND ledger rows CVG-051 (Core 9), CVG-052 (Core 10) and CVG-053 (Core 11) move off GAP with an assertion ref into the kit.",
+    "acceptance": "GIVEN conformance/documents/ WHEN run against this repo THEN it reports a real PASS/FAIL (not SKIP, not absence) for documents.v1 Core 9, Core 10 and Core 11; AND ledger rows CVG-051 (Core 9), CVG-052 (Core 10) and CVG-053 (Core 11) move off \"not yet\" with an assertion ref into the kit.",
     "design": null,
     "contract_named_on_line_one": true
   },
@@ -135,6 +162,15 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-a5r",
+    "title": "Nine work items do not define done in plain words (documents rule 9a FAIL)",
+    "status": "open",
+    "description": "Contract: documents.v1 Core 9 — \"A work item names its contract in one line, defines done in plain words, and quotes the feedback or gap it came from.\"\n\nThe queue export landed (converge-gmo), so documents kit rule 9a runs for the first time instead of skipping. It runs and it FAILs.\n\nRAN 2026-09-03, `uv run conformance/documents/run.py . --json-only`:\n\n    [FAIL] 9a work_item_names_a_contract: 9 of 42 work failed —\n      converge-12o: does not define done in plain words\n      converge-5m8: defines done with machine state word(s) ['GAP']\n      converge-8om: defines done with machine state word(s) ['GAP']\n      converge-bmp: defines done with machine state word(s) ['OPEN-PINNED']\n      … (five more; run the kit for the full list)\n\nThis is the ledger's bidirectional ratchet working as designed: CVG-051's probe was written so that *closing* its gap breaks its expectation, and it did. The row is re-derived to GAP-with-a-running-check and now cites this item.\n\nTwo honest notes for whoever takes it:\n\n1. Most of the failures are items about the ledger itself, whose definition of done genuinely is a disposition (`GAP`, `OPEN-PINNED`). Whether a ledger item may use the ledger's own vocabulary in its acceptance is a real question — it may be that clause 9's \"plain words\" needs a sentence about terms of art, in which case this is a `documents.v1` candidate amendment rather than 9 edits.\n2. The export is a snapshot. `uv run scripts/export-work-items.py --project converge --out docs/work-items.json` refreshes it; `docs/` is not this lane's to write, so the count above is measured against the export as committed.\n\nNot fixed here: this lane owns `ledger/**` and `conformance/**`. The subjects are tracker items and `docs/work-items.json`.",
+    "acceptance": "GIVEN the refreshed queue export WHEN `uv run conformance/documents/run.py .` runs THEN rule 9a reports PASS — every work item names a contract that exists and says what finishing looks like in ordinary words — or `documents.v1` clause 9 carries a ratified sentence saying when a term of art is allowed, and the rule follows it.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-axv",
     "title": "wire the converge-manager mode into behaviors/converge.yaml and bundle.md",
     "status": "resolved",
@@ -144,11 +180,20 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-bd3",
+    "title": "apply the ratified PROTOCOL v3 candidate to docs/PROTOCOL.md",
+    "status": "resolved",
+    "description": "Contract: documents.v1 §8 (proposals) and the protocol's own amendment path. The steward ratified docs/PROTOCOL.v3-candidate.md on 2026-09-03 (word recorded in docs/workflow/owner-ratifications-2026-09-03.md). Apply it: docs/PROTOCOL.md becomes v3 with the candidate's exact changes, a changelog entry citing the ratification record, and no rule changing meaning; the candidate file stays as the decision record (do not delete it).",
+    "acceptance": "GIVEN the ratified candidate WHEN applied THEN docs/PROTOCOL.md's H1 reads v3, every term of art is defined at first use, the changelog cites the ratification record, a rule-by-rule table shows every v2 rule unchanged in meaning, and the guard's audit shows the write went through its sanctioned path (or the guard did not apply because PROTOCOL.md carries no locked marker — state which).",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-bmp",
     "title": "Documents: Core 5 says clause numbers match the kit's rule table, but kits number to the Conformance-asserts bullets",
     "status": "resolved",
     "description": "Contract: documents.v1. Found while seeding ledger/rows.yaml (converge-5m8); recorded as ledger row CVG-046, disposition OPEN-PINNED.",
-    "acceptance": "GIVEN documents.v1 Core 5's last sentence WHEN the steward has ruled THEN either the clause names which numbering it means, or the three kit rule tables renumber to the Core clauses; AND ledger row CVG-046 moves off OPEN-PINNED.",
+    "acceptance": "GIVEN documents.v1 Core 5's last sentence WHEN the steward has ruled THEN either the clause names which numbering it means, or the three kit rule tables renumber to the Core clauses; AND ledger row CVG-046 moves off \"pinned open\".",
     "design": null,
     "contract_named_on_line_one": true
   },
@@ -162,11 +207,38 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-c4s",
+    "title": "Console pane overflows the viewport by 11px when closed (desktop)",
+    "status": "held",
+    "description": "Contract: experience-console.v1 (the pane stays inside the viewport in every state) and platform-web.v1 (renders at 1280 without horizontal overflow). Found while doing the rendered check for converge-f5f (Direction › Changes) on 2026-09-03, at 1280x900 in Chromium.",
+    "acceptance": "GIVEN the app open on a desktop viewport at 1280px WHEN the Manager Console pane is closed THEN document.documentElement.scrollWidth equals clientWidth and no element's bounding rect extends past the right edge, in both the Read and Changes views.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
+    "id": "converge-ck8",
+    "title": "W7 honest debts: 9a items, stale ledger expectations, lane-brief 'residual is not a blocker', announcement locked/frozen re-check",
+    "status": "resolved",
+    "description": "Contract: documents.v1 §9–10, operation.v1 §5, the announcement. Four resolved queue items still use machine state words in their acceptance (documents kit 9a); ledger rows CVG-051 and CVG-061 carry expectations two merges stale; two lanes this week wrote BLOCKED although every deliverable was verified because a criterion was satisfiable only outside their ownership — lane-brief needs the rule 'a criterion outside your ownership is recorded as a residual, and the outcome is A' stated where the evaluator reads it; docs/ANNOUNCEMENT.md and README must use 'locked' consistently after PROTOCOL v3.",
+    "acceptance": "GIVEN the documents kit WHEN run with --work-items THEN rule 9a PASS; GIVEN verify.py THEN CVG-051/CVG-061 re-derived with RAN lines and exit 0; GIVEN skills/lane-brief/SKILL.md and docs/workspace-template/GOAL-FILE.md.template THEN the residual-not-blocker rule is present in the 'Done means' section; GIVEN grep THEN zero 'frozen' in ANNOUNCEMENT.md/README.md outside a parenthetical.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-cym",
     "title": "Upstream ask: `amplifier tool invoke` never emits tool:pre, so no hook can guard it",
     "status": "resolved",
     "description": "Contract: composition.v1 §6–7 (the guard's coverage). Upstream ask: 'amplifier tool invoke' never emits tool:pre, so no hook — including the candidate guard — can intercept a direct tool invocation. Filed upstream with the close-out issue.",
     "acceptance": "GIVEN a bundle that registers a hook on tool:pre AND a repo holding a file that hook would deny writes to WHEN `amplifier tool invoke write_file file_path=<that file> content=...` runs with that bundle composed THEN the hook fires and the write is denied — OR the non-coverage is documented as intended behavior in the app-CLI docs, so bundle authors do not assume hook coverage on this path that they do not have.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
+    "id": "converge-d3n",
+    "title": "experience.v1 clause 15 names two platform contracts that do not exist",
+    "status": "open",
+    "description": "Contract: experience.v1 Core 15.\n\nThe clause reads:\n\n> the idioms of one body by one `platform-*.v1` — `platform-browser.v1` and `platform-web-app.v1` first, then one per native body.\n\nMeasured 2026-09-03: `contracts/` holds `platform-web.v1.md`, `platform-ios.v1.md`, `platform-android.v1.md`, `platform-macos.v1.md`, `platform-windows.v1.md`. Neither `platform-browser.v1` nor `platform-web-app.v1` exists, and neither ever did — the browser and the installable web app were written as **one** contract, `platform-web.v1`, whose own clause 9 covers installing (\"It installs, and installing changes only the frame — IDIOM\").\n\nSo the umbrella and the family it governs disagree about the family's own membership, and both were ratified in the same pass. Two readings, and only the steward settles it:\n\n1. The single `platform-web.v1` is right and the clause's names are stale — the fix is a one-sentence amendment naming `platform-web.v1`.\n2. The two bodies genuinely need two contracts — the fix is a split, and `platform-web.v1` clause 9 is the seam.\n\nNothing here is edited: `contracts/` is out of this lane's scope, and a ratified clause changes by proposal, never in place. Ledger row CVG-114 carries this as a GAP with a probe that names both absent files, so it flips the moment either reading lands.",
+    "acceptance": "GIVEN experience.v1 clause 15 WHEN a reader checks each platform contract it names against `contracts/` THEN every named contract exists — either because the clause was amended to name `platform-web.v1`, or because the two contracts it names were written.",
     "design": null,
     "contract_named_on_line_one": true
   },
@@ -180,11 +252,29 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-drz",
+    "title": "candidate-guard: false-positive 'no mounted tools visible' warning on every launch (validator trial-mount)",
+    "status": "resolved",
+    "description": "Contract: composition.v1 §6–7 (the guard's coverage and enforcement). Source: the steward's bug report /home/bkrabach/dev/vision-focused-team-ci/BUG-REPORT-candidate-guard-mock-mount-warning.md (2026-09-03). Quoted finding: 'Every amplifier start prints candidate-guard: no mounted tools visible at mount time … The hook's mount() checks coordinator.get(\"tools\") and warns when empty … but before the real mount, amplifier-core's HookValidator trial-mounts every hook module against a bare MockCoordinator() that has no tools, so the check fires there.' Verified by the reporter: validator pass tools_wrapped=0, real mount tools_wrapped=4. Severity low but it tells the user a safety guard is OFF when it is not, on every launch — a diagnostic that trains users to ignore the guard. Fix: do not warn under the validation mock (or defer the wrap-and-check to a post-mount point); add the two tests the report suggests.",
+    "acceptance": "GIVEN the guard is mounted by core's HookValidator against MockCoordinator() WHEN mount() runs THEN no WARNING is logged; GIVEN a coordinator with N tools registered WHEN mount() runs THEN tools_wrapped == N; AND 'amplifier run \"reply ok\"' on a session composing converge prints no candidate-guard warning on stderr.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-duf",
     "title": "Numbering anchor: renumber the composition and surface kit rule tables once the steward rules on documents.v2-candidate change 2",
-    "status": "blocked",
+    "status": "resolved",
     "description": "Contract: documents.v1 §5 (clause numbers match the kit's rule table). Numbering anchor: renumber the composition and surface kit rule tables once the steward decides whether kit rule ids anchor to contract clause numbers or stay sequential. Blocked on that decision (a priority/direction call for the steward).",
     "acceptance": "GIVEN the steward has answered contracts/documents.v2-candidate.md change 2 WHEN conformance/documents/run.py runs against this repository THEN rule 5b reports every contract numbered to its kit's rule table, with no contract listed as not aligned; AND each of the three kits' self-tests contains a check that every Core clause of its contract has a rule row, so a clause added later cannot go unchecked without a test failing; AND conformance/README.md's numbering section names one anchor rather than two.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
+    "id": "converge-dwi",
+    "title": "Guard: an H1 status of \"(RATIFIED <date>)\" is not recognised as locked, while \"**Status:** RATIFIED\" is",
+    "status": "resolved",
+    "description": "Contract: composition.v1 clause 7 (structural enforcement of the proposal route) and documents.v1 clause 6 (status lives in the H1 and nowhere else).\n\nMeasured on the committed tree with the SHIPPED behaviors/converge.yaml config, calling the module's own functions:\n\n  frozen_marker_regex : (?im)^\\*\\*Status:\\*\\*\\s*(?:RATIFIED|FROZEN)|^status:\\s*FROZEN|^#.*\\(FROZEN\\b\n\nThe three branches disagree about RATIFIED. The body branch accepts \"**Status:** RATIFIED\"; the H1 branch accepts only \"(FROZEN\". So a document that moves its status into the H1 - exactly what documents.v1 clause 6 mandates - and whose word is RATIFIED rather than FROZEN, reads as UNLOCKED where the same word in the body read as LOCKED.\n\ndocs/PROTOCOL.md is the live instance. Before this lane it carried \"**Status:** RATIFIED - 2026-08-29\" (regex matched). After the ratified v3 pass its H1 reads \"# ... - Protocol v3 (RATIFIED 2026-09-03)\" and no body status line remains, so the regex no longer matches at all:\n\n  docs/PROTOCOL.md  matches guarded_globs: False  frozen_marker_regex: True -> '**Status:** RATIFIED'   [before]\n  docs/PROTOCOL.md  matches guarded_globs: False  frozen_marker_regex: False                            [after]\n\nNothing changed in practice, because docs/PROTOCOL.md is not in guarded_globs (contracts/*.md, contracts/**/*.md, docs/VISION.md, VISION.md) and so was never guarded either way. The exposure is latent: the day a RATIFIED-in-H1 document is added to guarded_globs, the guard silently declines to guard it - the same under-match failure mode that produced converge-diw / -9vw / -ksg, and the reason the module README gives for making the H1 branch deliberately loose (\"over-matching only ever guards more, whereas a guard that under-matches fails silently\").\n\nDecide one of: (a) teach the H1 branch RATIFIED as well as FROZEN, in the module default and behaviors/converge.yaml together (the test asserting they cannot diverge already exists); or (b) rule that RATIFIED is not a lock word, and record that where readers meet it.\n\nNote: this item was filed with malformed markup that leaked stray tags into its own text and lost its acceptance field. This edit restores both.",
+    "acceptance": "GIVEN a guarded file whose H1 carries \"(RATIFIED <date>)\" and which carries no \"**Status:**\" line WHEN a write to it is evaluated by hooks-candidate-guard THEN the outcome is the decided one - denied as locked, or documented as deliberately not a lock word - and the module default and behaviors/converge.yaml agree, proven by the existing divergence test.",
     "design": null,
     "contract_named_on_line_one": true
   },
@@ -202,7 +292,7 @@
     "title": "Surface kit checks the mockup's markup, so the server-rendered app fails rules 1a–1e, 3a and 4",
     "status": "resolved",
     "description": "Running the shipped kit at a page rendered by the companion app —\n\n  uv run conformance/surface/run.py <a page rendered by amplifier_converge.web>\n\n— reports FAIL on 1a, 1b, 1c, 1d, 1e, 3a and 4 on every page, and PASS on 5.\n\nThe failures are not the app missing the promises. They are the kit looking for the *mockup's* way of keeping them: `data-goto` navigation, `#needCount`, `[data-answer]` controls, a `fillLanes` routine, a `#readiness` block, `#diffBtn`, `#filedList`, and script handlers wiring them together. The app keeps the same promises without any script at all — places are links to real routes, answering is a form POST that re-renders a shorter list, the lock control is a disabled button, what-changed is a rendered list of removed and added sentences, and every answer is written to the dated ratification record on disk. `tests/test_renders_at_both_widths.py::test_pages_are_server_rendered_with_no_script_at_all` asserts the app carries no script on purpose, so this is not something the app can satisfy by adding handlers.\n\nTwo rules also still SKIP with the reason \"the app is not built yet (converge-2qh)\", which is no longer true.\n\nSo a steward reading the kit's verdict on the app sees FAIL and cannot tell a real defect from a shape mismatch — which is exactly what a conformance kit exists to prevent.\n\nNot attempted here: lane w3-app-vocab owns `src/amplifier_converge/**` only, and conformance/ is explicitly out of its scope.\n\nAlso open, from the same run: the verified mockup at /home/bkrabach/dev/vision-focused-team-ci/ai_working/converge-ux-mockups/index.html still FAILs rule 5 on \"bundle\" and \"recipe\" (four lines of card and lane copy, plus one promise sentence, named in converge-y7s). It lives in another repository, outside any file this lane may edit.",
-    "acceptance": "GIVEN a page rendered by the companion app WHEN `uv run conformance/surface/run.py <page>` runs THEN each rule either PASSes, or FAILs for a reason that is a real defect in the app — never because the app keeps a promise a different way than the mockup did; AND no rule's SKIP reason says the app is not built yet.",
+    "acceptance": "GIVEN a page rendered by the companion app WHEN `uv run conformance/surface/run.py <page>` runs THEN each rule of the surface.v1 kit either PASSes, or FAILs for a reason that is a real defect in the app — never because the app keeps a promise a different way than the mockup did; AND no rule's SKIP reason says the app is not built yet.",
     "design": null,
     "contract_named_on_line_one": false
   },
@@ -216,11 +306,29 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-f1l",
+    "title": "experience.v1 and experience-collaboration.v1 have no conformance kit",
+    "status": "open",
+    "description": "Contract: experience.v1 (\"Conformance kit asserts\" — seven bullets) and experience-collaboration.v1 (same section, seven bullets).\n\nSeeding the ledger for the experience family (converge-pq2) built three kits — `experience-direction`, `experience-operation`, `experience-console` — because those three contracts have a body to judge. Two of the family's contracts got none, and the ledger rows say so clause by clause rather than leaving the silence unexplained.\n\nWhere a clause of `experience.v1` is kept by a section contract, its ledger row cites that section's kit rule and inherits its verdict. The clauses left over are the umbrella's own, and nothing asserts them:\n\n- Core 4, \"Exactly five writes\" — countable from the app's own `/openapi.json`, unasserted.\n- Core 5, \"At most five things ask for your word at once … every answer lands in a dated ratification record\" — the first half is countable from `/api/needs/{mid}`; the second is a file check.\n- Core 9, 10, 11, 12, 13 — every behavior carries one of four words, per surface class; idioms satisfy behaviors and never subtract them; a body may exceed in idiom, never in features. These are readable from the contracts themselves (a REQUIRED/IDIOM/OPTIONAL/EXCLUDED tag per clause, and a placement against full app · quick-access · notification), and no kit reads them.\n- Core 14, \"Where a body genuinely cannot do a thing, it says so in the app\" — measured today: the app offers feedback as text and a screenshot and not as voice, and says nothing about the limit anywhere.\n\nFor `experience-collaboration.v1`, clauses 4, 5, 6, 7 and 9 need a repository host with a second party on it; only a live host settles them. Its rows are NOT-ASSERTABLE with that reason, which is a different answer from this one — those need a subject, these need a kit.\n\nNot built here: this lane's brief named three kits, and building a fourth and fifth would have made none of them good.",
+    "acceptance": "GIVEN the experience family WHEN a kit for experience.v1 runs against the app THEN Core 4, 5, 9, 10, 11, 12, 13 and 14 each have a rule with a negative fixture — or each is recorded can't check with a reason that names what a machine cannot settle; AND the ledger rows citing this item are re-derived against those verdicts.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
+    "id": "converge-f5f",
+    "title": "Direction › Changes: align by git hunks, edit-in-place, persistent Keep/Restore, since-you-last-read (steward feedback 2026-09-03)",
+    "status": "resolved",
+    "description": "Contract: experience-direction.v1 (the Changes view; granular accept/revert constructing 'ratified with edits'; direct edits where legal, proposals when locked) and documents.v1 §8. Source — the steward's feedback on the running app at http://spark-1:8788 (build b7ed3f0, 2026-09-03), quoted: 'The diff is misaligned, we should actually leverage git diff under the hood to get that right. Many of the Before/Now are currently off by one, where one of the Now items was new and so then the next Now was lined up w/ the previous Before and so on. Also, we should have the opportunity to edit the value we want instead of only having a before/now. Also, all entries in the changes list say \"vision: principle 8\" - I guess maybe that is right though? I marked all \"Keep this change\", but leaving the change page to read and back and they are all reset - there seems to be no save.' Read against the code: (1) app/data.py pairs before/now sentences positionally after a sequence diff, so an insertion shifts every later pair — the fix is git's own hunks (git diff <since>..HEAD -U0 --word-diff=porcelain) mapped to sentences, with pure insertions shown as New and pure deletions as Removed; (2) no edit affordance exists — the mock never had one; (3) every entry's label is the commit subject 'vision: principle 8 …' because all changes come from one commit AND the label shows source where the section belongs — the section should be the heading path plus list-item number, the source the commit subject + short sha + date; (4) Keep/Restore were toast-only in the mock and were ported as such — nothing persists. Root cause under (1),(3),(4): the app diffs 'the last two commits' instead of 'since you last read' and keeps no per-steward read state, so there is nothing to save Keep against.",
+    "acceptance": "GIVEN a document changed by an insertion between two commits WHEN Changes renders THEN every Before/Now pair is aligned by git hunk and the inserted sentence appears as New with no Before (fixture-tested); GIVEN a change card WHEN the steward chooses Edit and saves new wording THEN a DRAFT document gets a real commit authored to the steward and a locked document gets a <doc>.vN-candidate.md with the fenced before/after, and the card shows the result; GIVEN Keep is pressed WHEN the steward navigates away and back or reloads THEN the change stays kept (server-side per-user state); GIVEN 'Mark all as read' THEN the doc's since-you-last-read point advances and the changes list empties; AND each card shows section = heading path (+ item number) and source = commit subject · short sha · date.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-fmz",
     "title": "Surface: three clause-halves have no check now that the app ships (ledger rows CVG-038, CVG-057, CVG-066)",
     "status": "resolved",
     "description": "The companion page now ships (commit 05b3f09) and its 116 tests pass, so most surface.v1 clauses moved to CONFORMS in ledger/rows.yaml. Three halves have no check at all against the shipped app:\n\n- Core 9, \"The whole operation in view\" — lanes running against lanes intended with the fill control, running against waiting-on-you, the plan in order with reasons, each lane's state and evidence with drill-in, your limits, the feedback drop, \"tell all\". tests/ has a file per clause for 1-7 and 10; there is none for 9. (ledger CVG-038)\n- Core 8, first half — the app must SPEAK the plain state words: Kept / Not yet / Broken / Pinned open / Can't check for contracts, and Working / Quiet / Silent for lanes. One assertion exists (`\"Not yet\" in html`); nothing checks the vocabularies are used. (ledger CVG-057)\n- Core 8, second half — no equivalent of the surface kit's rule 5 (internal vocabulary outside a Details fold) runs against the shipped app. The kit reads an HTML file or a directory with index.html; the app is server-rendered and there is no wiring between them. `test_technical_words_stay_behind_a_details_fold` asserts the fold exists; nothing scans the app's own words for terms a non-engineer would have to look up. Measured against the verified mockup the same rule FAILs on two terms (bundle, recipe) — that is converge-y7s, still open. (ledger CVG-066)\n\nThe cheapest fix for the third is probably to render a page to HTML in a test and point conformance/surface/run.py at it, which would close the kit-versus-app gap for several rules at once rather than one at a time.\n\nFiled rather than fixed: the app and its tests are not this lane's to write (ledger/** only).",
-    "acceptance": "GIVEN the shipped companion app WHEN its tests run THEN surface.v1 Core 9 has at least one assertion, the required state vocabularies are asserted, and the internal-vocabulary scan runs against the app's own rendered words; AND ledger rows CVG-038, CVG-057 and CVG-066 move off GAP.",
+    "acceptance": "GIVEN the shipped companion app WHEN its tests run THEN surface.v1 Core 9 has at least one assertion, the required state vocabularies are asserted, and the internal-vocabulary scan runs against the app's own rendered words; AND ledger rows CVG-038, CVG-057 and CVG-066 move off \"not yet\".",
     "design": null,
     "contract_named_on_line_one": true
   },
@@ -229,7 +337,7 @@
     "title": "Export the work queue to docs/work-items.json so documents rule 9a can run against this repo",
     "status": "resolved",
     "description": "Serves documents.v1 Core 9, first half: \"**A work item names its contract** in one line, defines done in plain words\". Named by ledger row CVG-051 as the fix that closes its GAP.\n\nRAN 2026-09-03, `uv run conformance/documents/run.py . --json-only`:\n\n  9a  work_item_names_a_contract   SKIP  \"no work-item export at docs/work-items.json\n      and none named with --work-items — work items live in the work queue, not in\n      this tree, so the kit has nothing to read\"\n\nRule 9a is mechanical and complete — it asserts both halves clause 9's first sentence names (an item names a contract that EXISTS in contracts/, by stem and version; and its definition of done carries no machine state word). It SKIPs here for one reason only: this repository exports no queue. That is a fixable absence, not a refusal, which is why CVG-051 is GAP and not NOT-ASSERTABLE.\n\nThe kit already accepts the export in two ways (conformance/documents/README.md, \"Run it\"): a JSON array or JSONL at `docs/work-items.json` in the target, found automatically, or an explicit `--work-items PATH`. Each object may carry `id`, `title`, `description`, `acceptance`, `design`, `notes`.\n\nDone means: `uv run conformance/documents/run.py .` reports rule 9a as a real PASS or FAIL — not SKIP — and CVG-051 is re-derived against that verdict.\n\nKnown before starting: when converge-8om ran 9a against the live converge queue (24 items) it reported a real FAIL — 4 of 24 named no contract (converge-nht, converge-dxv, converge-l44, converge-5zk), filed as converge-vc0. So landing the export is expected to turn CVG-051 from GAP into a red row with a running check, which is progress, not a regression. Refreshing the export is also a policy question worth deciding in the same pass: a stale export would let rule 9a pass on a queue that has since changed.",
-    "acceptance": "GIVEN this repository carries no work-item export, WHERE documents kit rule 9a SKIPs with \"no work-item export at docs/work-items.json and none named with --work-items\", WHEN an export of the converge work queue is committed at docs/work-items.json (JSON array or JSONL; objects carrying id, title, description, acceptance, design, notes), THEN `uv run conformance/documents/run.py .` reports rule 9a with status PASS or FAIL rather than SKIP, and its reason names the item count it read. Falsified by: a rule 9a still SKIPping, an export that is empty or hand-written rather than derived from the queue, or a ledger row moved off GAP without the run printed.",
+    "acceptance": "GIVEN this repository carries no work-item export, WHERE documents kit rule 9a SKIPs with \"no work-item export at docs/work-items.json and none named with --work-items\", WHEN an export of the converge work queue is committed at docs/work-items.json (JSON array or JSONL; objects carrying id, title, description, acceptance, design, notes), THEN `uv run conformance/documents/run.py .` reports rule 9a with status PASS or FAIL rather than SKIP, and its reason names the item count it read. Falsified by: a rule 9a still SKIPping, an export that is empty or hand-written rather than derived from the queue, or a ledger row moved off \"not yet\" without the run printed.",
     "design": null,
     "contract_named_on_line_one": true
   },
@@ -243,6 +351,15 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-h5k",
+    "title": "tests/test_plain_words_on_the_surface.py imports the retired surface kit by path",
+    "status": "open",
+    "description": "Contract: surface.v1 (superseded 2026-09-03 by the experience family) — and, for whatever replaces the assertion, experience.v1 Core 6 / experience-direction.v1.\n\n`conformance/surface/` moved to `conformance/_superseded/surface/` on 2026-09-03 (converge-pq2), because the contract it judges was superseded. One caller outside `conformance/` reads it by path:\n\n    tests/test_plain_words_on_the_surface.py:404\n        path = REPO_ROOT / \"conformance\" / \"surface\" / \"run.py\"\n\nMEASURED IMPACT, both before and after, on 2026-09-03:\n\n    before the move:  9 passed\n    after the move:   3 passed, 6 errors\n\nSix and not one: `_surface_kit()` is reached from a shared fixture, so every test that walks the app's pages errors at collection, not just `test_the_shipped_kit_reports_rule_8c_pass_on_every_page`. The failure is a clean `FileNotFoundError` on the old path — nothing subtle.\n\nTwo honest options for whoever owns `tests/`:\n\n1. Point the import at `conformance/_superseded/surface/run.py` — one line, restores all nine, and names what it reads as retired.\n2. Retire the assertion with its contract, and let the vocabulary promise be judged where the family now holds it. Note that **no experience kit currently carries a vocabulary rule** — `experience.v1` Core 6 (\"plain state words everywhere\") and its \"no machine vocabulary outside a Details fold\" bullet have no kit, because the umbrella's clauses are kept by its section contracts. If option 2 is taken, that scan should move into a kit rather than disappear; the retired kit's rule 8c is a working implementation to lift.\n\nLedger row CVG-066 already records this: it moved CONFORMS → GAP in the same pass that broke it, cites this item, and its probe now asserts the gap, so it flips back the moment either option lands.\n\nNot fixed here: this lane owns `ledger/**` and `conformance/**` only; `tests/` is out of scope.",
+    "acceptance": "GIVEN the repository after the surface kit's retirement WHEN `uv run --extra app --with pytest pytest tests/test_plain_words_on_the_surface.py -q` runs THEN it passes — either reading the kit from `conformance/_superseded/surface/run.py`, or with the vocabulary assertion moved into a live experience kit and this test retired alongside its contract.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-hl5",
     "title": "W1 composition: anchors base, local preamble, retire encode+full-wave, README host sentence",
     "status": "resolved",
@@ -252,9 +369,18 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-hng",
+    "title": "Four ledger rows name composition kit rules that were renumbered",
+    "status": "resolved",
+    "description": "Contract: composition.v1 Core 1, 2, 6 and 7 — the rows that record whether those clauses are kept.\n\nThe composition kit's rule ids were re-anchored to the contract's Core clauses on 2026-09-03 (the steward's word, docs/workflow/owner-ratifications-2026-09-03.md, call 2). Four rows in ledger/rows.yaml still name the old ids, and ledger/checks/verify.py reports each one:\n\n  CVG-001  composition Core 1  ref names rules 1a, 1b, 1c  ->  should name rules 1a, 1b\n  CVG-002  composition Core 2  ref names rules 1b, 1e      ->  should name rules 2a, 2b\n  CVG-006  composition Core 6  ref names rule 1d           ->  should name rules 6a, 6b\n  CVG-007  composition Core 7  ref names rules 4a, 4b      ->  should name rules 7a, 7b\n\nCVG-001 and CVG-002 both name 1b, which still resolves — to a different rule than the one the row means. That is the case the rule-id tripwire was written for: a reference pointing confidently at the wrong rule is worse than one that points nowhere.\n\nTwo rows could also be upgraded while someone is in there: composition Core 3, 4 and 5 now have kit rules of their own (3a, 4, 5), and surface Core 4 and 5 have rules 4 and 5, so CVG-003, CVG-004, CVG-005, CVG-033 and CVG-034 could name a kit rule instead of a hand-written probe. That is an improvement, not a defect.\n\nThe lane that renumbered the kits does not own ledger/, so it left this here. The old-to-new map for both kits is in conformance/README.md.",
+    "acceptance": "GIVEN the composition kit's rules are numbered 1a through 7b WHEN `uv run --with pyyaml ledger/checks/verify.py` runs THEN it reports every named kit rule id as present in its kit's rule table, and CVG-001, CVG-002, CVG-006 and CVG-007 each name the rule that actually judges its clause.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-ium",
     "title": "Surface kit rule 2 has no live render check at 390 and 1280 (a browser harness is missing)",
-    "status": "deferred",
+    "status": "resolved",
     "description": "Contract: surface.v1 §10 (renders at 390 and 1280). Surface kit rule 2 has no live render check at the two widths — a browser harness the stdlib kit does not launch; covered structurally by the app's own width test. Documented SKIP until a browser harness is standard.",
     "acceptance": "GIVEN the companion app WHEN the live render harness runs THEN each place is loaded at 390 and 1280 pixels, nothing overflows the viewport, the console is empty, and surface.v1 kit rule 2 reports PASS instead of SKIP.",
     "design": null,
@@ -270,6 +396,24 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-jdm",
+    "title": "Direction: no lock gate, one copy control, no zoom",
+    "status": "open",
+    "description": "Contract: experience-direction.v1 Core 3 and Core 11.\n\nMeasured 2026-09-03 by `uv run conformance/experience-direction/run.py http://127.0.0.1:8788`:\n\n- rule 11 FAIL — no lock control, and none of the four conditions appears anywhere the app serves. Nothing gates a document being locked, and a steward reading a DRAFT contract is never shown why it is not yet lockable. `grep -rniE \"\\block\\b|freeze\" app/templates app/static/js` returns nothing.\n- rule 3 FAIL — the clause names five reader abilities: copy as rendered, copy as source, download the source, zoom, and page width or full screen. The app offers one copy control (`#copyRendered`, which in fact copies the *source* — `copyText(data.doc.raw)`), download and width. There is no zoom, and the two copy abilities are not distinguishable.\n\nNote: rule 3 counts copy controls rather than matching them by id, precisely because a single control called `copyRendered` cannot stand for both abilities.\n\nOwner: whoever owns `app/`. This lane owns `ledger/` and `conformance/` only.",
+    "acceptance": "GIVEN the running app WHEN `conformance/experience-direction/run.py <app>` runs THEN rules 3 and 11 report PASS: two copy controls plus download, zoom and width; and a lock gate stating all four Freeze Bar conditions with a control beside them whose state tracks them.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
+    "id": "converge-koe",
+    "title": "W7 turnkey: a fresh DTU, one --app install, a manager session that is not me runs two real lanes",
+    "status": "resolved",
+    "description": "Contract: operation.v1 'Conformance kit asserts — Turnkey' (RED today) and §5, §12. The operation half has never run end-to-end through Converge without this session driving it by hand. Make evaluations/turnkey/ green or leave it honestly red with each failing step named: fresh DTU (amplifier-digital-twin profile under evaluations/turnkey/), the Gitea mirror re-synced to origin/main first (amplifier-gitea mirror-from-github <instance-id> --github-repo … ; the CLI wants the instance ID, not its name), one 'amplifier bundle add …behaviors/converge.yaml --app', scripts/install-check.py green, then a headless 'amplifier run' under the converge-manager mode against a fixture project (a small repo with a vision, two contracts, and a deliberate gap) that must: derive items into a work-tracker project, show the plan, launch two REAL lanes (tmux -L <socket> sessions + worktrees, verified from outside), judge by evidence, integrate, re-check the contracts, and write a return brief. Every step PASS/FAIL/SKIP with the evidence it read (RESULT.md). Fix what is fixable inside the mode/scripts/install-check; anything else becomes a named residual.",
+    "acceptance": "GIVEN a fresh DTU WHEN evaluations/turnkey/run.sh runs THEN RESULT.md shows each of the nine steps with a verdict and evidence; lanes are proven as tmux sessions + worktrees from outside the manager session; no work item was held by an in-session sub-agent; the ledger re-check ran; a return brief exists — and the overall verdict is GREEN, or RED with every red step naming its cause.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-ksg",
     "title": "candidate-guard does not honor the new proposal name &lt;contract&gt;.vN-candidate.md",
     "status": "resolved",
@@ -281,7 +425,7 @@
   {
     "id": "converge-l44",
     "title": "W3 upstream + mirror: highway skill feedback filed; Gitea mirror re-synced",
-    "status": "open",
+    "status": "resolved",
     "description": "Contract: operation.v1 §5–6 (real lanes, width) and §12 (dependencies). Close-out: file upstream highway-skill feedback (refill enforcement, .width truth, the false 'todo board is the dashboard' claim, marker-outside-worktree, launcher refuses already-held items) with session evidence; re-sync the Gitea mirror used by the evaluations to origin/main.",
     "acceptance": "GIVEN the issues exist with session evidence AND the mirror HEAD equals origin/main.",
     "design": null,
@@ -306,11 +450,29 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-lwa",
+    "title": "Operation: the plan, the brief and the timeline do not carry their reasons or their parts",
+    "status": "open",
+    "description": "Contract: experience-operation.v1 Core 2, Core 3, Core 4.\n\nMeasured 2026-09-03 by `uv run conformance/experience-operation/run.py http://127.0.0.1:8788`:\n\n- rule 2b FAIL — all 11 waves carry no reason. Every wave's `title` is its own lane names joined by commas (\"w1-composition, w1-guard, w1-documents\"), which is a list of members, not a statement of what the batch is for. Nothing shows why the plan was redrawn either.\n- rule 3 FAIL — the return brief never says what finished and never says what is stuck. It is six narrative sentences; the clause fixes five parts (time away · what finished · what is stuck · what needs your word · what quietly changed).\n- rule 4 FAIL — all 8 confidence-timeline entries are `[date, title, text]` with nothing to open. They state that confidence moved and give the reader no way to inspect why, which is the half of the clause that makes the timeline worth reading.\n\nOwner: whoever owns `app/` (`app/data.py` builds all three payloads). This lane owns `ledger/` and `conformance/` only.",
+    "acceptance": "GIVEN the running app WHEN `conformance/experience-operation/run.py <app>` runs THEN rules 2b, 3 and 4 report PASS: every wave carries a reason distinct from its lane names, the brief says all five of its parts, and every timeline entry carries evidence to open.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
+    "id": "converge-nf4",
+    "title": "Post-merge reconcile: re-derive CVG-020, CVG-051, CVG-066, CVG-186 after wave 7",
+    "status": "held",
+    "description": "Contract: operation.v1 §8 (after each change lands, every contract is re-checked) and LEDGER-FORMAT §3 (drift in either direction is re-derived, never bumped). After merging w7-turnkey, w7-ratchet-family and w7-debts, ledger/checks/verify.py reports four rows whose expectations no longer match reality: CVG-020 (MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=8 — the return log grew), CVG-066 (SURFACE-RULE-8C-NOT-ASSERTED-AGAINST-THE-APP — the surface kit was retired and the experience kits took over), CVG-051 (WORK-ITEM-CHECK-NOW-RUNS-FAIL — the export was refreshed and documents rule 9a now PASSes), CVG-186 (WRITES-GO-STRAIGHT-TO-THE-REPOSITORY — a new experience-family row whose probe disagrees with the app's actual write path). Re-derive each from a live run with a RAN line; a CONFORMS row carries no work ref; verify.py exits 0.",
+    "acceptance": "GIVEN uv run --with pyyaml ledger/checks/verify.py THEN exit 0 with every executable ref meeting its expectation and no [FAIL] line; GIVEN the four rows THEN each carries a RAN 2026-09-04 line naming what it observed; GIVEN git diff --stat THEN only ledger/ changed.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-nht",
     "title": "Documents: six kit rules assert less than their clause text says (ledger rows CVG-058/059/061/063/064/065)",
     "status": "resolved",
     "description": "Contract: documents.v1. Six documents-kit rules assert less than their clause text says; tighten each rule to its clause or record an honest SKIP with the reason. Follow-up to the w3-doc-kit lane — same ownership (conformance/documents/**).\n\n>>> THE RESOLUTION ON THIS ITEM IS FALSE IN ONE PARAGRAPH AND CANNOT BE EDITED.\n>>> READ converge-xm5 INSTEAD — it supersedes this item and carries the corrected\n>>> reason in a resolution field. The supersedes edge is live in both directions.\n\nTwo corrections, recorded here because the resolution field is immutable once an item closes.\n\n1. THE RESOLUTION'S CLAIM THAT NO LEDGER EXISTS IS FALSE. It says \"there is no ledger/ directory and no rows.yaml at any commit\". `ledger/rows.yaml` is on `main` (seeded 3c7fdfb; revised c1a4005, bd61d86, d96c379) and on `lane/w4-wiring`. Lane w4-doc-kit-2 branched at 8b54020 and main has moved eighteen commits past it, so the file is absent from that worktree only. `git log -- ledger` on the lane branch returned nothing and was read as \"nowhere\"; `git log --all -- ledger` returns four commits. Checking one branch and reporting on the repository is the unverified claim AGENTS.md section 5 forbids, and it is retracted.\n\nBoth repair paths were tried and both refused, which is why this note exists rather than a fixed resolution:\n    work_claim(converge-nht)                          -> \"issue not claimable: status closed\"\n    amplifier-work-tracker resolve --id converge-nht  -> exit 0, original resolution echoed back\n                                                         unchanged (readback-checked no-op)\n`work_edit` / `edit` can rewrite title, description, acceptance and design — every field except the one that is wrong.\n\n2. THIS ITEM'S DESCRIPTION AND ITS ACCEPTANCE NAMED DIFFERENT CLAUSES. The original description said \"Core 5, 9–11\". The title and acceptance name six ledger rows, and those rows are, read from main:ledger/rows.yaml:\n\n     CVG-058  documents.v1 Core 1   \"Terms of art are defined at first use or not used.\"\n     CVG-059  documents.v1 Core 2   \"A vision fits two screens. A brief is a few sentences.\"\n     CVG-061  documents.v1 Core 6   \"Neither vision nor contract carries kept / broken / in-progress\"\n     CVG-063  documents.v1 Core 7   \"whose entries carry evidence.\"\n     CVG-064  documents.v1 Core 12  what each participant-kit file must contain\n     CVG-065  documents.v1 Core 13  \"its protocol authority checks documents against it\"\n\nCore 1, 2, 6, 7, 12, 13 — not Core 5, 9, 10, 11. The lane trusted the description and built the Core 5/9/10/11 wave before reading the rows. Both waves are real work and both are committed; the second is the one the named rows require. The \"Core 5, 9–11\" phrase has been removed from the top of this description so it cannot mislead a third reader.\n\nShipped on lane/w4-doc-kit-2:\n  5fe18cd — Core 5, 9, 10, 11: rule 5c added, 9a and 10a tightened, 11 split into 11a/11b.\n  acc77b8 — conformance/README.md's numbering claim replaced with the measured per-kit table.\n  ca4036f — Core 1, 2, 6, 7, 12, 13: rules 2b, 6b, 12c added, 13 split into 13a/13b, rule 1's reason widened, 7d recorded as a measured SKIP.\n\nThe kit reports PASS against this repository (17 pass, 0 fail, 9 skip) and FAIL on all 18 checkable rules against sample-bad; 43/43 conformance self-tests pass.\n\nMoving the six ledger rows off GAP is not done and cannot be done from this lane: ledger/ is outside its file ownership and absent from its worktree. Filed as converge-jc9, follow-up-of this item.",
-    "acceptance": "GIVEN conformance/documents/ WHEN run against this repo THEN each of the six clause-halves above has its own rule reporting a real PASS/FAIL; AND ledger rows CVG-058, CVG-059, CVG-061, CVG-063, CVG-064 and CVG-065 move off GAP with an assertion ref into the kit.",
+    "acceptance": "GIVEN conformance/documents/ WHEN run against this repo THEN each of the six clause-halves above has its own rule reporting a real PASS/FAIL; AND ledger rows CVG-058, CVG-059, CVG-061, CVG-063, CVG-064 and CVG-065 move off \"not yet\" with an assertion ref into the kit.",
     "design": null,
     "contract_named_on_line_one": true
   },
@@ -319,7 +481,7 @@
     "title": "Split CVG-051 — clause 9's two halves no longer share a disposition after wave 4",
     "status": "resolved",
     "description": "Serves documents.v1 Core 9. Found while working converge-12o, which owned the four red rows (CVG-052/053/057/066) and the stale `indexed` refs, and deliberately did not guess at this fifth re-derivation.\n\nCVG-051 is one GAP row quoting the whole of clause 9: \"**A work item names its contract** in one line, defines done in plain words, and quotes the feedback or gap it came from.\" Before wave 4 that was right — rule 4 SKIPped because \"work items live in the work queue, not in the repository\", and nothing asserted any part of the clause.\n\nWave 4 replaced that with two rules, and they are no longer the same kind of thing (RAN 2026-09-03, `uv run conformance/documents/run.py . --json-only`):\n\n  9a  work_item_names_a_contract   SKIP  \"no work-item export at docs/work-items.json\n      and none named with --work-items — work items live in the work queue, not in\n      this tree, so the kit has nothing to read\"\n  9b  work_item_quotes_its_source  SKIP  \"measured against this repository's own\n      queue: the literal test — a blockquote or a quoted span — passes 7 of 24 real\n      items, and most of the 17 it fails do point at their origin … Telling a\n      quotation of feedback from a quoted filename needs a reader.\"\n\n9a is a plain GAP: the check exists, it is mechanical, and it SKIPs only because this repository exports no queue. Supply `docs/work-items.json` (or `--work-items`) and it runs. 9b is a MEASURED refusal — the same shape as rule 7d, which is exactly why converge-jc9 moved CVG-063 to NOT-ASSERTABLE rather than leaving it GAP.\n\nA row whose two halves carry different dispositions is one this ledger splits, quoting a disjoint sentence for each (CVG-059 → CVG-067 in wave 4; CVG-052 → CVG-068 in converge-12o). The likely shape: CVG-051 keeps \"**A work item names its contract** in one line, defines done in plain words,\" as GAP against rule 9a, and a new id takes \"and quotes the feedback or gap it came from.\" as NOT-ASSERTABLE against rule 9b's measurement.\n\nWorth deciding in the same pass: whether exporting the work queue to docs/work-items.json is work this repo wants, since that alone would let 9a actually run and could move the GAP half.\n\nconverge-12o updated CVG-051's `indexed` ref from the stale `(rule 4)` — which after the renumber names `contract_section_order` under Core 4 — to `(rules 9a, 9b)`, and re-derived its notes against the run above. The disposition was left at GAP, which under-claims rather than over-claims, and is honest for the row as it currently stands.",
-    "acceptance": "GIVEN the documents kit as merged at wave 4, WHERE rule 9a SKIPs for a missing export and rule 9b SKIPs on a measurement, WHEN CVG-051 is split so each half quotes its own disjoint sentence of clause 9 and carries the disposition its own rule supports, THEN `uv run --with pyyaml ledger/checks/verify.py` prints and exits 0 with clause 9 still cited, each new row carries a RAN line naming the rule and verdict it was derived from, and the NOT-ASSERTABLE half carries a justification quoting rule 9b's own measured reason. Falsified by: a disposition assigned without a run shown, overlapping quotes between the two halves, or a `work` ref left on a row that is no longer red.",
+    "acceptance": "GIVEN the documents kit as merged at wave 4, WHERE rule 9a SKIPs for a missing export and rule 9b SKIPs on a measurement, WHEN CVG-051 is split so each half quotes its own disjoint sentence of clause 9 and carries the disposition its own rule supports, THEN `uv run --with pyyaml ledger/checks/verify.py` prints and exits 0 with clause 9 still cited, each new row carries a RAN line naming the rule and verdict it was derived from, and the can't-check half carries a justification quoting rule 9b's own measured reason. Falsified by: a disposition assigned without a run shown, overlapping quotes between the two halves, or a `work` ref left on a row that is no longer red.",
     "design": null,
     "contract_named_on_line_one": true
   },
@@ -329,6 +491,24 @@
     "status": "resolved",
     "description": "Contract operation.v1 §1-13. modes/converge-manager.md: derive never invent; plan visibly; never the bottleneck; feedback triage (quote evidence, date against build, merge/split by cause, enrich, update not duplicate, mine unreported, direction → decision, still-broken → verify); REAL lanes via ten-lane-highway/goal/goal-batch (tmux+worktree), four sanctioned sub-agent roles only, no launcher → fail loud; width as collision decision + repair card; markers are claims, re-run proof, post-merge gate; stalls → stuck; return brief to OWNER-RETURN-LOG; four gates; custody; hand-off. Include a feedback intake convention (.converge/feedback/). Ground in ~/dev/ai-context/workflows/cortex-core/WORKFLOW.md v2 and drumbeat CONTRACT-DRIVEN-WORKFLOW.md.",
     "acceptance": "GIVEN the mode is active WHEN a manager session runs a wave THEN every lane is a tmux session with its own worktree on disk and no work item was executed by delegate(); AND width deficits produce a repair card; AND the return log has a sentence brief per return.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
+    "id": "converge-pq2",
+    "title": "W7 ratchet for the experience family: ledger rows + kits that judge the real app",
+    "status": "resolved",
+    "description": "Contract: operation.v1 §8 (the contract check) and the eleven experience/platform contracts' 'Conformance kit asserts'. The ledger has rows only for the original four contracts; the eleven new ones have none, and the surface kit judges a superseded contract. SEED rows for experience.v1 and its sections/platforms via converge:reconciler (SYNC hashes; platform bodies that do not exist are NOT-ASSERTABLE with the reason); build conformance/experience-direction/, experience-operation/, experience-console/ kits (clause-numbered, good/bad fixtures, honest SKIP) that judge the running app at http://127.0.0.1:8788 (or its rendered pages) — the mockup-made-real is the reference body; retire conformance/surface/ (move to conformance/_superseded/ with a banner) and re-point ledger rows that cited it.",
+    "acceptance": "GIVEN ledger/rows.yaml WHEN verify.py runs THEN every experience/platform contract has a SYNC hash and clause rows; GIVEN the three new kits WHEN run against the app THEN PASS or named FAILs that are filed; self-tests green; the documents kit's rule 5b reports every kit numbered to its contract; surface kit retired with a banner and no live ledger row cites it.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
+    "id": "converge-q66",
+    "title": "Operation: lane words, flow measures, queue numbers and steering are short of the contract",
+    "status": "open",
+    "description": "Contract: experience-operation.v1 Core 5, 7, 8, 11, 13 (and experience.v1 Core 6, the plain state words).\n\nMeasured 2026-09-03 by `uv run conformance/experience-operation/run.py http://127.0.0.1:8788`:\n\n- rule 8 FAIL — the surface shows each lane's raw `status` field (`app/static/js/render/operation.js` renders `l.status` into `.lane-status`). 42 lanes read `done` and 2 read `stuck`, both outside the lane vocabulary the contract fixes: *Working · Quiet · Silent — may have died*. `done` and `stuck` are WORK words, not lane words. If the vocabulary genuinely needs a word for a finished lane, that is a candidate amendment to `experience.v1` Core 6 and `experience-operation.v1` Core 8, not a change to make in the kit.\n- rule 5a FAIL — the flow reading shows derived, resolved, verified, reopened and never `stuck`. The clause names all five.\n- rule 7 FAIL — only \"waiting on you\" is shown. There is no \"truly ready\" number, so a steward cannot see their own backlog against work that is genuinely ready.\n- rule 11 FAIL — steering offers objective, budget, lane count and fill the lanes, but no way to say \"have the manager session review this\". Four of the five limits.\n- rule 13 FAIL — every manager session is listed and sorted by need, but there is no way to tell them all at once.\n\nOwner: whoever owns `app/`. This lane owns `ledger/` and `conformance/` only.",
+    "acceptance": "GIVEN the running app WHEN `conformance/experience-operation/run.py <app>` runs THEN rules 5a, 7, 8, 11 and 13 report PASS — or, where the lane vocabulary is genuinely short of a word a finished lane needs, a ratified amendment to experience.v1 Core 6 supplies it and the kit's LANE_WORDS follows the contract.",
     "design": null,
     "contract_named_on_line_one": true
   },
@@ -351,6 +531,33 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-tdy",
+    "title": "documents kit rule 11b's SKIP reason names surface rule 5, which after the renumbering is a different rule",
+    "status": "resolved",
+    "description": "Contract: documents.v1 §5 (a kit's rule numbers follow its contract's clause numbers) — the same anchor the steward ratified on 2026-09-03 (docs/workflow/owner-ratifications-2026-09-03.md, call 2).\n\nconformance/documents/run.py:156, inside rule 11b's SKIP reason:\n\n    \"It is asserted where it can be seen, by conformance/surface against\n     surface.v1 clause 8 (\\\"Technical detail waits behind a Details fold\\\"),\n     whose rule 5 scans the app's own words.\"\n\nThe surface kit's vocabulary row moved from 5 to 8c in the 2026-09-03 renumbering, and rule 5 now judges surface.v1 Core 5 (proposals). So this reason sends a reader to a rule that still resolves — to a different clause entirely. That is the failure mode conformance/README.md calls worse than a dangling ref, here in prose rather than in a ledger ref.\n\nNothing automated catches it: ledger/checks/verify.py's rule-id tripwire reads ledger refs, not the kits' own reason strings, and 11b is a declared SKIP so no run goes red.\n\nFound while re-pointing the ledger (converge-hng) and the app test (converge-uli). Neither lane owns conformance/, so the id was left as-is and annotated in CVG-053's `proves` instead.</description>\n<parameter name=\"acceptance\">GIVEN conformance/documents/run.py rule 11b's SKIP reason names the surface kit's vocabulary rule WHEN a reader follows that id into conformance/surface/README.md THEN it lands on the row that scans the app's own words (8c today), not on the Core 5 proposal row.",
+    "acceptance": null,
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
+    "id": "converge-tfu",
+    "title": "Console: the pane shows the session but is not it, and it reaches every session on the socket",
+    "status": "open",
+    "description": "Contract: experience-console.v1 Core 3, Core 4, Core 10.\n\nMeasured 2026-09-03 by `uv run conformance/experience-console/run.py http://127.0.0.1:8788`:\n\n- rule 3 FAIL — `#consoleInput` and its send button are both `disabled`, and the app answers no route that carries a keystroke to the session (`/openapi.json` lists `/api/tmux/{socket}/{session}` GET only). The clause says what you type there is what the manager session receives; today the pane shows the session but is not it. The app says \"read-only in this version\" in its own footer, which is what keeps clause 9 green — so this is a known limit, not a surprise, but it is still the clause unmet.\n- rule 4 FAIL — the console becomes a tray at 980px (`app/static/css/console.css`), and `#consoleClose` dismisses it, but nothing makes the pane resizable on a wide screen: no `resize:` rule on `.manager-console` and no drag handle. The shape may follow the platform; the behaviour does not change.\n- rule 10 FAIL — the app answers `/api/tmux/sessions`, which enumerates **every** tmux session on a socket. Against the live socket that returns the watchdog, other lanes, and other manager sessions' work. The console pane itself shows only this manager's own targets, so the defect is the reach, not the display. The client does not currently call it.\n\nOwner: whoever owns `app/` (`app/tmux_view.py` for the route). This lane owns `ledger/` and `conformance/` only.",
+    "acceptance": "GIVEN the running app WHEN `conformance/experience-console/run.py <app>` runs THEN rules 3, 4 and 10 report PASS: a live console input with a route that carries a keystroke to the manager session, a resizable pane at wide width, and no served route that enumerates sessions beyond the manager's own.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
+    "id": "converge-uli",
+    "title": "Surface kit's vocabulary rule moved from 5 to 8c — one app test still asks for rule 5",
+    "status": "resolved",
+    "description": "Contract: surface.v1 Core 8 (technical detail waits behind a Details fold), and documents.v1 §5 (a kit's rule numbers follow its contract's clause numbers).\n\nThe steward ratified the Core-clause anchor on 2026-09-03, so the surface kit's \"no internal vocabulary outside Details folds\" row moved from rule 5 to rule 8c; rule 5 now judges Core 5 (proposals). One caller outside the kit still selects the old id:\n\n    tests/test_plain_words_on_the_surface.py:427\n    rule = next(r for r in report[\"results\"] if r[\"rule\"] == \"5\")\n\nMeasured 2026-09-03 after the renumbering: that test fails with \"- PASS / + SKIP\", because rule 5 skips on a single page with no proposal on it. Everything else in the app suite passes (1 failed, 8 passed).\n\nThe lane that renumbered the kits does not own tests/, so it left this here rather than making the change. The ledger row CVG-066 runs this very test, so that row goes green again the moment the line changes.",
+    "acceptance": "GIVEN the surface kit numbers its vocabulary rule 8c WHEN tests/test_plain_words_on_the_surface.py runs THEN every test in it passes, because the test asks for rule 8c rather than rule 5; AND the test's name no longer says \"rule 5\"; AND `uv run --with pyyaml ledger/checks/verify.py` no longer reports CVG-066's expectation as unmet.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-vc0",
     "title": "Four queue items name no contract in the form documents.v1 clause 9 requires (documents kit rule 9a FAILs)",
     "status": "resolved",
@@ -358,6 +565,15 @@
     "acceptance": "GIVEN the converge queue exported to a work-item file WHEN `uv run conformance/documents/run.py . --work-items <export>` runs THEN rule 9a reports PASS — every item names a contract that exists in contracts/ by stem and version.",
     "design": null,
     "contract_named_on_line_one": false
+  },
+  {
+    "id": "converge-wrx",
+    "title": "Direction: restore and per-change choices show a message and forget",
+    "status": "open",
+    "description": "Contract: experience-direction.v1 Core 6 and Core 8.\n\nMeasured 2026-09-03 by `uv run conformance/experience-direction/run.py http://127.0.0.1:8788`:\n\n- rule 6 FAIL — the restore controls exist (`[data-restore]` at paragraph/section/document scope) but their handler in `app/static/js/render/direction.js` reaches no write the app declares; it calls `toast(...)` and nothing else. Restoring is therefore not a real action, and on a locked document it cannot produce the proposal the clause requires.\n- rule 8 FAIL — the per-change Keep/Restore controls (`[data-change-action]`) have the same shape: the handler dims the card and shows a message. A steward's kept-and-dropped choices are shown and discarded rather than carried into the one answer that constructs `ratified with edits`.\n\nNote for whoever fixes this: the kit reads the handler with string literals blanked, because the message *\"Restore staged for the next proposal decision.\"* contains the word `decision` and made the rule report a fabricated PASS on the first attempt. A write has to be a call.\n\nOwner: whoever owns `app/`. This lane owns `ledger/` and `conformance/` only.",
+    "acceptance": "GIVEN the running app WHEN `conformance/experience-direction/run.py <app>` runs THEN rules 6 and 8 report PASS: the restore handler reaches a declared write (the proposal path on a locked document), and the per-change handler carries the granular choices into the decision write.",
+    "design": null,
+    "contract_named_on_line_one": true
   },
   {
     "id": "converge-xm5",

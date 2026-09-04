@@ -9,17 +9,28 @@ the whole system in one sentence:
 
 This directory is the runnable version of that sentence.
 
+**As of 2026-09-04 it runs green** — nine of nine, twice, in fresh containers
+([`RESULT.md`](RESULT.md)). The contract still records the gate as red; a
+contract changes by proposal and the steward's word, never because a harness
+went green, so that line is left exactly as it is and this is the evidence
+under it.
+
 ```sh
-uv run evaluations/turnkey/run.py --help
-uv run evaluations/turnkey/run.py --self-check
-uv run evaluations/turnkey/run.py --env local --workspace ~/dev/hw-converge
-uv run evaluations/turnkey/run.py --env dtu --project turnkey
+./evaluations/turnkey/run.sh                        # fresh container, real wave
+./evaluations/turnkey/run.sh --sync-mirror          # re-sync the mirror first
+./evaluations/turnkey/run.sh --self-check           # no environment needed
+./evaluations/turnkey/run.sh --env local --workspace ~/dev/hw-converge
+uv run evaluations/turnkey/run.py --help            # every flag, unwrapped
 ```
 
-No install step beyond `uv run`. The harness is stdlib-only.
+`run.sh` is a thin entry point: it proves the Gitea mirror the container
+installs from matches github before anything launches, resolves the secrets and
+the infra ledger, and puts the run's output — including the manager session's
+full transcript — outside this repository. Everything else is `run.py`, which is
+stdlib-only and needs no install beyond `uv run`.
 
-**What it actually reported the last time it ran is in [`RESULT.md`](RESULT.md),
-red included.**
+**What it actually reported the last time it ran is in [`RESULT.md`](RESULT.md)
+— currently GREEN, with the four defects it took to get there.**
 
 ## The nine steps
 
@@ -30,7 +41,7 @@ red included.**
 | c | `install_check` | `scripts/install-check.py` green inside it | that script's JSON report — every required dependency, named |
 | d | `project` | a project started | the shared queue answering for the project, with items in it |
 | e | `derived` | work derived from a fixture gap | the fixture's own kit; then every item's record, for a contract it names and a *done* it states |
-| f | `lanes` | **two REAL lanes**, tended, judged | `git worktree list`, `tmux list-panes`, `/proc/<pid>/cwd` of every item's holder, commits beyond each lane's base |
+| f | `lanes` | **two REAL lanes**, tended, judged | `git worktree list`, `tmux list-panes` on the launcher's own socket, `/proc/<pid>/cwd` of every item's holder, commits beyond each lane's base — live where they can still be read, and from readings taken during the wave where they cannot |
 | g | `integrated` | results integrated and verified | merge commits naming `lane/*` on the integration branch |
 | h | `rechecked` | contracts re-checked | the contract kits, re-run **by this harness** after integration |
 | i | `brief` | a plain-sentence return brief | `docs/workflow/OWNER-RETURN-LOG.md` — dated, five parts, written in sentences |
@@ -56,7 +67,16 @@ harness exists to prevent — and it has caught itself producing one (see
 **`driven`** (`--env dtu`) — the harness stands the environment up itself,
 carries the repository under test into it as a git bundle (so git still has
 real history to answer about), runs the one documented install inside it, seeds
-the fixture, and drives the wave. Every step is performed here and now.
+the fixture, and then **runs the operation for real**: a headless `amplifier
+run` inside the container, told to work in the converge-manager mode against
+the fixture, with the objective in [`manager-objective.md`](manager-objective.md).
+
+That manager session is a separate process. This harness does not participate
+in the wave it is judging — it holds a deadline and takes readings from
+outside, every 15 seconds, of the three systems that can only answer in the
+present tense: the multiplexer's session list, git's worktree list, and where
+each held item's process is sitting. `--no-wave` stands the environment up
+without one, and judges whatever is there.
 
 **`observed`** (`--env local`) — the harness judges a manager wave that ran on
 this host, against the same assertions and the same evidence. Step (a) is SKIP:
@@ -120,8 +140,8 @@ Two deliberate refusals in that code:
 An assertion nobody can make fail proves nothing.
 
 ```sh
-uv run evaluations/turnkey/run.py --self-check      # 16 cases, no environment needed
-uv run --with pytest pytest evaluations/turnkey -q  # 30 tests
+uv run evaluations/turnkey/run.py --self-check      # 24 cases, no environment needed
+uv run --with pytest pytest evaluations/turnkey -q  # 57 tests
 ```
 
 `--self-check` runs every `assert_*` function against synthetic evidence that

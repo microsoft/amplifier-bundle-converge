@@ -67,6 +67,58 @@ export async function finalizeDecision(decision, label, note) {
   }
 }
 
+// --------------------------------------------------------------------------
+// the Changes view: four writes, no staging
+// --------------------------------------------------------------------------
+//
+// Each of these makes a request and then re-reads the document, so what the
+// steward sees afterwards is what the server actually did. Keep used to be a
+// message and nothing else — the steward marked every change, left the page,
+// came back, and found them all reset. That is why the reload is not optional
+// here: it is the proof.
+
+async function afterChange(said) {
+  await hooks.reloadDoc();
+  if (said) toast(said);
+}
+
+export async function keepChange(changeId, on) {
+  try {
+    await api.keepChange(state.managerId, state.repoId, state.docId, changeId, on);
+    await afterChange(on ? 'Kept — and remembered for you, not for this browser.' : 'No longer kept.');
+  } catch (err) {
+    toast(`Could not save that: ${err.message}`);
+  }
+}
+
+export async function saveChangeEdit(changeId, text) {
+  if (!text || !text.trim()) { toast('Write the wording you want first.'); return; }
+  try {
+    const res = await api.editChange(state.managerId, state.repoId, state.docId, changeId, text.trim());
+    await afterChange(res && res.said ? res.said : 'Your wording is in.');
+  } catch (err) {
+    toast(`Could not write that edit: ${err.message}`);
+  }
+}
+
+export async function restoreChange(changeId) {
+  try {
+    const res = await api.restoreChange(state.managerId, state.repoId, state.docId, changeId);
+    await afterChange(res && res.said ? res.said : 'The previous wording is back.');
+  } catch (err) {
+    toast(`Could not restore that: ${err.message}`);
+  }
+}
+
+export async function markAllRead() {
+  try {
+    const res = await api.markRead(state.managerId, state.repoId, state.docId);
+    await afterChange(`Marked read at ${res && res.short ? res.short : 'the current version'}. The next change will be the next thing you see.`);
+  } catch (err) {
+    toast(`Could not move your read point: ${err.message}`);
+  }
+}
+
 function readImage(input) {
   const file = input && input.files && input.files[0];
   if (!file) return Promise.resolve(null);

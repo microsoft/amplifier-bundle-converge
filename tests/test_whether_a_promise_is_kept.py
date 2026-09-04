@@ -36,7 +36,7 @@ from amplifier_converge.reading.kept import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-FIXTURE = REPO_ROOT / "conformance" / "surface" / "fixtures" / "app"
+FIXTURE = REPO_ROOT / "conformance" / "_superseded" / "surface" / "fixtures" / "app"
 
 
 # --------------------------------------------------------------------------
@@ -287,12 +287,18 @@ def test_this_projects_own_record_reads(recorded):
     """
     reading = read_promises(REPO_ROOT)
     assert reading.available, reading.note
-    assert set(reading.value) == {
+    # 2026-09-04: the record grew from the original four contracts to the
+    # whole set (the experience family). Growth is not drift: the originals
+    # must still be read, and every file the record names must exist.
+    originals = {
         "contracts/composition.v1.md",
         "contracts/documents.v1.md",
         "contracts/operation.v1.md",
         "contracts/surface.v1.md",
     }
+    assert originals <= set(reading.value), originals - set(reading.value)
+    for rel in reading.value:
+        assert (REPO_ROOT / rel).exists(), rel
     for name, standing in reading.value.items():
         assert standing.word in words.CONTRACT_STATES, f"{name}: {standing.word}"
         assert standing.clauses > 0, name

@@ -90,6 +90,27 @@ RETURN_LOG = "docs/workflow/OWNER-RETURN-LOG.md"
 # The five parts of a brief, in order (operation.v1 clause 10).
 BRIEF_PARTS = ["time away", "finished", "stuck", "needs you", "quietly broken"]
 
+# The terminal-session socket the lane launcher uses (HIGHWAY_TMUX_SOCKET's own
+# default). A lane started by the launcher is invisible to a bare `tmux
+# list-panes -a`, which reads the DEFAULT socket only -- so every reading here
+# unions both, and records which socket answered.
+LANE_TMUX_SOCKET = "hw"
+
+# Where the wave's own state lives inside a driven environment.
+WAVE_BATCH_IN_ENV = "/workspace/turnkey-batch"
+WAVE_OBJECTIVE_IN_ENV = f"{WAVE_BATCH_IN_ENV}/objective.md"
+WAVE_LOG_IN_ENV = f"{WAVE_BATCH_IN_ENV}/manager.log"
+WAVE_EXIT_IN_ENV = f"{WAVE_BATCH_IN_ENV}/manager.exit"
+
+# The lane launcher, as installed with the amplifier CLI. Probed at wave time
+# rather than assumed -- the interpreter version is in the path.
+LAUNCHER_GLOBS = [
+    "/root/.local/share/uv/tools/amplifier/lib/python*/site-packages/amplifier_app_cli/"
+    "data/skills/ten-lane-highway/scripts/launch_lane.sh",
+    "/root/.local/share/uv/tools/amplifier/lib/*/site-packages/amplifier_app_cli/"
+    "data/skills/ten-lane-highway/scripts/launch_lane.sh",
+]
+
 # Holder ids look like "agent-spark-1-425543". The trailing integer is the OS
 # pid of the holding process — verified against /proc on this host, 2026-09-02.
 # This is an inferred convention, not a documented interface: when it does not
@@ -313,20 +334,41 @@ def read_worktrees(env: Env, repo: str) -> list[dict]:
     return out
 
 
-def read_tmux_panes(env: Env) -> list[dict]:
-    """Every live terminal session and the directory its pane is sitting in."""
-    ran = env.run(
-        ["tmux", "list-panes", "-a", "-F", "#{session_name}\t#{pane_current_path}"],
-        timeout=60.0,
-    )
-    if not ran.ok:
-        return []
-    panes = []
-    for line in ran.out.splitlines():
-        session, _, path = line.partition("\t")
-        if session.strip():
-            panes.append({"session": session.strip(), "path": path.strip()})
+def read_tmux_panes(env: Env, sockets: tuple[str | None, ...] = (None, LANE_TMUX_SOCKET)
+                    ) -> list[dict]:
+    """Every live terminal session and the directory its pane is sitting in.
+
+    Reads EVERY socket named, not just the default one. `tmux list-panes -a`
+    answers only about the socket it is pointed at, and the lane launcher uses
+    `-L hw` -- so a single default-socket reading would report zero lanes in a
+    container where two lanes are visibly running, which is a fabricated FAIL
+    of exactly the kind this harness exists to refuse.
+    """
+    panes: list[dict] = []
+    seen: set[tuple[str, str]] = set()
+    for socket in sockets:
+        argv = ["tmux"] + (["-L", socket] if socket else []) + [
+            "list-panes", "-a", "-F", "#{session_name}\t#{pane_current_path}"
+        ]
+        ran = env.run(argv, timeout=60.0)
+        if not ran.ok:
+            continue
+        for line in ran.out.splitlines():
+            session, _, path = line.partition("\t")
+            session, path = session.strip(), path.strip()
+            if not session or (session, path) in seen:
+                continue
+            seen.add((session, path))
+            panes.append({"session": session, "path": path,
+                          "socket": socket or "default"})
     return panes
+
+
+def read_tmux_sessions(env: Env, socket: str = LANE_TMUX_SOCKET) -> list[str]:
+    """Just the session names on one socket -- what `tmux -L <socket> ls` shows."""
+    ran = env.run(["tmux", "-L", socket, "list-sessions", "-F", "#{session_name}"],
+                  timeout=60.0)
+    return [ln.strip() for ln in ran.out.splitlines() if ln.strip()] if ran.ok else []
 
 
 def read_manifest(env: Env, workspace: str) -> list[Lane]:
@@ -437,16 +479,31 @@ def holder_pid(holder: str | None) -> int | None:
     return int(match.group(1)) if match else None
 
 
-def commits_beyond(env: Env, repo: str, base: str, branch: str) -> int | None:
-    ran = env.run(
-        ["git", "-C", repo, "rev-list", "--count", f"{base}..{branch}"], timeout=60.0
-    )
-    if not ran.ok:
-        return None
-    try:
-        return int(ran.out.strip())
-    except ValueError:
-        return None
+def commits_beyond(env: Env, repo: str, base: str, branch: str,
+                   fallback_repo: str | None = None) -> int | None:
+    """How many commits `branch` carries beyond `base`, from any clone that knows.
+
+    `base..branch` is a question about two refs, and any repository holding
+    both can answer it. The lane's own worktree is asked first because it is
+    the lane's own copy — but a finished wave removes its worktrees after
+    merging, and `git -C <a directory that no longer exists>` fails. Measured
+    on run E: both lanes came back "git could not count commits", so clause 7's
+    commits-beyond-base check was unmeasured on a wave whose branches were
+    sitting right there in the main repository, merged.
+    """
+    for where in [repo, fallback_repo]:
+        if not where:
+            continue
+        ran = env.run(
+            ["git", "-C", where, "rev-list", "--count", f"{base}..{branch}"],
+            timeout=60.0,
+        )
+        if ran.ok:
+            try:
+                return int(ran.out.strip())
+            except ValueError:
+                return None
+    return None
 
 
 def contract_names(env: Env, repo: str) -> list[str]:
@@ -508,7 +565,32 @@ UNPROVEN = "unproven"
 NOT_A_LANE = "not_a_lane"
 
 
-def assert_lane_is_real(lane: Lane, worktrees: list[dict], panes: list[dict]) -> dict:
+def _observed_as_lane(lane: Lane, observations: list[dict]) -> dict | None:
+    """Was this lane seen with BOTH halves, in one reading, while it ran?
+
+    A finished wave tidies up after itself: the manager merges the branches and
+    removes the worktrees, and the terminal sessions exit with the lanes. After
+    that, git and the multiplexer are telling the truth when they say there is
+    nothing there — but "nothing there NOW" is not "never was", and treating
+    the two the same condemns every successfully completed wave as having run
+    no lanes at all. (Measured: the first wave this harness drove did exactly
+    that, and the harness called two real, merged lanes 'no lanes found'.)
+
+    So a reading taken WHILE the wave ran is admitted as evidence — but only a
+    reading that carries both halves at once for this lane, which is the same
+    bar `assert_lane_is_real` applies in the present tense.
+    """
+    for sample in observations or []:
+        if lane.tmux and lane.tmux not in sample.get("sessions", []):
+            continue
+        branches = [w.get("branch") for w in sample.get("worktrees", [])]
+        if lane.branch and lane.branch in branches:
+            return {"at": sample.get("at"), "session": lane.tmux, "branch": lane.branch}
+    return None
+
+
+def assert_lane_is_real(lane: Lane, worktrees: list[dict], panes: list[dict],
+                        observations: list[dict] | None = None) -> dict:
     """One lane is real iff it has its OWN worktree AND its OWN terminal session.
 
     operation.v1 clause 5: "A lane is a worker session's own working copy,
@@ -538,6 +620,22 @@ def assert_lane_is_real(lane: Lane, worktrees: list[dict], panes: list[dict]) ->
          if w["path"].rstrip("/") == lane.worktree.rstrip("/")),
         None,
     )
+    seen_running = _observed_as_lane(lane, observations or [])
+    if registered is None and seen_running:
+        # Cleaned up after a finished wave, but caught in the act earlier.
+        return {
+            "lane": lane.name, "state": ENDED, "ok": True,
+            "worktree": lane.worktree, "branch": lane.branch,
+            "worktree_registered": False, "terminal_sessions": [],
+            "recorded_terminal": lane.tmux,
+            "observed_running": seen_running,
+            "findings": [
+                f"no worktree registered at {lane.worktree} now, but at "
+                f"{seen_running['at']} this lane's worktree ({lane.branch}) and its "
+                f"terminal session ({lane.tmux}) were both live in one reading taken "
+                "from outside the manager session; it ran and was cleaned up after"
+            ],
+        }
     if registered is None:
         findings.append(f"no worktree registered at {lane.worktree}")
     elif registered.get("branch") and lane.branch and registered["branch"] != lane.branch:
@@ -579,6 +677,7 @@ def assert_lane_is_real(lane: Lane, worktrees: list[dict], panes: list[dict]) ->
         "worktree_registered": registered is not None,
         "terminal_sessions": sessions,
         "recorded_terminal": lane.tmux,
+        "observed_running": seen_running,
         "findings": findings,
     }
 
@@ -599,11 +698,23 @@ def assert_lanes_are_distinct(lanes: list[Lane]) -> dict:
     return {"ok": not problems, "problems": problems}
 
 
+def _holder_seen_running(pid: int, observations: list[dict]) -> dict | None:
+    """Where this pid was sitting, read from /proc while the wave still ran."""
+    for sample in reversed(observations or []):
+        for holder in sample.get("holders", []):
+            if holder.get("pid") == pid and holder.get("cwd"):
+                return {"pid": pid, "cwd": holder["cwd"],
+                        "cmdline": holder.get("cmdline", ""),
+                        "observed_at": sample.get("at")}
+    return None
+
+
 def assert_no_subagent_held_work(
     items: list[dict],
     processes: dict[int, dict | None],
     lane_worktrees: list[str],
     lane_branches: list[str] | None = None,
+    observations: list[dict] | None = None,
 ) -> dict:
     """FAIL the run if a work item was executed by an in-session sub-agent.
 
@@ -631,6 +742,14 @@ def assert_no_subagent_held_work(
     launcher recorded" — never to upgrade it to a pass. Prose naming a branch
     is exactly the kind of self-report a session running work in-session could
     write, so it corroborates and does not prove.
+
+    `observations` are readings of the SAME question taken while the wave was
+    still running: pid -> the directory it was sitting in, read from /proc at
+    the time. A holder that has since exited but WAS read sitting inside a lane
+    worktree is a pass, because that reading is the identical fact this
+    assertion asks for, taken when it could still be taken. Without it, every
+    holder on a completed wave is unresolved — measured: 2 of 2 on run D — and
+    the strongest evidence against in-session execution only exists mid-flight.
     """
     verdicts, offenders, unresolved = [], [], []
     live_pids: dict[int, str] = {}
@@ -651,7 +770,7 @@ def assert_no_subagent_held_work(
             verdicts.append(record)
             continue
 
-        process = processes.get(pid)
+        process = processes.get(pid) or _holder_seen_running(pid, observations or [])
         if process is None:
             named = [b for b in branches if b and b in str(item.get("resolution") or "")]
             record.update(verdict=SKIP, pid=pid,
@@ -669,6 +788,8 @@ def assert_no_subagent_held_work(
 
         cwd = process.get("cwd", "")
         record.update(pid=pid, cwd=cwd)
+        if process.get("observed_at"):
+            record["read_at"] = process["observed_at"]
         lane = next((w for w in lane_worktrees if _within(cwd, w)), None)
         if lane is None:
             record.update(
@@ -688,6 +809,13 @@ def assert_no_subagent_held_work(
         else:
             live_pids[pid] = str(item.get("id"))
             record.update(verdict=PASS, lane_worktree=lane)
+            if process.get("observed_at"):
+                record["why"] = (
+                    f"pid {pid} was read sitting in {cwd!r} at "
+                    f"{process['observed_at']}, while the wave was running; it has "
+                    "since exited, but that reading is this assertion's own question "
+                    "answered at the only time it could be asked"
+                )
         verdicts.append(record)
 
     return {
@@ -723,6 +851,74 @@ def assert_commits_beyond_base(lane: Lane, count: int | None) -> dict:
     }
 
 
+def assert_lanes_observed_live(samples: list[dict], width: int = 2) -> dict:
+    """Were `width` lanes ever seen running AT THE SAME TIME, from outside?
+
+    Every other lane assertion here reads the wreckage a lane leaves behind:
+    a worktree, a branch, commits, a resolution. All of that is still there
+    after the lane exits, and all of it can be produced by a session that never
+    left itself. This one reads the two systems that can only answer in the
+    present tense — git's worktree list and the multiplexer's session list —
+    while the manager session is still running, and from OUTSIDE that session.
+
+    It is deliberately conjunctive within a single sample. Two worktrees seen
+    at 12:01 and two terminal sessions seen at 12:09 are not two lanes; they
+    are two facts. Only one sample carrying both is evidence of concurrency.
+
+    Pure, over already-collected samples, so the concurrency claim can be made
+    to fail without a container.
+    """
+    if not samples:
+        return {"verdict": SKIP, "width": width, "samples": 0,
+                "why": "no sample was taken while a manager session was running, so "
+                       "concurrency was never observed either way"}
+    scored = []
+    for sample in samples:
+        sessions = [s for s in sample.get("sessions", []) if str(s).startswith("hw__")]
+        worktrees = [w for w in sample.get("worktrees", [])
+                     if str(w.get("branch", "")).startswith("lane/")]
+        scored.append({
+            "at": sample.get("at"),
+            "lane_sessions": sessions,
+            "lane_worktrees": [w.get("branch") for w in worktrees],
+            "both": min(len(sessions), len(worktrees)),
+        })
+    best = max(scored, key=lambda s: s["both"])
+    if best["both"] >= width:
+        return {
+            "verdict": PASS, "width": width, "samples": len(samples), "peak": best,
+            "why": f"at {best['at']}, {len(best['lane_sessions'])} lane terminal "
+                   f"session(s) and {len(best['lane_worktrees'])} lane worktree(s) "
+                   "were visible at once, read from outside the manager session",
+        }
+
+    # A half that NEVER reached the width in any reading settles it: there were
+    # not `width` lanes, and no amount of sampling luck would have shown them.
+    # That is a finding, not a miss.
+    most_sessions = max(len(s["lane_sessions"]) for s in scored)
+    most_worktrees = max(len(s["lane_worktrees"]) for s in scored)
+    if most_sessions < width or most_worktrees < width:
+        return {
+            "verdict": FAIL, "width": width, "samples": len(samples), "peak": best,
+            "why": f"across {len(samples)} samples the most ever seen at once was "
+                   f"{most_sessions} lane terminal session(s) and {most_worktrees} "
+                   f"lane worktree(s); {width} lanes were asked for, and a half that "
+                   "never once reached that count was never there to be missed",
+        }
+    # Both halves reached the width, but never in the SAME reading. Sampling
+    # is periodic and lanes can be short; this cannot distinguish "they did not
+    # overlap" from "the sampler blinked". Reported as unproven, which is what
+    # this harness says instead of guessing — and never counted as a pass.
+    return {
+        "verdict": SKIP, "width": width, "samples": len(samples), "peak": best,
+        "why": f"{width} lane worktrees and {width} lane terminal sessions were each "
+               f"seen across {len(samples)} samples, but never both in one reading "
+               f"(the best single reading had {best['both']}); with periodic sampling "
+               "that cannot be told apart from a sampler that blinked, so this run "
+               "does not claim the lanes overlapped",
+    }
+
+
 # ---------------------------------------------------------------------------
 # the run context
 # ---------------------------------------------------------------------------
@@ -743,6 +939,25 @@ class Context:
     amplifier_home: str | None = None
     timeout: float = 300.0
     notes: list[str] = field(default_factory=list)
+    wave: dict | None = None
+    batch_dir: str = WAVE_BATCH_IN_ENV
+    width: int = 2
+
+    # The repository the WAVE happens in, and where its lane state lives.
+    #
+    # These are not the same as `repo`/`workspace` in driven mode, and
+    # conflating them is how a run ends up looking for lane worktrees in the
+    # bundle checkout while the lanes are all in the fixture. `repo` is the
+    # system under test (the converge bundle); `wave_repo` is the repository
+    # the manager session was told to operate ON.
+
+    @property
+    def wave_repo(self) -> str:
+        return self.fixture_repo if (self.mode == DRIVEN and self.fixture_repo) else self.repo
+
+    @property
+    def wave_workspace(self) -> str:
+        return self.batch_dir if (self.mode == DRIVEN and self.fixture_repo) else self.workspace
 
 
 # ---------------------------------------------------------------------------
@@ -1018,20 +1233,26 @@ def step_derived(ctx: Context) -> Result:
             f"The sample gap could not be put into the environment: {seeding['why']}",
             evidence={"seeding": seeding},
         )
-    fixture_state = _fixture_gap_state(ctx)
+    fixture_now = _fixture_gap_state(ctx)
+    # "Were the gaps really there?" is a question about the fixture BEFORE the
+    # wave. When a wave ran, that reading was taken at seed time and is the
+    # only honest basis; the current reading answers a different question and
+    # is reported beside it, never in place of it.
+    planted = (ctx.wave or {}).get("fixture_before") or fixture_now
+    planted_when = "before the wave" if (ctx.wave or {}).get("fixture_before") else "now"
     items, error = read_tracker_items(ctx.env, ctx.project)
     if error:
         return Result(SKIP, "The queue did not answer.", reason=error)
 
-    if ctx.mode == DRIVEN and fixture_state:
+    if ctx.mode == DRIVEN and planted:
         expected = set(ctx.answer_key.get("expected_red_rules_before", []))
-        actual = set(fixture_state.get("red_rules", []))
+        actual = set(planted.get("red_rules", []))
         if expected and expected != actual:
             return Result(
                 FAIL,
-                "The fixture is not in its planted state: expected rules "
-                f"{sorted(expected)} red, found {sorted(actual)}.",
-                evidence={"fixture": fixture_state},
+                f"The fixture was not in its planted state ({planted_when}): expected "
+                f"rules {sorted(expected)} red, found {sorted(actual)}.",
+                evidence={"fixture_planted": planted, "fixture_now": fixture_now},
             )
 
     # Clause 1: every item must NAME its contract and SAY what done looks like.
@@ -1076,7 +1297,9 @@ def step_derived(ctx: Context) -> Result:
             offenders.append(record)
 
     weakly = [s for s in sampled if s["basis"] == "weak"]
-    evidence = {"seeding": seeding, "fixture": fixture_state, "sampled": len(sampled),
+    evidence = {"seeding": seeding, "fixture_planted": planted,
+                "fixture_planted_read": planted_when, "fixture_now": fixture_now,
+                "sampled": len(sampled),
                 "contracts_in_repo": contracts,
                 "named_only_by_bare_stem": weakly,
                 "without_contract_or_done": offenders}
@@ -1113,8 +1336,11 @@ def step_derived(ctx: Context) -> Result:
             f"; {len(weakly)} name it only by a bare stem rather than a versioned "
             "reference, which is recorded but not counted against them"
         )
-    if fixture_state:
-        detail += f"; the fixture's own kit reports rules {fixture_state.get('red_rules')} red"
+    if planted:
+        detail += (f"; the fixture's own kit reported rules "
+                   f"{planted.get('red_rules')} red {planted_when}")
+    if fixture_now and fixture_now is not planted:
+        detail += f" and reports {fixture_now.get('red_rules')} red now"
     return Result(PASS, detail + ".", evidence=evidence)
 
 
@@ -1124,10 +1350,29 @@ def step_lanes(ctx: Context) -> Result:
     This is the step acceptance item 3 is about. See `assert_lane_is_real` and
     `assert_no_subagent_held_work` above for the assertions themselves.
     """
-    worktrees = read_worktrees(ctx.env, ctx.repo)
+    worktrees = read_worktrees(ctx.env, ctx.wave_repo)
     panes = read_tmux_panes(ctx.env)
-    lanes = read_manifest(ctx.env, ctx.workspace) or lanes_from_worktrees(worktrees, panes)
-    lanes = [ln for ln in lanes if ctx.env.exists(ln.worktree)]
+    lanes = (read_manifest(ctx.env, ctx.wave_workspace)
+             or lanes_from_worktrees(worktrees, panes))
+    samples = (ctx.wave or {}).get("samples", [])
+    # A lane whose worktree is gone is NOT dropped here. A finished wave
+    # removes its worktrees after merging, and discarding those rows turned a
+    # completed two-lane wave into "no lanes found" (measured, run C). Such a
+    # lane is kept and judged by assert_lane_is_real, which can place it from
+    # a reading taken while it ran; only a lane with neither a worktree nor an
+    # observation is dropped, and it is counted so the drop is never silent.
+    kept, vanished = [], []
+    for lane in lanes:
+        if ctx.env.exists(lane.worktree) or _observed_as_lane(lane, samples):
+            kept.append(lane)
+        else:
+            vanished.append(lane.name)
+    lanes = kept
+
+    # Concurrency, read while the wave was still running (the wave driver's
+    # samples). Everything else in this step reads what a lane LEFT; this is
+    # the only reading that could only have been true in the present tense.
+    observed = assert_lanes_observed_live(samples, ctx.width)
 
     if not lanes:
         return Result(
@@ -1135,10 +1380,13 @@ def step_lanes(ctx: Context) -> Result:
             "No lanes found: neither a launcher manifest nor a worktree on a "
             "lane/* branch exists. Clause 5 fails loud rather than falling back "
             "to running the work in-session.",
-            evidence={"worktrees": len(worktrees), "terminal_panes": len(panes)},
+            evidence={"repo_read": ctx.wave_repo, "workspace_read": ctx.wave_workspace,
+                      "worktrees": len(worktrees), "terminal_panes": len(panes),
+                      "dropped_no_worktree_no_observation": vanished,
+                      "observed_live": observed},
         )
 
-    reality = [assert_lane_is_real(ln, worktrees, panes) for ln in lanes]
+    reality = [assert_lane_is_real(ln, worktrees, panes, samples) for ln in lanes]
     distinct = assert_lanes_are_distinct(lanes)
     real = [r for r in reality if r["ok"]]
     impostors = [r for r in reality if r["state"] == NOT_A_LANE]
@@ -1148,25 +1396,31 @@ def step_lanes(ctx: Context) -> Result:
     pids = {p for p in (holder_pid(i.get("holder")) for i in items) if p is not None}
     processes = {pid: read_process(ctx.env, pid) for pid in pids}
     subagents = assert_no_subagent_held_work(
-        items, processes, [ln.worktree for ln in lanes], [ln.branch for ln in lanes]
+        items, processes, [ln.worktree for ln in lanes],
+        [ln.branch for ln in lanes], samples,
     )
 
     progress = [
         assert_commits_beyond_base(
-            ln, commits_beyond(ctx.env, ln.worktree, ln.base_sha, ln.branch)
+            ln, commits_beyond(ctx.env, ln.worktree, ln.base_sha, ln.branch,
+                               ctx.wave_repo)
             if ln.base_sha else None,
         )
         for ln in lanes
     ]
 
     evidence = {
+        "repo_read": ctx.wave_repo,
+        "workspace_read": ctx.wave_workspace,
         "lane_source": lanes[0].source,
+        "dropped_no_worktree_no_observation": vanished,
         "lanes": [{"name": ln.name, "worktree": ln.worktree, "branch": ln.branch,
                    "terminal": ln.tmux} for ln in lanes],
         "lane_reality": reality,
         "distinct": distinct,
         "no_subagent_held_work": subagents,
         "commits_beyond_base": progress,
+        "observed_live": observed,
         "tracker_error": tracker_error,
     }
 
@@ -1186,11 +1440,18 @@ def step_lanes(ctx: Context) -> Result:
         )
     if not distinct["ok"]:
         return Result(FAIL, "; ".join(distinct["problems"]) + ".", evidence=evidence)
-    if len(real) < 2:
+    if len(real) < ctx.width:
         return Result(
             FAIL,
             f"Only {len(real)} lane(s) can be shown to have had their own worktree "
-            f"and their own terminal session; the turnkey claim needs at least two.",
+            f"and their own terminal session; the turnkey claim needs at least "
+            f"{ctx.width}.",
+            evidence=evidence,
+        )
+    if observed["verdict"] == FAIL:
+        return Result(
+            FAIL,
+            f"The lanes left the right wreckage, but {observed['why']}.",
             evidence=evidence,
         )
 
@@ -1221,14 +1482,23 @@ def step_lanes(ctx: Context) -> Result:
         )
     if unmeasured:
         detail += f" {len(unmeasured)} lane(s) have no base SHA to measure progress from."
+    if observed["verdict"] == PASS:
+        detail += " " + observed["why"][0].upper() + observed["why"][1:] + "."
+    elif observed["verdict"] == SKIP:
+        detail += (
+            " Concurrency itself was not observed: "
+            + observed["why"] + " — the lanes are real by their artifacts, but this "
+            "run cannot say they overlapped."
+        )
     return Result(PASS, detail, evidence=evidence)
 
 
 def step_integrated(ctx: Context) -> Result:
     """(g) Results integrated and verified."""
-    merges = merge_commits(ctx.env, ctx.repo, ctx.integration_branch)
+    merges = merge_commits(ctx.env, ctx.wave_repo, ctx.integration_branch)
     lane_merges = [m for m in merges if re.search(r"lane/", m["subject"])]
     evidence = {
+        "repo_read": ctx.wave_repo,
         "branch": ctx.integration_branch,
         "merge_commits": len(merges),
         "lane_merges": lane_merges[:12],
@@ -1320,19 +1590,31 @@ def step_rechecked(ctx: Context) -> Result:
 
 def step_brief(ctx: Context) -> Result:
     """(i) A plain-sentence return brief produced."""
-    text = ctx.env.read(f"{ctx.repo}/{RETURN_LOG}")
-    where = f"{ctx.repo}/{RETURN_LOG}"
+    # The brief belongs to the repository the wave operated on. In driven mode
+    # that is the fixture, not the bundle checkout; both are looked in, and the
+    # one that answered is named, so a brief is never credited to the wrong repo.
+    candidates = [f"{root}/{RETURN_LOG}" for root in
+                  dict.fromkeys([ctx.wave_repo, ctx.repo])]
+    where, text = next(
+        ((path, body) for path in candidates
+         if (body := ctx.env.read(path)) is not None),
+        (candidates[0], None),
+    )
     if text is None:
         return Result(
             FAIL,
-            f"No return brief at {where}. Clause 10 requires one on every return, "
-            "and the return-brief convention names this exact path.",
-            evidence={"expected_path": where},
+            "No return brief at " + " or ".join(candidates) +
+            ". Clause 10 requires one on every return, and the return-brief "
+            "convention names this exact path.",
+            evidence={"expected_paths": candidates},
         )
     lowered = text.lower()
     present = [part for part in BRIEF_PARTS if part in lowered]
     missing = [part for part in BRIEF_PARTS if part not in lowered]
-    dated = bool(re.search(r"\b20\d{2}-\d{2}-\d{2}\b", text))
+    # `\b` after the day rejects an ISO-8601 timestamp -- 2026-09-04T04:01Z has
+    # a word character where the boundary must be, so a perfectly dated brief
+    # read as undated (measured, run C). A date followed by a time is a date.
+    dated = bool(re.search(r"\b20\d{2}-\d{2}-\d{2}(?![-\d])", text))
     sentences = [
         ln.strip() for ln in text.splitlines()
         if ln.strip().endswith(".") and len(ln.strip().split()) >= 6
@@ -1396,7 +1678,8 @@ def register_infra(host: LocalEnv, workspace: str, kind: str, ident: str,
 
 
 def launch_dtu(host: LocalEnv, profile: Path, workspace: str,
-               timeout: float) -> tuple[DtuEnv | None, str]:
+               timeout: float, variables: dict[str, str] | None = None
+               ) -> tuple[DtuEnv | None, str]:
     """Launch a DTU, registering it in the infra ledger BEFORE anything else.
 
     Refuses to launch if the ledger is unreachable: an unregistered container
@@ -1425,13 +1708,16 @@ def launch_dtu(host: LocalEnv, profile: Path, workspace: str,
     registered = register_infra(host, workspace, "dtu", name, destroy)
     if not registered.ok:
         return None, f"could not register {name} in the infra ledger: {registered.tail(200)}"
-    ran = host.run(
-        ["amplifier-digital-twin", "launch", str(profile), "--name", name],
-        timeout=max(timeout, 1800.0),
-    )
+    argv = ["amplifier-digital-twin", "launch", str(profile), "--name", name]
+    for key, value in (variables or {}).items():
+        argv += ["--var", f"{key}={value}"]
+    ran = host.run(argv, timeout=max(timeout, 2400.0))
     if not ran.ok:
         return None, f"launch failed (exit {ran.code}): {ran.tail(400)}"
-    return DtuEnv(name, host), f"launched {name}"
+    named = ", ".join(sorted(variables or {}))
+    return DtuEnv(name, host), (
+        f"launched {name}" + (f" with --var {named}" if named else "")
+    )
 
 
 REPO_IN_ENV = "/opt/converge-under-test"
@@ -1472,6 +1758,177 @@ def destroy_dtu(host: LocalEnv, env: DtuEnv) -> Ran:
     return host.run(
         ["amplifier-digital-twin", "destroy", env.instance], timeout=900.0
     )
+
+
+# ---------------------------------------------------------------------------
+# the wave — a manager session that is NOT this harness runs the operation
+# ---------------------------------------------------------------------------
+#
+# Until this existed, driven mode stood the environment up and then JUDGED
+# whatever had happened, which in a fresh container was nothing: steps (e)
+# through (i) failed for one reason, recorded in RESULT.md as "the harness
+# drives the environment, not the wave".
+#
+# What runs here is a headless `amplifier run` inside the container, told to
+# work in the converge-manager mode against the fixture. It is a separate
+# process with its own session; this harness does not participate in it. The
+# harness's only jobs during the wave are to watch from outside and to hold a
+# deadline — and watching from outside is itself the evidence for clause 5,
+# because a sub-agent cannot appear in another process's terminal-session list.
+
+
+def resolve_launcher(env: Env) -> str | None:
+    """Find the lane launcher inside the environment. Probed, never assumed."""
+    for pattern in LAUNCHER_GLOBS:
+        ran = env.run(["bash", "-lc", f"ls -1 {pattern} 2>/dev/null | head -1"],
+                      timeout=60.0)
+        path = first_line(ran.out)
+        if path and env.exists(path):
+            return path
+    return None
+
+
+def objective_text(path: Path, fields: dict[str, str]) -> tuple[str, str | None]:
+    """Read the objective template, drop its editorial preamble, fill it in.
+
+    The file's first `---` line separates the note explaining what the file is
+    (for a human reading the repository) from the text actually sent. Returns
+    the text and, on a missing field, the reason it could not be composed.
+    """
+    raw = path.read_text(encoding="utf-8")
+    _, sep, body = raw.partition("\n---\n")
+    text = (body if sep else raw).strip()
+    missing = [f"{{{k}}}" for k in re.findall(r"\{(\w+)\}", text) if k not in fields]
+    if missing:
+        return "", f"the objective names fields this run cannot fill: {missing}"
+    return text.format(**fields), None
+
+
+def sample_lanes(ctx: Context) -> dict:
+    """One reading of the three systems that can only answer in the present tense.
+
+    Terminal sessions, worktrees, and — the one that matters most for clause 5
+    — where each item's HOLDING PROCESS is sitting. A holder's working
+    directory is readable only while that process is alive, so a wave that has
+    finished can never be asked; this is that question, asked in time.
+    """
+    holders = []
+    items, error = read_tracker_items(ctx.env, ctx.project)
+    for item in items if not error else []:
+        pid = holder_pid(item.get("holder"))
+        if pid is None:
+            continue
+        process = read_process(ctx.env, pid)
+        if process:
+            holders.append({"item": item.get("id"), "pid": pid,
+                            "cwd": process.get("cwd", ""),
+                            "cmdline": process.get("cmdline", "")})
+    return {
+        "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "sessions": read_tmux_sessions(ctx.env, LANE_TMUX_SOCKET),
+        "worktrees": [w for w in read_worktrees(ctx.env, ctx.wave_repo)
+                      if str(w.get("branch", "")).startswith("lane/")],
+        "holders": holders,
+    }
+
+
+def drive_wave(ctx: Context, objective: Path, deadline_s: float,
+               poll_s: float = 15.0) -> dict:
+    """Start a manager session in the environment and watch it from outside.
+
+    Returns a record either way. A wave that could not be started is recorded
+    as not started, with the reason — never as a wave that ran and did nothing.
+    """
+    record: dict = {"started": False, "samples": [], "objective": str(objective)}
+
+    seeding = seed_fixture(ctx)
+    record["seeding"] = seeding
+    if not seeding.get("seeded"):
+        record["why"] = f"the fixture could not be seeded: {seeding.get('why')}"
+        return record
+
+    # The planted state, read BEFORE a manager session exists to change it.
+    # Step (e) asserts the gaps were really there; once the wave has closed
+    # them, that assertion can only be made against this reading. Taking it
+    # afterwards is how the harness accused its own successful wave of
+    # arriving at a fixture that was never red (measured, run C).
+    record["fixture_before"] = _fixture_gap_state(ctx)
+
+    launcher = resolve_launcher(ctx.env)
+    record["launcher"] = launcher
+    if launcher is None:
+        # Clause 5: fail loud. A wave with no launcher can only produce
+        # in-session work, which is the one thing this gate exists to catch.
+        record["why"] = ("no lane launcher was found in the environment, so a "
+                         "manager session there could only have run the work "
+                         "in-session — clause 5 says fail loud instead")
+        return record
+
+    check = " ".join(ctx.answer_key.get("check", ["python3", "check.py", "."]))
+    text, why = objective_text(objective, {
+        "fixture_repo": ctx.wave_repo,
+        "project": ctx.project,
+        "width": str(ctx.width),
+        "deadline_minutes": str(int(deadline_s // 60)),
+        "check_command": check,
+        "launcher": launcher,
+        "batch_dir": ctx.batch_dir,
+        "tmux_socket": LANE_TMUX_SOCKET,
+        "return_log": RETURN_LOG,
+    })
+    if why:
+        record["why"] = why
+        return record
+    record["objective_bytes"] = len(text)
+
+    wrote = ctx.env.run(["bash", "-c", (
+        f"mkdir -p {WAVE_BATCH_IN_ENV} && cat > {WAVE_OBJECTIVE_IN_ENV} "
+        f"<<'TURNKEY_OBJECTIVE_EOF'\n{text}\nTURNKEY_OBJECTIVE_EOF"
+    )], timeout=120.0)
+    if not wrote.ok:
+        record["why"] = f"the objective could not be written into the environment: {wrote.tail(200)}"
+        return record
+
+    # Detached, with every descriptor closed, so the container CLI's exec
+    # returns instead of waiting on the manager session's whole run. The exit
+    # file is how completion is known: a log that stopped growing proves
+    # nothing about whether the process is alive.
+    started = ctx.env.run(["bash", "-c", (
+        f"cd {ctx.wave_repo} && rm -f {WAVE_EXIT_IN_ENV} && "
+        f"setsid bash -lc 'amplifier run \"$(cat {WAVE_OBJECTIVE_IN_ENV})\" "
+        f"> {WAVE_LOG_IN_ENV} 2>&1; echo $? > {WAVE_EXIT_IN_ENV}' "
+        f"</dev/null >/dev/null 2>&1 & echo started $!"
+    )], timeout=180.0)
+    if not started.ok:
+        record["why"] = f"the manager session would not start: {started.tail(300)}"
+        return record
+    record["started"] = True
+    record["start_output"] = started.tail(120)
+
+    began = time.time()
+    while time.time() - began < deadline_s:
+        if ctx.env.exists(WAVE_EXIT_IN_ENV):
+            break
+        record["samples"].append(sample_lanes(ctx))
+        time.sleep(poll_s)
+    # One last reading either way: a wave that finished between two samples
+    # still deserves to be looked at once more before its lanes are judged.
+    record["samples"].append(sample_lanes(ctx))
+
+    record["elapsed_s"] = round(time.time() - began, 1)
+    exit_text = ctx.env.read(WAVE_EXIT_IN_ENV)
+    record["finished"] = exit_text is not None
+    record["exit_code"] = int(first_line(exit_text)) if exit_text and \
+        first_line(exit_text).isdigit() else None
+    if not record["finished"]:
+        record["why"] = (f"the manager session was still running when the "
+                         f"{deadline_s / 60:.0f}-minute deadline passed; what follows "
+                         "judges an unfinished wave, and says so")
+    log = ctx.env.read(WAVE_LOG_IN_ENV) or ""
+    record["log_bytes"] = len(log)
+    record["log_tail"] = log[-4000:]
+    record["log_head"] = log[:1500]
+    return record
 
 
 # ---------------------------------------------------------------------------
@@ -1535,6 +1992,19 @@ def self_check() -> dict:
     cases.append(("an exited holder is unresolved, never a pass",
                   gone["ok"] is True and len(gone["unresolved"]) == 1
                   and gone["verdicts"][0]["verdict"] == SKIP))
+    watched = assert_no_subagent_held_work(
+        items, {111: None}, ["/w/lanes/a/repo"], None,
+        [{"at": "T0", "holders": [{"item": "x-1", "pid": 111,
+                                   "cwd": "/w/lanes/a/repo"}]}],
+    )
+    cases.append(("an exited holder READ IN A LANE while it ran is a pass",
+                  watched["verdicts"][0]["verdict"] == PASS))
+    elsewhere = assert_no_subagent_held_work(
+        items, {111: None}, ["/w/lanes/a/repo"], None,
+        [{"at": "T0", "holders": [{"item": "x-1", "pid": 111, "cwd": "/w"}]}],
+    )
+    cases.append(("an exited holder read OUTSIDE every lane while it ran FAILS",
+                  elsewhere["ok"] is False))
     corroborated = assert_no_subagent_held_work(
         [{"id": "x-1", "status": "resolved", "holder": "agent-spark-1-111",
           "resolution": "landed on lane/a"}],
@@ -1556,6 +2026,32 @@ def self_check() -> dict:
                   assert_commits_beyond_base(
                       Lane("c", "/w/c", "lane/c"), None)["verdict"] == SKIP))
 
+    both = {"at": "T0", "sessions": ["hw__b__a", "hw__b__b"],
+            "worktrees": [{"branch": "lane/a"}, {"branch": "lane/b"}]}
+    only_sessions = {"at": "T1", "sessions": ["hw__b__a", "hw__b__b"], "worktrees": []}
+    only_worktrees = {"at": "T2", "sessions": [],
+                      "worktrees": [{"branch": "lane/a"}, {"branch": "lane/b"}]}
+    cases.append(("two lanes seen live at once is the concurrency evidence",
+                  assert_lanes_observed_live([only_sessions, both])["verdict"] == PASS))
+    cases.append(("two sessions in one sample and two worktrees in ANOTHER is not "
+                  "a pass",
+                  assert_lanes_observed_live(
+                      [only_sessions, only_worktrees])["verdict"] == SKIP))
+    cases.append(("nothing lane-shaped in any sample FAILS",
+                  assert_lanes_observed_live(
+                      [{"at": "T5", "sessions": [], "worktrees": []}])["verdict"] == FAIL))
+    cases.append(("one lane is not two",
+                  assert_lanes_observed_live(
+                      [{"at": "T3", "sessions": ["hw__b__a"],
+                        "worktrees": [{"branch": "lane/a"}]}])["verdict"] == FAIL))
+    cases.append(("a session that is not a lane does not count",
+                  assert_lanes_observed_live(
+                      [{"at": "T4", "sessions": ["probe", "0"],
+                        "worktrees": [{"branch": "lane/a"}, {"branch": "lane/b"}]}]
+                  )["verdict"] == FAIL))
+    cases.append(("no samples is a skip, never a pass",
+                  assert_lanes_observed_live([])["verdict"] == SKIP))
+
     failed = [name for name, ok in cases if not ok]
     return {
         "tool": "converge-turnkey-self-check",
@@ -1569,6 +2065,17 @@ def self_check() -> dict:
 # ---------------------------------------------------------------------------
 # reporting
 # ---------------------------------------------------------------------------
+
+
+def _wave_summary(wave: dict | None) -> dict | None:
+    """What the wave did, without the whole transcript in the middle of it."""
+    if wave is None:
+        return None
+    keep = ("started", "why", "launcher", "objective", "objective_bytes",
+            "elapsed_s", "finished", "exit_code", "log_bytes", "log_tail")
+    summary = {k: wave[k] for k in keep if k in wave}
+    summary["samples"] = wave.get("samples", [])
+    return summary
 
 
 def build_report(ctx: Context, rows: list[dict], started: float) -> dict:
@@ -1585,8 +2092,10 @@ def build_report(ctx: Context, rows: list[dict], started: float) -> dict:
         "environment": {"kind": ctx.env.kind, "label": ctx.env.label},
         "workspace": ctx.workspace,
         "repository": ctx.repo,
+        "wave_repository": ctx.wave_repo,
         "project": ctx.project,
         "integration_branch": ctx.integration_branch,
+        "wave": _wave_summary(ctx.wave),
         "ran_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "elapsed_s": round(time.time() - started, 1),
         "steps": rows,
@@ -1605,6 +2114,19 @@ def render_summary(report: dict) -> str:
         f"  project:     {report['project']}",
         "",
     ]
+    wave = report.get("wave")
+    if wave:
+        lines[-1:] = [
+            "  wave:        " + (
+                f"a manager session ran for {wave.get('elapsed_s')}s and "
+                f"{'finished' if wave.get('finished') else 'was still running at the deadline'}"
+                f" (exit {wave.get('exit_code')}), watched from outside in "
+                f"{len(wave.get('samples', []))} readings"
+                if wave.get("started") else
+                f"NOT RUN — {wave.get('why')}"
+            ),
+            "",
+        ]
     for row in report["steps"]:
         lines.append(f"  [{row['status']:4}] ({row['step']}) {row['name']}: {row['detail']}")
         if row["status"] == SKIP and row.get("reason"):
@@ -1680,6 +2202,33 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--keep", action="store_true",
                     help="do not destroy a launched environment (it stays in the "
                          "infra ledger; you must tear it down yourself)")
+    ap.add_argument("--wave", dest="wave", action="store_true", default=None,
+                    help="in a driven environment, run the operation for real: a "
+                         "headless manager session in the converge-manager mode, "
+                         "watched from outside while it works (default on)")
+    ap.add_argument("--no-wave", dest="wave", action="store_false",
+                    help="stand the environment up but do not run a manager "
+                         "session; steps (e)-(i) then judge whatever is there")
+    ap.add_argument("--wave-timeout", type=float, default=3600.0,
+                    help="seconds the manager session gets before the run judges "
+                         "an unfinished wave and says so (default 3600)")
+    ap.add_argument("--wave-poll", type=float, default=15.0,
+                    help="seconds between readings of the container's lane state "
+                         "while the wave runs (default 15). Measured: a two-lane "
+                         "wave on the fixture had both terminal sessions live for "
+                         "about 70 seconds, so a coarse interval can miss the only "
+                         "window in which concurrency is visible.")
+    ap.add_argument("--objective", type=Path, default=HERE / "manager-objective.md",
+                    help="the steward objective handed to the manager session")
+    ap.add_argument("--width", type=int, default=2,
+                    help="how many lanes the wave is asked for, and how many this "
+                         "run requires to have been seen running at once (default 2)")
+    ap.add_argument("--wave-log", type=Path, default=None,
+                    help="write the manager session's full transcript here (outside "
+                         "this repository; run.sh sets it)")
+    ap.add_argument("--var", action="append", default=[], metavar="KEY=VALUE",
+                    help="a launch variable for the DTU profile (repeatable). "
+                         "GITEA_URL/GITEA_TOKEN are also read from the environment.")
     ap.add_argument("--timeout", type=float, default=300.0,
                     help="seconds to wait for any one command (default 300)")
     ap.add_argument("--steps", default=None,
@@ -1717,11 +2266,17 @@ def main(argv: list[str] | None = None) -> int:
 
     ledger_root = str(Path(args.ledger_root).resolve()) if args.ledger_root else workspace
 
+    variables = {k: v for k, _, v in (pair.partition("=") for pair in args.var) if k}
+    for name in ("GITEA_URL", "GITEA_TOKEN"):
+        if name not in variables and os.environ.get(name):
+            variables[name] = os.environ[name]
+
     env: Env = host
     mode = OBSERVED
     launched: DtuEnv | None = None
     if args.env in ("dtu", "auto"):
-        launched, why = launch_dtu(host, args.profile, ledger_root, args.timeout)
+        launched, why = launch_dtu(host, args.profile, ledger_root, args.timeout,
+                                   variables)
         if launched is None:
             if args.env == "dtu":
                 sys.stderr.write(f"error: could not stand up an environment: {why}\n")
@@ -1766,14 +2321,50 @@ def main(argv: list[str] | None = None) -> int:
         env=env, host=host, mode=mode, workspace=workspace, repo=repo,
         project=args.project, integration_branch=args.integration_branch,
         answer_key=answer_key, fixture_repo=fixture_repo, amplifier_home=home,
-        timeout=args.timeout, notes=notes,
+        timeout=args.timeout, notes=notes, width=args.width,
     )
+
+    # The wave runs between (d) and (e): the project must exist before a
+    # manager session can derive into it, and (e) onward judge what the wave
+    # did. It is a phase, not a tenth step -- the contract's sentence has nine.
+    wave_after = "d" if (wanted is None or "d" in wanted) else None
+    want_wave = (args.wave is not False) and mode == DRIVEN and (
+        wanted is None or bool(wanted & set("efghi"))
+    )
+    if args.wave is False:
+        notes.append("--no-wave: no manager session was run; steps (e)-(i) judge "
+                     "whatever was already in this environment")
+    elif want_wave and wave_after is None:
+        notes.append("the wave was skipped: --steps did not include (d), so no "
+                     "project is known to have been started for it to derive into")
 
     rows = []
     try:
         for letter, name, description, run_step in STEPS:
             if wanted and letter not in wanted:
                 continue
+            if want_wave and letter == "e" and ctx.wave is None:
+                sys.stderr.write(
+                    f"\n  running the wave: a manager session in the "
+                    f"converge-manager mode, up to {args.wave_timeout / 60:.0f} "
+                    f"minutes, watched from outside\n"
+                )
+                ctx.wave = drive_wave(ctx, args.objective, args.wave_timeout,
+                                      args.wave_poll)
+                notes.append(
+                    f"a manager session ran the wave for real "
+                    f"({ctx.wave.get('elapsed_s', 0)}s, exit "
+                    f"{ctx.wave.get('exit_code')}); this harness watched from "
+                    f"outside it and took {len(ctx.wave.get('samples', []))} "
+                    "readings of the container's lane state"
+                    if ctx.wave.get("started") else
+                    f"the wave did NOT run: {ctx.wave.get('why')}"
+                )
+                if args.wave_log:
+                    args.wave_log.parent.mkdir(parents=True, exist_ok=True)
+                    full = env.read(WAVE_LOG_IN_ENV) or ctx.wave.get("log_tail", "")
+                    args.wave_log.write_text(full, encoding="utf-8")
+                    notes.append(f"the manager session's transcript is at {args.wave_log}")
             try:
                 result = run_step(ctx)
             except Exception as exc:  # noqa: BLE001 — a broken step must not fake a pass
