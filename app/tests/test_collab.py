@@ -484,8 +484,8 @@ def _snapshot(client, tmp_path: Path, extra_boot: dict | None = None):
     """
     from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-    _kit()                                    # sys.path, once
-    import appsnapshot                        # the kit's own reader
+    _kit()  # puts conformance/ on sys.path
+    import appsnapshot  # the kit's own reader
 
     templates = Environment(
         loader=FileSystemLoader(str(REPO_ROOT / "app" / "templates")),
