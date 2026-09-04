@@ -508,8 +508,166 @@ def test_an_iso_timestamp_counts_as_a_dated_entry(heading):
 
 
 def test_the_brief_check_actually_uses_that_pattern():
-    import inspect
-    assert r"(?![-\d])" in inspect.getsource(run.step_brief)
+    assert r"(?![-\d])" in run.ENTRY_DATE.pattern
+
+
+def test_an_iso_timestamped_heading_really_opens_an_entry():
+    """The pattern is only worth anything if the parser is the thing using it."""
+    entries = run.parse_return_log("## 2026-09-04T04:01Z\n**Stuck.** nothing.\n")
+    assert len(entries) == 1
+    assert entries[0]["parts_present"] == ["stuck"]
+
+
+# ---------------------------------------------------------------------------
+# clause 10 - the five parts are counted INSIDE one entry, never across a file
+# ---------------------------------------------------------------------------
+#
+# The measured defect: step (i) lowercased the whole log and asked whether each
+# of the five words appeared anywhere in it. A header, a footnote, or an
+# unrelated paragraph passed the check with no brief in the file at all, and
+# `docs/workflow/OWNER-RETURN-LOG.md` had to deliberately NOT name the five
+# labels in its header to keep the check honest. These fix the scope: an entry.
+
+
+FIVE_PARTS = (
+    "**Time away.** You were gone two hours and one wave ran in that time.\n"
+    "**Finished.** Both lanes merged and I re-ran the kit on the merged result.\n"
+    "**Stuck.** Nothing stopped; every lane returned with evidence behind it.\n"
+    "**Needs you.** Nothing needs you today, and no call waits on your word.\n"
+    "**Anything quietly broken.** Nothing broke that you did not know about.\n"
+)
+BRIEFED_RETURN = "## 2026-09-04 04:01 - the gate went green\n" + FIVE_PARTS
+
+# The header the real log cannot currently write, because the old check would
+# have taken it for a brief and gone green on it.
+HEADER_WITH_THE_FIVE_WORDS = (
+    "# Owner return log\n\n"
+    "Each entry carries five parts: time away, finished, stuck, needs you, and\n"
+    "anything quietly broken. Newest last, and every entry is dated 2026-09-04\n"
+    "or later, which is the shape this file has always had.\n"
+)
+
+
+class _LogEnv(run.Env):
+    """An environment whose only fact is the text of one return log."""
+
+    def __init__(self, text=None):
+        self.text = text
+
+    def run(self, argv, cwd=None, timeout=120.0, env=None):
+        return run.Ran(1, "", "nothing runs here", argv=argv)
+
+    def read(self, path):
+        return self.text
+
+
+def judge_log(text):
+    ctx = run.Context(env=_LogEnv(text), host=None, mode=run.OBSERVED,
+                      workspace="/w", repo="/w/repo", project="p",
+                      integration_branch="main", answer_key={})
+    return run.step_brief(ctx)
+
+
+def test_a_header_carrying_the_five_words_is_not_a_brief():
+    """The falsifier, stated as a test: prose is not a return brief."""
+    verdict = judge_log(HEADER_WITH_THE_FIVE_WORDS)
+    assert verdict.status == run.FAIL
+    assert "no dated entry" in verdict.detail
+    assert verdict.evidence["dated_entries"] == 0
+
+
+def test_the_five_words_spread_across_separate_entries_do_not_combine():
+    """A file-wide read passes this log. No single entry is a brief."""
+    scattered = (
+        "## 2026-09-01 - one\ntime away: two hours, and that is all it says here.\n"
+        "## 2026-09-02 - two\nfinished: the lane merged and nothing else happened.\n"
+        "## 2026-09-03 - three\nstuck: nothing stopped anywhere in this wave.\n"
+        "## 2026-09-04 - four\nneeds you: nothing at all needs you this time.\n"
+        "## 2026-09-05 - five\nquietly broken: nothing broke that you should know.\n"
+    )
+    assert all(part in scattered.lower() for part in run.BRIEF_PARTS)  # the old read
+    verdict = judge_log(scattered)
+    assert verdict.status == run.FAIL
+    assert verdict.evidence["complete_briefs"] == 0
+
+
+def test_one_entry_carrying_all_five_parts_passes():
+    verdict = judge_log(HEADER_WITH_THE_FIVE_WORDS + "\n" + BRIEFED_RETURN)
+    assert verdict.status == run.PASS, verdict.detail
+    assert verdict.evidence["stamped_returns"] == 1
+    assert verdict.evidence["complete_briefs"] == 1
+    assert verdict.evidence["judged"]["parts_missing"] == []
+
+
+@pytest.mark.parametrize("part,line", [
+    ("time away", "**Time away.**"), ("finished", "**Finished.**"),
+    ("stuck", "**Stuck.**"), ("needs you", "**Needs you.**"),
+    ("quietly broken", "**Anything quietly broken.**"),
+])
+def test_a_stamped_return_missing_one_part_fails_naming_that_part(part, line):
+    """Each of the five, one at a time -- an assertion nobody can fail proves nothing."""
+    holed = "\n".join(ln for ln in BRIEFED_RETURN.splitlines()
+                      if not ln.startswith(line)) + "\n"
+    verdict = judge_log(holed)
+    assert verdict.status == run.FAIL
+    assert part in verdict.detail
+    assert verdict.evidence["unbriefed_returns"][0]["missing"] == [part]
+
+
+def test_a_stamped_return_with_no_brief_under_it_is_counted_against_the_briefs():
+    """Clause 10 is a brief on EVERY return, so the two numbers are compared."""
+    unbriefed = BRIEFED_RETURN + (
+        "\n## 2026-09-04 09:30 - they came back again\n"
+        "I read the queue and answered them, and wrote none of this down.\n"
+    )
+    verdict = judge_log(unbriefed)
+    assert verdict.status == run.FAIL
+    assert verdict.evidence["stamped_returns"] == 2
+    assert verdict.evidence["complete_briefs"] == 1
+    assert "09:30" in verdict.evidence["unbriefed_returns"][0]["heading"]
+
+
+def test_an_unprompted_brief_keeps_its_date_only_heading_and_is_not_a_return():
+    """A wave landed while the steward was away: a brief with no return behind it."""
+    verdict = judge_log("## 2026-09-04 - a wave landed while you were away\n" + FIVE_PARTS)
+    assert verdict.status == run.PASS, verdict.detail
+    assert verdict.evidence["stamped_returns"] == 0
+    assert verdict.evidence["complete_briefs"] == 1
+
+
+def test_the_parts_may_be_written_as_a_list_and_still_count_as_sentences():
+    """A rule that scored a correctly-written brief zero would fabricate a red."""
+    listed = "## 2026-09-04 04:01 - list form\n" + "".join(
+        "- " + ln + "\n" for ln in FIVE_PARTS.splitlines())
+    verdict = judge_log(listed)
+    assert verdict.status == run.PASS, verdict.detail
+    assert verdict.evidence["judged"]["plain_sentences"] >= 3
+
+
+def test_prose_that_merely_uses_a_part_word_does_not_count_as_that_part():
+    """`nine well-written briefs say "nothing stopped" in their own words`."""
+    prose = ("## 2026-09-04 04:01 - a paragraph, not a brief\n"
+             "Finished lanes were merged and nothing needed you afterwards, and\n"
+             "no time away was recorded because stuck lanes never happened here.\n")
+    verdict = judge_log(prose)
+    assert verdict.status == run.FAIL
+    assert verdict.evidence["judged"]["parts_present"] == []
+
+
+def test_a_missing_log_is_still_a_failure_that_names_both_paths():
+    verdict = judge_log(None)
+    assert verdict.status == run.FAIL
+    assert run.RETURN_LOG in verdict.detail
+
+
+def test_a_subsection_inside_an_entry_does_not_truncate_it():
+    """`### Technical detail` is part of the brief it sits in, not a new entry."""
+    with_detail = ("## 2026-09-04 04:01 - the gate went green\n"
+                   "**Time away.** You were gone two hours and one wave ran in it.\n"
+                   "### Technical detail\n" + FIVE_PARTS.split("\n", 1)[1])
+    entries = run.parse_return_log(with_detail)
+    assert len(entries) == 1
+    assert entries[0]["complete"] is True
 
 
 # ---------------------------------------------------------------------------
