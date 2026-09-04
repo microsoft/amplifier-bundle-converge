@@ -346,6 +346,59 @@ def lane_evidence(mc: ManagerConfig, lane: LaneRow) -> str:
     return ""
 
 
+#: How many of a lane's commits the fold carries. A lane with more says so.
+PRODUCED_LIMIT = 12
+
+
+def lane_produced(mc: ManagerConfig, lane: LaneRow) -> list[dict]:
+    """What the lane actually produced, item by item — `experience-operation.v1` Core 8.
+
+    `lane_evidence` above answers "how much?" in one line — *3 commits*. That
+    is a claim, and Core 8 asks for the opposite: "Underneath sits what the
+    lane actually produced, so a claim can be inspected rather than believed."
+    A number cannot be inspected. This reads the things themselves off the
+    machine — the commit subjects on the lane's own branch, and whatever the
+    lane wrote into its report-back marker — so a steward can open the claim
+    and read what it is made of.
+
+    Every row says where it was read from. Nothing is invented: a lane with no
+    branch, no commits and no marker yields an empty list, and the surface
+    then says there is nothing to open rather than drawing an empty fold.
+    """
+    made: list[dict] = []
+    repo = mc.repo
+    if repo and lane.branch:
+        out = git(repo, "log", "--format=%h %s", f"main..{lane.branch}", "-n", str(PRODUCED_LIMIT + 1))
+        subjects = [line.strip() for line in out.splitlines() if line.strip()]
+        for line in subjects[:PRODUCED_LIMIT]:
+            made.append({"kind": "commit", "text": line, "source": f"git log main..{lane.branch}"})
+        if len(subjects) > PRODUCED_LIMIT:
+            made.append(
+                {
+                    "kind": "more",
+                    "text": f"and more, beyond the {PRODUCED_LIMIT} newest shown here",
+                    "source": f"git log main..{lane.branch}",
+                }
+            )
+    _home, _log, done, blocked = lane_paths(mc, lane)
+    if done.is_file():
+        try:
+            payload = json.loads(done.read_text(encoding="utf-8"))
+            said = str(payload.get("summary") or "").strip()
+        except (OSError, ValueError):
+            said = ""
+        if said:
+            made.append({"kind": "finished", "text": said, "source": f"{done.name} beside the lane"})
+    if blocked.is_file():
+        try:
+            said = blocked_reason(blocked.read_text(encoding="utf-8"))
+        except OSError:
+            said = ""
+        if said:
+            made.append({"kind": "stopped", "text": said, "source": f"{blocked.name} beside the lane"})
+    return made
+
+
 def blocked_reason(text: str) -> str:
     """The sentence a stopped lane leads with, out of its own marker file.
 
@@ -1258,6 +1311,9 @@ def operation_payload(mc: ManagerConfig) -> dict:
             "wave": wave_label(key),
             "age": age_words(age),
             "evidence": lane_evidence(mc, one),
+            # Core 8 — the claim above, and the things it is made of, so the
+            # claim can be opened instead of believed.
+            "produced": lane_produced(mc, one),
             "live": one.tmux in live,
             "tmux": {"socket": mc.tmux_socket, "session": one.tmux},
         }

@@ -93,7 +93,6 @@ function ensureAskStrip() {
   strip.innerHTML = `<span class="eyebrow">Ask</span>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
       <button id="reviewThisButton" class="primary-subtle-button" type="button">Have the manager session review this</button>
-      <button id="tellAllButton" class="primary-subtle-button" type="button">Tell all manager sessions</button>
     </div>`;
   card.appendChild(strip);
   return strip;
@@ -171,6 +170,54 @@ function tellAllSessions() {
   ]);
 }
 
+// Core 10 — "Feedback can be dropped in seconds, in whatever form is to hand."
+// The top bar's Feedback control is not drawn at 390 (measured: display none
+// under the shell's phone rules), so on a phone the Operation page offered no
+// way at all to say what you saw. This drop is on the page at both widths and
+// makes the same write the top bar's control makes.
+function wireFeedbackDrop() {
+  const send = $('feedbackDropSend');
+  if (!send || send.dataset.wired) return;
+  send.dataset.wired = '1';
+  send.addEventListener('click', async () => {
+    const m = currentManager();
+    const box = $('feedbackDropText');
+    const text = box ? box.value.trim() : '';
+    if (!m) { toast('No manager session is selected.'); return; }
+    if (!text) { toast('Say what you saw first.'); return; }
+    try {
+      const answer = await api.feedback(m.id, { text, context: `${m.name} · Operation` });
+      if (box) box.value = '';
+      toast(answer && answer.path ? `Filed at ${answer.path}` : 'Delivered to the manager session.');
+    } catch (err) {
+      toast(`Could not file that: ${err.message}`);
+    }
+  });
+}
+
+// Core 13 — "Every manager session you run is listed, sorted by which one
+// needs you, and you can tell them all at once." The shell's rail lists them
+// too; what was missing is the list on this page, beside the one message that
+// reaches all of them.
+function renderManagers() {
+  const holder = $('managersList');
+  if (!holder) return;
+  const sessions = [...(data.managerList || [])].sort(
+    (a, b) => (b.needs || 0) - (a.needs || 0) || String(a.name).localeCompare(String(b.name)),
+  );
+  const here = currentManager();
+  holder.innerHTML = sessions.length
+    ? sessions.map((one) => {
+      const mine = here && one.id === here.id;
+      const needs = Number(one.needs) || 0;
+      return `<div class="manager-row${mine ? ' is-here' : ''}">`
+        + `<span class="manager-row-name">${escapeHtml(one.name)}</span>`
+        + `<span class="manager-row-word">${escapeHtml(one.statusLabel || '')}</span>`
+        + `<span class="manager-row-needs">needs your word · ${needs}</span></div>`;
+    }).join('')
+    : '<p class="muted">No manager session is listed yet.</p>';
+}
+
 // --------------------------------------------------------------------------
 // the return brief's five parts, and the timeline's evidence
 // --------------------------------------------------------------------------
@@ -229,6 +276,28 @@ function timelineEntry(entry) {
 // lanes
 // --------------------------------------------------------------------------
 
+// Core 6 — "Empty lanes are the most common quiet waste, so the ratio is on
+// the surface and filling them is one gesture." The gesture belongs beside
+// the gauge exactly while the gauge says lanes are short. Offered when every
+// lane you asked for is already carrying work, it says something untrue; so
+// when nothing is short the control goes and the page says why in words.
+function renderFillControl(m) {
+  const button = $('fillLanesButton');
+  const note = $('fillNote');
+  if (!button) return;
+  const running = m ? Number(m.lanesActive) || 0 : 0;
+  const intended = m ? Number(m.lanesMax) || 0 : 0;
+  const short = m ? intended - running : 0;
+  button.classList.toggle('hidden', !(m && short > 0));
+  if (note) {
+    note.textContent = !m
+      ? ''
+      : (short > 0
+        ? `${short} lane${short === 1 ? '' : 's'} you asked for ${short === 1 ? 'is' : 'are'} not carrying work.`
+        : 'Every lane you asked for is carrying work.');
+  }
+}
+
 // `statusLabel` names the payload field an at-work lane's word comes from, and
 // it is this parameter's name too: what the card shows IS the lane's state
 // word, and a reader of this file — or a conformance kit reading it — should be
@@ -237,7 +306,29 @@ function laneCard(lane, statusLabel, cls, watchAttr) {
   const watch = watchAttr
     ? `<button class="watch-button" ${watchAttr}="${escapeHtml(lane.id)}" type="button">Watch session →</button>`
     : '';
-  return `<article class="lane-card ${escapeHtml(cls)}"><div class="lane-main"><div class="lane-topline"><span class="lane-status ${escapeHtml(cls)}">${escapeHtml(statusLabel)}</span><span class="lane-title">${escapeHtml(lane.title)}</span></div><div class="lane-meta"><span>${escapeHtml(lane.worker)}</span><span>${escapeHtml(lane.wave)}</span><span>${escapeHtml(lane.age)}</span></div></div><div class="lane-evidence"><strong>${escapeHtml(lane.evidence)}</strong>${watch}</div></article>`;
+  // `mark` and `evidence` sit beside this app's own class names on purpose:
+  // they are surface.v1's words for a state shown in a word and for the proof
+  // under it, and a reader that speaks that vocabulary — a person or the
+  // retired kit — should be able to find them without knowing this body.
+  return `<article class="lane-card ${escapeHtml(cls)}" id="lane-${escapeHtml(lane.id)}"><div class="lane-main"><div class="lane-topline"><span class="lane-status mark ${escapeHtml(cls)}">${escapeHtml(statusLabel)}</span><span class="lane-title">${escapeHtml(lane.title)}</span></div><div class="lane-meta"><span>${escapeHtml(lane.worker)}</span><span>${escapeHtml(lane.wave)}</span><span>${escapeHtml(lane.age)}</span></div></div><div class="lane-evidence evidence"><strong>${escapeHtml(lane.evidence)}</strong>${watch}</div>${producedFold(lane)}</article>`;
+}
+
+// Core 8 — "Underneath sits what the lane actually produced, so a claim can
+// be inspected rather than believed." The line above the fold is a claim (*3
+// commits*); a number cannot be inspected. The fold carries the things the
+// claim is made of, read off the machine, each saying where it was read from.
+// A lane with nothing readable yet says exactly that, and is never given a
+// fold with nothing behind it.
+function producedFold(lane) {
+  const made = Array.isArray(lane.produced) ? lane.produced : [];
+  if (!made.length) {
+    return `<details class="lane-produced"><summary>What this lane produced</summary>`
+      + `<p class="muted">Nothing is readable on this lane yet — no commit on its branch, and no note beside it.</p></details>`;
+  }
+  const rows = made.map((one) => `<li><span class="produced-text" style="${WRAP}">${escapeHtml(one.text)}</span>`
+    + `<span class="produced-source muted" style="${WRAP}">${escapeHtml(one.source || '')}</span></li>`).join('');
+  return `<details class="lane-produced"><summary>What this lane produced · ${made.length}</summary>`
+    + `<ul class="produced-list">${rows}</ul></details>`;
 }
 
 // The same walk down the ladder as `watchLane`, for a lane that has reported
@@ -270,6 +361,11 @@ export function renderOperation() {
   ensureAskStrip();
   wire($('reviewThisButton'), askForReview);
   wire($('tellAllButton'), tellAllSessions);
+  // Core 10 and Core 13 do not wait on the operation payload: what a steward
+  // can say, and who they can say it to, are known from the boot reading.
+  wireFeedbackDrop();
+  renderManagers();
+  renderFillControl(m);
 
   if (!op) {
     $('returnBrief').innerHTML = '<p class="muted">Loading the manager\u2019s operation…</p>';
