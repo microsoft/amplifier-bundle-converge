@@ -1,0 +1,59 @@
+{
+ "waves": [
+  {
+   "id": "w1",
+   "label": "Wave 1",
+   "title": "w1-kit, w1-ledger",
+   "phase": "RUNNING",
+   "cls": "run",
+   "progress": 40,
+   "items": [
+    [
+     "w1-kit",
+     false
+    ],
+    [
+     "w1-ledger",
+     true
+    ]
+   ]
+  },
+  {
+   "id": "w2",
+   "label": "Wave 2",
+   "title": "",
+   "phase": "NEXT",
+   "cls": "next",
+   "progress": 0,
+   "items": []
+  }
+ ],
+ "lanes": [
+  {
+   "id": "w1-kit",
+   "status": "done",
+   "statusLabel": "Done",
+   "wave": "",
+   "title": "build the kit",
+   "worker": "w1-kit",
+   "age": "20m",
+   "evidence": ""
+  }
+ ],
+ "timeline": [
+  [
+   "2026-09-03",
+   "something moved",
+   "no way to look at it"
+  ]
+ ],
+ "returnBrief": [],
+ "throughput": {
+  "derived": 8,
+  "resolved": 6,
+  "available": true
+ },
+ "confidence": {
+  "available": false
+ }
+}

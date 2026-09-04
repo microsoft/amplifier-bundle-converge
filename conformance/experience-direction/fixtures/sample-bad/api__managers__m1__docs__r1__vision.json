@@ -1,0 +1,35 @@
+{
+ "path": "docs/VISION.md",
+ "title": "Vision",
+ "state": "draft",
+ "standing": "Not yet",
+ "sections": [
+  [
+   "Where this is going",
+   "<p>plain words only</p>"
+  ]
+ ],
+ "raw": "# Vision\n\nThe agreement is **one body of work**.\n\n| Promise | State |\n|---|---|\n| one place | Not yet |\n\nSee [the umbrella](contracts/experience.v1.md).\n",
+ "changes": [
+  {
+   "id": 1,
+   "section": "Where this is going",
+   "text": "something moved"
+  }
+ ],
+ "proposals": [
+  {
+   "id": "P4",
+   "source": "a pull request",
+   "title": "name it"
+  }
+ ],
+ "history": [
+  {
+   "id": "now",
+   "label": "Current",
+   "date": "Sep 3",
+   "note": "ratified"
+  }
+ ]
+}

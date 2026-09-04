@@ -1,0 +1,90 @@
+{
+ "waves": [
+  {
+   "id": "w1",
+   "label": "Wave 1",
+   "title": "Prove the contracts are checkable",
+   "reason": "Nothing else can be trusted until a kit can judge it.",
+   "phase": "RUNNING",
+   "cls": "run",
+   "progress": 40,
+   "items": [
+    [
+     "w1-kit",
+     false
+    ],
+    [
+     "w1-ledger",
+     true
+    ]
+   ]
+  }
+ ],
+ "lanes": [
+  {
+   "id": "w1-kit",
+   "status": "working",
+   "statusLabel": "Working",
+   "wave": "Wave 1",
+   "title": "build the kit",
+   "worker": "w1-kit",
+   "age": "20m",
+   "evidence": "3 commits",
+   "tmux": {
+    "socket": "hw",
+    "session": "w1-kit"
+   }
+  },
+  {
+   "id": "w1-ledger",
+   "status": "quiet",
+   "statusLabel": "Quiet",
+   "wave": "Wave 1",
+   "title": "seed the ledger",
+   "worker": "w1-ledger",
+   "age": "40m",
+   "evidence": "1 commit",
+   "tmux": {
+    "socket": "hw",
+    "session": "w1-ledger"
+   }
+  }
+ ],
+ "timeline": [
+  {
+   "date": "2026-09-03",
+   "title": "the kit judged the app",
+   "text": "Confidence rose: the promises are now checkable.",
+   "evidence": "/api/managers/m1/operation#w1-kit"
+  }
+ ],
+ "returnBrief": [
+  "You were away 20m.",
+  "Finished: the ledger seed landed and was verified.",
+  "Stuck: the turnkey lane is blocked on a host package.",
+  "Needs your word: two proposals are waiting on you.",
+  "Quietly changed: the plan was redrawn after the app shipped."
+ ],
+ "throughput": {
+  "derived": 8,
+  "resolved": 6,
+  "verified": 5,
+  "reopened": 1,
+  "stuck": 1,
+  "spark": [
+   1,
+   2,
+   3
+  ],
+  "available": true
+ },
+ "confidence": {
+  "pct": 60,
+  "kept": 6,
+  "notyet": 4,
+  "broken": 0,
+  "pinnedOpen": 0,
+  "cantCheck": 1,
+  "available": true
+ }
+}

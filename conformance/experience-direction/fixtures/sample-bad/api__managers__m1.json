@@ -1,0 +1,26 @@
+{
+ "id": "m1",
+ "name": "Example",
+ "status": "running",
+ "statusLabel": "Running",
+ "age": "20m",
+ "summary": "Working.",
+ "objective": "",
+ "deadline": "",
+ "strategy": "",
+ "strategyNarrative": "",
+ "lanesMax": null,
+ "lanesActive": null,
+ "needs": 2,
+ "repos": 1,
+ "projects": 1,
+ "managerTmux": "",
+ "repositories": [
+  {
+   "id": "r1",
+   "name": "Repo one",
+   "path": "/tmp/r1",
+   "docs": []
+  }
+ ]
+}

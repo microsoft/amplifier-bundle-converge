@@ -1,0 +1,24 @@
+{
+ "user": "you",
+ "managers": [
+  {
+   "id": "m1",
+   "name": "Example",
+   "status": "running",
+   "statusLabel": "Running",
+   "age": "20m",
+   "summary": "Working.",
+   "objective": "Keep the promises.",
+   "deadline": "Friday",
+   "strategy": "3 waves",
+   "strategyNarrative": "Contracts first.",
+   "lanesMax": 4,
+   "lanesActive": 3,
+   "needs": 2,
+   "repos": 1,
+   "projects": 1,
+   "managerTmux": "hw:example",
+   "repositories": null
+  }
+ ]
+}

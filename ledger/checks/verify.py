@@ -118,12 +118,20 @@ chk(not missing, f"every indexed ref path exists on disk ({missing or 'all resol
 # run.py still existed, so nothing above noticed. Six of the stale ids were worse
 # than dangling -- they still resolved, to a rule under a DIFFERENT clause.
 print("\nINDEXED RULE IDS \u2014 does each named rule exist in its kit's README table?")
-RULE_REF = re.compile(r"conformance/(\w+)/run\.py \(rules? ([^)]+)\)")
+# `\w+` does not match a hyphen, so this silently skipped every ref into
+# conformance/experience-direction, -operation and -console: 34 named rule ids
+# went unchecked while the line below reported a confident "20 named kit rule
+# ids, each present". Caught 2026-09-03 by converge-pq2, the first pass to add
+# a kit whose directory carries a hyphen. A tripwire that quietly covers less
+# than it says is worse than one that is absent.
+RULE_REF = re.compile(r"conformance/([\w-]+)/run\.py \(rules? ([^)]+)\)")
 tables = {}
 def kit_rules(kit):
     if kit not in tables:
         p = pathlib.Path(f"conformance/{kit}/README.md")
         tables[kit] = set(re.findall(r"(?m)^\|\s*([\w.]+)\s*\|", p.read_text())) if p.exists() else set()
+    if not tables[kit]:
+        fail.append(f"conformance/{kit}/README.md has no rule table to resolve a ref against")
     return tables[kit]
 n_rule_refs = 0
 for r in rows[1:]:
