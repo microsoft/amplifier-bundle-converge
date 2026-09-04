@@ -15,3 +15,8 @@
 
 ## Round 3 — word: `Yes, ratified, please go.`
 Ratified as DRAFT content (nothing locked): the vision's principle 8 amendment (afd83c8: manager-session anchor · Manager Console as a pane, not a place · the fifth write, ask · one experience across browser, installable web, and native · manager sessions never talk to each other directly); the experience family — `experience.v1` (umbrella), `experience-direction.v1`, `experience-operation.v1`, `experience-console.v1`, `experience-collaboration.v1`, `platform-web.v1`, and the four native shells `platform-ios/android/macos/windows.v1`; `documents.v1` clause 14 (one contract is one domain component) and the fenced before/after proposal presentation in §8; `docs/RIGHT-SIZING.md`; `surface.v1` superseded by the family. "Go" authorizes deriving the next wave from the gap: turnkey first.
+
+## Round 4 (2026-09-04) — word: `loosely, ratified, go`
+- **Locking:** hold loosely. `composition.v1`, `documents.v1`, and the vision meet the four conditions but are NOT locked; the steward chose to let the family mature first (PROTOCOL v3 §5 names this as a legitimate state).
+- **`operation.v1` — ratified:** the turnkey sentence changes from "Red today — this is the work list" to record the first green (2026-09-04, twice, in fresh containers; re-run on every merge). DRAFT contract; changed in place with a changelog row.
+- **The plan — go:** wave 8 derives from docs/workflow/GAP-ANALYSIS-2026-09-04.md in the order it proposes.
