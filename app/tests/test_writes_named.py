@@ -555,14 +555,19 @@ def test_the_two_limits_are_readable_on_the_page(
     said = page.eval_on_selector("#managerParity", "el => el.innerText.replace(/\\s+/g, ' ')")
     print(f"\n[{width}] the fold reads: {said}")
 
-    # The limit, and what to do instead, for each of the two.
-    for limit, instead, item in (
-        ("Raise or lower a priority", "Manager session can", "converge-a5g"),
-        ("voice note", "Manager Console", "converge-rj1"),
+    # Three things per limit, because any two of them without the third is
+    # still a silence: that the thing is named, that the limit is SAID in so
+    # many words, and what to do instead. Plus the item that would change it,
+    # which is how `render/direction.js` already writes its own two limits.
+    for limit, says_the_limit, instead, item in (
+        ("Raise or lower a priority",
+         "no control that raises or lowers a priority", "manager session can", "converge-a5g"),
+        ("voice note",
+         "voice note is not recorded here", "manager console", "converge-rj1"),
     ):
         assert limit.lower() in said.lower(), f"[{width}] the fold never mentions {limit!r}"
-        assert re.search(r"\bnot\b|\bno\b|cannot", said, re.I), (
-            f"[{width}] the fold mentions {limit!r} without saying it is not offered"
+        assert says_the_limit.lower() in said.lower(), (
+            f"[{width}] the fold mentions {limit!r} without saying it is not offered here"
         )
         assert instead.lower() in said.lower(), (
             f"[{width}] {limit!r} states a limit and never says what to do instead"
