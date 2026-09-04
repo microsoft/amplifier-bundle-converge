@@ -15,7 +15,7 @@
 // (converge-ddt) rather than looking like it did something.
 import { $, qsa, state, data, escapeHtml, currentRepo, currentDoc, readBookmark } from '../state.js';
 import { hooks } from '../refresh.js';
-import { handleDecision, keepChange, saveChangeEdit, restoreChange, restoreScope, markAllRead, editDoc, reconcile, openAsk } from '../actions.js';
+import { handleDecision, keepChange, saveChangeEdit, restoreChange, restoreScope, markAllRead, editDoc, reconcile, openAsk, copyText, confirmLock } from '../actions.js';
 
 const DECISION_BUTTONS = [
   ['ratified', 'Ratify', 'primary-button'],
@@ -39,6 +39,249 @@ function plural(n, word) { return `${n} ${word}${n === 1 ? '' : 's'}`; }
 
 export function rawTextForDoc() {
   return data.doc && data.doc.raw ? data.doc.raw : '';
+}
+
+// --------------------------------------------------------------------------
+// §3 — copy as rendered, copy as source, zoom, width
+// --------------------------------------------------------------------------
+//
+// The clause names five reader abilities and two of them are copies: what the
+// page shows, and the file behind it. Until now one control called
+// `copyRendered` handed over `doc.raw` — the SOURCE, under a name that said
+// otherwise (converge-jdm). So there are two controls, and each copies what
+// its label promises.
+
+//: Tags that end a line when the render is read as text. Everything else is
+//: inline and joins the line it sits on.
+const BLOCK_TAGS = new Set([
+  'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr', 'pre', 'blockquote',
+  'div', 'section', 'article', 'ul', 'ol', 'dl', 'dt', 'dd', 'hr', 'table',
+]);
+
+function textInto(node, out) {
+  node.childNodes.forEach((child) => {
+    if (child.nodeType === 3) { out.push(child.nodeValue); return; }
+    if (child.nodeType !== 1) return;
+    const tag = child.tagName.toLowerCase();
+    if (tag === 'br') { out.push('\n'); return; }
+    const block = BLOCK_TAGS.has(tag);
+    if (block) out.push('\n');
+    textInto(child, out);
+    if (block) out.push('\n');
+  });
+}
+
+//: The document as the Reading view shows it, in plain text: headings and
+//: prose, no Markdown punctuation. Read from the same rendered sections the
+//: screen draws, so what is copied is what was seen.
+export function renderedTextForDoc() {
+  const doc = data.doc;
+  if (!doc) return '';
+  const holder = document.createElement('div');
+  holder.innerHTML = (doc.sections || [])
+    .map(([title, html]) => `<h2>${escapeHtml(title)}</h2>${html}`).join('');
+  const out = [];
+  textInto(holder, out);
+  // The document's own H1 is already the first section's heading (`sections_of`
+  // in app/data.py keeps it), so adding `doc.title` on top would hand the
+  // steward the title twice — measured, before this line said so.
+  return out.join('').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+//: Zoom is the reading column's own text size and nothing else's, so the
+//: controls never grow out of the toolbar they sit in. Kept on the device
+//: rather than the server: it is how one person's eyes read today, not a fact
+//: about the document.
+const ZOOM_STEPS = [0.8, 0.9, 1, 1.15, 1.3, 1.5, 1.75];
+const ZOOM_KEY = 'converge:zoom';
+let zoomAt = ZOOM_STEPS.indexOf(1);
+
+function readZoom() {
+  try {
+    const at = ZOOM_STEPS.indexOf(Number(localStorage.getItem(ZOOM_KEY)));
+    if (at >= 0) zoomAt = at;
+  } catch { /* storage blocked: this device reads at 100% */ }
+}
+
+function applyZoom() {
+  const factor = ZOOM_STEPS[zoomAt];
+  $('documentSurface').style.setProperty('--doc-zoom', String(factor));
+  $('zoomLevel').textContent = `${Math.round(factor * 100)}%`;
+  $('zoomOut').disabled = zoomAt === 0;
+  $('zoomIn').disabled = zoomAt === ZOOM_STEPS.length - 1;
+}
+
+function stepZoom(direction) {
+  const next = Math.min(ZOOM_STEPS.length - 1, Math.max(0, zoomAt + direction));
+  if (next === zoomAt) return;
+  zoomAt = next;
+  try { localStorage.setItem(ZOOM_KEY, String(ZOOM_STEPS[zoomAt])); } catch { /* storage blocked */ }
+  applyZoom();
+}
+
+// --------------------------------------------------------------------------
+// converge-2ib — the objective, clamped, with the whole sentence one gesture away
+// --------------------------------------------------------------------------
+//
+// `#objectiveText` is filled by render/top.js with the first sentence of the
+// batch's Outcome — ~300 characters in a real batch. The clamp is CSS; this
+// only says whether there is anything hidden to show, and offers the gesture
+// when there is.
+function syncObjective() {
+  const text = $('objectiveText');
+  const more = $('objectiveMore');
+  if (!text || !more) return;
+  const block = text.closest('.objective-block');
+  const whole = (text.textContent || '').trim();
+  text.title = whole;
+  const open = block.classList.contains('objective-open');
+  const clipped = text.scrollHeight - text.clientHeight > 1;
+  more.classList.toggle('hidden', !open && !clipped);
+  more.textContent = open ? 'Show less' : 'Show all';
+  more.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function toggleObjective() {
+  const block = $('objectiveText').closest('.objective-block');
+  block.classList.toggle('objective-open');
+  syncObjective();
+}
+
+// --------------------------------------------------------------------------
+// §11 — the lock gate: four conditions, shown, and a control that tracks them
+// --------------------------------------------------------------------------
+//
+// The Freeze Bar's four conditions, in the contract's own order. Three are a
+// judgement only a reader can make and the steward answers them here; the
+// third the app can answer from the document's own ledger standing, so it
+// does, with the evidence beside it — asking a steward to attest to something
+// the project already measures is how an attestation becomes a formality.
+//
+// Nothing is ticked for the steward, and no answer survives moving to another
+// document: an answer about the vision is not an answer about a contract.
+// And nothing locks on its own — the control is the last step, never the
+// first.
+const LOCK_CONDITIONS = [
+  ['means', 'It says what it means'],
+  ['example', 'It carries a real example of right and wrong'],
+  ['reality', 'It can be checked against reality'],
+  ['steward', 'You have read it and agreed'],
+];
+
+//: The steward's own answers, for ONE document.
+let stewardAnswers = { key: '', means: false, example: false, steward: false };
+
+function lockKey() { return `${state.repoId}\u001f${state.docId}`; }
+
+function answersHere() {
+  if (stewardAnswers.key !== lockKey()) {
+    stewardAnswers = { key: lockKey(), means: false, example: false, steward: false };
+  }
+  return stewardAnswers;
+}
+
+//: Which conditions are met right now, and what says so. `reality` is the
+//: ledger's word about this document (`draft` means no row watches it, which
+//: is exactly "cannot be checked against reality yet").
+function lockState(doc) {
+  const answers = answersHere();
+  const watched = !!(doc && doc.state && doc.state !== 'draft');
+  const standing = (doc && doc.standingSentence)
+    || 'This project keeps no record yet of whether this is being kept.';
+  return {
+    met: { means: answers.means, example: answers.example, reality: watched, steward: answers.steward },
+    evidence: {
+      means: 'Your word — only a reader can say whether the wording means one thing.',
+      example: 'Your word — the document has to carry the example, not the promise of one.',
+      reality: `${(doc && doc.standing) || "Can't check"} — ${standing}`,
+      steward: 'Your word, and it is the last one. Nothing locks on its own.',
+    },
+  };
+}
+
+export function renderLockGate() {
+  const gate = $('lockGate');
+  if (!gate) return;
+  const doc = data.doc;
+  const lock = (doc && doc.locked) || '';
+  const { met, evidence } = lockState(doc);
+  const count = LOCK_CONDITIONS.filter(([key]) => met[key]).length;
+
+  LOCK_CONDITIONS.forEach(([key]) => {
+    const row = gate.querySelector(`[data-lock-row="${key}"]`);
+    if (!row) return;
+    row.classList.toggle('met', !!met[key]);
+    const box = row.querySelector('[data-lock-check]');
+    if (box) {
+      box.checked = !!met[key] && !lock;
+      box.disabled = !!lock || !doc;
+    }
+    const mark = row.querySelector('[data-lock-mark]');
+    if (mark) mark.textContent = met[key] ? '✓' : '•';
+    const said = row.querySelector('[data-lock-evidence]');
+    if (said) said.textContent = evidence[key];
+  });
+
+  const chip = $('lockGateCount');
+  chip.className = `lock-gate-count${lock ? ' locked' : count === 4 ? ' met' : ''}`;
+  if (lock) {
+    $('lockGateHead').textContent = 'This document is locked';
+    chip.textContent = lock;
+    $('lockGateWhy').textContent = `Its first line carries ${lock}, so app/writes.py will not edit it in place: every change to it, yours included, is written as a proposal beside it for you to answer.`;
+    $('lockGateNote').textContent = 'Unlocking is not a control here — a locked document changes by the same proposal it took to lock it.';
+  } else {
+    $('lockGateHead').textContent = 'Locking this document';
+    chip.textContent = `${count} of 4 met`;
+    $('lockGateWhy').textContent = 'A document is locked only when all four of the Freeze Bar\u2019s conditions are met. Three are yours to answer; the third is read from this project\u2019s own ledger, so it is not yours to tick past.';
+    const short = LOCK_CONDITIONS.filter(([key]) => !met[key]).map(([, label]) => label.toLowerCase());
+    $('lockGateNote').textContent = count === 4
+      ? 'Locking is irreversible in the way that matters: from then on this document changes by proposal.'
+      : `Not yet: ${short.join('; ')}.`;
+  }
+  $('lockButton').disabled = !!lock || count < 4 || !doc;
+}
+
+//: The control's last step. It is inert unless all four are met, but the
+//: check is made again here rather than trusted: what actually keeps a
+//: document from being locked is the server's write, so forcing the control
+//: in the browser reaches the same refusal.
+function requestLock() {
+  const doc = data.doc;
+  if (!doc || doc.locked) return;
+  const { met, evidence } = lockState(doc);
+  const answered = LOCK_CONDITIONS
+    .filter(([key]) => met[key])
+    .map(([key, label]) => (key === 'reality' ? `${label} — ${evidence.reality}` : `${label} — your word`));
+  if (answered.length < 4) return;
+  confirmLock(doc, answered);
+}
+
+//: The Direction toolbar and the header outlive a re-render, so their controls
+//: are wired once. `#copyRendered` is REPLACED rather than added to: main.js
+//: binds it to `copyText(data.doc.raw)` — the source — and main.js is not this
+//: lane's file. Replacing the node drops that listener, and the button then
+//: does what its label says. Safe to do here because main.js's `wire()` is
+//: synchronous at boot, before any render, so nothing binds it again after.
+let toolsWired = false;
+
+function wireDocTools() {
+  if (toolsWired) return;
+  toolsWired = true;
+  const stale = $('copyRendered');
+  const fresh = stale.cloneNode(true);
+  stale.replaceWith(fresh);
+  fresh.addEventListener('click', () => copyText(renderedTextForDoc()));
+  $('copySource').addEventListener('click', () => copyText(rawTextForDoc()));
+  $('zoomIn').addEventListener('click', () => stepZoom(1));
+  $('zoomOut').addEventListener('click', () => stepZoom(-1));
+  $('objectiveMore').addEventListener('click', toggleObjective);
+  qsa('[data-lock-check]').forEach((box) => box.addEventListener('change', () => {
+    answersHere()[box.dataset.lockCheck] = box.checked;
+    renderLockGate();
+  }));
+  $('lockButton').addEventListener('click', requestLock);
+  readZoom();
+  applyZoom();
 }
 
 export function renderRepoTree() {
@@ -310,6 +553,7 @@ export function renderProposalMini() {
 }
 
 export function renderDirection() {
+  wireDocTools();
   renderRepoTree();
   const repo = currentRepo();
   const navDoc = currentDoc();
@@ -349,6 +593,8 @@ export function renderDirection() {
   $('documentModeContent').innerHTML = html;
   attachDocumentModeHandlers();
   renderProposalMini();
+  renderLockGate();
+  syncObjective();
 
   const confidence = data.operation && data.operation.confidence;
   $('realityKept').textContent = confidence ? confidence.kept : '—';

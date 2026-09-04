@@ -60,4 +60,15 @@ export const api = {
   // call is left pointing at the real route on purpose — it fails loudly and
   // the screen says so, rather than a control that quietly does nothing.
   ask: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/ask`, payload),
+  // Lock — stamping a document's H1 so it becomes law (§11). The gate in the
+  // browser decides whether the control is live; the write itself is the
+  // server's, because the H1 is a file and `app/writes.py` is the only place
+  // that touches one.
+  //
+  // The app does not answer this route yet: `app/serve.py` and `app/writes.py`
+  // are another lane's files, and the server half is filed as converge-eci.
+  // Same choice as `ask` above — the call points at the real route so it fails
+  // out loud and the screen says so, rather than a control that ticks four
+  // boxes and quietly changes nothing.
+  lock: (mid, repoId, docId, payload) => post(`${docBase(mid, repoId, docId)}/lock`, payload),
 };
