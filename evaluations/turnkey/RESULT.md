@@ -1,239 +1,320 @@
-# Turnkey run result — 2026-09-02
+# Turnkey run result — 2026-09-04
 
-**Verdict: RED.** Both modes, exit 1.
+**Verdict: GREEN.** Nine steps, nine PASS, no SKIP, exit 0 — twice, in two
+fresh containers, with two different manager sessions.
 
-`contracts/operation.v1.md` already records this gate as red — "**Red today** —
-this is the work list." This file is what the harness actually reported, with
-the failing steps named. It is not a plan; it is a transcript.
+`contracts/operation.v1.md` opens its conformance list with the whole system in
+one sentence, and has carried "**Red today** — this is the work list" beside it
+since it was written:
 
-| Run | Mode | Command | pass · fail · skip | Exit |
-|---|---|---|---|---|
-| A | `observed` | `run.py --env local --workspace ~/dev/hw-converge --project converge` | 6 · 2 · 1 | 1 |
-| B | `driven` | `run.py --env dtu --project turnkey --ledger-root ~/dev/hw-converge` | 3 · 6 · 0 | 1 |
+> **Turnkey:** fresh environment → one install → start a project, derive from a
+> sample gap, run two lanes, tend, judge, integrate, re-check, brief → green.
 
-Both runs were real: run A judged the live `hw-converge` manager wave on this
-host; run B stood up an Incus container, installed into it, and tore it down.
+That sentence now runs, unattended, end to end. This file is what the harness
+reported, including the four runs it took to get here and what each one found.
 
----
+| Run | Instance | Result | What it was for |
+|---|---|---|---|
+| C | `turnkey-20260904T035511Z` | 5 · 4 · 0, exit 1 | first wave ever driven; found four defects |
+| — | `turnkey-20260904T040824Z` | abandoned | cancelled mid-provision to fix the sampling interval |
+| D | `turnkey-20260904T041055Z` | 8 · 1 · 0, exit 1 | four fixes in; found a fifth, in the brief |
+| E | `turnkey-20260904T042036Z` | **9 · 0 · 0, exit 0** | first green |
+| F | `turnkey-20260904T043038Z` | **9 · 0 · 0, exit 0** | green again, with (f) fully measured |
 
-## Run A — observed, against the live wave (6 PASS · 2 FAIL · 1 SKIP)
-
-```
-[SKIP] (a) environment: No fresh environment was stood up; this run judges an existing
-           host workspace (/home/bkrabach/dev/hw-converge).
-           why skipped: a workspace that is already running is not a fresh environment.
-[PASS] (b) install: The one documented install succeeded into a throwaway AMPLIFIER_HOME.
-[PASS] (c) install_check: The install check is green: 8 present, 0 not checked.
-[PASS] (d) project: Project 'converge' is live in the shared queue with 23 items
-           3 deferred, 5 held, 5 open, 10 resolved.
-[FAIL] (e) derived: 1 of 23 items do not both name a contract and state what done looks
-           like (converge-dxv) — work that cannot point at a gap was invented, not derived.
-[PASS] (f) lanes: 6 lanes are real — each has its own worktree registered with git and its
-           own terminal session (6 live, 0 ended after running) — and no work item was held
-           by a process outside a lane worktree (15 holders checked). 4 lane(s) sit on an
-           unchanged branch and are recorded stuck: w3-explainer, w3-guard-2, w3-doc-kit,
-           w3-app-vocab. 10 holder(s) could not be placed because their process has exited;
-           those are recorded unresolved, not passed.
-[PASS] (g) integrated: 11 lane branch(es) are merged into main (newest: 78c549a
-           'merge lane/w3-protocol: wave 2/3').
-[PASS] (h) rechecked: The contract check was re-run by this harness after integration:
-           composition.v1 PASS, documents.v1 PASS.
-[FAIL] (i) brief: No return brief at docs/workflow/OWNER-RETURN-LOG.md.
-
-VERDICT: FAIL  (pass=6 fail=2 skip=1)
-```
-
-### The two reds are true findings, not harness bugs
-
-**(e) `converge-dxv` names no contract.** Its record reads:
-
-> *title:* Highway: launcher should refuse a lane for an already-held item
-> (duplicate lane observed)
-> *acceptance:* GIVEN an item already held by a live peer WHEN a manager instance
-> tries to launch a lane for it THEN the launch is refused before any worktree or
-> tmux session is created…
-
-It states what done looks like, and it is real, useful work discovered by
-operating the system. It names no contract. `operation.v1` clause 1: "Every item
-traces to a contract gap or to steward feedback, **names its contract**, and
-states what done looks like." The fix is one line in the item, not a looser rule.
-
-The check was widened once before this run, and that widening is worth recording
-because it cuts the other way. The first version matched only `<name>.vN`, and
-flagged `converge-l44` ("Operation §5-6 evidence") — which *does* name its
-contract, just not in versioned form. **An over-strict rule fabricates a failure
-exactly as badly as a loose one fabricates a pass.** The rule now derives the
-contract names from `contracts/*.md` on disk and accepts a bare stem as a *weak*
-basis, recorded as weak in the evidence. `converge-l44` passes with that noted;
-`converge-dxv` still fails, because it names nothing.
-
-**(i) No `docs/workflow/OWNER-RETURN-LOG.md` exists** — anywhere. Not in this
-repository, not in the workspace. `operation.v1` clause 10 requires a brief on
-every return, and `context/manager/return-brief.md` names that exact path as
-where it is appended. Multiple waves have run and returned. **The durable memory
-the convention describes has never been written.** That is the single largest
-gap this harness found: everything else in the wave is real and checkable, and
-the one artifact the steward is supposed to actually read does not exist.
-
-### What run A proves that no file scan could
-
-- **Lanes are real, measured against the machine.** Six lanes each had a worktree
-  registered with git *and* a live terminal session in it.
-- **No in-session sub-agent held work.** Fifteen holders were resolved to OS
-  processes; every live one was sitting inside a lane worktree. This is the
-  assertion acceptance item 3 is about, and on this wave it is green.
-- **Four lanes were sitting on unchanged branches** and are recorded stuck
-  (clause 7: a marker on an unchanged branch is stuck, whatever the marker says).
-  This is a live snapshot, not a defect — those lanes were mid-flight.
-- **Ten holders could not be placed** because their processes had exited. Those
-  are `unresolved`, never `pass`. Where their resolutions name a lane branch the
-  launcher recorded, that is annotated as corroboration and still not a pass:
-  prose can be written by a session that never left itself.
+Every one of those containers is destroyed. `amplifier-digital-twin list` shows
+none of them.
 
 ---
 
-## Run B — driven, in a fresh container (3 PASS · 6 FAIL)
+## The green run (F), step by step
 
 ```
-[PASS] (a) environment: DTU instance 'turnkey-20260903T052431Z' is up and answering.
+Converge turnkey — operation.v1 — Conformance kit asserts, bullet 1 (Turnkey)
+  mode:        driven (DTU instance 'turnkey-20260904T043038Z')
+  repository:  /opt/converge-under-test
+  project:     turnkey
+  wave:        a manager session ran for 261.5s and finished (exit 0),
+               watched from outside in 17 readings
+
+[PASS] (a) environment: DTU instance 'turnkey-20260904T043038Z' is up and answering.
 [PASS] (b) install: The one documented install succeeded into /tmp/turnkey-amplifier-home.
-[FAIL] (c) install_check: The install check is not green: 1 required dependency missing
-           (work-queue-service).
-[PASS] (d) project: Project 'turnkey' was started in the shared queue and answers; it holds
-           no items yet, which is what the next step derives.
-[FAIL] (e) derived: The sample gap is planted and the project is started, but no work has
-           been derived from it — the queue is empty.
-[FAIL] (f) lanes: Only 0 lane(s) can be shown to have had their own worktree and their own
-           terminal session; the turnkey claim needs at least two.
-[FAIL] (g) integrated: No lane branch has been merged into main — nothing has been integrated.
-[FAIL] (h) rechecked: After integration the fixture's kit still reports rules ['1', '2'] red;
-           the wave was supposed to leave none.
-[FAIL] (i) brief: No return brief at /opt/converge-under-test/docs/workflow/OWNER-RETURN-LOG.md.
+[PASS] (c) install_check: The install check is green: 8 present, 0 not checked.
+[PASS] (d) project: Project 'turnkey' was started in the shared queue and answers; it
+           holds no items yet, which is what the next step derives.
+[PASS] (e) derived: All 2 sampled items name one of this repository's 14 contracts and
+           state what done looks like; the fixture's own kit reported rules ['1', '2']
+           red before the wave and reports [] red now.
+[PASS] (f) lanes: 2 lanes are real — each has its own worktree registered with git and
+           its own terminal session (0 live, 2 ended after running) — and no work item
+           was held by a process outside a lane worktree (2 holders checked). At
+           2026-09-04T04:34:24+00:00, 2 lane terminal session(s) and 2 lane worktree(s)
+           were visible at once, read from outside the manager session.
+[PASS] (g) integrated: 2 lane branch(es) are merged into main (newest: a8a7e21 'merge
+           lane/index: lumen.v1 Core 2 index fix'). Two or more lanes landed in one
+           repository, so a post-merge gate is required; this harness runs it itself in
+           the next step, rather than trusting either lane's green.
+[PASS] (h) rechecked: The contract check was re-run by this harness after integration:
+           lumen.v1 PASS.
+[PASS] (i) brief: A dated return brief is at /workspace/lumen-fixture/docs/workflow/
+           OWNER-RETURN-LOG.md with all five parts and 10 plain sentences.
 
-VERDICT: FAIL  (pass=3 fail=6 skip=0)
+VERDICT: PASS  (pass=9 fail=0 skip=0)
 ```
 
-**What genuinely works end to end in a fresh container:** it launches, the
-repository under test arrives with real git history (pushed as a git bundle and
-cloned inside, because this checkout is a worktree whose `.git` is a file
-pointing at a parent that does not exist in the container), the **one documented
-install runs and succeeds**, a project is started in the shared queue, and the
-gap fixture is seeded and reports its two planted rules red.
+Total 366s: about 105s to stand the container up and install into it, 261s for
+the wave.
 
-**(c) is a true finding about `profiles/turnkey.yaml`**, not about the install
-check. The profile runs the queue's supervisor detached (systemd `--user` is
-unavailable to root in an Incus container), so `service status` never reports
-`active: true`. `install-check.py` will accept a live `--project` query instead —
-but step (c) runs *before* step (d) starts the project, so at that moment there
-is nothing live to query. Two honest options, neither taken here because both
-change something outside this lane's ownership: teach the profile to register a
-managed service, or let the install check accept a foregrounded `serve` the way
-work-tracker's own `doctor` already does.
+### What each green line actually read
 
-**(e) through (i) fail for one reason, and it is the residual below.**
+**(a)–(c) One install, from a mirror proven current first.** `run.sh` refuses to
+launch until the Gitea mirror the profile installs from matches github:
+
+```
+[04:30:38] mirror is current: admin/amplifier-bundle-converge main == github main
+           (b7ed3f0f8e4fdf31ea5f508ba8ab3932b3c05100)
+```
+
+The command step (b) runs is read out of `README.md` at run time, so the harness
+cannot drift from what the repository tells a newcomer to type:
+
+```json
+{"command": "amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml --app",
+ "source": "README.md, first 'amplifier bundle add' line of 2",
+ "amplifier_home": "/tmp/turnkey-amplifier-home", "exit_code": 0}
+```
+
+One command. `url_rewrites` sends those bytes to the mirror without changing a
+character of the command itself.
+
+**(e) The gaps were there before, and are gone after.**
+
+```json
+"fixture_planted": {"verdict": "FAIL", "red_rules": ["1", "2"], "exit_code": 1},
+"fixture_planted_read": "before the wave",
+"fixture_now":     {"verdict": "PASS", "red_rules": [],        "exit_code": 0}
+```
+
+Both derived items name `lumen.v1` and state what done looks like.
+
+**(f) Two lanes, proven four different ways.** This is the step the whole gate is
+about, and it is the one that cannot be satisfied by a session doing the work
+itself and writing a good report afterwards.
+
+*Their own worktrees and their own terminal sessions, at the same moment, read
+from outside the manager's process:*
+
+```json
+{"at": "2026-09-04T04:34:24+00:00",
+ "lane_sessions":  ["hw__turnkey-batch__index", "hw__turnkey-batch__units"],
+ "lane_worktrees": ["lane/index", "lane/units"], "both": 2}
+```
+
+*Their holding processes, each sitting inside its own lane worktree — the
+discriminator clause 5 actually turns on:*
+
+| Item | Verdict | The holder's working directory | Read at |
+|---|---|---|---|
+| `turnkey-zf0` | PASS | `/workspace/turnkey-batch/lanes/units/lumen-fixture` | 04:34:40Z |
+| `turnkey-69z` | PASS | `/workspace/turnkey-batch/lanes/index/lumen-fixture` | 04:34:57Z |
+
+*Commits beyond each lane's own base (clause 7):* `1 commit(s) beyond 84af18ff`,
+both lanes. *And the launcher's manifest as the lane source*, not an inference.
+
+**(g)–(h) Integrated, then re-checked by the harness.** Two lane merges —
+`50738fc`, `a8a7e21` — and the fixture's own kit re-run by this harness after
+both landed: `lumen.v1 PASS (pass=2 fail=0 skip=0)`. Neither lane's own green
+proved the pair; the post-merge gate did.
+
+**(i) A brief a person can read.** All five parts present, 10 plain sentences,
+dated, 5050 bytes, at the path the return-brief convention names.
 
 ---
 
-## The residual: the harness drives the environment, not the wave
+## What the manager session did, in its own words
 
-Steps (e)–(i) in driven mode need a **manager session** to actually run the wave
-— derive from the gap, launch two lanes, tend them, judge, integrate, re-check,
-brief. The harness does not start one. It stands up the environment, installs,
-starts the project, and seeds the gap; then it **judges** whatever happened.
+The harness handed it `manager-objective.md` — an objective, a width, a
+deadline, and where things are — and then watched. It did not tell it how to
+derive work, how to write a lane brief, or how to judge one. From run E's brief:
 
-That is a real limit and it is named rather than hidden. It is also precisely
-the shape of the contract's own claim: the turnkey sentence is red because the
-wave-running half is what does not yet run unattended, and a harness that
-pretended otherwise would be worth less than no harness.
+> **Truly ready.** Both contract gaps are closed on `main` and I re-ran the kit
+> myself against the merged result: PASS, no red rules.
+>
+> **Finished.** Two lanes, one wave, about five minutes wall clock end to end.
+> […] I re-ran `python3 check.py .` on `main` myself, after both merges landed
+> together (the post-merge gate — neither lane's own green proved the pair)
+> […] I read both back with `work_list` before writing this brief, so what's
+> quoted above is what's actually stored, not what I intended to store.
+>
+> **Anything quietly broken.** […] `write_file`/`edit_file` refused to write
+> inside `/workspace/turnkey-batch` (outside this project's allowed write
+> paths), so I wrote both lane goal files with `bash` heredocs instead.
 
-In `observed` mode this limit does not apply — a real manager session ran the
-wave on this host, and run A judged it with the same assertions. Between the two
-runs, every one of the nine steps has been exercised against something real.
-
----
-
-## A fabricated pass the harness caught itself producing
-
-Worth recording, because it is the exact failure mode this harness exists to
-refuse, and it happened here.
-
-The container CLI does **not** pass an inner command's exit code through. It
-prints an envelope — `{"id", "command", "exit_code", "stdout", "stderr"}` — and
-exits 0 whether the inner command succeeded or not. The first driven run took
-that at face value and reported:
-
-```
-[PASS] (c) install_check: The install check is green: 0 present, 0 not checked.
-```
-
-Zero checks present, reported green. Every command inside the container looked
-successful and every output looked like an envelope. Four steps were passing for
-no reason at all.
-
-Two fixes, both now covered by tests:
-
-1. `unwrap_dtu_envelope` — the envelope is always unwrapped, and an envelope that
-   cannot be parsed is a loud failure rather than an empty success.
-2. Step (c) now fails when a report arrives with no `checks` in it. **Treating
-   "nothing was checked" as "nothing is missing" is the fabricated pass**, and it
-   is now structurally impossible rather than merely unlikely.
-
-`tests/test_turnkey.py::test_a_failing_command_inside_a_container_is_not_a_success`
-and its three siblings exist so this cannot come back.
+That last paragraph is a finding the harness could not have produced, reported
+by the system under test about itself. It is in the work list below.
 
 ---
 
-## What was verified about the harness itself
+## The residual this run closed
+
+The previous RESULT.md ended on one:
+
+> **The harness drives the environment, not the wave.** Steps (e)–(i) in driven
+> mode need a manager session to actually run the wave […] The harness does not
+> start one.
+
+It does now. `drive_wave` starts a headless `amplifier run` inside the
+container, told to work in the converge-manager mode against the fixture, and
+then does two things and only two: holds a deadline, and takes readings from
+outside. The manager session is a separate process; this harness does not
+participate in the wave it is judging.
+
+**Watching from outside is not incidental — it is the evidence.** A sub-agent
+cannot appear in another process's terminal-session list, and a holder's
+working directory can only be read while that process is alive. Both of the
+strongest facts in step (f) exist only during the wave, and until something was
+watching, nobody was there to take them.
+
+---
+
+## The four defects the first driven wave found, and one it did not
+
+Run C did everything the contract asks — two real lanes, both gaps closed, both
+branches merged, the kit green, a five-part brief — and the harness reported 4
+of 9 steps red. Three of those reds were the harness's own, and all three are
+the same species of error: judging a true thing against a rule that could not
+accommodate it.
+
+| | What it said | What was actually true |
+|---|---|---|
+| (e) | "The fixture is not in its planted state: expected rules ['1','2'] red, found []" | The wave had closed both gaps, which is its job. The planted-state assertion ran *after* it. |
+| (f) | "No lanes found: neither a launcher manifest nor a worktree on a lane/* branch exists" | Two lanes had run and merged. A finished wave removes its worktrees; the harness dropped every lane whose worktree was gone — including two it had itself watched running. |
+| (i) | "carries no dated entry" | The entry was headed `## 2026-09-04T04:01Z`. The date regex ended in `\b`, which an ISO-8601 *timestamp* fails: the `4` of `04` is followed by `T`. |
+
+Each fix keeps the assertion's teeth:
+
+- The fixture's planted state is now read **at seed time**, before a manager
+  session exists to change it, and the current state is reported beside it.
+- A lane whose worktree is gone is judged against **a reading taken while the
+  wave ran** — but only one carrying *both* halves at once for that lane, which
+  is the same bar the live check applies. Half an observation resurrects
+  nothing, and another lane's observation vouches for nothing.
+- A date followed by a time is a date.
+
+**(c) was not the harness's**, and was fixed where it belonged. The check's own
+stated promise is a *reachable* queue service — "without a reachable queue
+service no claim or heartbeat can be recorded" — and a managed unit is one way
+to be reachable, not the only one. `systemd --user` is unavailable to root in
+an Incus container, so the profile runs the queue detached; that queue served
+an entire wave — claims, custody, resolutions — while `install-check.py` called
+it missing. It now accepts an answering unmanaged server *and says plainly that
+nothing will restart it after a reboot*.
+
+Run D then found a fifth, which is **not** fixed here — see the work list.
+
+## Two more the green run found by reading its own evidence
+
+Run E was green, and still had two annotations worth chasing:
+
+**"2 lane(s) have no base SHA to measure progress from"** — actually
+`git could not count commits e90dfb0c..lane/units-if6`. `commits_beyond` asked
+the *lane's worktree*, which the manager had removed after merging. `base..branch`
+is a question about two refs and any clone holding both can answer it; the main
+repository was sitting right there with both branches merged into it. Run F
+measured what run E could not: `1 commit(s) beyond 84af18ff`, both lanes.
+
+**Four containers registered into a ledger nobody sweeps.** `run.sh` defaulted
+`--ledger-root` to the checkout's parent, which is this *lane's* directory, not
+the workspace. Every container was destroyed by its own run, so nothing leaked
+— but had one survived, its row would have been invisible exactly where someone
+would look for it. A container is a machine-wide resource; the default now
+prefers the outermost ancestor that already keeps an `infra.tsv`.
+
+```
+[04:30:38] infra ledger: /home/bkrabach/dev/hw-converge/infra.tsv
+```
+
+---
+
+## Proving the assertions can still fail
 
 ```
 $ uv run evaluations/turnkey/run.py --self-check
-  VERDICT: PASS   (16 of 16 assertions behave as specified)
+  VERDICT: PASS   (24 of 24 assertions behave as specified)
 
 $ uv run --with pytest pytest evaluations/turnkey -q
-  30 passed
+  57 passed
 ```
 
 Every `assert_*` function is exercised against evidence that must make it fail,
 and a test asserts that every `assert_*` function appears in the self-check — so
-a new assertion cannot be added without being made to fail first.
+a new assertion cannot be added without being made to fail first. The seven
+assertions added or changed here are covered by cases drawn from what actually
+went wrong, not from what was convenient:
+
+- a merged, cleaned-up lane reads `ended`; one never seen running does not
+- half an observation does not resurrect a lane, and another lane's does not
+- an exited holder read *inside* a lane passes; read *outside* one still fails
+- two sessions in one reading and two worktrees in another is **not** a pass
+- a half that never once reached the width is a real failure, not a miss
+- a removed worktree falls back to the repository that still has the refs
+- the objective the repository ships can actually be composed
+
+That fourth one is worth its own line. `assert_lanes_observed_live` had two
+verdicts, so a sampler that blinked and a manager that never launched lanes
+produced the same red. Periodic sampling cannot tell those apart, and this
+harness already has a word for that: **unproven**. It is now `SKIP` with the
+reason, and `FAIL` is reserved for a half that never once reached the width —
+which no sampling interval could have missed. Measured, and the reason it
+mattered: run C's lanes had live terminal sessions for about 70 seconds, and
+the default interval was 45. It is now 15.
+
+---
 
 ## Infrastructure
 
-Five containers were launched across the runs that produced this file. Each was
-registered in the run's infra ledger **before it existed**, and each was
-destroyed. `amplifier-digital-twin list` at the end of this lane shows no
-`turnkey-*` instance. Nothing this lane stood up outlived it.
-
-One thing was learned by measuring rather than assuming, and it changed the code.
-A ledger row records the command that reclaims a resource, and the sweep closes
-the row only when that command exits 0. The harness destroys its own container in
-a `finally` block — so by sweep time the container is *already gone*, and
-`amplifier-digital-twin destroy <gone>` exits 1. A row registered with the plain
-destroy command therefore can never close. Measured, on this lane's own ledger:
+Five containers were launched. Five are gone.
 
 ```
->> sweeping id=turnkey-20260903T051444Z: amplifier-digital-twin destroy …
-   FAILED (rc=1)                                                   -> row stays open
->> sweeping id=turnkey-20260903T051654Z: … destroy … ; ! … status … >/dev/null 2>&1
-   swept ok                                                        -> row closes
+turnkey-20260904T035511Z gone   turnkey-20260904T042036Z gone
+turnkey-20260904T040824Z gone   turnkey-20260904T043038Z gone
+turnkey-20260904T041055Z gone
 ```
 
-So the registered command is now "destroy it, then assert it is not there",
-which is true whether this run or a later sweep removed it, and still fails
-loudly if the thing is somehow still running. Three rows in the shared workspace
-ledger predate that fix or belong to runs from before it; their containers are
-destroyed, and those rows are left for the workspace's own sweep rather than
-hand-edited — that file documents itself as having exactly one writer.
+The two runs that mattered (E and F) ran without `--keep` and destroyed their
+own container in a `finally` block, which is the normal path. The three kept
+ones were destroyed by hand. Run F's ledger row is left open for the
+workspace's own sweep rather than hand-edited — that file documents itself as
+having exactly one writer — and its registered reclaim command exits 0 today,
+so the sweep will close it cleanly whenever it next runs.
+
+No Gitea instance was stood up. The existing shared mirror was re-synced
+(delete-and-recreate: `mirror-from-github` answers 409 on an existing repo and
+the CLI has no update verb) and left running, because other evaluations use it.
+Tearing down a shared instance this lane did not create would be the wrong kind
+of tidy.
+
+---
 
 ## The work list this run produces
 
 | # | Finding | Where it belongs |
 |---|---|---|
-| 1 | `docs/workflow/OWNER-RETURN-LOG.md` has never been written, though several waves have returned | the manager session's own behaviour — clause 10 |
-| 2 | `converge-dxv` names no contract | one line in that item — clause 1 |
-| 3 | Driven mode cannot run the wave; it only judges one | this harness, and the launcher it would have to call |
-| 4 | `profiles/turnkey.yaml`'s queue is not a managed service, so the install check reports it missing | the profile, or the install check's service probe |
+| 1 | A manager session dropped the **Time away** part of its brief, folding its content into *Finished*. `context/manager/return-brief.md` says "The five parts, **in this order**". Run C and runs E–F wrote all five; run D wrote four. Real variance, not incapacity. | the mode's clause 10 — see below |
+| 2 | `write_file`/`edit_file` refused paths under the batch directory, so the manager wrote lane goal files with `bash` heredocs. Reported by the manager itself, unprompted, in *anything quietly broken*. | the allowed-write-paths default for a session whose batch dir sits outside its repository |
+| 3 | The queue in a container is unmanaged: it answers, but nothing restarts it after a reboot. The install check now says so out loud instead of calling it missing. | the profile, if a managed unit is ever wanted there |
 
-None of these were fixed here: this lane owns `evaluations/turnkey/**`, and
-changing a contract, the mode, or the install check to make the harness pass
-would be the one move that makes a green report worthless.
+**Why #1 was not fixed here, though the mode is in this lane's ownership.** The
+container installs the bundle from the mirror of `origin/main`. An edit to
+`modes/converge-manager.md` on this branch does not exist inside the container
+and cannot be exercised by this harness until it lands on main and the mirror
+re-syncs. Shipping a behavioural edit this run could not observe would be a
+claim with no check behind it, which is the one move that makes a green report
+worthless. It is filed instead, with the evidence: run D's brief, whose
+*Finished* paragraph reads "Two lanes, one wave, about five minutes wall clock
+end to end" and which has no **Time away** heading at all.
+
+**Deliberately not done:** widening the brief check to accept that folded form.
+The convention names five parts in an order, three of four briefs produced them,
+and a rule tuned until the run passes measures nothing. An over-strict rule
+fabricates a failure exactly as badly as a loose one fabricates a pass — and the
+three harness defects above were all the first kind.
