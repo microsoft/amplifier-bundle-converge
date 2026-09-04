@@ -549,6 +549,15 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-8z4s",
+    "title": "A lane cannot close its own infra ledger rows: the tool the error message names does not exist on this host",
+    "status": "open",
+    "description": "Contract: operation.v1 (a wave leaves its host as it found it). Found 2026-09-04 by lane w9-queue-and-kits while tearing down the one server it had registered.\n\nThe lane registered its dev stub as the ledger asks:\n\n    infra_ledger.sh <workspace> add server w9-stub-8799 \"kill 2123521\"\n    ADDED: type=server id=w9-stub-8799 status=open destroy='kill 2123521'\n\nIt then stopped the server and confirmed it was gone (`kill -0` reports both pids gone; port 8799 free). But there is no verb to mark the row closed:\n\n    $ infra_ledger.sh <workspace> done server w9-stub-8799\n    ERROR: unknown command 'done' (want: add|list|sweep)\n\n    $ infra_ledger.sh <workspace> sweep\n    sweep is the MANAGER's batch-close verb and destroys EVERY open row.\n    A lane tearing down its OWN rows must use the lane-scoped tool:\n      .amplifier/evaluation/tools/lane_teardown.sh <workspace> <lane> teardown --yes\n\nThat path does not exist:\n\n    $ ls /home/bkrabach/dev/hw-converge/.amplifier/evaluation/tools/lane_teardown.sh\n    (no such file)\n    $ find /home/bkrabach/dev/hw-converge -maxdepth 5 -name lane_teardown.sh   -> nothing\n    $ find ~/.local/share/uv/tools/amplifier -name lane_teardown.sh            -> nothing\n\nSo the only verb a lane can reach is the one it is explicitly told not to use, because it would destroy every other live lane's rows as well. The two rows stay `open` against dead processes.\n\nThe cost is quiet and cumulative: infra.tsv already carries a long tail of `<unattributed:...>` open rows for servers that are long dead — visible in the sweep output — so the ledger reads as though this host is holding far more than it is, and a manager closing a batch cannot tell a leaked server from a stale row.\n\nEither ship the lane-scoped tool the message names, or give `infra_ledger.sh` a row-scoped close verb (`done <type> <id>`) that refuses when the destroy command's process is still alive — so closing a row is evidence the thing is actually gone, not just a claim.",
+    "acceptance": "GIVEN a lane that registered an infra row and has since stopped the process WHEN it runs the lane-scoped close the error message names THEN that row alone is marked closed, no other lane's open rows are touched, and the close refuses if the registered destroy command's process is still alive — checked with one live row and one dead one in the same ledger.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-94i",
     "title": "docs/work-items.json is stale, so the ledger's closed-cite tripwire is blind to converge-f1l",
     "status": "resolved",
