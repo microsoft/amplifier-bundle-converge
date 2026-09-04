@@ -21,6 +21,10 @@
     <section class="return-card panel-card">
       <div class="card-heading"><div><span class="eyebrow">While you were away</span><h2 id="awayDuration">—</h2></div><button id="timelineButton" class="text-button" type="button">Timeline →</button></div>
       <div id="returnBrief" class="brief-list"></div>
+      <!-- Core 3 fixes five parts. This strip says which of them the brief on
+           record actually labels, so a part that is missing reads as missing
+           rather than disappearing into the prose. -->
+      <div id="briefParts" style="margin-top:12px"></div>
     </section>
 
     <section class="throughput-card panel-card">
@@ -49,6 +53,13 @@
     <section class="waves-card panel-card wide-card">
       <div class="card-heading"><div><span class="eyebrow">Execution plan</span><h2 id="wavesHeadline">Waves</h2></div><span class="muted">Manager-owned · visible to you</span></div>
       <div id="wavesGrid" class="waves-grid"></div>
+      <!-- Core 2's second sentence: when the plan is redrawn, the reason for
+           the redraw is shown too. Each entry is quoted from the manager
+           session's own weave-in log; nothing here is composed. -->
+      <div id="planRedraws" style="margin-top:14px">
+        <span class="eyebrow">Why the plan was redrawn</span>
+        <div id="planRedrawList"></div>
+      </div>
     </section>
 
     <section class="lanes-card panel-card wide-card">

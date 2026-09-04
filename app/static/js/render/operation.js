@@ -18,6 +18,13 @@ import { openDialog, closeDialog } from '../actions.js';
 import { api } from '../api.js';
 import { hooks } from '../refresh.js';
 
+// A wave's reason is a sentence from a record, and a record is full of tokens
+// no line break fits inside: `umbrella+console+collaboration`, a file path, a
+// sha. Measured at 1280 on 2026-09-04: one wave's reason ran 216px wide inside
+// a 186px card whose CSS hides its overflow, so the end of it was simply gone
+// off the right edge. Breaking anywhere is what keeps a reason readable.
+const WRAP = 'overflow-wrap:anywhere';
+
 const BRIEF_CLASS = [
   [/\b(finish|finished|landed|verified|merged|complete)/i, 'finished'],
   [/\b(stuck|blocked|cannot|could not|failed|fails)/i, 'stuck'],
@@ -165,6 +172,60 @@ function tellAllSessions() {
 }
 
 // --------------------------------------------------------------------------
+// the return brief's five parts, and the timeline's evidence
+// --------------------------------------------------------------------------
+
+function renderBriefParts(reading) {
+  const holder = $('briefParts');
+  if (!holder) return;
+  if (!reading || !(reading.parts || []).length) { holder.innerHTML = ''; return; }
+  const parts = reading.parts.map((p) => {
+    const kept = p.recorded !== false;
+    return `<span style="display:inline-block;margin:0 10px 4px 0;font-size:10px" class="${kept ? '' : 'muted'}">`
+      + `${kept ? '✓' : '·'} ${escapeHtml(p.label)}${kept ? '' : ' — not labelled'}</span>`;
+  }).join('');
+  const missing = reading.parts.filter((p) => p.recorded === false).length;
+  const note = reading.labelled
+    ? (missing ? `${missing} of the five parts is not labelled in this brief.` : 'All five parts are labelled in this brief.')
+    : 'This brief does not label its parts, so every sentence it wrote is shown above, whole.';
+  holder.innerHTML = `<span class="eyebrow">The five parts</span><div style="margin-top:6px">${parts}</div>`
+    + `<p class="muted" style="font-size:10px;margin:4px 0 0">${escapeHtml(note)} From ${escapeHtml(reading.source || '')}</p>`;
+}
+
+// A turn is a summary of an entry; its evidence is the entry itself. Opening
+// one shows every sentence the summary was cut from, and names the commit that
+// recorded it, so the claim can be read back off the machine with `git show`.
+function toggleEvidence(button) {
+  const box = button.parentNode.querySelector('.timeline-evidence');
+  if (!box) return;
+  const shut = box.classList.toggle('hidden');
+  button.textContent = shut ? 'Open the evidence' : 'Close the evidence';
+}
+
+function timelineEntry(entry) {
+  // A turn is [date, title, one sentence, evidence]. The dev fixtures still
+  // carry the three-place row this grew out of, and a row with no fourth place
+  // simply has nothing to open — it is never filled in with something else.
+  const row = Array.isArray(entry)
+    ? { date: entry[0], title: entry[1], text: entry[2], evidence: entry[3] }
+    : (entry || {});
+  const proof = row.evidence || null;
+  const said = proof && Array.isArray(proof.sentences) ? proof.sentences : [];
+  const stamp = proof && proof.commit
+    ? `${proof.source} · recorded in ${proof.commit}${proof.committedOn ? ` on ${proof.committedOn}` : ''}`
+    : ((proof && proof.ref) || '');
+  const open = said.length
+    ? `<button class="text-button" data-open-evidence="1" type="button" style="font-size:10px;padding:0">Open the evidence</button>`
+      + `<div class="timeline-evidence hidden" style="margin-top:6px">`
+      + said.map((s) => `<p class="muted" style="font-size:11px;margin:0 0 4px">${escapeHtml(s)}</p>`).join('')
+      + `<p class="muted" style="font-size:10px;margin:4px 0 0">${escapeHtml(stamp)}</p></div>`
+    : `<p class="muted" style="font-size:10px;margin:2px 0 0">Nothing is recorded to open for this turn.</p>`;
+  return `<div class="timeline-entry"><div class="timeline-time">${escapeHtml(row.date)}</div>`
+    + `<div class="timeline-axis"><span></span></div>`
+    + `<div class="timeline-content"><strong>${escapeHtml(row.title)}</strong><p>${escapeHtml(row.text)}</p>${open}</div></div>`;
+}
+
+// --------------------------------------------------------------------------
 // lanes
 // --------------------------------------------------------------------------
 
@@ -223,6 +284,11 @@ export function renderOperation() {
     return `<div class="brief-item"><span class="brief-dot ${briefClass(sentence)}"></span><div>${hasLead ? `<strong>${escapeHtml(lead)}</strong>` : ''}<p>${escapeHtml(rest)}</p></div></div>`;
   }).join('') || '<p class="muted">Nothing has been reported back yet.</p>';
 
+  // Core 3 — the five parts, and which of them the brief on record labels. A
+  // part the brief never wrote is shown as missing rather than filled in: the
+  // page never labels a sentence the manager session did not label itself.
+  renderBriefParts(op.briefReading);
+
   const flow = op.throughput || {};
   const net = (Number(flow.resolved) || 0) - (Number(flow.reopened) || 0);
   $('throughputNet').textContent = `${net >= 0 ? '+' : ''}${net} net`;
@@ -250,10 +316,33 @@ export function renderOperation() {
       `conic-gradient(#22a56d 0 ${keptEnd}%, #f0c35a ${keptEnd}% ${gapEnd}%, #e26169 ${gapEnd}% 100%)`;
   }
 
+  // Core 2 — a wave says what a batch of work is FOR, above the lanes inside
+  // it. A wave whose reason nobody wrote down says exactly that, in muted
+  // words marked `Not recorded`, so it can never be read as a reason. The one
+  // thing this card no longer shows is the wave's lane names as its heading:
+  // that is a list of members, which is what the clause says a wave is not.
   const waveRows = op.waves || [];
   $('wavesHeadline').textContent = waveRows.length === 1 ? 'One wave' : `${waveRows.length} waves`;
-  $('wavesGrid').innerHTML = waveRows.map((w) => `<article class="wave-card ${escapeHtml(w.cls)}"><div class="wave-kicker"><span>${escapeHtml(w.label)}</span><span>${escapeHtml(w.phase)}</span></div><h3>${escapeHtml(w.title)}</h3><div class="wave-items">${(w.items || []).map(([name, done]) => `<div class="wave-item ${done ? 'done' : ''}"><span class="check">${done ? '✓' : ''}</span><span>${escapeHtml(name)}</span></div>`).join('')}</div><div class="progress-bar"><span style="width:${Number(w.progress) || 0}%"></span></div></article>`).join('')
-    || '<p class="muted">No wave plan has been published yet.</p>';
+  $('wavesGrid').innerHTML = waveRows.map((w) => {
+    const reason = w.reason || w.title || '';
+    const missing = w.reasonRecorded === false;
+    const mark = missing ? '<span class="muted" style="font-size:10px">Not recorded · </span>' : '';
+    const source = w.reasonSource
+      ? `<p class="muted" style="${WRAP};font-size:10px;margin:4px 0 0">From ${escapeHtml(w.reasonSource)}</p>`
+      : '';
+    return `<article class="wave-card ${escapeHtml(w.cls)}"><div class="wave-kicker"><span>${escapeHtml(w.label)}</span><span>${escapeHtml(w.phase)}</span></div>`
+      + `<h3${missing ? ' class="muted"' : ''} style="${WRAP}">${mark}${escapeHtml(reason)}</h3>${source}`
+      + `<div class="wave-items">${(w.items || []).map(([name, done]) => `<div class="wave-item ${done ? 'done' : ''}"><span class="check">${done ? '✓' : ''}</span><span>${escapeHtml(name)}</span></div>`).join('')}</div>`
+      + `<div class="progress-bar"><span style="width:${Number(w.progress) || 0}%"></span></div></article>`;
+  }).join('') || '<p class="muted">No wave plan has been published yet.</p>';
+
+  // Core 2 again: when the plan is redrawn, the reason for the redraw is shown.
+  const redraws = op.redraws || [];
+  if ($('planRedrawList')) {
+    $('planRedrawList').innerHTML = redraws.length
+      ? redraws.map((r) => `<p class="muted" style="${WRAP};font-size:11px;margin:6px 0 0"><strong>${escapeHtml(r.when || 'Undated')}</strong> — ${escapeHtml(r.why)}</p>`).join('')
+      : '<p class="muted" style="font-size:11px;margin:6px 0 0">The plan has not been redrawn on this run.</p>';
+  }
 
   // Core 7 — the two numbers, side by side, above the lanes.
   const queue = op.queue || {};
@@ -288,6 +377,7 @@ export function renderOperation() {
   }
 
   const timelineRows = op.timeline || [];
-  $('timelineList').innerHTML = timelineRows.map(([time, title, text]) => `<div class="timeline-entry"><div class="timeline-time">${escapeHtml(time)}</div><div class="timeline-axis"><span></span></div><div class="timeline-content"><strong>${escapeHtml(title)}</strong><p>${escapeHtml(text)}</p></div></div>`).join('')
+  $('timelineList').innerHTML = timelineRows.map(timelineEntry).join('')
     || '<p class="muted">No meaningful changes recorded yet.</p>';
+  qsa('[data-open-evidence]').forEach((btn) => btn.addEventListener('click', () => toggleEvidence(btn)));
 }

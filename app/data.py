@@ -685,6 +685,278 @@ def sections_of(text: str) -> list[list[str]]:
 
 
 # --------------------------------------------------------------------------
+# why a batch exists, and why the plan changed — experience-operation.v1 Core 2
+# --------------------------------------------------------------------------
+
+#: The steward-facing record, relative to the repository root.
+OWNER_LOG = "docs/workflow/OWNER-RETURN-LOG.md"
+
+#: A weave-in line opens with the stamp the manager session wrote it at.
+_WEAVE_LINE = re.compile(r"^\s*[-*+]\s*(\d{4}-\d\d-\d\dT[\d:]+Z)?\s*(.*)$")
+
+#: Core 2's second sentence — "when the plan is redrawn, the reason for the
+#: redraw is shown too". A redraw is written into the weave-in log as REOPENED:
+#: the run had closed and the steward's word opened it again.
+_REDRAW = re.compile(r"\bREOPENED\b")
+
+#: What a wave carries when no record names it. It is not a reason and must
+#: never be dressed as one — a steward reading this learns that the manager
+#: session never wrote down why this batch was grouped, which is true and
+#: useful, and is the one thing a list of lane names never says.
+NO_REASON_ON_RECORD = "The plan does not record why this batch was grouped."
+
+
+def weave_log(text: str) -> list[tuple[str, str]]:
+    """(stamp, what was said) for every line of HIGHWAY.md's weave-in log.
+
+    This is the manager session's own running account of the run: one line per
+    launch, cycle, merge, incident and reopen. It is where a batch's reason is
+    actually written down, so it is the first place read for one.
+    """
+    made: list[tuple[str, str]] = []
+    for line in section_body(text, "weave-in log").splitlines():
+        if not line.strip().startswith(("-", "*", "+")):
+            continue
+        match = _WEAVE_LINE.match(line)
+        if not match:
+            continue
+        said = (match.group(2) or "").strip()
+        if said:
+            made.append(((match.group(1) or "").strip(), said))
+    return made
+
+
+def _named_by(*words: str) -> list:
+    return [re.compile(rf"\b{re.escape(w)}\b", re.I) for w in words if w]
+
+
+#: How a wave is named in prose: `wave 2`, `wave-1`, `experience wave e1`, `W8`.
+_WAVE_MENTION = re.compile(r"\b(?:(wave|experience)\s*-?\s*|([we]))(\d+)\b", re.I)
+
+
+def waves_named_in(said: str) -> set[str]:
+    """Every wave a sentence names, as keys — `wave-1` and `W1` are both `w1`."""
+    found: set[str] = set()
+    for word, letter, number in _WAVE_MENTION.findall(said or ""):
+        head = (letter or word[:1]).lower()
+        found.add(f"{head}{int(number)}")
+    return found
+
+
+def wave_reason(
+    key: str,
+    label: str,
+    members: list[str],
+    weave: list[tuple[str, str]],
+    entries: list[tuple[str, str, str]],
+) -> dict:
+    """Why this batch of work exists, quoted from the record that says so.
+
+    Two records are read, in the order they were written for: HIGHWAY.md's
+    weave-in log (where a launch is recorded, with the word that authorised
+    it), then the owner return log (where the manager session told the steward
+    what a wave was for). Nothing is composed here — the reason is the record's
+    own sentence, and `source` names which record and which line it came from.
+
+    The weave-in log is a launch record and the manager session writes a wave
+    into it as an identifier (`W8:`, `w8-gap`), so a bare key is safe there.
+
+    The owner log is prose and two things are refused in it. A bare key or a
+    one-word label is never matched — measured 2026-09-04, both `app` and its
+    label `App` match "the companion app's first pass", a sentence about a
+    different thing entirely. And a sentence that names *more than one* wave is
+    refused as well: "…verified all four wave-1 lanes…and refilled with wave 2"
+    names two and says what neither is for, so it is not either one's reason.
+    """
+    for stamp, said in weave:
+        if any(p.search(said) for p in _named_by(key, *members)):
+            where = "HIGHWAY.md · weave-in log"
+            return {"reason": said, "recorded": True, "source": f"{where} · {stamp}" if stamp else where}
+    numbered = label if re.fullmatch(r"[A-Za-z]+ \d+", label or "") else ""
+    for _date, heading, body in entries:
+        for said in sentences(body):
+            if not any(p.search(said) for p in _named_by(numbered, *members)):
+                continue
+            if waves_named_in(said) - {key}:
+                continue
+            return {"reason": said, "recorded": True, "source": f"{OWNER_LOG} · {heading}"}
+    return {"reason": NO_REASON_ON_RECORD, "recorded": False, "source": ""}
+
+
+def plan_redraws(text: str) -> list[dict]:
+    """Every time the plan was redrawn, and why, in the record's own words."""
+    return [
+        {"when": stamp, "why": said}
+        for stamp, said in weave_log(text)
+        if _REDRAW.search(said)
+    ]
+
+
+# --------------------------------------------------------------------------
+# the return brief — experience-operation.v1 Core 3
+# --------------------------------------------------------------------------
+
+#: The five parts, in the clause's order. `label` is the contract's own wording
+#: (Core 3), because that is what a steward reads. `opens` matches the label a
+#: manager session writes into the log, which is the return-brief convention's
+#: (`context/manager/return-brief.md`) — the two vocabularies are deliberately
+#: not merged: one is what the page says, the other is what the file says.
+BRIEF_PARTS = (
+    ("timeAway", "Time away", re.compile(r"^\**\s*time away\b", re.I)),
+    ("finished", "What finished", re.compile(r"^\**\s*finished\b", re.I)),
+    ("stuck", "What is stuck", re.compile(r"^\**\s*stuck\b", re.I)),
+    ("needsYou", "What needs your word", re.compile(r"^\**\s*needs? you\b", re.I)),
+    ("quietlyChanged", "What quietly changed", re.compile(r"^\**\s*(anything quietly broken|quietly)\b", re.I)),
+)
+
+
+def brief_parts(body: str) -> list[dict]:
+    """The labelled parts of one return-brief entry, in the clause's order.
+
+    A part starts at the line that opens with its bold label and runs to the
+    next labelled line, so a part written as two sentences is not cut in half.
+    An entry that labels nothing yields nothing — this reads a shape, it never
+    decides which unlabelled sentence "is really" the stuck part.
+    """
+    found: dict[str, list[str]] = {}
+    holding = ""
+    for line in (body or "").splitlines():
+        text = line.strip()
+        if not text or text.startswith(("#", "|", "```", "<!--")):
+            continue
+        opened = next((part for part, _label, rx in BRIEF_PARTS if rx.match(text)), "")
+        if opened:
+            holding = opened
+            text = re.sub(r"^\**\s*[^*.:]{0,32}[.:]\**\s*", "", text, count=1).strip()
+        if holding and text:
+            found.setdefault(holding, []).append(text)
+    return [
+        {"part": part, "label": label, "text": " ".join(found[part]).strip()}
+        for part, label, _rx in BRIEF_PARTS
+        if found.get(part)
+    ]
+
+
+def return_brief(entries: list[tuple[str, str, str]]) -> list[str]:
+    """What a returning steward reads first — the newest entry, whole.
+
+    Nothing here is truncated. The reading this replaces kept the entry's first
+    six sentences, and measured against the real log on 2026-09-04 that is how
+    the one part a steward most needs — what needs their word — fell off the
+    end of a fifteen-sentence entry and the kit reported the brief never said
+    it. Six sentences is not one of the clause's five parts.
+
+    An entry written to the convention is returned as its five labelled parts,
+    each opening with the label Core 3 gives it. An entry that labels nothing —
+    every entry written before the convention landed — is returned as its own
+    sentences, unlabelled and complete. No sentence is ever given a label the
+    manager session did not write: the brief a steward reads is the brief that
+    was written, and `brief_reading` says plainly which parts are missing.
+    """
+    if not entries:
+        return []
+    body = entries[-1][2]
+    parts = brief_parts(body)
+    if parts:
+        return [f"{one['label']}: {one['text']}" for one in parts]
+    return sentences(body)
+
+
+def brief_reading(entries: list[tuple[str, str, str]]) -> dict:
+    """Which of Core 3's five parts the newest entry actually labels.
+
+    Shown beside the brief so an absent part is visible as an absence. A brief
+    with a part missing is a real, countable defect (the convention: "a return
+    that never got briefed stands in the file as a stamp with parts missing"),
+    and hiding it behind prose is how it stays missing.
+    """
+    if not entries:
+        return {"entry": "", "date": "", "source": OWNER_LOG, "labelled": False, "parts": []}
+    date, heading, body = entries[-1]
+    said = {one["part"]: one for one in brief_parts(body)}
+    return {
+        "entry": heading,
+        "date": date,
+        "source": f"{OWNER_LOG} · {heading}",
+        "labelled": bool(said),
+        "parts": [
+            {"part": part, "label": label, "recorded": part in said}
+            for part, label, _rx in BRIEF_PARTS
+        ],
+    }
+
+
+# --------------------------------------------------------------------------
+# the confidence timeline — experience-operation.v1 Core 4
+# --------------------------------------------------------------------------
+
+
+def owner_log_commits(repo: Path | None) -> dict[str, tuple[str, str]]:
+    """Entry heading → (short sha, date) of the commit that first recorded it.
+
+    One `git log -p` over one small file, read for the `## ` headings each
+    commit *added*. That is what makes a turn on the timeline inspectable
+    outside this app: a steward can run `git show <sha>` and read the same
+    words the page is showing them.
+
+    The date returned is the *commit's*, which is a different fact from the
+    date in the entry's own heading and is not corrected to match it — the
+    newest entry here is headed 2026-09-04 and was committed on 2026-09-03.
+    """
+    if not repo:
+        return {}
+    out = git(repo, "log", "--reverse", "--format=%x01%h%x09%ad", "--date=short", "-p", "-U0", "--", OWNER_LOG)
+    made: dict[str, tuple[str, str]] = {}
+    sha = when = ""
+    for line in out.splitlines():
+        if line.startswith("\x01"):
+            sha, _tab, when = line[1:].partition("\t")
+            continue
+        if line.startswith("+## "):
+            heading = _split_heading(line[4:].strip())[1]
+            made.setdefault(heading, (sha, when))
+    return made
+
+
+def confidence_timeline(entries: list[tuple[str, str, str]], repo: Path | None) -> list[list]:
+    """The turns that changed how sure the manager session is, newest first.
+
+    Core 4 asks for two things and the old reading gave one: it said *that*
+    confidence moved and left no way to inspect *why*. Each turn now carries
+    its evidence — the whole entry the one-sentence summary was cut from, the
+    file it lives in, and the commit that recorded it — so the claim can be
+    opened rather than believed.
+
+    A turn stays the row the surface already read, `[date, title, sentence]`,
+    with the evidence appended as a fourth place rather than the row being
+    replaced by an object. Adding to a shape breaks nothing that reads it by
+    position; changing the shape breaks every reader at once.
+    """
+    commits = owner_log_commits(repo)
+    made: list[list] = []
+    for date, heading, body in reversed(entries):
+        said = sentences(body)
+        sha, when = commits.get(heading, ("", ""))
+        made.append(
+            [
+                date,
+                heading,
+                said[0] if said else "",
+                {
+                    "kind": "return brief",
+                    "source": OWNER_LOG,
+                    "section": heading,
+                    "ref": f"{OWNER_LOG} § {heading}",
+                    "commit": sha,
+                    "committedOn": when,
+                    "sentences": said,
+                },
+            ]
+        )
+    return made
+
+
+# --------------------------------------------------------------------------
 # the three payloads
 # --------------------------------------------------------------------------
 
@@ -1001,7 +1273,10 @@ def operation_payload(mc: ManagerConfig) -> dict:
     order = list(by_wave)
     now_index = next((i for i, key in enumerate(order) if wave_live.get(key)), -1)
     waves: list[dict] = []
-    board = _lane_board(highway_text(mc))
+    highway = highway_text(mc)
+    board = _lane_board(highway)
+    weave = weave_log(highway)
+    log_entries = _owner_log_entries(mc.repo)
     for index, key in enumerate(order):
         items = by_wave[key]
         done = sum(flag for _name, flag in items)
@@ -1016,13 +1291,23 @@ def operation_payload(mc: ManagerConfig) -> dict:
             phase, cls = "NEXT", "next"
         else:
             phase, cls = "STRETCH", "stretch"
-        titles = [board.get(name, "") for name, _flag in items if board.get(name)]
-        title = "; ".join(titles[:3]) if titles else ", ".join(name for name, _flag in items[:3])
+        names = [name for name, _flag in items]
+        # Core 2: a wave says what a batch of work is FOR. The lane board is
+        # the manager session's own one-line-per-lane summary and is used when
+        # the batch keeps one; otherwise the reason is quoted from the record.
+        # What is never used again is the lane names joined by commas: that is
+        # a list of members, which is exactly what the clause says a wave is
+        # not, and it was this page's title for all eleven waves until now.
+        titles = [board.get(name, "") for name in names if board.get(name)]
+        why = wave_reason(key, wave_label(key), names, weave, log_entries)
         waves.append(
             {
                 "id": key,
                 "label": wave_label(key),
-                "title": title,
+                "title": "; ".join(titles[:3]) if titles else why["reason"],
+                "reason": why["reason"],
+                "reasonRecorded": why["recorded"],
+                "reasonSource": why["source"],
                 "phase": phase,
                 "cls": cls,
                 "progress": progress,
@@ -1030,18 +1315,17 @@ def operation_payload(mc: ManagerConfig) -> dict:
             }
         )
 
-    entries = _owner_log_entries(mc.repo)
-    timeline = [[date, heading, first_sentence(body)] for date, heading, body in reversed(entries)]
-    brief = sentences(entries[-1][2])[:6] if entries else []
-    reopened = len(re.findall(r"\bREOPENED\b", highway_text(mc)))
+    reopened = len(_REDRAW.findall(highway))
     counts = tracker_counts(mc)
 
     return {
         "waves": waves,
+        "redraws": plan_redraws(highway),
         "lanes": lane_items,
         "reported": reported_items,
-        "timeline": timeline,
-        "returnBrief": brief,
+        "timeline": confidence_timeline(log_entries, mc.repo),
+        "returnBrief": return_brief(log_entries),
+        "briefReading": brief_reading(log_entries),
         "throughput": throughput(counts, merged_count, reopened),
         "queue": queue_reading(counts),
         "confidence": confidence(mc.repo) if mc.repo else {"pct": 0, "kept": 0, "notyet": 0, "broken": 0, "available": False},
@@ -1065,13 +1349,19 @@ def _lane_board(text: str) -> dict[str, str]:
 
 
 __all__ = [
+    "BRIEF_PARTS",
     "LANE_WORD",
+    "NO_REASON_ON_RECORD",
     "OUTCOME_WORD",
+    "OWNER_LOG",
     "LaneRow",
     "age_words",
     "blocked_reason",
+    "brief_parts",
+    "brief_reading",
     "changes_for",
     "confidence",
+    "confidence_timeline",
     "doc_id",
     "doc_payload",
     "doc_state",
@@ -1082,15 +1372,21 @@ __all__ = [
     "manager_payload",
     "manifest_lanes",
     "operation_payload",
+    "owner_log_commits",
+    "plan_redraws",
     "proposals_for",
     "queue_reading",
     "repo_docs",
     "repo_id",
     "repositories_payload",
+    "return_brief",
     "run",
     "sections_of",
     "throughput",
     "tmux_sessions",
     "tracker_counts",
+    "wave_reason",
+    "waves_named_in",
+    "weave_log",
     "_needs_items",
 ]
