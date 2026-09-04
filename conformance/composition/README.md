@@ -6,8 +6,9 @@ repository root and it mechanically asserts the conformance list from
 PASS, the repository sits on the lean base, its automated steps reach only
 lean-base helpers, a real session on it reaches both helper families, an
 unrelated session measured beside it keeps its shell, delegation and skills
-tools, and its guard admits a proposal beside a locked contract. If it says FAIL, it
-names the rule, the file, and the line.
+tools — both beside this working tree and beside the release of it actually
+installed on this host — and its guard admits a proposal beside a locked
+contract. If it says FAIL, it names the rule, the file, and the line.
 
 ## Run it
 
@@ -23,7 +24,7 @@ suppress the stderr summary.
 # a conforming repository  ->  VERDICT: PASS, exit 0
 uv run conformance/composition/run.py conformance/composition/fixtures/sample-good
 
-# a broken repository      ->  VERDICT: FAIL (all twelve rules), exit 1
+# a broken repository      ->  VERDICT: FAIL (twelve rules; 6c declines), exit 1
 uv run conformance/composition/run.py conformance/composition/fixtures/sample-bad
 
 # this repository          ->  the real result, whatever it is
@@ -58,10 +59,41 @@ looks wrong. Rules 4 and 5 below are those rows.
 | 5 | Core 5 | "The shared work queue rides on both install paths, so the contract checker can file and read work anywhere." | Requires the work queue to be named on **both** paths: in `bundle.md`'s includes (the root install) and in a `behaviors/*.yaml`'s includes (the `--app` install target). Named on one only, filing work works after one install and silently does not after the other. |
 | 6a | Core 6 | "Nothing touches the tools of other work in your session" | Requires no top-level `spawn:` key in `bundle.md`'s frontmatter or in any `behaviors/*.yaml`. A composed `spawn.exclude_tools` strips the named tools from every spawned helper in **every** session that composes the bundle — measured 2026-09-02, including unrelated work. |
 | 6b | Core 6 | the same clause, judged live: "After installing Converge beside other work, a helper in an unrelated session keeps its shell, delegation, and skills tools" | Stands up a real **unrelated** session on the lean base alone (the *control*), then the same unrelated session again with this repository installed beside it — once per install path it declares (the *treatments*). The spawned-helper tool surface of each is computed by Amplifier's own `apply_spawn_tool_policy`. PASS when installing takes nothing away. The control is what makes it mean anything: a host may already carry a session-wide spawn policy of its own, and without a baseline the rule would either blame this repository for the host's setting or report green because the tools were gone before it arrived. |
+| 6c | Core 6 | the same clause, judged where this repository is **installed**: "After installing Converge beside other work, a helper in an unrelated session keeps its shell, delegation, and skills tools" | Stands up the unrelated session **as this host actually composes it** — the lean base plus the host's whole app-bundle list, exactly as `runtime/config.py` hands `get_app_bundles()` to `load_and_prepare_bundle`. When that session is contaminated, every app entry is loaded alone and asked for its own `spawn`, so the verdict names the entry a user would have to remove. FAIL only when a carrier **names this repository**; a host broken by a foreign bundle is a SKIP naming that bundle, never this repository's failure. |
 | 7a | Core 7 | "The guard recognizes both proposal names — `<contract>.vN-candidate.md` and the legacy `CANDIDATE-*.md`" | Reads every `hooks-candidate-guard` config in `behaviors/` and tests its `always_allow_globs` and `candidate_glob` against **both** proposal names — `contracts/CANDIDATE-retry-clause.md` and `contracts/composition.v1-candidate.md`. Both must be admitted by both lists. |
 | 7b | Core 7 | "… and refuses every other write to a locked contract" | Compiles the config's `frozen_marker_regex` and tests it against `# Composition Contract — v1 (FROZEN 2026-09-02)` — the H1-parenthetical status form `documents.v1` Core 6 fixes. A regex that misses it leaves a locked contract unguarded. |
 
-### The two live rules (they used to decline; they no longer do)
+### Rule 6c: what the tree does, and what the release already installed does
+
+6a and 6b both judge **this working tree**: 6a that it declares no `spawn:`
+key, 6b that composing it onto a neighbour's session takes nothing away. Both
+were PASS on 2026-09-04, and both were right. On the same machine, at the same
+moment, a *published sibling release of the same product* — app-installed from
+another fork — was stripping `tool-bash`, `tool-delegate` and `tool-skills`
+from every spawned helper in **every** session on the host, unrelated work
+included. That is `converge-w3v`, and it is the gap 6c closes: the tree a
+maintainer reads and the release a user runs are different repository states,
+and only one of them is what the neighbour actually experiences.
+
+So 6c composes the neighbour's session the way the host really does it, and
+when the result is contaminated it loads each app entry alone to find the one
+carrying the policy. Two properties keep it honest:
+
+- **It names the entry, not the host.** "Your host is contaminated" is not
+  actionable; "remove this URI, which declares `spawn.exclude_tools`" is.
+- **It never blames a neighbour's bundle on this repository.** A contaminated
+  host whose carrier names no bundle of this repository is a SKIP that says
+  the promise is broken *and* says whose setting broke it. This is the same
+  discipline rule 6b's control enforces, applied to attribution.
+
+Because no fixture is installed on anybody's host, 6c declines on both fixtures
+by design — so it is proven through a seam instead of a fixture.
+`AMPLIFIER_COMPOSITION_KIT_APP_BUNDLES` (whitespace-separated URIs) replaces the
+host's app list, and three self-tests drive 6c red, green, and to its
+never-blame-a-neighbour decline. A rule that declines everywhere proves as
+little as a rule that always passes.
+
+### The live rules (they used to decline; they no longer do)
 
 Rules 3b and 6b are judgments about a **running session**, not about files on
 disk. Until 2026-09-04 the kit declined both — `SKIP`, with the reason — and the
@@ -84,20 +116,22 @@ Modules are prepared with `install_deps=False`. What is under test is
 module's Python package installs, and resolving a full dependency closure on
 each conformance run would buy no extra signal about either promise.
 
-What did NOT change is the refusal to fabricate. Both rules still `SKIP` when a
+What did NOT change is the refusal to fabricate. These rules still `SKIP` when a
 verdict is genuinely out of reach, and a SKIP names the exact missing capability
 from a declared vocabulary (`live.MISSING`): no `amplifier` on PATH, an
 interpreter that cannot import `amplifier_app_cli`, a probe that timed out, or
-`AMPLIFIER_COMPOSITION_KIT_LIVE=0`. They are also still the **only** two rules
-allowed to decline at all — `test_only_the_live_rules_may_skip` pins that
+`AMPLIFIER_COMPOSITION_KIT_LIVE=0`. They (with 6c) are also still the **only**
+rules allowed to decline at all — `test_only_the_live_rules_may_skip` pins that
 ceiling, and `test_live_rules_decline_honestly_when_switched_off` exercises the
 decline path so the honest-SKIP behaviour is tested rather than assumed.
 
 Both clauses that carry a live half also carry a file-readable one, and that
 half is checked rather than waved at: clause 3's rulebook is rule 3a, clause 6's
-absent session-wide policy is rule 6a. The two halves catch different things —
-6a proves this repository declares no `spawn:` key, and 6b proves that what a
-neighbour's session actually ends up with is unchanged by installing it.
+absent session-wide policy is rule 6a. The halves catch different things — 6a
+proves this repository declares no `spawn:` key, 6b proves that what a
+neighbour's session ends up with is unchanged by installing this tree, and 6c
+proves the same about the release already installed on the host, which is the
+only one of the three a user is actually running.
 
 ### Globs are matched properly, not by `fnmatch`
 
@@ -124,7 +158,9 @@ promise under test.
   into the session by an `agents:` block**, a README stating the host requirement
   in one sentence, the work queue named on both install paths, no `spawn:` key,
   and a guard that admits both proposal names and recognizes an H1-parenthetical
-  status. The kit reports **PASS** on all twelve rules.
+  status. The kit reports **PASS** on all twelve file- and session-readable
+  rules, and declines the host half (6c) — no fixture is installed on anyone's
+  host, so there is no installed release of it to judge.
 - `fixtures/sample-bad/` — an **intentionally broken** repository that violates
   every rule at once, so one run surfaces all of them instead of
   stopping at the first: an `@foundation:` reference in loaded context (1a),
@@ -160,9 +196,12 @@ uv run --with pytest pytest conformance/composition/tests/ -q
 
 `test_every_rule_has_a_negative_fixture` is the load-bearing one: every rule the
 kit emits must either FAIL on `sample-bad` or be a declared SKIP with a reason.
-A rule nobody can make fail proves nothing. As of 2026-09-04 **all twelve** rules
-FAIL on `sample-bad`, including the two live ones — no rule is exempted from
-proof any more.
+A rule nobody can make fail proves nothing. As of 2026-09-04 **all twelve**
+fixture-judgeable rules FAIL on `sample-bad`, including both live ones. The
+thirteenth, 6c, cannot be the subject of a fixture at all — nobody has a fixture
+installed on their host — so it is proven through the app-list seam by
+`test_host_half_goes_red_when_the_installed_release_strips_tools` and its two
+siblings. No rule is exempted from proof, including the one that declines.
 
 `test_every_core_clause_has_a_row` is the one the Core-clause anchor buys: every
 numbered clause under `## Core (the teeth)` in `contracts/composition.v1.md`
