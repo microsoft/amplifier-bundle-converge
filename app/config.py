@@ -1,14 +1,18 @@
 """What this app is watching, and where.
 
 One TOML file names the managers: the batch directory a manager runs in, the
-repositories it steers, the tracker project it files against, and the explicit
-tmux socket its lanes live on. Nothing is guessed from the ambient environment
-— an ambient `$TMUX` is never consulted, because the socket a lane runs on and
-the socket this process happens to sit in are different facts.
+repositories it steers, the tracker project it files against, the explicit
+tmux socket its lanes live on, and the `steward` whose word counts on it.
+Nothing is guessed from the ambient environment — an ambient `$TMUX` is never
+consulted, because the socket a lane runs on and the socket this process
+happens to sit in are different facts, and no `steward` is inferred from
+whoever is signed in, because who may answer and who is looking are different
+facts too.
 
 When the file is absent the app discovers managers rather than showing an empty
 page: every `~/dev/hw-*/HIGHWAY.md` is a batch, and its repositories come from
-that batch's own `manifest.tsv`.
+that batch's own `manifest.tsv`. A discovered manager names no steward: it was
+never registered, so there is nobody to name.
 """
 
 from __future__ import annotations
@@ -33,6 +37,12 @@ class ManagerConfig:
     tracker_project: str = ""
     tmux_socket: str = DEFAULT_TMUX_SOCKET
     manager_tmux: str = ""
+    #: Whose word counts on this session, settled here at registration.
+    #: `experience-collaboration.v1` Core 8: it is a fact about the registered
+    #: session, never an inference from whoever happens to be signed in. Empty
+    #: when the block does not say — an unnamed steward is a registration that
+    #: has not been finished, and guessing one is exactly what Core 8 forbids.
+    steward: str = ""
 
     @property
     def repo(self) -> Path | None:
@@ -77,6 +87,7 @@ def _manager_from_table(table: dict, index: int) -> ManagerConfig | None:
         tracker_project=str(table.get("tracker_project") or "").strip(),
         tmux_socket=str(table.get("tmux_socket") or DEFAULT_TMUX_SOCKET).strip() or DEFAULT_TMUX_SOCKET,
         manager_tmux=str(table.get("manager_tmux") or "").strip(),
+        steward=str(table.get("steward") or "").strip(),
     )
 
 
