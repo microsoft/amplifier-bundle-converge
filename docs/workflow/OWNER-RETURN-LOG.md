@@ -2,6 +2,23 @@
 
 Plain-sentence briefs for the intent steward, appended by the manager session on every return (operation.v1 §10). Newest last.
 
+**The shape of an entry.** A return is stamped the moment it happens, and the brief is written under that stamp before the reply goes out:
+
+```
+  ## <date> <clock time> - <the state of the project in a few words>
+  <five sentences, each opening with its part label in bold, in the order the
+   return-brief convention gives them: 1 how long they were gone and how many
+   waves ran - 2 what is done and proven, with the check that was re-run -
+   3 what stopped, and the cause - 4 the calls only they can make - 5 what went
+   wrong that they never asked about>
+```
+
+The stamped heading is the record that a return happened; the five sentences under it are the brief. They are written at different moments, so a return that never got briefed stands in the file as a stamp with parts missing under it — countable, and visible to anyone who opens this page. The five labels themselves are named in `modes/converge-manager.md` clause 10 and in `context/manager/return-brief.md`, and deliberately not repeated here: a check that reads this whole file for them would take this header for a brief and pass on it.
+
+**A brief sent unprompted** — a wave landed while the steward was away — keeps a date-only heading. Every return has a brief; not every brief has a return.
+
+**Everything below predates the stamp.** The nine briefs written before 2026-09-04 have no recorded return beside them, so nothing can say whether a return was ever missed. They stand as briefs. The count begins at the first stamped entry.
+
 ## 2026-09-02 — EXECUTE begins
 You ratified the vision, four contracts, and the announcement with the word "lgtm." I derived fourteen items from the gap, showed you the plan, and started wave 1 as four real lanes. Nothing needed you.
 
