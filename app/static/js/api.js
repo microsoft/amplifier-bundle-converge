@@ -57,8 +57,17 @@ const docBase = (mid, repoId, docId) =>
 export const api = {
   boot: () => request('/api/boot'),
   manager: (mid) => request(`/api/managers/${encodeURIComponent(mid)}`),
-  doc: (mid, repoId, docId) =>
-    request(`/api/managers/${encodeURIComponent(mid)}/docs/${encodeURIComponent(repoId)}/${encodeURIComponent(docId)}`),
+  // `since` reads this document as it stood at one commit in its own history
+  // (converge-4pq). Left out, the read is the steward's own — their read
+  // point, their kept marks — exactly as before. It is a separate URL, so the
+  // service worker stores a snapshot apart from the steward's own reading and
+  // one can never be served in place of the other.
+  //
+  // Reading a snapshot deliberately does NOT move the read point: the read
+  // point belongs to the steward, and looking at history is not reading. The
+  // server holds that rule, not this file.
+  doc: (mid, repoId, docId, since = '') =>
+    request(`${docBase(mid, repoId, docId)}${since ? `?since=${encodeURIComponent(since)}` : ''}`),
   operation: (mid) => request(`/api/managers/${encodeURIComponent(mid)}/operation`),
   needs: (mid) => request(`/api/needs/${encodeURIComponent(mid)}`),
   decision: (mid, payload) => post(`/api/managers/${encodeURIComponent(mid)}/decision`, payload),
@@ -67,10 +76,17 @@ export const api = {
   markRead: (mid, repoId, docId) => post(`${docBase(mid, repoId, docId)}/read`, {}),
   keepChange: (mid, repoId, docId, changeId, kept) =>
     post(`${docBase(mid, repoId, docId)}/changes/${encodeURIComponent(changeId)}/keep`, { kept }),
-  editChange: (mid, repoId, docId, changeId, text) =>
-    post(`${docBase(mid, repoId, docId)}/changes/${encodeURIComponent(changeId)}/edit`, { text }),
-  restoreChange: (mid, repoId, docId, changeId) =>
-    post(`${docBase(mid, repoId, docId)}/changes/${encodeURIComponent(changeId)}/restore`, {}),
+  // Both writes take the same optional `since` the read above does, and for
+  // the same reason: a change card only exists inside one reading, so a write
+  // against a card from a snapshot has to name the snapshot it came from. The
+  // server refuses a commit that is not in this document's own history, in
+  // those words — the bound is its, not this file's.
+  editChange: (mid, repoId, docId, changeId, text, since = '') =>
+    post(`${docBase(mid, repoId, docId)}/changes/${encodeURIComponent(changeId)}/edit`,
+      since ? { text, since } : { text }),
+  restoreChange: (mid, repoId, docId, changeId, since = '') =>
+    post(`${docBase(mid, repoId, docId)}/changes/${encodeURIComponent(changeId)}/restore`,
+      since ? { since } : {}),
   // Presence (§10) — who has an editor open on which section, right now.
   // Courtesy only: none of these three refuses anything, and there is no route
   // here that could. The beat both refreshes and releases (an empty section is

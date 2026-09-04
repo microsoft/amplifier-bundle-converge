@@ -60,6 +60,7 @@ check that stands in for it.
 
 from __future__ import annotations
 
+import datetime
 import re
 import shutil
 import socket as socketlib
@@ -838,12 +839,23 @@ def test_forcing_the_control_locks_nothing(server, project, browser):
 
 
 @needs_browser
-def test_locking_says_out_loud_that_no_write_answers_yet(server, project, browser):
-    """With all four met the control is live — and honest about what it reaches.
+def test_locking_stamps_the_document_and_says_so(server, project, browser):
+    """With all four met the control is live — and the lock actually lands.
 
-    The app answers no lock route (converge-eci). A control that ticked four
-    boxes and quietly changed nothing would be worse than no control, so this
-    asserts the screen says so and the file is untouched.
+    Until converge-eci the app answered no lock route, and this test asserted
+    the refusal while carrying its own tripwire: "when converge-eci lands, the
+    tripwire below fails and this test is the one to rewrite: it should then
+    assert the document's H1 is stamped."
+
+    The route landed and the tripwire fired. Measured 2026-09-04 before this
+    rewrite (converge-drh):
+
+        AssertionError: the refusal was swallowed: 'Locked: FROZEN'
+        assert 'Nothing was locked' in 'Locked: FROZEN'
+
+    So this is that rewrite. `contracts/documents.v1.md` clause 6 puts a
+    document's status in its H1 and nowhere else, so the H1 on disk is what is
+    read here — not the toast, which is only the app's report of it.
     """
     errors: list[str] = []
     ctx, page = _boot(browser, server, project, 1280, 800, errors)
@@ -877,20 +889,28 @@ def test_locking_says_out_loud_that_no_write_answers_yet(server, project, browse
         "() => /lock/i.test(document.getElementById('toast').textContent || '')", timeout=10000
     )
     toast = page.evaluate("() => document.getElementById('toast').textContent")
-    print(f"[lock] toast: {toast}")
-    assert "Nothing was locked" in toast, f"the refusal was swallowed: {toast!r}"
-    assert "converge-eci" in toast, f"the refusal does not name the work: {toast!r}"
     after = (project["repo"] / "contracts" / "demo.v1.md").read_text(encoding="utf-8")
-    assert after == before, "the document changed on disk although no lock route answered"
-    # The 404 IS the finding here, so it is the one console error this test
-    # expects. When converge-eci lands, the tripwire below fails and this test
-    # is the one to rewrite: it should then assert the document's H1 is stamped.
-    assert any("404" in e for e in errors), (
-        "the lock route answered — converge-eci has landed, so rewrite this test to assert the "
-        f"lock actually happens: {errors}"
+    day = datetime.date.today().isoformat()
+    head, body = before.splitlines()[0], before.splitlines()[1:]
+    stamped, kept = after.splitlines()[0], after.splitlines()[1:]
+
+    print(f"[lock] toast: {toast}")
+    print(f"[lock] H1 before: {head}")
+    print(f"[lock] H1 after:  {stamped}")
+    print(f"[lock] everything below the H1 is unchanged: {kept == body}")
+    print(f"[lock] console errors: {errors or 'none'}")
+
+    assert "Locked" in toast, f"the app did not say the lock landed: {toast!r}"
+    assert "FROZEN" in toast, f"the report does not name the locking word: {toast!r}"
+    # The H1, on disk, is the claim — clause 6 says the status lives there and
+    # nowhere else, so a screen that says "Locked" over an unstamped file is
+    # exactly the defect this test exists to catch.
+    assert f"(FROZEN {day})" in stamped, (
+        f"the document's H1 was not stamped although the app said it locked: {stamped!r}"
     )
-    unexpected = [e for e in errors if "404" not in e]
-    assert not unexpected, f"the page logged errors beyond the expected 404: {unexpected}"
+    assert "(DRAFT)" not in stamped, f"the H1 still carries its draft status: {stamped!r}"
+    assert kept == body, "locking rewrote something below the H1; it stamps the H1 and nothing else"
+    assert not errors, f"the page logged errors: {errors}"
     ctx.close()
 
 

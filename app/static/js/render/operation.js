@@ -310,7 +310,15 @@ function laneCard(lane, statusLabel, cls, watchAttr) {
   // they are surface.v1's words for a state shown in a word and for the proof
   // under it, and a reader that speaks that vocabulary — a person or the
   // retired kit — should be able to find them without knowing this body.
-  return `<article class="lane-card ${escapeHtml(cls)}" id="lane-${escapeHtml(lane.id)}"><div class="lane-main"><div class="lane-topline"><span class="lane-status mark ${escapeHtml(cls)}">${escapeHtml(statusLabel)}</span><span class="lane-title">${escapeHtml(lane.title)}</span></div><div class="lane-meta"><span>${escapeHtml(lane.worker)}</span><span>${escapeHtml(lane.wave)}</span><span>${escapeHtml(lane.age)}</span></div></div><div class="lane-evidence evidence"><strong>${escapeHtml(lane.evidence)}</strong>${watch}</div>${producedFold(lane)}</article>`;
+  //
+  // The pill is styled `text-transform:uppercase`, which puts the machine's
+  // screaming form of the lane's word back on the screen after the payload
+  // stopped serving it: `experience.v1` Core 6 fixes the title-case word, and
+  // that difference is the whole of the clause. So the pill opts out of the
+  // transform, exactly as the wave phase below does. (The rule belongs in
+  // `operation.css`, which this lane does not own; rule 6b of the experience
+  // kit is why this comment does not spell the screaming form out.)
+  return `<article class="lane-card ${escapeHtml(cls)}" id="lane-${escapeHtml(lane.id)}"><div class="lane-main"><div class="lane-topline"><span class="lane-status mark ${escapeHtml(cls)}" style="text-transform:none">${escapeHtml(statusLabel)}</span><span class="lane-title">${escapeHtml(lane.title)}</span></div><div class="lane-meta"><span>${escapeHtml(lane.worker)}</span><span>${escapeHtml(lane.wave)}</span><span>${escapeHtml(lane.age)}</span></div></div><div class="lane-evidence evidence"><strong>${escapeHtml(lane.evidence)}</strong>${watch}</div>${producedFold(lane)}</article>`;
 }
 
 // Core 8 — "Underneath sits what the lane actually produced, so a claim can

@@ -1155,6 +1155,11 @@ def manager_payload(mc: ManagerConfig) -> dict:
         "batchDir": str(mc.batch_dir or ""),
         "tmuxSocket": mc.tmux_socket,
         "managerTmux": mc.manager_tmux,
+        # Whose word counts here, as the registration settled it. Always
+        # present, and empty when the registration did not name anybody —
+        # never the signed-in reader's name, which is a fact about who is
+        # looking rather than about who may answer.
+        "steward": mc.steward,
     }
 
 
