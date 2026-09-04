@@ -81,6 +81,22 @@ the guard; the contract is the law and the guard is the thing that must move.
 
 - Converge's lean base is the *anchors* bundle:
   `git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundles/anchors`
+- The recipe (`recipes/seed-reconcile.yaml`) is `schema_version: 2`: it declares
+  the bundles that ship its helpers and resolves helpers only from them. Pins:
+  - `converge:reconciler` ← this repository's `behaviors/converge.yaml` at tag
+    **`v0.1.0`** (= `4507e46`, the first tag on this repo, cut 2026-09-04). A
+    self-referential pin is correct; the engine never infers a source from a
+    namespace prefix. When agents change, cut a new tag and bump the pin.
+  - `anchors:explorer` ← `amplifier-foundation@main#subdirectory=bundles/anchors/bundle.md`.
+    **`main` is a branch, and that is a known gap:** no foundation tag ships
+    `bundles/anchors` yet (`v2.1.2` is the newest and predates it). Re-pin to the
+    first tag that does. Composition.v1 carries this in "does NOT freeze".
+  - A `source:` ref is fetched with `git clone --branch`: a tag or branch works,
+    a commit SHA does **not** (measured 2026-09-04: "Remote branch <sha> not
+    found"). Never pin a SHA.
+- Check the manifest: `recipe-runner validate recipes/seed-reconcile.yaml`
+  (expect `schema_version: 2`, `ok: true`) and `recipe-runner plan …` (expect
+  both `anchors:explorer` and `converge:reconciler` in `agents`).
 - **Never reintroduce a session-wide `spawn:` block.** Measured in isolation on
   2026-09-02: a behavior's top-level `spawn.exclude_tools` strips the listed
   tools from every spawned sub-agent in *every* session, not just Converge's —
