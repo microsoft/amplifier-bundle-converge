@@ -283,6 +283,37 @@ def create_app(
         """The wording that was there before, back where it was."""
         return await _reword(mid, repo_ident, doc_ident, change_id, request, "restore")
 
+    @app.post("/api/managers/{mid}/docs/{repo_ident}/{doc_ident}/lock")
+    async def lock_document(mid: str, repo_ident: str, doc_ident: str, request: Request) -> JSONResponse:
+        """Stamp this document's H1 so it becomes law — `experience-direction.v1` §11.
+
+        The gate that decides whether the control is live is the browser's;
+        the gate that decides whether a file changes is this one. It counts
+        the four conditions again here rather than trusting the ones the
+        browser ticked, so forcing the control reaches the same refusal — the
+        same shape as the edit guard above, and for the same reason.
+        """
+        found, refusal = doc_or_none(mid, repo_ident, doc_ident)
+        if refusal is not None:
+            return refusal
+        repo, path = found
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+        body = body if isinstance(body, dict) else {}
+        raw = body.get("conditions")
+        conditions = [str(one) for one in raw] if isinstance(raw, (list, tuple)) else []
+        result = writes.lock_document(
+            Path(repo),
+            Path(path),
+            conditions=conditions,
+            repo_id=repo_ident,
+            doc_id=doc_ident,
+            user=who(request),
+        )
+        return JSONResponse(result, status_code=200 if result.get("ok") else 400)
+
     # ------------------------------------------- who is editing what, right now
     #
     # `experience-direction.v1` clause 10. The three routes below are the whole

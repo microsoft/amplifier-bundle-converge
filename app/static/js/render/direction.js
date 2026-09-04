@@ -250,6 +250,11 @@ export function renderLockGate() {
 //: check is made again here rather than trusted: what actually keeps a
 //: document from being locked is the server's write, so forcing the control
 //: in the browser reaches the same refusal.
+//:
+//: That write answers now (converge-eci). The four answers below are carried
+//: to it verbatim, because it counts them again at its end and puts them on
+//: the record beside the stamp — so what a steward reads back later is the
+//: same sentence they ticked here, and not this screen's word for it.
 function requestLock() {
   const doc = data.doc;
   if (!doc || doc.locked) return;

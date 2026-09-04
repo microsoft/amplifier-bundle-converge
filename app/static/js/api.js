@@ -75,10 +75,11 @@ export const api = {
   // server's, because the H1 is a file and `app/writes.py` is the only place
   // that touches one.
   //
-  // The app does not answer this route yet: `app/serve.py` and `app/writes.py`
-  // are another lane's files, and the server half is filed as converge-eci.
-  // Same choice as `ask` above — the call points at the real route so it fails
-  // out loud and the screen says so, rather than a control that ticks four
-  // boxes and quietly changes nothing.
+  // The app answers this route now (converge-eci): it stamps `(FROZEN <date>)`
+  // into the document's own first heading, commits it as `<you> via Converge`,
+  // and writes the four conditions into today's ratification record. The
+  // payload carries them — `{conditions: [four sentences]}` — because the
+  // server counts them again rather than trusting the boxes this end ticked,
+  // and refuses by name when the document already carries a locking word.
   lock: (mid, repoId, docId, payload) => post(`${docBase(mid, repoId, docId)}/lock`, payload),
 };
