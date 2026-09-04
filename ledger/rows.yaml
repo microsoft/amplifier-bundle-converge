@@ -15,6 +15,29 @@
 # THE RATCHET NOW COVERS THE WHOLE CONTRACT SET: every Core clause of all
 # fourteen contracts is cited by at least one row. See the section headed
 # "THE FOURTH RECONCILE AND THE SECOND SEED" for how a disposition was chosen.
+# RE-DERIVED 2026-09-04 (converge-0gb) — FIFTEEN ROWS WHOSE NAMED FIX WAS
+# ALREADY FINISHED. converge-qtp (the turnkey harness) and converge-fmz (the
+# surface clause halves) both resolved, and fifteen red rows went on citing them
+# — so a reader following the cite landed on completed work. One of the two was
+# worse than closed: converge-fmz's resolution says the app PASSES the clause
+# CVG-038 records as unkept. Each of the fifteen was re-run rather than
+# re-pointed: three moved (CVG-011, CVG-015 green; CVG-038's probe replaced), and
+# twelve stayed red for reasons now stated one row at a time. Four items carry
+# them: converge-2ro, converge-6mi, converge-7ym, converge-do8. The same pass
+# taught verify.py to FAIL a red row that cites a resolved item, so the rule stops
+# needing a person — it had been enforced by hand three times.
+# WHAT THE INTEGRATOR WILL SEE, MEASURED IN A SCRATCH MERGE RATHER THAN GUESSED.
+# converge-0gb branched at f718a20; main then moved 26 commits and edited
+# contracts/operation.v1.md. Merging this lane into main in a throwaway worktree
+# and running the gate there: 174/174 quotes verify, 89 executable refs each meet
+# their expect, no red row cites a resolved item — and ONE line still fails,
+# `SYNC contracts/operation.v1.md`. That failure is main's own and predates this
+# lane: main is red on that pin AND on CVG-010's quote today, both from one edit
+# that moved a bold marker. This lane fixes the quote half (see CVG-010) and
+# leaves the pin, because LEDGER-FORMAT §4 answers a hash mismatch with a
+# mandatory full re-review and never a bump, and a lane whose tree holds the OLD
+# bytes cannot honestly pin the new ones. converge-pxz carries it, with most of
+# the re-review already done.
 # Main moves hourly; a ledger that chases it converges on nothing. Re-read on
 # merge.
 #
@@ -45,11 +68,14 @@
 #   proves        present ONLY when the assertion proves something NARROWER than
 #                 the row's disposition claims — read it before trusting a green.
 #                 Its ABSENCE is meaningful: on the other rows the assertion's
-#                 pass/fail IS the disposition's truth condition. (Of the 22 GAP
-#                 rows with a passing probe, 13 carry `proves` — the operation
-#                 clauses, where the probe reads a mode file. The other 9 assert
-#                 the gap itself: "the rule is still absent", "the rule still
-#                 SKIPs".)
+#                 pass/fail IS the disposition's truth condition. (Measured
+#                 2026-09-04 by verify.py itself: 21 GAP rows have a passing
+#                 probe, and 17 carry `proves` — mostly the operation clauses,
+#                 where the probe reads a mode file. The rest assert the gap
+#                 itself: "the rule is still absent", "the rule still SKIPs".
+#                 Two CONFORMS rows carry `proves` too — CVG-011 and CVG-015,
+#                 green off the turnkey gate, where the assertion is real and
+#                 narrower than the clause.)
 #   work          the tracker item that closes a red row
 #
 # `expect` exists because of a failure this ledger caught in itself on its first
@@ -62,8 +88,16 @@
 # deviate freely — deviations are data for v1." Three deviations here:
 #
 #   1. `assertion.kind: probe` cites an exact SHELL COMMAND, not a function in
-#      ledger/checks/. This repo has no ledger/checks/ yet; its executable
-#      assertions live in conformance/ (three kits) and in module test suites.
+#      ledger/checks/. Most of this repo's executable assertions live in
+#      conformance/ (now seven kits) and in module test suites, and a probe
+#      shells out to them.
+#      CORRECTED 2026-09-04 (converge-0gb): this paragraph used to say "This repo
+#      has no ledger/checks/ yet", which was already untrue — verify.py itself
+#      lives there and always has. Two probe helpers now live beside it,
+#      `turnkey_step.py` and `surface_clause9.py`, written where a one-line shell
+#      command could not carry the reasoning about what the probe does and does
+#      not prove. A comment that has quietly stopped being true is the same
+#      species of drift as a row that has.
 #      THIS WAIVES MORE THAN THE REF FORMAT, and the waiver is the point:
 #        - §1's "In-process only: no LLM, no network, no subprocess" — every
 #          probe here is a subprocess, several are `uv run` (seconds, not the
@@ -700,7 +734,26 @@
     arriving, the one event that flips it. Now it keys on the rule's status.
     ALSO FIXED: this row used to absorb kit bullet 3 in prose. Bullet 3 is a
     different subject and is now CVG-009.
-  work: converge-qtp
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). RAN → LIVE-REACHABILITY-STILL-SKIPPED.
+    Kit rule 3b still declines, in the same words: "needs a live Amplifier
+    session; this kit reads files only". The reading has not moved; the reason it
+    is waiting has.
+    THE `work` REF MOVED converge-qtp → converge-7ym. converge-qtp is RESOLVED —
+    the turnkey harness landed and went green on 2026-09-04 — and this file's own
+    rule is that a closed item may not stay cited as the thing that will fix a red
+    row. It was cited because the composition kit README says closing this needs
+    "the live harness, not a cleverer file scan", and at the time converge-qtp was
+    the live harness being built.
+    IT IS THE WRONG HARNESS, AND THAT IS THE FINDING. The turnkey's nine steps
+    stand up an environment, install once, run the install check, start a project,
+    derive work, run two lanes, integrate, re-check and brief. Not one of them
+    asks whether a session reaches a helper. Read its own step table
+    (`evaluations/turnkey/README.md`) rather than its verdict: a green gate that
+    never asks this question cannot answer it. converge-7ym carries the two honest
+    routes — extend the turnkey, which already stands a fresh container up and
+    installs into it, or write a separate session-reachability evaluation.
+  work: converge-7ym
 
 - id: CVG-009
   title: the neighbour promise — an unrelated session keeps its tools
@@ -727,15 +780,44 @@
     and recorded in bundle.md's comment — nothing re-runs it.
     ADDED BY THE CROSS-CHECK: a ledger query for "who asserts the neighbour
     promise?" previously returned nothing.
-  work: converge-qtp
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). RAN → NEIGHBOUR-CHECK-STILL-SKIPPED.
+    Kit rule 6b still declines, in the same words: "needs two live Amplifier
+    sessions (Converge plus unrelated work) side by side".
+    THE `work` REF MOVED converge-qtp → converge-7ym, for the reason CVG-008
+    states at length and this row will not repeat: the turnkey is finished and
+    green, and none of its nine steps stands a second, unrelated session beside
+    the first. This one is the further of the two — reaching a helper needs one
+    session, the neighbour promise needs two, and nothing here has ever run two.
+    WHAT MAKES THIS THE MORE UNCOMFORTABLE OF THE PAIR. The measurement behind
+    PINS.md's standing rule — "Never reintroduce a session-wide spawn: block",
+    which cost `foundation:explorer` its `bash`, `delegate` and `load_skill` in
+    an unrelated session — was taken once, by hand, on 2026-09-02, and has been
+    re-taken by nothing in the two days since. The rule is enforced statically
+    (CVG-006 asserts the absence of a `spawn:` key); the harm it prevents is not
+    re-measured. A static absence is a good guard and a poor witness.
+  work: converge-7ym
 
 # ─────────────────────────────────────────────────────────────────────────────
 # operation.v1 — 15 rows.  The contract names its own gate "**Red today** —
-# this is the work list", and that is what the ledger shows: 14 of 15 GAP.
+# this is the work list", and at seed that is what the ledger showed: 14 of 15
+# GAP.  RE-READ 2026-09-04 (converge-0gb), after the gate went green and the
+# steward ratified the sentence recording it: 4 of 15 CONFORMS, 11 GAP.
 #
-# The manager mode encodes every clause; nothing OBSERVES a manager session
-# keeping one.  Every GAP row's probe passes and proves only the encoding —
-# read `proves` before trusting any green here.
+# THE GATE GOING GREEN DID NOT MAKE THESE ROWS GREEN, AND THAT IS THE POINT.
+# Each of the thirteen clause rows was re-read on its own against what the
+# harness actually asserts — its nine steps, named in
+# `evaluations/turnkey/README.md`, not its verdict word.  Two clauses have a
+# step that asserts them and moved (CVG-011 Core 1, step (e); CVG-015 Core 5,
+# step (f)).  Three are asserted in part, and the part left over is named
+# (CVG-017, CVG-018, CVG-022 → converge-6mi).  Seven have no step at all
+# (CVG-012, CVG-013, CVG-014, CVG-016, CVG-019, CVG-021, CVG-023 →
+# converge-2ro).  One was already re-derived separately (CVG-020 →
+# converge-823).
+#
+# For the eleven that stayed red, the manager mode encodes the clause and
+# nothing OBSERVES a manager session keeping it.  Their probes pass and prove
+# only the encoding — read `proves` before trusting any green here.
 #
 # GAP IS THE RIGHT WORD, RULED 2026-09-02 (converge:protocol-authority):
 # §3.3's "no implementation" reads against §5's Freeze Bar, where conditions 2
@@ -754,7 +836,7 @@
   contract:
     file: contracts/operation.v1.md
     clause: "Conformance kit asserts, Turnkey"
-    quote: "**First green 2026-09-04 — nine of nine steps, twice, in fresh containers, with a manager session that was not the integrator (`evaluations/turnkey/RESULT.md`); it re-runs on every merge.**"
+    quote: "nine of nine steps, twice, in fresh containers, with a manager session that was not the integrator (`evaluations/turnkey/RESULT.md`); it re-runs on every merge."
   disposition: CONFORMS
   assertion:
     kind: absence
@@ -789,6 +871,35 @@
     WHEN THE TURNKEY LANDS GREEN, THE THIRTEEN ARE RE-READ INDIVIDUALLY, NEVER
     BULK-FLIPPED. Thirteen rows behind one tracker item is exactly the shape that
     invites one green run to flip thirteen dispositions unexamined.
+    ────────────────────────────────────────────────────────────────────────────
+    THE THIRTEEN WERE RE-READ INDIVIDUALLY 2026-09-04 (converge-0gb). Two moved
+    green (CVG-011, CVG-015), eleven stayed red for eleven separately stated
+    reasons, and none was bulk-flipped. What each one now rests on is in its own
+    notes.
+    THE QUOTE WAS CORRECTED IN THE SAME PASS, and this is not a bump. The row
+    quoted a closing `**` the contract did not carry: at this lane's branch point
+    `operation.v1.md:77` ended "…it re-runs on every merge." with the bold left
+    open, so the ledger's own quote tripwire failed — `CVG-010 QUOTE NOT FOUND`,
+    and with it the whole gate, for every lane that ran it. converge-wq4 is the
+    item that carries this.
+    THE QUOTE NOW STARTS MID-SENTENCE ON PURPOSE. DO NOT TIDY IT BACK. While this
+    lane worked, main fixed the same defect from the other end: commit on main
+    closes the bold early, `**First green 2026-09-04** — nine of nine steps…`,
+    where this tree still has `**First green 2026-09-04 — nine of nine steps…`.
+    Both readings are one `**` apart and a quote spanning that span can only
+    verify against one of them — so a row quoting either form would be red either
+    here or on the merged result, and being green in this tree while poisoning
+    main is the worse of the two. The quote was narrowed to the longest run both
+    files carry byte-for-byte, which begins at "nine of nine steps". Checked
+    against both, whitespace-collapsed, before committing: matches this tree,
+    matches `git show main:contracts/operation.v1.md`.
+    WHAT IS LOST BY NARROWING IT, SAID PLAINLY: the words "First green" and the
+    date are no longer inside the binding anchor, so a change to them would not
+    make this row notice. Everything the row actually rests on — nine of nine,
+    twice, fresh containers, a manager session that was not the integrator, the
+    named evidence file, and re-running on every merge — is still quoted. When
+    main's form is the only one left, whoever reconciles next should widen the
+    quote back to the whole sentence and say so here.
 
 - id: CVG-011
   title: work is derived, never invented
@@ -798,22 +909,55 @@
     quote: |
       **Work is derived, never invented.** Every item traces to a contract gap or
       to steward feedback, names its contract, and states what done looks like.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 1 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-1 || echo MODE-LOST-CLAUSE-1'
+    ref: 'if grep -q "^## Clause 1 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py e "sampled items name one of this repository" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-1-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-E; else echo CLAUSE-1-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-1"
+      stdout_contains: "CLAUSE-1-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-E"
   proves: >
-    modes/converge-manager.md encodes this clause — NOT that a manager session
-    derives rather than invents. This probe going red means the mode dropped its
-    section, never "REGRESSION against Core 1".
+    That the mode still encodes this clause, AND that the turnkey gate's step (e)
+    — the contract's own runnable definition of derived work — asserts it and
+    passed. NOT that every item in every wave is derived: step (e) reads the
+    items a wave actually produced, and the recorded green run produced two.
+    Read the wider reading in the notes before treating this as a promise about
+    all work everywhere.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-1 (modes/converge-manager.md:41).
     GAP because conformance to this clause is a claim about what a manager
     session does, and no run has demonstrated it (CVG-010, turnkey red).
-  work: converge-qtp
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb) AND MOVED GAP → CONFORMS. RAN →
+    CLAUSE-1-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-E.
+    A RUN HAS NOW DEMONSTRATED IT, WHICH IS THE ONE THING THIS ROW WAS WAITING
+    FOR. Step (e) of the turnkey is this clause made runnable — run.py's own
+    comment above it reads "Clause 1: every item must NAME its contract and SAY
+    what done looks like … an item that cannot point at a contract is an opinion,
+    not derived work" — and it asserts BOTH halves of the sentence: that the work
+    traces to a contract gap (the fixture's own kit reported rules ['1', '2'] red
+    before the wave and [] red after it), and that each item names its contract
+    and states what done looks like.
+    THE RECORDED RUN IS THE CONTRACT'S OWN NAMED EVIDENCE, not a lane's
+    self-report. `contracts/operation.v1.md` carries, in a sentence the steward
+    ratified on 2026-09-04, "First green 2026-09-04 — nine of nine steps, twice,
+    in fresh containers, with a manager session that was not the integrator
+    (`evaluations/turnkey/RESULT.md`)". The probe reads that file, keyed on step
+    (e)'s own words, so it flips if the record changes.
+    AND IT WAS RE-RUN HERE, LIVE, AGAINST THIS HOST — this lane did not take the
+    recorded run on trust. `uv run evaluations/turnkey/run.py --env local
+    --workspace ~/dev/hw-converge --project converge --steps e,g,h,i` →
+    "[PASS] (e) derived: All 40 sampled items name one of this repository's 14
+    contracts and state what done looks like." Forty items out of this
+    repository's real queue, not two out of a fixture. The probe is not keyed on
+    that run because an observed run needs a live workspace and would go red
+    whenever this one happened to be idle — a false alarm, not drift.
+    AND THE ASSERTION CAN STILL FAIL. `uv run evaluations/turnkey/run.py
+    --self-check` → VERDICT PASS, 24 of 24 assertions behave as specified; every
+    assert_* function is exercised against evidence that must make it fail. A
+    green from machinery nobody has made fail is worth nothing, so it was checked.
+    THE `work` REF IS GONE, because a green row may not carry one — a tracker ref
+    on a CONFORMS row implies red.
 
 - id: CVG-012
   title: the plan is visible
@@ -833,8 +977,23 @@
   proves: >
     The mode encodes this clause (modes/converge-manager.md:51) — not that any
     plan was ever shown.
-  notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-2. See CVG-010 for the shared cause."
-  work: converge-qtp
+  notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-2. See CVG-010 for the shared cause.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-2. The
+    reading has not moved and the reason it is waiting has: the gate this row
+    named is finished.
+    THE `work` REF MOVED converge-qtp → converge-2ro. converge-qtp is RESOLVED
+    — the turnkey harness landed and went green on 2026-09-04 — and this
+    file's own rule is that a closed item may not stay cited as the thing that
+    will fix a red row.
+    THE GREEN GATE DOES NOT REACH THIS CLAUSE, AND THAT IS WHY THE ROW DID NOT
+    MOVE. Read the harness's nine steps (`evaluations/turnkey/README.md`), not
+    its verdict: not one of them reads a plan. Nothing in the harness asks whether order,
+    dependencies, collisions and opportunistic picks were shown with reasons,
+    because a wave that ran leaves no artifact saying what was shown before it.
+    converge-2ro carries this clause and six others in the same position, with
+    what each one would need observed."
+  work: converge-2ro
 
 - id: CVG-013
   title: never the bottleneck
@@ -854,8 +1013,24 @@
   proves: >
     The mode encodes this clause (modes/converge-manager.md:62) — not that the
     steward was never the bottleneck, which is measurable only across a real wave.
-  notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-3. See CVG-010."
-  work: converge-qtp
+  notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-3. See CVG-010.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-3. The
+    reading has not moved and the reason it is waiting has: the gate this row
+    named is finished.
+    THE `work` REF MOVED converge-qtp → converge-2ro. converge-qtp is RESOLVED
+    — the turnkey harness landed and went green on 2026-09-04 — and this
+    file's own rule is that a closed item may not stay cited as the thing that
+    will fix a red row.
+    THE GREEN GATE DOES NOT REACH THIS CLAUSE, AND THAT IS WHY THE ROW DID NOT
+    MOVE. Read the harness's nine steps (`evaluations/turnkey/README.md`), not
+    its verdict: no step counts what proceeded without the steward. The recorded wave ran
+    unattended for 261.5s and exited 0, which is suggestive and is not the
+    measurement — an unattended run proves nothing was ASKED, never that
+    everything askable was maximised.
+    converge-2ro carries this clause and six others in the same position, with
+    what each one would need observed."
+  work: converge-2ro
 
 - id: CVG-014
   title: feedback is signal, not a ticket
@@ -881,7 +1056,23 @@
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-4-WITH-INTAKE. The kit assert "No raw
     feedback becomes work without a quoted source and enrichment" has no runner
     (CVG-010).
-  work: converge-qtp
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-4. The
+    reading has not moved and the reason it is waiting has: the gate this row
+    named is finished.
+    THE `work` REF MOVED converge-qtp → converge-2ro. converge-qtp is RESOLVED
+    — the turnkey harness landed and went green on 2026-09-04 — and this
+    file's own rule is that a closed item may not stay cited as the thing that
+    will fix a red row.
+    THE GREEN GATE DOES NOT REACH THIS CLAUSE, AND THAT IS WHY THE ROW DID NOT
+    MOVE. Read the harness's nine steps (`evaluations/turnkey/README.md`), not
+    its verdict: no step feeds the wave a raw report. The harness seeds a CONTRACT GAP, which
+    is the other half of clause 1's "a contract gap or steward feedback" — so
+    the derived-work path is asserted and the feedback path is not touched at
+    all. Measuring this needs a raw report and its filed item side by side.
+    converge-2ro carries this clause and six others in the same position, with
+    what each one would need observed.
+  work: converge-2ro
 
 - id: CVG-015
   title: lanes are real sessions
@@ -891,16 +1082,20 @@
     quote: |
       **Lanes are real sessions.** A lane is a worker session's own working copy,
       branch, and terminal session, launched through the parallel-lane tooling.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 5 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-5 || echo MODE-LOST-CLAUSE-5'
+    ref: 'if grep -q "^## Clause 5 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py f "no work item was held by a process outside a lane worktree" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-5-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-F; else echo CLAUSE-5-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-5"
+      stdout_contains: "CLAUSE-5-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-F"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:96) — not that any
-    lane was correctly launched.
+    That the mode still encodes this clause, AND that the turnkey gate's step (f)
+    asserts the clause's own discriminator — that no work item was held by a
+    process sitting outside a lane worktree — and passed. NOT that a lane can
+    never be faked by a route nobody has thought of; the assertion is as good as
+    the one signature an in-session sub-agent cannot forge, which is where its
+    holding process was sitting.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-5. Circumstantial support, NOT an
     assertion: this seed itself ran in a lane with its own worktree and branch
@@ -909,7 +1104,40 @@
     being present, not the manager session using it correctly. The kit assert
     "Every lane has a terminal session and working copy on disk; in-session
     sub-agents never hold work items" has no runner (CVG-010).
-  work: converge-qtp
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb) AND MOVED GAP → CONFORMS. RAN →
+    CLAUSE-5-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-F.
+    THE KIT ASSERT NOW HAS A RUNNER, AND IT IS THE STRONGEST ONE IN THE HARNESS.
+    Step (f) does not read a report; it reads three systems that can only answer
+    in the present tense — `git worktree list`, the launcher socket's own session
+    list, and `/proc/<pid>/cwd` of every held item's process. The harness's README
+    names why that last one settles the clause: a manager session that quietly
+    runs lane work in a sub-agent produces identical artifacts — commits, a
+    resolution, a green check — and the one thing it cannot fake is where the
+    holding process was sitting, because a sub-agent reports the manager
+    session's own pid and therefore never a lane worktree.
+    RE-RUN HERE, LIVE, AGAINST THIS HOST'S OWN WAVE — this lane did not take the
+    recorded container run on trust. `uv run evaluations/turnkey/run.py --env
+    local --workspace ~/dev/hw-converge --project converge --steps f` →
+    "[PASS] (f) lanes: 7 lanes are real — each has its own worktree registered
+    with git and its own terminal session (7 live, 0 ended after running) — and
+    no work item was held by a process outside a lane worktree (60 holders
+    checked)." Sixty holders, seven live lanes, read from outside every one of
+    them, on the wave this row was written in.
+    WHAT THAT LIVE RUN ALSO SAID, KEPT BECAUSE IT IS THE HONEST HALF: "53
+    holder(s) could not be placed because their process has exited; those are
+    recorded unresolved, not passed", and "Concurrency itself was not observed:
+    no sample was taken while a manager session was running". An exited holder is
+    recorded unresolved rather than counted as a pass, which is the harness
+    refusing to fabricate, and it is why the seven that COULD be placed are worth
+    something.
+    AND THE ASSERTION CAN STILL FAIL. `--self-check` → VERDICT PASS, 24 of 24
+    assertions behave as specified, including the four cases run E and F forced:
+    a merged, cleaned-up lane reads ended while one never seen running does not;
+    half an observation does not resurrect a lane, and another lane's does not;
+    an exited holder read inside a lane passes and read outside one still fails;
+    two sessions in one reading and two worktrees in another is not a pass.
+    THE `work` REF IS GONE, because a green row may not carry one.
 
 - id: CVG-016
   title: width is a collision decision
@@ -931,8 +1159,26 @@
     The mode encodes this clause (modes/converge-manager.md:120) — not that lanes
     were ever filled only with disjoint items, nor that a shortfall ever surfaced
     as the repair card rather than silently.
-  notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-6. See CVG-010."
-  work: converge-qtp
+  notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-6. See CVG-010.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-6. The
+    reading has not moved and the reason it is waiting has: the gate this row
+    named is finished.
+    THE `work` REF MOVED converge-qtp → converge-2ro. converge-qtp is RESOLVED
+    — the turnkey harness landed and went green on 2026-09-04 — and this
+    file's own rule is that a closed item may not stay cited as the thing that
+    will fix a red row.
+    THE GREEN GATE DOES NOT REACH THIS CLAUSE, AND THAT IS WHY THE ROW DID NOT
+    MOVE. Read the harness's nine steps (`evaluations/turnkey/README.md`), not
+    its verdict: step (f) checks that the wave REACHED its width — two lanes seen running at
+    once — and never that the two were chosen because they touch different
+    files. Reaching a width and earning it are different facts, and only the
+    first is read. The clause's shortfall half — a shortfall past a bounded
+    interval becoming a repair the steward answers with a word — is read by
+    nothing either.
+    converge-2ro carries this clause and six others in the same position, with
+    what each one would need observed."
+  work: converge-2ro
 
 - id: CVG-017
   title: done means the manager session re-ran the check
@@ -958,7 +1204,31 @@
     assert "A marker on an unchanged branch is recorded stuck … every done has
     evidence the manager session re-ran" has no runner (CVG-010). Until it does,
     a DONE.json is a claim this ledger does not credit — including this lane's own.
-  work: converge-qtp
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-7. STILL GAP,
+    AND HALF THE CLAUSE IS NOW MEASURED.
+    THE PARENTHETICAL IS ASSERTED, LIVE. The kit assert this row quotes has a
+    runner now, and it ran against this host's own wave: `uv run
+    evaluations/turnkey/run.py --env local --workspace ~/dev/hw-converge
+    --project converge --steps f` → "6 lane(s) sit on an unchanged branch and are
+    recorded stuck: w8-ledger-refs, w8-direction-writes, w8-console, w8-ask-route,
+    w8-turnkey-step-i, w8-brief-convention". A marker on an unchanged branch IS
+    recorded stuck, by a check, on real lanes — this one among them.
+    THE SENTENCE'S SUBJECT IS NOT. "Done means THE MANAGER SESSION re-ran the
+    check" is a claim about who acted, and the harness cannot make it: step (h)
+    re-runs the contract check itself, by design — its own docstring reads
+    "Contracts re-checked — by this harness, not by the lane that changed them".
+    An artifact does not record which process produced it. So the half that is
+    easiest to fake is exactly the half still unasserted, which is what this row
+    said on 2026-09-02 and still says.
+    THE `work` REF MOVED converge-qtp → converge-6mi. converge-qtp is RESOLVED
+    and may not stay cited as the fix. converge-6mi carries this clause with
+    Core 8 and Core 12, which are in the same position for the same reason.
+    WHY THE PROBE STILL ONLY READS THE MODE. The measurement above came from an
+    OBSERVED run, which needs a wave to be running at that moment; a probe keyed
+    on it would go red whenever this workspace happened to be idle — a false
+    alarm, not drift. It is recorded here in the words the run printed instead.
+  work: converge-6mi
 
 - id: CVG-018
   title: integrate, verify, re-check
@@ -985,7 +1255,30 @@
     RUNNABLE for three of four contracts (conformance/composition, /documents,
     /surface). What is unasserted is that anyone re-runs it at the right moment.
     See CVG-010.
-  work: converge-qtp
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-8. STILL GAP,
+    AND TWO OF THE CLAUSE'S THREE PARTS ARE NOW MEASURED.
+    SOMEONE DOES RE-RUN IT AT THE RIGHT MOMENT, AND IT WAS WATCHED DOING SO.
+    `uv run evaluations/turnkey/run.py --env local --workspace ~/dev/hw-converge
+    --project converge --steps e,g,h,i`, live against this repository →
+    "[PASS] (g) integrated: 40 lane branch(es) are merged into main (newest:
+    bed7728 …). Two or more lanes landed in one repository, so a post-merge gate
+    is required; this harness runs it itself in the next step, rather than
+    trusting either lane's green." and "[PASS] (h) rechecked: The contract check
+    was re-run by this harness after integration: composition.v1 PASS,
+    documents.v1 PASS." The post-merge gate fires when two or more lanes land,
+    and the contract check follows it.
+    THE OPENING WORDS ARE STILL UNASSERTED, AND THEY ARE THE POINT. "The manager
+    session's own verification, never the worker session's" is a claim about WHO
+    verified. The harness is neither — it verifies instead, deliberately, so that
+    no lane's own green is trusted. That makes step (h) a good gate and a poor
+    witness to this sentence: it proves the check was re-run and cannot say by
+    whom it was owed.
+    THE `work` REF MOVED converge-qtp → converge-6mi, for the same reason
+    CVG-017 gives. The probe still reads only the mode, for the same reason too:
+    an observed run needs a live wave, and a row keyed on one would go red on a
+    quiet afternoon.
+  work: converge-6mi
 
 - id: CVG-019
   title: stalls are decisions, not loops
@@ -1006,8 +1299,24 @@
   proves: >
     The mode encodes this clause (modes/converge-manager.md:164) — not that any
     stall was ever declared stuck rather than retried.
-  notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-9. See CVG-010."
-  work: converge-qtp
+  notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-9. See CVG-010.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-9. The
+    reading has not moved and the reason it is waiting has: the gate this row
+    named is finished.
+    THE `work` REF MOVED converge-qtp → converge-2ro. converge-qtp is RESOLVED
+    — the turnkey harness landed and went green on 2026-09-04 — and this
+    file's own rule is that a closed item may not stay cited as the thing that
+    will fix a red row.
+    THE GREEN GATE DOES NOT REACH THIS CLAUSE, AND THAT IS WHY THE ROW DID NOT
+    MOVE. Read the harness's nine steps (`evaluations/turnkey/README.md`), not
+    its verdict: no step stalls anything. Both recorded green runs finished their waves, so
+    the clause was never exercised — a gate that only ever passes cannot say
+    what happens when work stops moving. This one needs a wave deliberately
+    made to stall.
+    converge-2ro carries this clause and six others in the same position, with
+    what each one would need observed."
+  work: converge-2ro
 
 - id: CVG-020
   title: a brief on every return — and the log it names does not exist
@@ -1093,7 +1402,23 @@
     ("**zero** owner-facing prompt/approval events appear in any session this run
     touched", its scenario-3 ground truth). The manager-session equivalent is
     CVG-010.
-  work: converge-qtp
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-11. The
+    reading has not moved and the reason it is waiting has: the gate this row
+    named is finished.
+    THE `work` REF MOVED converge-qtp → converge-2ro. converge-qtp is RESOLVED
+    — the turnkey harness landed and went green on 2026-09-04 — and this
+    file's own rule is that a closed item may not stay cited as the thing that
+    will fix a red row.
+    THE GREEN GATE DOES NOT REACH THIS CLAUSE, AND THAT IS WHY THE ROW DID NOT
+    MOVE. Read the harness's nine steps (`evaluations/turnkey/README.md`), not
+    its verdict: no step counts owner-facing prompts. evaluations/ratchet already does exactly
+    this counting, for the reconciler; the turnkey does not do it for a manager
+    session, and a headless run that never prompted is not the same fact as
+    every prompt falling inside the four.
+    converge-2ro carries this clause and six others in the same position, with
+    what each one would need observed.
+  work: converge-2ro
 
 - id: CVG-022
   title: the queue is the shared one, with custody
@@ -1122,7 +1447,26 @@
     through it. STILL GAP, and deliberately: that is a WORKER session using the
     queue correctly. The clause is a promise about the MANAGER session. See
     CVG-010.
-  work: converge-qtp
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-12. STILL
+    GAP, AND THE OBJECTION THIS ROW WAS BUILT ON HAS BEEN ANSWERED.
+    IT IS NO LONGER ONE WORKER SESSION VOUCHING FOR ITSELF. `uv run
+    evaluations/turnkey/run.py --env local --workspace ~/dev/hw-converge
+    --project converge --steps f`, live → "no work item was held by a process
+    outside a lane worktree (60 holders checked)". Sixty held items, placed by
+    reading each holding process from outside it, across a whole wave a manager
+    session ran. Atomic claim and custody-while-held are asserted by that
+    placement: an item cannot be held by a lane process that is not holding it.
+    WHAT IS LEFT IS THE LAST THIRD OF THE SENTENCE. "Resolution written for
+    whoever asked" is read by nothing. The queue stores a resolution string; no
+    check judges who it was written for, and the difference between a resolution
+    a person can act on and a changelog line is exactly what that phrase is for.
+    Nothing in this repository could fail on it today.
+    THE `work` REF MOVED converge-qtp → converge-6mi. converge-qtp is RESOLVED
+    and may not stay cited. converge-6mi names this remainder explicitly rather
+    than folding it in with the other two, which are about attribution; this one
+    is about a record nobody writes.
+  work: converge-6mi
 
 - id: CVG-023
   title: hand off when done
@@ -1146,7 +1490,22 @@
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-13. The kit assert "a hand-off exists for
     every manager session that ended by choice" has no runner and no artifact to
     count (CVG-010).
-  work: converge-qtp
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-13. The
+    reading has not moved and the reason it is waiting has: the gate this row
+    named is finished.
+    THE `work` REF MOVED converge-qtp → converge-2ro. converge-qtp is RESOLVED
+    — the turnkey harness landed and went green on 2026-09-04 — and this
+    file's own rule is that a closed item may not stay cited as the thing that
+    will fix a red row.
+    THE GREEN GATE DOES NOT REACH THIS CLAUSE, AND THAT IS WHY THE ROW DID NOT
+    MOVE. Read the harness's nine steps (`evaluations/turnkey/README.md`), not
+    its verdict: no step reads a hand-off. Both recorded waves finished, so no manager session
+    lost its footing, so none was owed one — and the harness has no way to
+    tell "none was owed" from "one was owed and not written".
+    converge-2ro carries this clause and six others in the same position, with
+    what each one would need observed.
+  work: converge-2ro
 
 - id: CVG-024
   title: declared dependencies are verified at install, each absence named with its cost
@@ -1486,11 +1845,21 @@
       waiting on you · the plan in order with reasons
   disposition: GAP
   assertion:
-    kind: absence
-    ref: 'ls tests/ | grep -qi "operation_in_view\|whole_operation" && echo CLAUSE-9-HAS-A-TEST || echo NO-TEST-FILE-FOR-CLAUSE-9'
+    kind: probe
+    ref: 'uv run --extra web --with httpx python ledger/checks/surface_clause9.py 2>/dev/null'
     expect:
       exit: 0
-      stdout_contains: "NO-TEST-FILE-FOR-CLAUSE-9"
+      stdout_contains: "SURFACE-CLAUSE-9-IN-VIEW=6-OF-8-GAUGE=SKIP"
+  proves: >
+    That the SHIPPED surface kit's rule 9b, imported from where it lives and not
+    reimplemented, finds six of the eight things this clause puts in view on the
+    app's own rendered /operation page — and that its companion rule 9a declines,
+    because the fixture project it is pointed at has no lanes for the gauge to
+    count. THE COUNT IS THE PIN: the verdict word alone could not tell six-of-eight
+    from two-of-eight, so a page that got better would go on reporting the same
+    word and drift toward spec would be enjoyed unrecorded (LEDGER-FORMAT §3).
+    NOT that the assertion lives in the live suite — the kit is retired, which is
+    a fact about the check's home, recorded below, the same one CVG-066 carries.
   notes: >
     RAN 2026-09-02 → NO-TEST-FILE-FOR-CLAUSE-9. The app ships with a test file per
     clause for 1, 2, 3, 4, 5, 6, 7 and 10 — and none for 9, the longest clause in
@@ -1498,7 +1867,42 @@
     control are covered; the operation board's gauge, the plan in order with
     reasons, per-lane drill-in and the limits are not. This is the one surface
     clause the app's arrival did not turn green.
-  work: converge-fmz
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-0gb). STILL GAP, AND NOW MEASURED RATHER THAN
+    MERELY UNCHECKED. RAN → SURFACE-CLAUSE-9-IN-VIEW=6-OF-8-GAUGE=SKIP, with the
+    kit's own words for the two that are missing:
+    "truly ready against waiting on you (truly ready: False, waiting on you:
+    False)" and "the plan in order, with reasons (no plan is in order on the
+    page)".
+    THE PROBE WAS REPLACED, AND THE OLD ONE WAS THE WEAKEST KIND. It asserted
+    that no file in tests/ was NAMED after this clause — a filename scan, which
+    a rename would flip and a real regression would not. The clause has had a
+    runnable definition all along, in the surface kit's rule 9b; nothing was
+    pointing at it. The new probe runs that rule against the page the app
+    actually serves, by the same route and the same import path
+    tests/test_plain_words_on_the_surface.py uses for rule 8c.
+    THE CITE IT CARRIED WAS WORSE THAN CLOSED — IT CONTRADICTED THE ROW.
+    converge-fmz is RESOLVED, and resolved with "Core 9 … → rule 9. … Against
+    the app: PASS, 'all 8 parts of the operation are on one page, and nothing on
+    the board stops anything'". Run today, the same rule says six of eight. A
+    reader following that cite would have been told the row was already green by
+    the item the row named as its fix. That is the exact failure this ledger's
+    standing rule exists to prevent, in its worst form.
+    THE `work` REF MOVED converge-fmz → converge-do8, which carries the
+    measurement above, and is linked to the two items that already own the two
+    absences against the experience family's contracts: converge-q66 (the queue's
+    two numbers) and converge-lwa (the plan in order, with its reasons).
+    RULE 9a DECLINES, AND THAT IS A FACT ABOUT THE FIXTURE, NOT THE PAGE. "the
+    lanes cannot be read in this target, so the gauge states no number to check
+    against the fill control" — the surface kit's own app fixture has no lanes
+    directory. Closing that half needs a project with lanes in it; it is named in
+    converge-do8 rather than papered over by pointing the kit somewhere flattering.
+    WHERE THIS ASSERTION LIVES, SAID PLAINLY: conformance/_superseded/surface/.
+    surface.v1 was superseded by the experience family and its kit was retired,
+    so this clause is now watched by machinery that is deliberately outside the
+    live suite. CVG-066 records the same fact for rule 8c, and converge-f1l is
+    where a live home for both would be built.
+  work: converge-do8
 
 - id: CVG-039
   title: phone first, companion first
