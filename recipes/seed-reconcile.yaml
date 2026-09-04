@@ -69,6 +69,35 @@
 #
 # CHANGELOG
 # -----------------------------------------------------------------------------
+# v1.4.0 (2026-09-04):
+#   - NEW: Schema v2 dependency manifest — this recipe now says what it needs
+#     instead of borrowing it from whoever calls it (composition.v1 Core 1–2:
+#     a session assembles on the lean base; an automated step may only reach
+#     helpers that session actually has).
+#     * DRIVER: under schema v1 the two `agent:` references below resolved out
+#       of the CALLING session's agent map. Run from any session that is not a
+#       Converge session, the first step failed with
+#       "Agent 'anchors:explorer' not found in configuration". The header block
+#       already said as much in prose — "a recipe can only reach helpers present
+#       in the session it runs in" — and that sentence is now enforced by the
+#       file rather than trusted to the reader.
+#     * CHANGE: added `schema_version: 2` + a `dependencies:` block naming the
+#       one closure both helpers resolve from. This is the ONLY change: steps,
+#       prompts, context, agents and outputs are byte-identical, and a legacy
+#       engine ignores both new top-level keys (verified — Recipe.from_yaml +
+#       validate_recipe give the same 0 errors / 0 warnings as before).
+#     * ONE dependency, not two, and that is deliberate. Declaring the lean base
+#       (`amplifier-foundation@main#subdirectory=bundles/anchors`) ALONGSIDE
+#       this bundle is a preflight ERROR, measured 2026-09-04:
+#         [AgentCollisionError] Agent name
+#         'context-intelligence:session-navigator' is supplied by more than one
+#         dependency: …bundles/anchors, …amplifier-bundle-converge@main
+#       — because this bundle composes the lean base, so its closure already
+#       contains it. Collisions are never resolved by precedence, so the correct
+#       declaration is the single entry that supplies both helpers.
+#     * The self-reference is required, not redundant: the runner never infers a
+#       dependency from an agent name's namespace prefix (manifest.v1 Core 11).
+#
 # v1.3.1 (2026-09-02):
 #   - BUGFIX (docs): The two comments that told a reader where an owner-decision
 #     finding GOES — one in the header, one in the file-drift prompt — both sent
@@ -164,6 +193,35 @@
 #       drift, idempotent re-runs.
 # =============================================================================
 
+# --- Dependency manifest (contract: recipe-dependency-manifest.v1) ------------
+# `schema_version: 2` makes this recipe a self-contained dependency root: both
+# `agent:` references below resolve ONLY from the closure declared here, never
+# from the calling session's agent map. That is the file-level enforcement of
+# what the Requirements block above states in prose — a recipe can only reach
+# helpers that are actually present.
+#
+# ONE entry, deliberately. This bundle composes the lean anchors base
+# (PINS.md §Composition), so its closure already supplies `anchors:explorer`.
+# Declaring the lean base a SECOND time is a preflight collision error, not a
+# belt-and-braces — see the v1.4.0 changelog entry for the measured message.
+# The self-reference is required, not redundant: the runner never infers a
+# dependency from an agent name's namespace prefix (manifest.v1 Core 11).
+#
+# PIN HONESTY (measured 2026-09-04, not assumed): this pins `@main`, not a SHA.
+# Foundation fetches a ref with `git clone --branch`, which accepts a branch or
+# a tag but NOT a commit SHA — a bare SHA fails with "Could not find remote
+# branch … to clone". This repository publishes no tags, so `@main` is the most
+# precise resolvable pin available. Move it to a tag the moment one is cut.
+schema_version: 2
+
+dependencies:
+  - source: "git+https://github.com/microsoft/amplifier-bundle-converge@main"
+    kind: bundle
+    required_agents:
+      - "anchors:explorer"
+      - "converge:reconciler"
+# -----------------------------------------------------------------------------
+
 name: "seed-reconcile"
 description: >
   The Converge ratchet. Reconciles a target repo against its frozen contracts:
@@ -171,7 +229,7 @@ description: >
   conformance kit, files work-tracker items for every GAP/VIOLATION, records
   bidirectional drift, and emits a reconcile report. Flat, gate-free, and
   schedulable — it never prompts the steward.
-version: "1.3.1"
+version: "1.4.0"
 author: "converge bundle"
 tags: ["converge", "ratchet", "conformance", "ledger", "reconcile", "drift"]
 
