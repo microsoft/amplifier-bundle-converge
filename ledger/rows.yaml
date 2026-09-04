@@ -53,6 +53,21 @@
 # app's own words in front of the service worker's plain offline sentence. The
 # string survived and its meaning inverted. A grep cannot see that; the probe
 # now walks the whole chain in three files.
+# WHAT THE INTEGRATOR WILL SEE THIS TIME, ALSO MEASURED IN A SCRATCH MERGE.
+# converge-yjn branched at 5509f5e; main moved to fed1d66 while this ran. The
+# merge is clean (only ledger/ is touched here), and the gate in the merged tree
+# is GREEN ON EVERYTHING THIS PASS OWNS: no red row cites a resolved item, all
+# 86 executable refs meet their expect except one, every quote verifies. Two
+# lines fail there and neither is this lane's to clear:
+#   CVG-019  cites converge-wb0, which main's own newer export marks resolved.
+#            wb0's resolution names the successor itself -- converge-rp7, open,
+#            "ledger/ belongs to another lane, so the re-derivation is filed".
+#            It is a real re-derivation (step (j) still reads SKIP while the new
+#            stall fixture proves the reading answers both ways), not a ref swap.
+#   CVG-051  pins FAIL-ITEMS=12 and reads 13 there, because fed1d66 refreshed the
+#            export -- fixing four items and bringing newer ones in. The count
+#            follows the export by design; re-read on merge, never bump blind.
+# Main moves hourly; a ledger that chases it converges on nothing.
 # WHAT THE INTEGRATOR WILL SEE, MEASURED IN A SCRATCH MERGE RATHER THAN GUESSED.
 # converge-0gb branched at f718a20; main then moved 26 commits and edited
 # contracts/operation.v1.md. Merging this lane into main in a throwaway worktree
