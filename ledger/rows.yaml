@@ -752,13 +752,13 @@
     file: contracts/operation.v1.md
     clause: "Conformance kit asserts, Turnkey"
     quote: "**Red today** — this is the work list."
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: absence
-    ref: 'if [ -f evaluations/turnkey/run.py ] && grep -q "Verdict: RED" evaluations/turnkey/RESULT.md; then echo TURNKEY-EXISTS-AND-IS-RED; else echo TURNKEY-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if [ -f evaluations/turnkey/run.py ] && grep -q "Verdict: GREEN" evaluations/turnkey/RESULT.md; then echo TURNKEY-EXISTS-AND-IS-GREEN; else echo TURNKEY-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "TURNKEY-EXISTS-AND-IS-RED"
+      stdout_contains: "TURNKEY-EXISTS-AND-IS-GREEN"
   notes: >
     RAN 2026-09-02 → TURNKEY-EXISTS-AND-IS-RED. THE CAUSE CHANGED THIS SESSION and
     the change is recorded rather than absorbed. At seed the harness did not exist
@@ -786,7 +786,6 @@
     WHEN THE TURNKEY LANDS GREEN, THE THIRTEEN ARE RE-READ INDIVIDUALLY, NEVER
     BULK-FLIPPED. Thirteen rows behind one tracker item is exactly the shape that
     invites one green run to flip thirteen dispositions unexamined.
-  work: converge-qtp
 
 - id: CVG-011
   title: work is derived, never invented

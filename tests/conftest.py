@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-FIXTURE = REPO_ROOT / "conformance" / "surface" / "fixtures" / "app"
+FIXTURE = REPO_ROOT / "conformance" / "_superseded" / "surface" / "fixtures" / "app"
 
 
 @pytest.fixture
