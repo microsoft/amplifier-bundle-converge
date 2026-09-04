@@ -173,7 +173,7 @@
 # ONE FINDING IS FILED RATHER THAN ROWED, and the reasoning is in CVG-000: the
 # kit-assert bullet the amendment ADDED to composition.v1 has neither a ledger
 # row nor a kit rule. The fact it describes holds on this host; the promise that
-# the kit asserts it does not.
+# the kit asserts it does not. converge-lhkf carries both halves.
 #
 # WHAT THIS REPO OWES
 # -------------------
@@ -686,9 +686,10 @@
     recipes/seed-reconcile.yaml` → `status: ok`, `schema_version: 2`, and `plan`
     names both helpers against the dependency that supplies each — but a promise
     nothing checks is exactly the invisible gap converge-bv7 wrote CVG-071 for.
-    Filed as work rather than rowed in this pass, because whether that row's
-    probe may depend on a dependency fetch (network) is a real design call and
-    not a thing to settle at the end of a reconcile.
+    Filed as converge-lhkf rather than rowed in this pass, because whether that
+    row's probe may depend on a dependency fetch (network) is a real design call
+    and not a thing to settle at the end of a reconcile. When it lands, this
+    contract gains an eleventh row and that item is the one to read for why.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # composition.v1 — 9 rows.  The healthy one: 7 of 9 CONFORM, each by a kit rule
