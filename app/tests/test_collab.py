@@ -493,7 +493,12 @@ def _snapshot(client, tmp_path: Path, extra_boot: dict | None = None):
     )
     shell = templates.get_template("shell.html").render(user=GOOD_USER)
     partial = templates.get_template("collab.html").render()
-    served = shell.replace("</main>", partial + "\n</main>")
+    # Where the include line goes: below `.body-grid`, beside the dialogs -- not
+    # inside `<main class="workspace">`, which is `overflow:hidden` and draws the
+    # foot of this panel underneath the console pane. Measured 2026-09-04.
+    anchor = '<div id="managerMenu"'
+    assert anchor in shell, "the shell no longer includes dialogs.html where this expects"
+    served = shell.replace(anchor, partial + "\n" + anchor, 1)
     assert partial.strip() and partial in served, "the partial was not included in the shell"
 
     boot = client.get("/api/boot").json()

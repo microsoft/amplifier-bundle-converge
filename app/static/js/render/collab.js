@@ -167,9 +167,13 @@ async function postQuestion(one) {
     const mid = await managerId();
     const done = await send(`/api/collab/${encodeURIComponent(mid)}/pulls/${origin.number}/comments`,
       { repoId: origin.repoId || '', text: said });
-    outcome(done.ok ? `Posted on pull request #${origin.number}.` : `Not posted: ${done.reason}`);
     if (done.ok && box) box.value = '';
+    // Reading the conversation back redraws this review, which throws away the
+    // element the outcome was written into. So the redraw happens first and the
+    // sentence is written after it -- otherwise a steward who posted
+    // successfully saw nothing at all, which reads exactly like a failure.
     if (done.ok) await openOne(one.id, true);
+    outcome(done.ok ? `Posted on pull request #${origin.number}.` : `Not posted: ${done.reason}`);
   } catch (err) {
     outcome(`Not posted: ${err.message}`);
   }
@@ -183,10 +187,14 @@ async function answer(one, decision) {
     const done = await send(`/api/collab/${encodeURIComponent(mid)}/pulls/${origin.number}/answer`,
       { repoId: origin.repoId || '', decision, note: note ? note.value : '' });
     const back = done.returnedToOrigin || {};
-    outcome(`${done.decision}: written to the dated ratification record. `
+    const said = `${done.decision}: written to the dated ratification record. `
       + (back.ok
         ? `Posted back to pull request #${origin.number}.`
-        : `NOT posted back to the host — ${back.reason || 'the host refused'}.`));
+        : `NOT posted back to the host — ${back.reason || 'the host refused'}.`);
+    // Same order as the question above: redraw, then say what happened, so the
+    // word the steward just gave is visible beside the comment it became.
+    if (back.ok) await openOne(one.id, true);
+    outcome(said);
   } catch (err) {
     outcome(`Not answered: ${err.message}`);
   }

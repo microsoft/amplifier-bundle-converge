@@ -7,13 +7,26 @@
   Converge keeps no collaboration surface of its own, so nothing below stores
   anything -- every row is the host's own pull request, read fresh.
 
-  It wires with one line:
+  It wires with one line in `app/templates/shell.html`:
 
       {% raw %}{% include "collab.html" %}{% endraw %}
 
   and brings its own stylesheet and its own module script, so nothing else has
   to be edited to make it work. Collapsed it is a single summary line; the
   panel only costs room when a steward opens it.
+
+  **Where that line goes, and why it is not obvious.** Put it inside `#app`,
+  after the `.body-grid` div and beside `{% raw %}{% include "dialogs.html" %}{% endraw %}` -- not
+  inside `<main class="workspace">`. Measured at 1280x800 on 2026-09-04 with
+  the partial inside `<main>`: `.workspace` is `overflow:hidden` and the
+  console is the grid's third column, so the foot of this panel was drawn
+  underneath the console pane and its last paragraph could not be read or
+  clicked. Below the grid it is in the page's own flow and scrolls into view.
+
+  On screens narrower than 980px the console becomes a fixed sheet over the
+  bottom of the viewport (`console.css`), so it covers this panel there as it
+  covers everything else; closing the console shows it. That is the shell's
+  behaviour, not this partial's.
 
   The sentence under the summary is deliberately written into the markup rather
   than left for the script to fill in. Clause 6 asks for the freshness

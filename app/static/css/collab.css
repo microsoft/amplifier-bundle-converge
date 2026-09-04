@@ -51,7 +51,16 @@
   text-align: center;
 }
 
-.collab-body { padding: 0 16px 16px; border-top: 1px solid var(--line); }
+/* Bounded on purpose: an open panel with twenty pull requests in it would
+ * otherwise run the page off the bottom of the shell, and the shell's own
+ * console sheet is already there on a narrow screen. The panel scrolls
+ * inside itself instead. */
+.collab-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--line);
+  max-height: min(64vh, 680px);
+  overflow-y: auto;
+}
 
 .collab-freshness {
   margin: 12px 0;
