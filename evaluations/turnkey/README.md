@@ -116,6 +116,19 @@ attribution has been exercised on a purpose-built repository — a real lane mer
 and a real integration — in `tests/test_turnkey.py`, which is a fixture and not
 this host, and RESULT.md says that too.
 
+**Clause 9 needed an event, not a parser.** Its reading looks for a lane whose
+terminal session is gone and whose branch carries no commit beyond its base —
+and every wave on this host finished, so it ran, found nothing, and said so. A
+gate that has only ever seen work move cannot say what happens when work stops.
+[`fixtures/stall_wave.py`](fixtures/stall_wave.py) seeds the missing event: a
+wave, in observed mode, whose second lane really did stop with an unchanged
+branch. Two variants differing by one plan-record entry — one where the plan
+record declares the stall, one where nothing names it — read `PASS` and `FAIL`
+respectively. On its first run **both passed**, because the reading credited the
+entry that *launched* the lane with declaring its stall; see
+[`fixtures/README.md`](fixtures/README.md#what-it-caught-on-its-first-run). It is
+a fixture and not this host, and what it does not prove is written beside it.
+
 ## Three statuses, and a SKIP is never a soft pass
 
 | Status | Means |
@@ -217,13 +230,32 @@ in it — so a new assertion cannot be added without being exercised. The pytest
 suite additionally proves the fixture is red before any work, that the answer
 key says what the fixture actually says, and that the two gaps do not touch.
 
-## The fixture
+**Synthetic evidence proves the judgement, not the detection.** A pure function
+over a hand-written list says nothing about whether the thing it judges is ever
+found — from git, from the multiplexer, from the launcher's manifest. That gap
+is real and it has been measured: clause 9's judgement was correct in both
+directions against synthetic input while the step around it credited a launch
+entry with declaring a stall. So the two clause readings that turn on evidence
+git and the plan record must agree about are additionally exercised against
+**real repositories**: clauses 7 and 8 against a repository with a real lane
+merge, and clause 9 against [`fixtures/stall_wave.py`](fixtures/stall_wave.py),
+a real wave with a real stalled lane, run both ways.
 
-[`fixtures/`](fixtures/) — a tiny repository with two planted gaps in two files
-that do not touch, and its own conformance kit that reports both red. Two
-disjoint gaps is the smallest fixture that makes "run two lanes" the correct
-answer rather than an arbitrary one (clause 6: width is a collision decision).
-See [`fixtures/README.md`](fixtures/README.md).
+## The fixtures
+
+[`fixtures/`](fixtures/) carries two, and they answer different questions.
+
+- **The gap fixture** (`gap-repo/`, `seed.sh`) — a tiny repository with two
+  planted gaps in two files that do not touch, and its own conformance kit that
+  reports both red. It is the wave's *input*. Two disjoint gaps is the smallest
+  fixture that makes "run two lanes" the correct answer rather than an arbitrary
+  one (clause 6: width is a collision decision).
+- **The stall fixture** (`stall_wave.py`) — a wave that has already *happened*,
+  in which one lane stopped with an unchanged branch and a second one did not.
+  It is the wave's *output*, and it exists because clause 9 needed an event
+  rather than a cleverer parser.
+
+See [`fixtures/README.md`](fixtures/README.md) for both.
 
 ## Anything it stands up, it tears down
 

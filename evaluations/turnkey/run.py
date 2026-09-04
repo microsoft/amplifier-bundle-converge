@@ -289,6 +289,29 @@ PARK = re.compile(r"\bpark(?:ed|s|ing)?\b", re.I)
 # `PROTOCOL.md` keeps its dot — splitting on a bare period cut the first real
 # park sentence in this workspace's plan record in half (measured).
 SENTENCE_BREAK = re.compile(r"(?<=[.;])[ \t]+")
+
+# Clause 9 asks whether a stall was DECLARED, and naming a lane is not declaring
+# that it stopped. MEASURED, 2026-09-04, on the stall fixture next door
+# (`fixtures/stall_wave.py`): a wave whose plan record never mentioned the stall
+# at all still came back `Core 9 PASS`, because the entry that LAUNCHED the lane
+# three lines up carried the lane's name and the reading asked for nothing more.
+# The two variants of that fixture differ by one entry and read identically --
+# which is a reading that cannot discriminate, and the exact fabricated pass
+# this harness exists to refuse.
+#
+# So a record declares a stall only if it also says the lane STOPPED, and says
+# it IN THE SAME SENTENCE as the lane's name: otherwise one entry naming lane A
+# while reporting lane B stuck would vouch for A. Read against this workspace's
+# own plan record, the two real declarations in it both still answer -- "both w6
+# lanes died silently mid-work (0 commits ...)" and "w8-ledger-refs relaunched:
+# first attempt hung at the provider-setup prompt".
+STALL_DECLARED = re.compile(
+    r"\b(?:stall(?:s|ed|ing)?|stuck|stop(?:s|ped|ping)?|halted|"
+    r"abandon(?:ed|ing)?|die[sd]?|dead|dying|hung|hang(?:s|ing)?|exited|"
+    r"killed|timed out|gave up|no progress|no commits|0 commits|zero commits|"
+    r"unchanged branch|never returned|did not return|refus(?:ed|al))\b",
+    re.I,
+)
 CALL_STAMP = re.compile(r"\bCALL[ \t]+([A-Za-z][A-Za-z ]{2,20}?)[ \t]*[-:\u2014]")
 CONTINUED = re.compile(r"\bContinued[ \t]*:[ \t]*([^.;]*)", re.I)
 # `Live: a, b` names them; `Live 4` counts them. Both are the same fact, and a
@@ -1645,9 +1668,23 @@ def assert_stalls_are_declared(stalls: list[dict], records: list[dict]) -> dict:
     on an unchanged branch has not stalled, it is working, and counting it here
     would fabricate a red.
 
-    For each, the question is whether anybody wrote down that it stopped and
-    why. The record has to name the lane; a record naming no lane cannot be
-    said to be about it.
+    For each, the question is whether anybody wrote down that it stopped. Two
+    things have to be true of the record, and the second one was learned the
+    hard way (see `STALL_DECLARED`):
+
+    - it NAMES the lane — a record naming no lane cannot be said to be about it;
+    - and it says, in the same sentence as that name, that the lane STOPPED.
+      Being named is not being declared: the entry that launched a lane names
+      it, and so does the refill line that filled the slot beside it. A lane
+      that is only mentioned is reported as exactly that, and never as a pass.
+
+    WHAT A PASS DOES NOT PROVE. Whether the cause the record gives is the real
+    one, or an adequate one — this reads that a stop was written down and shows
+    the words, and a reader judges the cause. Nor whether the lane had already
+    been retried before it was declared: clause 9's "across iterations" needs a
+    count of attempts, and nothing on disk here records one. A record that
+    declares the stop and then relaunches in place reads as declared, which is
+    the honest limit of what an artifact left on disk can settle.
     """
     if not stalls:
         return _clause(9, SKIP,
@@ -1655,22 +1692,55 @@ def assert_stalls_are_declared(stalls: list[dict], records: list[dict]) -> dict:
                        "reading to judge — the reading ran and found nothing",
                        stalls=0, records=len(records),
                        awaits="a lane that ends with an unchanged branch")
-    undeclared, declared = [], []
+    unnamed, mentioned, declared = [], [], []
     for stall in stalls:
-        hit = next((r for r in records if stall["lane"] in (r.get("text") or "")), None)
-        (declared if hit else undeclared).append(
-            {"lane": stall["lane"], "record": (hit or {}).get("text", "")[:160] or None})
+        lane = stall["lane"]
+        naming = [r for r in records if lane in (r.get("text") or "")]
+        said = None
+        for record in naming:
+            text = record.get("text") or ""
+            for sentence in SENTENCE_BREAK.split(text):
+                if lane in sentence and STALL_DECLARED.search(sentence):
+                    said = {"lane": lane, "record": text[:160],
+                            "sentence": sentence.strip()[:160]}
+                    break
+            if said:
+                break
+        if said:
+            declared.append(said)
+        elif naming:
+            mentioned.append({"lane": lane,
+                              "record": (naming[-1].get("text") or "")[:160]})
+        else:
+            unnamed.append({"lane": lane, "record": None})
     facts = {"stalled": [s["lane"] for s in stalls], "declared": declared,
-             "undeclared": [u["lane"] for u in undeclared]}
-    if undeclared:
+             "mentioned_only": mentioned, "records_read": len(records),
+             "undeclared": [r["lane"] for r in unnamed + mentioned]}
+    if unnamed or mentioned:
+        halves = []
+        if unnamed:
+            halves.append(
+                f"{', '.join(u['lane'] for u in unnamed)} — no record among the "
+                f"{len(records)} read names them at all")
+        if mentioned:
+            first = mentioned[0]
+            halves.append(
+                f"{', '.join(m['lane'] for m in mentioned)} — named, but no record "
+                f"says the lane stopped; the newest one naming "
+                f"{first['lane']} reads {first['record']!r}, which is a mention "
+                "and not a declaration")
         return _clause(9, FAIL,
-                       f"{len(undeclared)} lane(s) stopped with an unchanged branch "
-                       f"and no record names them or says why: "
-                       f"{', '.join(u['lane'] for u in undeclared)}",
+                       f"{len(unnamed) + len(mentioned)} lane(s) stopped with an "
+                       f"unchanged branch and were not declared stuck: "
+                       + "; ".join(halves),
                        **facts)
+    first = declared[0]
     return _clause(9, PASS,
-                   f"{len(declared)} lane(s) stopped with an unchanged branch and each "
-                   "is named in a record that says what stopped it",
+                   f"{len(declared)} lane(s) stopped with an unchanged branch and "
+                   f"each is named in a record that says it stopped — "
+                   f"{first['lane']}: {first['sentence']!r}; this reads that the "
+                   "stop was written down, not whether the cause it gives is the "
+                   "real one",
                    **facts)
 
 
@@ -3700,6 +3770,22 @@ def self_check() -> dict:
                   )["verdict"] == PASS))
     cases.append(("no stall at all is a skip, never a pass",
                   assert_stalls_are_declared([], [])["verdict"] == SKIP))
+    cases.append(("a record that only NAMES the stalled lane FAILS clause 9",
+                  assert_stalls_are_declared(
+                      [{"lane": "w6-x"}],
+                      [{"text": "cycle 1: launched w6-x and w6-y at width 2"}]
+                  )["verdict"] == FAIL))
+    cases.append(("being named by the launch entry is reported as a mention",
+                  assert_stalls_are_declared(
+                      [{"lane": "w6-x"}],
+                      [{"text": "cycle 1: launched w6-x and w6-y at width 2"}]
+                  )["mentioned_only"][0]["lane"] == "w6-x"))
+    cases.append(("a stall word about ANOTHER lane does not declare this one",
+                  assert_stalls_are_declared(
+                      [{"lane": "w6-x"}],
+                      [{"text": "cycle 3: refilled w6-x. w6-y is stuck at the "
+                                "provider prompt."}]
+                  )["verdict"] == FAIL))
 
     quoted = {"id": "p-1", "title": "the changes view is misaligned",
               "description": "Source — the steward on build b7ed3f0, quoted: 'the "
