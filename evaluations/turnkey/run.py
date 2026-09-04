@@ -242,26 +242,103 @@ BACKTICKED = re.compile(r"`([^`]+)`")
 
 # Files that record a CHECK HAVING BEEN RUN — the ledger's `RAN <date>` notes
 # and this harness's own recorded result. Clause 7 and clause 8 are about who
-# re-ran the check, and these are the only artifacts in the repository that a
-# check run leaves behind.
+# re-ran the check, and these were, until the convention below, the only
+# artifacts in the repository that a check run leaves behind.
 CHECK_RECORDS = ("ledger/rows.yaml", "evaluations/turnkey/RESULT.md")
+
+# The manager session's OWN record of the post-merge re-check, written in its
+# own commit on the integration branch. Both files above are edited by lanes, so
+# the newest commit touching either arrives through a lane merge — measured on
+# this repository 2026-09-04, which is why the attribution below could see seven
+# integrator-written records in the history and still not say who verified the
+# newest wave. A file only the manager session writes takes the confusion out of
+# the question. The convention is written in the file itself and taught in
+# `modes/converge-manager.md` clause 8; this harness only reads it.
+MANAGER_CHECK_RECORD = "docs/workflow/CHECK-RECORD.md"
+
+# An entry in that record: `## <date> <HH:MM> - <what was integrated>`. The same
+# stamped shape a return-log entry carries, for the same reason — a stamp is
+# countable by somebody who was not in the session.
+CHECK_ENTRY = re.compile(
+    r"^#{2,}[ \t]+(20\d{2}-\d{2}-\d{2})[ \tT]+(\d{2}:\d{2})[ \t]*[-:\u2014]?[ \t]*(.*)$",
+    re.MULTILINE,
+)
+
+# A check RUN leaves a command behind. An entry naming no command is a claim
+# that a check happened, which is the one thing this step exists not to take on
+# trust. A fenced block counts; so does a backticked command long enough to be
+# one.
+CHECK_COMMAND = re.compile(r"`([A-Za-z][^`\n]{5,})`")
+CHECK_FENCE = re.compile(r"(?:```|~~~)[^\n]*\n(.+?)(?:```|~~~)", re.S)
+CHECK_INDENTED = re.compile(r"^[ \t]{4,}(\S.*)$", re.MULTILINE)
+
+# A CALL to the steward, stamped in the plan record. Clause 11 says exactly four
+# reach them; clause 3 asks what kept moving while one was outstanding. One line
+# carries both:
+#
+#   - <ISO> CALL ratify - the clause 15 candidate needs your word.
+#     Parked: w8-clause15. Continued: console, direction-writes.
+#
+# The looser form this workspace's manager sessions already write is read too —
+# a cycle entry saying `Parked: x` and `Live: a, b` records the same two facts —
+# and every reading says which form answered it. `\b` on the park word is not
+# decoration: without it `spark-1`, the hostname in this workspace's own plan
+# record, was counted as a park (measured, 5 entries where 4 are real).
+PARK = re.compile(r"\bpark(?:ed|s|ing)?\b", re.I)
+# A sentence break is a period, semicolon or dash FOLLOWED BY A SPACE, so
+# `PROTOCOL.md` keeps its dot — splitting on a bare period cut the first real
+# park sentence in this workspace's plan record in half (measured).
+SENTENCE_BREAK = re.compile(r"(?<=[.;])[ \t]+")
+CALL_STAMP = re.compile(r"\bCALL[ \t]+([A-Za-z][A-Za-z ]{2,20}?)[ \t]*[-:\u2014]")
+CONTINUED = re.compile(r"\bContinued[ \t]*:[ \t]*([^.;]*)", re.I)
+# `Live: a, b` names them; `Live 4` counts them. Both are the same fact, and a
+# reading that took only the first would find nothing in this workspace's newer
+# entries, which count.
+STILL_LIVE = re.compile(r"\bLive[ \t]*(?::[ \t]*([^.;]*)|([0-9]+))", re.I)
+
+# Why nothing else could move while the steward's word was outstanding.
+# Deliberately NOT `PLAN_REASON`: that pattern counts the word "parked" itself
+# as a reason, so every park would excuse itself and the failing case could
+# never fire — measured, the self-check case caught it.
+IDLE_REASON = re.compile(
+    r"\b(because|since|collides?|collision|no ready|no refill|nothing ready|"
+    r"nothing else|everything else|blocked|depends on|the same word|"
+    r"awaiting the same)\b", re.I)
+
+# The four calls clause 11 sanctions, each with the words a manager session
+# actually writes for it. A call naming none of these is UNREAD, never a
+# violation: the clause is broken by a fifth kind of call reaching the steward,
+# not by an entry that failed to say which kind it was.
+CALL_WORDS = (
+    ("ratify", re.compile(r"\bratif\w*", re.I)),
+    ("irreversible", re.compile(r"\birreversib\w*|\bdestructive\b", re.I)),
+    ("human check", re.compile(r"\bhuman check\b|\bonly a (?:person|human|device)\b",
+                               re.I)),
+    ("priority", re.compile(r"\bpriorit\w*|\bstop the run\b|\bkill the run\b", re.I)),
+)
 
 # What a resolution must not be if it was written for whoever asked: a sha, an
 # issue number, a path, a bare status word.
 WORD = re.compile(r"[A-Za-z][A-Za-z'\u2019-]+")
 POINTER_ONLY = re.compile(r"^(?:[0-9a-f]{7,40}|#\d+|\S+/\S+|done|fixed|ok|wontfix)$", re.I)
 
-# The two observations nothing in this harness takes yet, written out once so
-# a SKIP names the same thing every time it is read.
+# The observations these readings wait on, written out once so a SKIP names the
+# same thing every time it is read. Each names something a manager session can
+# actually produce — the stamp `modes/converge-manager.md` clauses 3 and 11 ask
+# for — rather than a wish. An awaited observation nobody can take is a way of
+# never being answerable.
 AWAITED = {
-    3: "a count of the items parked on the steward's word, taken at each park, "
-       "beside the work that continued without them — the maximisation clause 3 "
-       "promises is a comparison against the work that COULD have proceeded, and "
-       "neither the queue nor the plan record stores a park event to count",
-    11: "the manager session's owner-facing prompt events, classified into the "
-        "four calls. evaluations/ratchet counts exactly these events for the "
-        "RECONCILER; no equivalent reading exists for a manager session, and "
-        "neither the queue nor the return log records a prompt as an event",
+    3: "a park stamped in the plan record with what continued beside it — "
+       "`CALL <one of four> - <what is asked>. Parked: <items>. Continued: "
+       "<what kept moving>` — or a cycle entry that names both a park and the "
+       "lanes still live at that moment. Clause 3's promise is a comparison, so "
+       "a park recorded alone cannot be told from a wave that stopped",
+    11: "a call stamped with which of the four it is — `CALL ratify`, `CALL "
+        "irreversible`, `CALL human check`, `CALL priority` — in the plan "
+        "record, at the moment of the call. evaluations/ratchet counts "
+        "owner-facing events for the RECONCILER; a manager session's calls are "
+        "recorded nowhere else, so a call nobody stamped leaves no trace to "
+        "classify",
 }
 
 
@@ -743,6 +820,106 @@ def parse_plan_entries(text: str) -> list[dict]:
     return entries
 
 
+def _names(blob: str | None) -> list[str]:
+    """The names in a comma-separated list, with the words for none dropped."""
+    out = []
+    for token in re.split(r"[,\u00b7]|\band\b", blob or ""):
+        token = token.strip(" .`*-\u2014").strip()
+        if not token or token.lower() in ("none", "nothing", "nobody", "no lanes",
+                                          "no lane", "n/a"):
+            continue
+        out.append(token)
+    return out
+
+
+def _what_continued(text: str) -> tuple[int | None, list[str], str | None]:
+    """How much kept moving while the steward's word was outstanding.
+
+    Two forms are read, and the reading says which answered. `Continued: a, b`
+    is the stamp `modes/converge-manager.md` clause 3 asks for. `Live: a, b` and
+    `Live 4` are what this workspace's manager sessions already write in a cycle
+    entry, and they record the same fact at the same moment.
+
+    None means the entry never said — which is different from saying nothing
+    continued, and is why the two are never collapsed here.
+    """
+    stamped = CONTINUED.search(text)
+    if stamped:
+        named = _names(stamped.group(1))
+        return len(named), named, "the stamped `Continued:` list"
+    live = STILL_LIVE.search(text)
+    if live and live.group(1) is not None:
+        named = _names(live.group(1))
+        return len(named), named, "the entry's own `Live:` list"
+    if live and live.group(2) is not None:
+        return int(live.group(2)), [], "the entry's own live count"
+    return None, [], None
+
+
+def _call_named(entry: str, park_sentence: str) -> tuple[str | None, str | None]:
+    """Which of the four calls this entry names, and the words it named it with.
+
+    Two places are read, and only two. The stamp `CALL <word>` is unambiguous
+    wherever it sits in the entry, because nothing else writes it. Failing that,
+    the loose form is read from the PARK'S OWN SENTENCE and nowhere else: read
+    from the whole entry, a cycle that merged a guard fix mentioning "RATIFIED =
+    locked" and separately parked something unrelated came back classified as a
+    ratify call — measured on this workspace's plan record, and a classification
+    nobody wrote and nobody could defend.
+
+    Returns (call, raw). A stamped `CALL <word>` whose word is none of the four
+    comes back as (None, word) — a fifth kind of call reaching the steward, which
+    is the defect clause 11 names. An entry that names no call at all comes back
+    as (None, None): unread, not a violation.
+    """
+    stamp = CALL_STAMP.search(entry)
+    if stamp:
+        raw = stamp.group(1).strip()
+        for name, pattern in CALL_WORDS:
+            if pattern.search(raw):
+                return name, raw
+        return None, raw
+    for name, pattern in CALL_WORDS:
+        hit = pattern.search(park_sentence)
+        if hit:
+            return name, hit.group(0)
+    return None, None
+
+
+def parse_park_events(entries: list[dict]) -> list[dict]:
+    """Every plan entry that records work parked on the steward's word.
+
+    Three things come off each one, and clauses 3 and 11 need different ones:
+    what was parked, which of the four calls it waits on, and what kept moving
+    beside it. The call is looked for in the park's own sentence rather than the
+    whole entry, so a cycle that merged a lane called `ratify-card` and parked
+    something unrelated is not read as a ratify call.
+    """
+    events = []
+    for entry in entries:
+        text = entry.get("text") or ""
+        stamp = CALL_STAMP.search(text)
+        if not PARK.search(text) and not stamp:
+            continue
+        sentences = [s for s in SENTENCE_BREAK.split(text) if PARK.search(s)]
+        parked = (sentences[0] if sentences else
+                  (stamp.group(0) if stamp else text)).strip()
+        call, raw = _call_named(text, parked)
+        count, named, source = _what_continued(text)
+        events.append({
+            "at": entry.get("at"),
+            "parked": parked[:200],
+            "call": call,
+            "call_named": raw,
+            "continued": count,
+            "continued_names": named[:8],
+            "continued_source": source,
+            "reason": bool(IDLE_REASON.search(text)),
+            "stamped": bool(CALL_STAMP.search(text)),
+        })
+    return events
+
+
 def _declaration(line: str) -> str:
     """The part of an ownership line that is the DECLARATION, not the prose.
 
@@ -861,6 +1038,84 @@ def commits_touching(env: Env, repo: str, branch: str, path: str, limit: int = 2
                      ) -> list[dict]:
     """The newest commits on `branch` that changed `path`, newest first."""
     return _log(env, repo, [f"--max-count={limit}", branch, "--", path])
+
+
+def commit_that_introduced(env: Env, repo: str, branch: str, path: str,
+                           needle: str, limit: int = 40) -> dict | None:
+    """The commit that ADDED a line to a file, found with git's own pickaxe.
+
+    "The newest commit touching the file" is the wrong question for an append-
+    only record: a later commit fixing a typo three entries up would be credited
+    with writing the newest entry. `-S` reports the commits where the count of a
+    string changed, newest first, so the OLDEST of them is the one that put the
+    line there.
+
+    Note this walks the whole history and not the first-parent line, which is
+    exactly what the attribution needs: a commit that arrived on a lane branch
+    must be findable in order to be recognised as a lane's.
+    """
+    rows = _log(env, repo, [f"--max-count={limit}", f"-S{needle}", branch, "--", path])
+    return rows[-1] if rows else None
+
+
+def parse_check_entries(text: str | None) -> list[dict]:
+    """The stamped entries of the manager session's check record, oldest first.
+
+    Each entry runs from its heading to the next heading of any depth, the same
+    way the return log's entries do. What is read off it: the stamp, the
+    headline, and the command it says was run — because an entry naming no
+    command is a claim that a check happened rather than a record of one.
+    """
+    if not text:
+        return []
+    heads = list(CHECK_ENTRY.finditer(text))
+    entries = []
+    for i, head in enumerate(heads):
+        end = heads[i + 1].start() if i + 1 < len(heads) else len(text)
+        body = text[head.end():end]
+        command = None
+        fence = CHECK_FENCE.search(body)
+        if fence:
+            command = first_line(fence.group(1))
+        if not command:
+            spanned = CHECK_COMMAND.search(body)
+            command = spanned.group(1).strip() if spanned else None
+        if not command:
+            indented = CHECK_INDENTED.search(body)
+            command = indented.group(1).strip() if indented else None
+        entries.append({
+            "stamp": f"{head.group(1)} {head.group(2)}",
+            "headline": head.group(3).strip(),
+            "heading": head.group(0).strip(),
+            "command": command,
+        })
+    return entries
+
+
+def read_manager_check_record(env: Env, repo: str, branch: str,
+                              attribute) -> dict:
+    """The manager session's own check record, and who wrote its newest entry.
+
+    `attribute` is the same classifier step (k) uses on every other commit, so
+    the answer here rests on exactly one fact: which side of a lane merge the
+    commit that added the entry arrived on.
+    """
+    path = f"{repo}/{MANAGER_CHECK_RECORD}"
+    if not env.exists(path):
+        return {"path": MANAGER_CHECK_RECORD, "exists": False, "entries": 0,
+                "newest": None}
+    entries = parse_check_entries(env.read(path))
+    if not entries:
+        return {"path": MANAGER_CHECK_RECORD, "exists": True, "entries": 0,
+                "newest": None}
+    newest = entries[-1]
+    commit = commit_that_introduced(env, repo, branch, MANAGER_CHECK_RECORD,
+                                    newest["heading"])
+    placed = attribute(commit, MANAGER_CHECK_RECORD) if commit else None
+    return {
+        "path": MANAGER_CHECK_RECORD, "exists": True, "entries": len(entries),
+        "newest": {**newest, "commit": placed},
+    }
 
 # ---------------------------------------------------------------------------
 # THE ASSERTIONS — clause 5, "lanes are real sessions"
@@ -1419,6 +1674,131 @@ def assert_stalls_are_declared(stalls: list[dict], records: list[dict]) -> dict:
                    **facts)
 
 
+def assert_parks_kept_the_wave_moving(parks: list[dict]) -> dict:
+    """Clause 3 — what needs their word is parked; everything else continues.
+
+    The clause is a MAXIMISATION, and a maximisation is a comparison. What can
+    be compared here is narrow and worth saying plainly: at the moment work was
+    parked on the steward's word, did anything else keep moving? A park recorded
+    on its own is indistinguishable from a wave that stopped, which is why the
+    stamp asks for both halves on one line.
+
+    A park with nothing continuing is only a FAIL when the entry gives no reason
+    for it. "Everything else is blocked on this same word" and "no ready item
+    that does not collide" are the honest cases, and a rule that could not tell
+    them from giving up would fabricate a red on a manager session doing exactly
+    the right thing.
+
+    What a PASS does NOT prove: that nothing MORE could have proceeded. Nothing
+    on disk records the work that was available and not launched, so this says
+    the wave did not go idle on the steward's word, and no more than that.
+    """
+    if not parks:
+        return _clause(3, SKIP,
+                       "no park is recorded in the plan record, so nothing was "
+                       "waiting on the steward for this reading to judge — the "
+                       "reading ran and found nothing",
+                       awaits=AWAITED[3], parks=0)
+    judged = [p for p in parks if p["continued"] is not None]
+    idle = [p for p in judged if p["continued"] == 0 and not p["reason"]]
+    excused = [p for p in judged if p["continued"] == 0 and p["reason"]]
+    moving = [p for p in judged if (p["continued"] or 0) > 0]
+    facts = {"parks": len(parks), "judged": len(judged), "moving": len(moving),
+             "idle": len(idle), "idle_with_a_reason": len(excused),
+             "events": parks[:8],
+             "stamped": len([p for p in parks if p["stamped"]])}
+    if idle:
+        first = idle[0]
+        return _clause(3, FAIL,
+                       f"{len(idle)} of {len(parks)} park(s) record nothing "
+                       f"continuing beside them and give no reason for it: at "
+                       f"{first['at']}, {first['parked'][:90]!r} — a wave that "
+                       "waits on a person while nothing else moves is the one "
+                       "thing this clause forbids",
+                       **facts)
+    if not moving:
+        return _clause(3, SKIP,
+                       f"{len(parks)} park(s) are recorded and none names what "
+                       "continued beside it, so the comparison the clause promises "
+                       "cannot be made",
+                       awaits=AWAITED[3], **facts)
+    fewest = min(p["continued"] for p in moving)
+    source = moving[0]["continued_source"]
+    return _clause(3, PASS,
+                   f"{len(moving)} of {len(parks)} recorded park(s) name what kept "
+                   f"moving beside them (read from {source}; fewest at any one "
+                   f"park: {fewest})"
+                   + (f", and {len(excused)} park(s) with nothing continuing say "
+                      "why" if excused else "")
+                   + " — the wave did not go idle on the steward's word, which is "
+                     "what this reading can say and not that nothing more could "
+                     "have proceeded",
+                   **facts)
+
+
+def assert_calls_are_one_of_the_four(parks: list[dict]) -> dict:
+    """Clause 11 — exactly four kinds of call reach the steward.
+
+    A call a manager session makes is recorded in one place: the plan record's
+    own entry, at the moment it made it. This reads those, and classifies each
+    into ratify · irreversible · human check · priority.
+
+    Three outcomes, and the difference between the last two is the whole point:
+
+    - FAIL — a call was stamped with a word that is none of the four. That is
+      the defect the clause names, standing in plain sight.
+    - PASS — every recorded call names one of the four.
+    - SKIP — some recorded call names none, so the set cannot be said to be the
+      four. An entry that failed to say which kind of call it was is unread, not
+      a violation.
+
+    What a PASS does NOT prove: that no OTHER call reached the steward. A call
+    nobody stamped leaves no trace, and this reads what a wave left behind.
+    """
+    if not parks:
+        return _clause(11, SKIP,
+                       "no call to the steward is recorded in the plan record, so "
+                       "there is nothing to count or classify — the reading ran "
+                       "and found nothing",
+                       awaits=AWAITED[11], calls=0)
+    outside = [p for p in parks if p["call_named"] and not p["call"]]
+    named = [p for p in parks if p["call"]]
+    unnamed = [p for p in parks if not p["call_named"]]
+    tally = {}
+    for park in named:
+        tally[park["call"]] = tally.get(park["call"], 0) + 1
+    facts = {"calls": len(parks), "classified": len(named),
+             "unclassified": len(unnamed), "outside_the_four": len(outside),
+             "tally": tally, "events": parks[:8]}
+    if outside:
+        first = outside[0]
+        return _clause(11, FAIL,
+                       f"{len(outside)} call(s) reached the steward stamped as "
+                       f"something that is none of the four: {first['call_named']!r} "
+                       f"at {first['at']} — clause 11 says anything else is a "
+                       "defect to file",
+                       **facts)
+    if not named:
+        return _clause(11, SKIP,
+                       f"{len(parks)} call(s) are recorded and none says which of "
+                       "the four it is, so they cannot be classified",
+                       awaits=AWAITED[11], **facts)
+    if unnamed:
+        return _clause(11, SKIP,
+                       f"{len(named)} of {len(parks)} recorded call(s) name which "
+                       f"of the four they are ({', '.join(f'{k}: {v}' for k, v in tally.items())}); "
+                       f"the other {len(unnamed)} name none, so this run cannot say "
+                       "the calls that reached the steward were the four",
+                       awaits=AWAITED[11], **facts)
+    return _clause(11, PASS,
+                   f"every one of {len(parks)} call(s) recorded in the plan record "
+                   f"is one of the four ({', '.join(f'{k}: {v}' for k, v in tally.items())}) "
+                   "— a call stamped as anything else would be the defect this "
+                   "clause names, and none is; a call nobody stamped leaves no "
+                   "trace here either way",
+                   **facts)
+
+
 def assert_feedback_was_enriched(pairings: list[dict]) -> dict:
     """Clause 4 — no raw report becomes work without a quoted source.
 
@@ -1638,6 +2018,111 @@ def assert_check_record_attributed(newest: list[dict], history: list[dict]) -> d
                 "half of clause 8 that says never the worker session's"),
         **facts,
     }
+
+
+def assert_manager_check_record(record: dict) -> dict:
+    """Clauses 7 and 8 — the record the MANAGER SESSION writes about its own re-run.
+
+    `assert_check_record_attributed` below reads the two files a check run used
+    to leave a trace in, and both are edited by lanes, so its answer on this host
+    is almost always "the newest record came in through a lane merge". That is
+    an honest reading of a confounded artifact, not a reading of the promise.
+
+    The convention removes the confound: `docs/workflow/CHECK-RECORD.md` is
+    written only by the manager session, in its own commit, after integrating.
+    Then one fact settles the clause — which side of a lane merge the commit that
+    added the newest entry arrived on.
+
+    Five outcomes:
+
+    - PASS — the newest entry was added outside every lane merge, and it names
+      the check that was run.
+    - FAIL — the newest entry came in through a lane merge. The record of the
+      manager session's own verification was written by a worker session, which
+      is the half of clause 8 that says never the worker session's.
+    - SKIP (no file) — the convention is not in this repository yet.
+    - SKIP (no entry) — the convention is written down and nothing has followed
+      it here.
+    - SKIP (a claim, not a record) — the newest entry names no command, so
+      nothing says a check was actually run.
+
+    What a PASS does NOT prove: that the run behind the entry was clean, or that
+    it covered every merge. Step (h) re-runs the check itself and answers that;
+    this answers who.
+    """
+    path = record.get("path", MANAGER_CHECK_RECORD)
+    if not record.get("exists"):
+        return {"verdict": SKIP,
+                "short": f"({path}) is not in this repository yet",
+                "why": f"the record the manager session writes itself ({path}) is "
+                       "not in this repository yet, so nothing here says who "
+                       "re-ran the check",
+                "awaits": f"the {path} convention, and the first entry a manager "
+                          "session writes into it after integrating a wave",
+                "entries": 0}
+    if not record.get("entries"):
+        return {"verdict": SKIP,
+                "short": f"({path}) carries no entry yet",
+                "why": f"the record the manager session writes itself ({path}) "
+                       "exists and carries no entry yet — the convention is "
+                       "written down and no wave has followed it here",
+                "awaits": f"one entry in {path}, added by the manager session's "
+                          "own commit after it re-ran the check",
+                "entries": 0}
+    newest = record["newest"]
+    commit = newest.get("commit")
+    facts = {"entries": record["entries"], "newest_stamp": newest.get("stamp"),
+             "newest_headline": newest.get("headline"),
+             "newest_command": newest.get("command"), "commit": commit}
+    if commit is None:
+        return {"verdict": SKIP,
+                "short": f"({path}) carries an entry no commit could be found for",
+                "why": f"the newest entry in {path} ({newest.get('stamp')}) could "
+                       "not be traced to the commit that added it, so who wrote it "
+                       "is unread",
+                "awaits": "a git history this run can read to the end",
+                **facts}
+    author = commit.get("author")
+    if author == "lane":
+        merge = commit.get("lane_merge_before") or {}
+        return {"verdict": FAIL,
+                "short": f"({path})'s newest entry came in through a lane merge",
+                "why": (f"the newest entry in {path} ({newest.get('stamp')}) was "
+                        f"added by {commit['sha'][:8]}, which reached this branch "
+                        f"as the second parent of {merge.get('sha', '?')[:8]} "
+                        f"({merge.get('subject', 'a lane merge')!r}) — a worker "
+                        "session wrote the record of the manager session's own "
+                        "verification, which is the half of clause 8 that says "
+                        "never the worker session's"),
+                **facts}
+    if author != "integrator":
+        return {"verdict": SKIP,
+                "short": f"({path})'s newest entry could not be placed",
+                "why": (f"the commit that added the newest entry in {path} "
+                        f"({commit['sha'][:8]}) could not be placed on either side "
+                        "of a lane merge, so who wrote it is unread"),
+                "awaits": "a git history this run can read to the end",
+                **facts}
+    if not newest.get("command"):
+        return {"verdict": SKIP,
+                "short": f"({path})'s newest entry names no check that was run",
+                "why": (f"the newest entry in {path} ({newest.get('stamp')}) was "
+                        "written outside every lane merge, and it names no command "
+                        "— it is a claim that a check happened rather than a record "
+                        "of one"),
+                "awaits": f"an entry in {path} naming the command it re-ran",
+                **facts}
+    return {"verdict": PASS,
+            "short": f"({path})'s newest entry is the manager session's own",
+            "why": (f"the newest entry in {path} ({newest.get('stamp')} — "
+                    f"{newest.get('headline')!r}) was added by "
+                    f"{commit['sha'][:8]} ({commit.get('subject')!r}), which is on "
+                    "neither side of any lane merge, so it was the manager "
+                    f"session's own hand and not a lane's; it names the check it "
+                    f"ran ({newest.get('command')!r}). What this does not prove is "
+                    "that the run behind it was clean or that it covered every "
+                    "merge — step (h) re-runs the check itself and answers that"),
+            **facts}
 
 
 # ---------------------------------------------------------------------------
@@ -2479,9 +2964,13 @@ def step_clauses(ctx: Context) -> Result:
 
     Every reading here is taken from something a wave LEFT — a lane brief, the
     plan record, git, the queue — and never from `modes/converge-manager.md`,
-    which says only that the rule was written down. Two of the seven have no
-    reading at all yet, and each of those names the observation it waits on
-    instead of being quietly dropped.
+    which says only that the rule was written down. A clause with no reading yet
+    names the observation it waits on instead of being quietly dropped, and the
+    observation it names is one a manager session can actually take.
+
+    Clauses 3 and 11 are read from the same artifact, because they are about the
+    same moment: a call to the steward, what it parked, and what kept moving
+    beside it.
     """
     repo, workspace = ctx.wave_repo, ctx.wave_workspace
     panes = read_tmux_panes(ctx.env)
@@ -2534,22 +3023,14 @@ def step_clauses(ctx: Context) -> Result:
             pairings.append({"entry": entry["text"],
                              "item": read_tracker_item(ctx.env, ctx.project, item_id)})
 
-    parked = [e for e in entries if re.search(r"park", e["text"], re.I)]
+    parks = parse_park_events(entries)
     readings = [
         assert_plan_is_visible(briefs, entries, where, looked_in),
-        _clause(3, SKIP,
-                "this run can see that work was parked on the steward's word and that "
-                f"other lanes kept running ({len(parked)} plan entries record a park), "
-                "which is the clause's shape but not its promise",
-                awaits=AWAITED[3], parked_entries=len(parked),
-                lanes_running_at_once=len(concurrent)),
+        assert_parks_kept_the_wave_moving(parks),
         assert_feedback_was_enriched(pairings),
         assert_lanes_touch_different_files(measured_lanes),
         assert_stalls_are_declared(stalls, records),
-        _clause(11, SKIP,
-                "nothing in this run reads a prompt as an event, so the four calls "
-                "cannot be counted or classified",
-                awaits=AWAITED[11]),
+        assert_calls_are_one_of_the_four(parks),
         assert_handoff_on_close([e for e in entries if e["close"]]),
     ]
 
@@ -2560,6 +3041,7 @@ def step_clauses(ctx: Context) -> Result:
         "concurrency_source": concurrency_source,
         "briefs": briefs, "stalled_lanes": stalls,
         "feedback_pairings": len(pairings),
+        "park_events": parks,
         "clause_readings": readings,
     }
     detail = " · ".join(f"{r['clause']} ({r['row']}) {r['verdict']}: {r['why']}"
@@ -2599,6 +3081,13 @@ def step_attribution(ctx: Context) -> Result:
     an artifact: commits beyond base, a lane merge, a contract check re-run.
     None of them can say WHO. This step reads that from git's own shape and
     from the queue's own text, and where it cannot, it says what it waits on.
+
+    Two records are read, in order of strength. The manager session's own check
+    record (`docs/workflow/CHECK-RECORD.md`) is written by nobody else, so the
+    commit that added its newest entry answers the question directly. The older
+    pair — the ledger and this harness's own result file — are edited by lanes,
+    so their newest change usually arrives through a lane merge and can only say
+    that the question is unanswered here.
     """
     repo, branch = ctx.wave_repo, ctx.integration_branch
     carried, lane_merges, complete = lane_authored_commits(ctx.env, repo, branch)
@@ -2626,7 +3115,23 @@ def step_attribution(ctx: Context) -> Result:
             newest.append(touches[0])
             history.extend(touches)
     history.sort(key=lambda r: r["at"], reverse=True)
-    attribution = assert_check_record_attributed(newest, history)
+    # The manager session's own record is asked first, because it is the only
+    # one of the three files a lane never writes. The older pair is still read
+    # and still reported — a repository that has not adopted the convention gets
+    # exactly the reading it got before, plus a named way to answer it.
+    record = read_manager_check_record(ctx.env, repo, branch, classify)
+    manager = assert_manager_check_record(record)
+    others = assert_check_record_attributed(newest, history)
+    if manager["verdict"] in (PASS, FAIL):
+        attribution = {**manager, "other_check_records": others}
+    else:
+        attribution = {
+            **others,
+            "why": f"{others['why']}; and the record the manager session writes "
+                   f"itself {manager['short']}",
+            "awaits": manager["awaits"],
+            "manager_check_record": manager,
+        }
 
     items, tracker_error = read_tracker_items(ctx.env, ctx.project)
     resolutions = assert_resolutions_written_for_the_asker(items)
@@ -2672,6 +3177,7 @@ def step_attribution(ctx: Context) -> Result:
         "history_reached_the_end": complete,
         "check_records": newest,
         "check_record_history": len(history),
+        "manager_check_record": record,
         "tracker_error": tracker_error,
         "clause_readings": readings,
     }
@@ -3269,6 +3775,70 @@ def self_check() -> dict:
     cases.append(("no check record at all is a skip naming what it looked for",
                   assert_check_record_attributed([], [])["verdict"] == SKIP))
 
+    def _record(author: str, command: str | None = "uv run ledger/checks/verify.py"):
+        return {"path": MANAGER_CHECK_RECORD, "exists": True, "entries": 1,
+                "newest": {"stamp": "2026-09-04 12:40", "headline": "wave 8",
+                           "heading": "## 2026-09-04 12:40 - wave 8",
+                           "command": command,
+                           "commit": {"sha": "e" * 40, "at": "T3",
+                                      "subject": "check record: wave 8",
+                                      "author": author,
+                                      "lane_merge_before": {"sha": "f" * 40,
+                                                            "subject": "merge lane/x"}}}}
+
+    cases.append(("the manager session's own entry, outside every lane, is the "
+                  "attribution answered",
+                  assert_manager_check_record(_record("integrator"))["verdict"] == PASS))
+    cases.append(("an entry that came in through a lane merge FAILS clause 8",
+                  assert_manager_check_record(_record("lane"))["verdict"] == FAIL))
+    cases.append(("an entry naming no command is a claim, not a record",
+                  assert_manager_check_record(
+                      _record("integrator", None))["verdict"] == SKIP))
+    cases.append(("an entry nobody can place is unknown, never credited",
+                  assert_manager_check_record(_record("unknown"))["verdict"] == SKIP))
+    cases.append(("no check record file is a skip naming the convention",
+                  assert_manager_check_record(
+                      {"path": MANAGER_CHECK_RECORD, "exists": False,
+                       "entries": 0, "newest": None})["verdict"] == SKIP))
+    cases.append(("the file with no entry in it is a skip, never a pass",
+                  assert_manager_check_record(
+                      {"path": MANAGER_CHECK_RECORD, "exists": True,
+                       "entries": 0, "newest": None})["verdict"] == SKIP))
+
+    def _park(text: str, at: str = "T0"):
+        return parse_park_events([{"at": at, "text": text}])
+
+    moving = _park("cycle 24: CALL ratify - the candidate needs your word. "
+                   "Parked: protocol-terms. Continued: guard-3, renumber-followup.")
+    idle = _park("cycle 24: parked protocol-terms on your word. Continued: none.")
+    excused = _park("cycle 24: parked protocol-terms on your word. Continued: none, "
+                    "because no ready item does not collide with it.")
+    silent = _park("cycle 24: Parked: protocol-terms.")
+    cases.append(("a park with work continuing beside it is clause 3 kept",
+                  assert_parks_kept_the_wave_moving(moving)["verdict"] == PASS))
+    cases.append(("a park with nothing continuing and no reason FAILS clause 3",
+                  assert_parks_kept_the_wave_moving(idle)["verdict"] == FAIL))
+    cases.append(("a park with nothing continuing that says why is not a failure",
+                  assert_parks_kept_the_wave_moving(excused)["verdict"] != FAIL))
+    cases.append(("a park that never says what continued is a skip, never a pass",
+                  assert_parks_kept_the_wave_moving(silent)["verdict"] == SKIP))
+    cases.append(("no park at all is a skip: nothing was waiting on the steward",
+                  assert_parks_kept_the_wave_moving([])["verdict"] == SKIP))
+
+    outside = _park("cycle 24: CALL design opinion - which shade of blue? "
+                    "Parked: none. Continued: guard-3.")
+    cases.append(("every recorded call naming one of the four is clause 11 kept",
+                  assert_calls_are_one_of_the_four(moving)["verdict"] == PASS))
+    cases.append(("a call stamped as none of the four FAILS clause 11",
+                  assert_calls_are_one_of_the_four(outside)["verdict"] == FAIL))
+    cases.append(("a call that names no kind at all is unread, never a pass",
+                  assert_calls_are_one_of_the_four(silent)["verdict"] == SKIP))
+    cases.append(("no call at all is a skip, never a pass",
+                  assert_calls_are_one_of_the_four([])["verdict"] == SKIP))
+    cases.append(("a hostname containing 'park' is not a park",
+                  parse_park_events(
+                      [{"at": "T0", "text": "app live at http://spark-1:8788"}]) == []))
+
     failed = [name for name, ok in cases if not ok]
     return {
         "tool": "converge-turnkey-self-check",
@@ -3431,10 +4001,12 @@ def build_parser() -> argparse.ArgumentParser:
             "  j clauses        Core 2, 3, 4, 6, 9, 11, 13 — read from the lane\n"
             "                   briefs, the plan record, git and the queue, never\n"
             "                   from the mode file; a clause with no reading yet\n"
-            "                   names the observation it waits on\n"
+            "                   names the observation it waits on, and names one a\n"
+            "                   manager session can actually take\n"
             "  k attribution    Core 7, 8, 12 — WHO re-ran the check and who the\n"
-            "                   resolution was written for, from git's first-parent\n"
-            "                   line and the queue's own text\n"
+            "                   resolution was written for, from the manager\n"
+            "                   session's own check record, which side of a lane\n"
+            "                   merge a commit arrived on, and the queue's own text\n"
             "\n"
             "Examples:\n"
             "  uv run evaluations/turnkey/run.py --self-check\n"

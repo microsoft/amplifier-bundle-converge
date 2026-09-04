@@ -407,10 +407,15 @@ export async function sendAsk(scope, text, section) {
     toast(res && res.proposal ? `Proposal ${res.proposal} is waiting in Review.` : 'Your ask came back as a proposal, waiting in Review.');
     await hooks.reloadDoc();
   } catch (err) {
-    // Said out loud rather than swallowed: this app answers no route that
-    // makes a proposal, so nothing was asked and nothing was recorded. The
-    // server half is converge-ddt.
-    toast(`Nothing was asked — this app answers no proposal route yet (${err.message}). Filed as converge-ddt.`);
+    // What refused, in its own words, and no cause of our own on top of it
+    // (converge-3al). This used to say "this app answers no proposal route
+    // yet", which is now false twice over: the route landed with converge-ddt,
+    // and offline the refusal is the service worker's — "you are offline, so
+    // nothing was asked — reconnect and ask again, or tell the manager session
+    // directly" — carried here whole by api.js. Framing that sentence as a
+    // missing route contradicted the banner beside it. Every other write in
+    // this file already reports the refusal and stops; so does this one.
+    toast(`Could not ask: ${err.message}`);
   }
 }
 

@@ -7,15 +7,24 @@ rule failures — against one that does not (fixtures/sample-bad).
 The load-bearing test here is `test_every_rule_has_a_negative_fixture`: a rule
 nobody can make fail is a rule that proves nothing.
 
-Two rules — 3b and 6b — are about a RUNNING session rather than files on disk.
-They used to SKIP unconditionally. They now stand real sessions up (see
-`live.py`) and return PASS/FAIL like every other rule, INCLUDING on
+Three rules — 3b, 6b and 6c — are about a RUNNING session rather than files on
+disk. 3b and 6b used to SKIP unconditionally. They now stand real sessions up
+(see `live.py`) and return PASS/FAIL like every other rule, INCLUDING on
 `sample-bad`, so both are proven by a negative fixture rather than exempted
-from proof. They remain the only two rules allowed to SKIP at all, and only
+from proof. Those three are the only rules allowed to SKIP at all, and only
 when a named capability is missing from the host — `test_only_the_live_rules_may_skip`
 pins that, and `test_live_rules_decline_honestly_when_switched_off` exercises
 the decline path so the honest-SKIP behaviour is itself tested rather than
 merely asserted.
+
+6c is the host half, and it is the one rule a fixture cannot make judge itself:
+it asks whether the release of the target ALREADY INSTALLED on this host takes
+tools from a neighbour, and no fixture is installed on anybody's host. It
+declines on both fixtures for exactly that reason. So it is proven a different
+way — `AMPLIFIER_COMPOSITION_KIT_APP_BUNDLES` replaces the host's app list, and
+the three tests at the end of this file drive it red, green, and to its
+never-blame-a-neighbour decline. A rule nobody can make fail proves nothing,
+and that applies to a rule that declines everywhere too.
 
 Runnable two ways (the assertions are identical):
   * with pytest:  uv run --with pytest pytest conformance/composition/tests/ -q
@@ -38,12 +47,22 @@ REPO = KIT.parent.parent  # the repository root this kit ships in
 GOOD = KIT / "fixtures" / "sample-good"
 BAD = KIT / "fixtures" / "sample-bad"
 
-# The only two rules that may ever report SKIP: the two that need a running
+# The only rules that may ever report SKIP: the ones that need a running
 # session. Every other rule must reach a verdict from files, always.
-LIVE_RULES = {"3b", "6b"}
+LIVE_RULES = {"3b", "6b", "6c"}
+
+# Of those, the two a FIXTURE can make judge itself. 6c is excluded on purpose:
+# its subject is the release of the target installed on THIS host, and a fixture
+# is installed on nobody's host, so it declines on both fixtures by design. It
+# is proven through the app-list seam instead (see the host-half tests below).
+FIXTURE_JUDGED = {"3b", "6b"}
 
 # The env switch `live.py` reads. "0" declines the live probes deliberately.
 LIVE_TOGGLE = "AMPLIFIER_COMPOSITION_KIT_LIVE"
+
+# The env seam `live.py` reads for rule 6c: whitespace-separated bundle URIs
+# that REPLACE the host's own app-bundle list.
+APP_BUNDLES = "AMPLIFIER_COMPOSITION_KIT_APP_BUNDLES"
 
 
 def _uv() -> str:
@@ -125,7 +144,12 @@ def test_bad_failures_carry_readable_detail():
 def test_every_rule_has_a_negative_fixture():
     """Every rule the kit emits must either FAIL on sample-bad, or be an
     explicitly declared SKIP with a reason. There is no third option — a rule
-    that can only ever PASS is decoration."""
+    that can only ever PASS is decoration.
+
+    A SKIP is exempted here, which would be a hole if the exemption were the
+    end of the story. It is not: 6c, the one rule that declines on both
+    fixtures, is driven red and green by the host-half tests below.
+    """
     _, good = run_kit(GOOD)
     _, bad = run_kit(BAD)
     good_rules = by_rule(good)
@@ -174,11 +198,19 @@ def test_live_rules_reach_a_real_verdict_on_this_host():
     """
     _, report = run_kit(GOOD)
     rows = by_rule(report)
-    for rule in sorted(LIVE_RULES):
+    for rule in sorted(FIXTURE_JUDGED):
         row = rows[rule]
         assert row["status"] in {"PASS", "FAIL"}, (
             f"rule {rule} declined instead of judging: {row.get('reason') or row['detail']}"
         )
+    # 6c declines against a fixture, and the decline must say WHY in terms a
+    # reader can act on: how many app bundles the host has, where that list
+    # came from, and which names it looked for. A bare decline here would hide
+    # a probe that silently found nothing to measure.
+    host = rows["6c"]
+    assert host["status"] == "SKIP", host
+    assert host["app_bundle_source"], "6c declined without saying where the app list came from"
+    assert "sample-good" in host["reason"], host["reason"]
     # And the verdict is backed by evidence from the run, not by a category.
     assert rows["3b"]["roster_size"] > 0
     assert rows["3b"]["delegation_tool_mounted"] is True
@@ -221,6 +253,61 @@ def test_no_rule_is_ever_fabricated():
         for r in report["results"]:
             assert r["status"] in {"PASS", "FAIL", "SKIP"}, r
             assert r["detail"].strip(), f"rule {r['rule']} reports no detail"
+
+
+# --------------------------------------------------------------------------- #
+# The host half (6c): the release already installed, not the working tree      #
+# --------------------------------------------------------------------------- #
+def host_row(target, app_bundles):
+    """Run the kit against `target` with the host's app list replaced."""
+    _, report = run_kit(target, env_extra={APP_BUNDLES: " ".join(app_bundles)})
+    return by_rule(report)["6c"]
+
+
+def uri(fixture):
+    return "file://" + str((fixture / "bundle.md").resolve())
+
+
+def test_host_half_goes_red_when_the_installed_release_strips_tools():
+    """The negative fixture 6c could not otherwise have.
+
+    This is the shape of what actually happened on 2026-09-04 (converge-w3v):
+    a repository whose own tree passes 6a and 6b, and a release of the SAME
+    product installed on the host taking shell, delegation and skills from
+    every spawned helper in every session. 6b cannot see it — it composes the
+    tree. 6c must, and must name the entry that carries it, because "your host
+    is contaminated" is not an actionable finding and "remove this URI" is.
+    """
+    row = host_row(BAD, [uri(BAD)])
+    assert row["status"] == "FAIL", row
+    assert "tool-bash" in row["detail"], row["detail"]
+    assert "sample-bad" in row["detail"], row["detail"]
+    assert row["host_lost"] == ["tool-bash", "tool-delegate", "tool-skills"], row
+    carriers = [r for r in row["attribution"] if r.get("spawn")]
+    assert len(carriers) == 1, carriers
+
+
+def test_host_half_goes_green_when_the_installed_release_is_clean():
+    """And it is not stuck red: a clean installed release passes."""
+    row = host_row(GOOD, [uri(GOOD)])
+    assert row["status"] == "PASS", row
+    assert row["host_spawn_policy"] is None, row
+    assert row["host_lost"] == [], row
+
+
+def test_host_half_never_blames_a_foreign_bundle():
+    """A neighbour's spawn policy is not this repository's failure.
+
+    Same mis-attribution rule 6b's control exists to prevent: a host can be
+    contaminated by a bundle that has nothing to do with the target, and a rule
+    that reported FAIL there would send someone auditing the wrong repository.
+    The decline still has to SAY the promise is broken, and name the carrier.
+    """
+    row = host_row(GOOD, [uri(GOOD), uri(BAD)])
+    assert row["status"] == "SKIP", row
+    assert "IS broken on this host" in row["reason"], row["reason"]
+    assert "sample-bad" in row["reason"], row["reason"]
+    assert row["app_bundles_naming_this_repository"] == [uri(GOOD)], row
 
 
 # --------------------------------------------------------------------------- #

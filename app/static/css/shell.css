@@ -140,9 +140,25 @@
 .home-hero { display:flex; justify-content:space-between; gap:20px; align-items:flex-end; margin-bottom:24px; }
 .home-hero h1 { font-size:32px; letter-spacing:-.04em; margin:5px 0 7px; }
 .home-hero p { max-width:700px; color:var(--muted); margin:0; }
-.hero-metric { text-align:right; }
+.hero-metric { text-align:right; display:flex; flex-direction:column; align-items:flex-end; }
 .hero-metric strong { display:block; font-size:34px; color:#5f46d8; }
 .hero-metric span { color:var(--muted); }
+/* Core 13's "you can tell them all at once", standing beside the count of what
+   wants your word — because the list it addresses is Home's list, and a control
+   for a list belongs on the surface that draws it (converge-are). Styled here
+   rather than borrowed from operation.css so Home does not depend on another
+   surface's stylesheet for a control of its own. */
+.home-tell-all {
+  margin-top:12px;
+  border:1px solid #d8d1ff;
+  background:#f3f0ff;
+  color:#5c45c8;
+  border-radius:9px;
+  padding:8px 12px;
+  font-weight:750;
+  white-space:nowrap;
+}
+.home-tell-all:hover { background:#ece7ff; }
 .home-session-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
 .home-manager-card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:18px; box-shadow:var(--shadow); text-align:left; }
 .home-manager-card .home-card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
@@ -174,7 +190,14 @@
   .body-grid { grid-template-columns:210px minmax(0,1fr) 340px; }
   .body-grid.console-closed { grid-template-columns:210px minmax(0,1fr) 0; }
   .icon-label-button span { display:none; }
-  .icon-label-button::after { content:"Console"; }
+  /* One `content` for every icon-label button labelled them ALL "Console", so
+     at 1280 — the laptop width `platform-web.v1` §14 names — the Feedback
+     control read "Console" (measured 2026-09-04: `::after` content "Console"
+     on #feedbackButton). §4 says the two widths show "the same words"; a
+     control wearing another control's word is not the same word. Each one
+     carries its own now. */
+  #feedbackButton::after { content:"Feedback"; }
+  #consoleToggle::after { content:"Console"; }
 }
 
 @media (max-width: 980px) {
@@ -185,7 +208,6 @@
   .manager-crumb .eyebrow { display:none; }
   .workspace-switch { grid-column:1/-1; grid-row:2; width:100%; border-radius:0; border-left:0; border-right:0; justify-content:center; }
   .top-actions { padding-right:8px; }
-  .feedbackButton { display:none; }
   .attention-pill { padding:0 9px; }
   .attention-pill { font-size:0; }
   .attention-pill strong { font-size:12px; }
@@ -206,7 +228,8 @@
   .constraint-strip { display:none; }
   .home-view { padding:16px; }
   .home-hero { align-items:flex-start; flex-direction:column; }
-  .hero-metric { text-align:left; }
+  .hero-metric { text-align:left; align-items:flex-start; }
+  .home-tell-all { white-space:normal; }
   .home-session-grid { grid-template-columns:1fr; }
   .home-manager-card .home-card-meta { grid-template-columns:repeat(2,1fr); }
   .floating-menu { top:56px; left:72px; }
@@ -250,11 +273,56 @@
   .crumb-button strong { max-width:145px; }
   .status-word { display:none; }
   .top-actions { gap:4px; }
-  .icon-label-button { display:none; }
-  /* The console is a sheet at this width and its only other control is inside it —
-     keep the one toggle that can bring it back. */
-  #consoleToggle { display:flex; }
+  /* Both top-bar controls stay, in the same words, shrunk to fit rather than
+     removed. `.icon-label-button { display:none }` used to take the Feedback
+     control off the phone entirely (converge-nng, measured 2026-09-04:
+     display none, a 0x0 rect), and #feedbackButton is the only way into the
+     feedback dialog — so one of the five writes `platform-web.v1` Core 1
+     requires simply was not reachable at 390. Removing a behavior at one
+     width is the moment an idiom becomes a divergence (§3). */
+  .icon-label-button { height:34px; padding:0 8px; font-size:11px; gap:5px; }
   .attention-pill::after { content:""; }
   .workspace-tab { min-width:120px; }
   .session-card { min-width:170px; }
 }
+
+/* --------------------------------------------------------------------------
+   experience.v1 Core 8 and Core 14 - the fold that names the manager-session
+   operation behind every write, and the two things this body cannot do.
+
+   Two homes, one look. `.parity-fold` is the shell's own, in the dark session
+   rail, standing on every screen at both widths (below 980px the rail becomes
+   a strip and this sits under it). `.op-parity` sits beside one control on a
+   light card - Operation and Home. Both are styled here rather than half here
+   and half in `operation.css`, because that file belongs to another lane.
+   -------------------------------------------------------------------------- */
+.parity-fold {
+  margin-top:14px;
+  border:1px solid #223349;
+  border-radius:12px;
+  background:rgba(255,255,255,.035);
+  font-size:12px;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.parity-fold > summary { cursor:pointer; padding:9px 11px; font-weight:750; color:#cdd8e7; list-style:none; }
+.parity-fold > summary::-webkit-details-marker { display:none; }
+.parity-fold > summary::before { content:"\25B8\00a0"; color:#71829a; }
+.parity-fold[open] > summary::before { content:"\25BE\00a0"; }
+.parity-lede { margin:0 11px 10px; color:#93a1b6; line-height:1.45; }
+.parity-list { list-style:none; margin:0; padding:0 11px 12px; display:flex; flex-direction:column; gap:11px; }
+.parity-list li { border-left:2px solid #2b3d55; padding-left:9px; min-width:0; }
+.parity-list strong { display:block; color:#fff; font-size:12px; }
+.parity-say { display:block; color:#c7d2e2; margin:3px 0; }
+.parity-op { display:block; color:#8d9bb1; line-height:1.45; }
+.parity-list code { color:#b9c6d8; background:rgba(255,255,255,.06); border-radius:4px; padding:0 3px; }
+.parity-cannot { border-left-color:#7a5a25; }
+.parity-cannot strong { color:#f5b34c; }
+
+.op-parity { margin-top:10px; font-size:12px; min-width:0; max-width:100%; overflow-wrap:anywhere; }
+.op-parity > summary { cursor:pointer; color:var(--muted); }
+.op-parity p { margin:6px 0 0; color:var(--muted); line-height:1.5; }
+.op-parity code { background:rgba(15,23,42,.06); border-radius:4px; padding:0 3px; }
+/* Home's hero column is right-aligned and its items are flex-end; the fold's
+   sentences read left-aligned wherever the column puts them. */
+.home-parity { text-align:left; max-width:100%; }

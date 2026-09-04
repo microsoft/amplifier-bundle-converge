@@ -81,6 +81,23 @@ observation it is still waiting on**, in words, in the report — and a clause
 that was never exercised (no lane stalled, no feedback arrived) is a SKIP that
 says exactly that, never a PASS.
 
+Two of these readings need a convention rather than a cleverer parser, because
+what they read is only written down if somebody writes it down. Both are in
+`context/manager/wave-record.md` and taught in `modes/converge-manager.md`:
+
+- **The call stamp** (clauses 3 and 11) — one line in the plan record naming
+  which of the four calls it is, what it parked, and what kept moving beside it.
+  Clause 3's promise is a comparison, so a park recorded on its own cannot be
+  told from a wave that stopped. The looser form this workspace's manager
+  sessions already write (`Parked: x` beside `Live: a, b`) is read too, and
+  every reading says which form answered it.
+- **The check record** (clauses 7 and 8) — `docs/workflow/CHECK-RECORD.md`, one
+  entry per integration, written in the manager session's own commit. The other
+  two files a check run leaves a trace in are edited by lanes, so their newest
+  change arrives through a lane merge; on this host that left both clauses
+  unattributed while the integrator had demonstrably written seven such records
+  before. A file only the manager session writes takes the confound out.
+
 The attribution in (k) is structural rather than nominal: every session in this
 system commits as the same person, so an author field settles nothing. A lane
 commits on its own branch, so its work reaches the integration branch only as
@@ -91,10 +108,13 @@ measured wrong: lanes merge onto an integration branch that reaches main
 through a pull-request merge, so main's first-parent line is almost entirely PR
 merges and an integrator's own commit sits off it.
 
-What each reading actually read on a live run, and what the six SKIPs wait on,
-is in [`RESULT.md`](RESULT.md) under *Two more steps*. These two steps have run
-in observed mode only; a driven container has never carried them, and RESULT.md
-says so rather than leaving it to be found out.
+What each reading actually read on a live run, and what the remaining SKIPs wait
+on, is in [`RESULT.md`](RESULT.md) under *Two more steps*. These two steps have
+run in observed mode only; a driven container has never carried them, and
+RESULT.md says so rather than leaving it to be found out. The clause 7 and 8
+attribution has been exercised on a purpose-built repository — a real lane merge
+and a real integration — in `tests/test_turnkey.py`, which is a fixture and not
+this host, and RESULT.md says that too.
 
 ## Three statuses, and a SKIP is never a soft pass
 

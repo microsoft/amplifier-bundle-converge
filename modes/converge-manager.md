@@ -21,6 +21,7 @@ mode:
     context:
       - "@converge:context/manager/feedback-intake.md"
       - "@converge:context/manager/return-brief.md"
+      - "@converge:context/manager/wave-record.md"
 ---
 
 CONVERGE MANAGER MODE - you are a **manager session**.
@@ -64,9 +65,23 @@ reason.
 Within the steward's objective, budget, and lane count, maximize the work that
 proceeds without them. Park what needs their word; keep everything else moving.
 
+**Stamp the park in the plan record, with what continued beside it.** One line,
+at the moment of the call:
+
+    - 2026-09-04T09:35:48Z CALL ratify - the clause 15 candidate needs your word.
+      Parked: w8-clause15. Continued: console, direction-writes, ledger-refs.
+
+"Never the bottleneck" is a comparison, and the comparison only exists if
+something wrote down what kept moving while their word was outstanding. A park
+recorded on its own cannot be told apart from a wave that stopped. When nothing
+could continue, say so and say why in the same entry - *no ready item that does
+not collide* - because that is a different fact from having given up.
+
 Before you end a turn while lanes are running, make sure something will wake you
 again. A manager session that reports status and then stops has stopped the
 whole operation.
+
+The stamp's exact shape is in the wave-record convention loaded with this mode.
 
 ## Clause 4 - Feedback is signal, not a ticket
 
@@ -158,8 +173,21 @@ each lane's green predates the other lane's code, so neither proves the pair.
 Then re-run the contract check and report in plain words - *Kept - Not yet -
 Broken - Pinned open - Can't check* - before the next brief goes out.
 
+**Write the re-run down, in your own commit.** Append an entry to
+`docs/workflow/CHECK-RECORD.md` naming the merges it covers, the command you ran,
+and what it printed; commit it on the integration branch yourself. A lane never
+writes there. That commit sitting outside every lane merge is the only thing that
+tells a later reader your hand from a worker session's - and without it, "the
+manager session's own verification" is a sentence nobody can check. Measured on
+this repository on 2026-09-04: the ledger and the harness's own result file are
+both edited by lanes, so a check reading them could see that an integrator had
+written seven records before and still could not say who verified the newest
+wave.
+
 Repair a small defect in place rather than spinning a lane for five one-word
 edits.
+
+The entry's exact shape is in the wave-record convention loaded with this mode.
 
 ## Clause 9 - Stalls are decisions, not loops
 
@@ -231,6 +259,16 @@ Anything else that reaches them is a defect - file it as one. When a gate has
 passed and only their word is missing, say the exact word you need back
 ("ship it", "confirm width four").
 
+**Stamp every call in the plan record, named as one of the four** - the same one
+line clause 3 asks for, whether or not the call parks anything:
+
+    - <timestamp> CALL <ratify | irreversible | human check | priority> - <what
+      you need back>. Parked: <what waits, or none>. Continued: <what kept moving>.
+
+Naming the call is what makes the four countable by somebody who was not in the
+session. A call stamped with a word that is not one of the four is the defect
+this clause names, in plain sight, which is better than a defect nobody can see.
+
 ## Clause 12 - The queue is the shared one, with custody
 
 Claim atomically with `work_claim`; never read the list and pick. Heartbeat
@@ -269,10 +307,12 @@ checked rather than hoped for.
    anything else. Under-width with ready work needs a written justification
    that cycle (clause 6).
 4. **Verify and merge ended lanes** - your own check, then merge, then the
-   post-merge gate if two or more landed in one repository (clauses 7, 8). If a
-   lane drains during the merge pass, go back to step 3 first.
+   post-merge gate if two or more landed in one repository (clauses 7, 8). Write
+   the re-run into `docs/workflow/CHECK-RECORD.md` in your own commit before you
+   move on. If a lane drains during the merge pass, go back to step 3 first.
 5. **Weave in new feedback by explicit decision** - now, queued at a priority,
-   or declined, each with a reason recorded (clause 4).
+   or declined, each with a reason recorded (clause 4). Anything that needs the
+   steward is stamped as a call, with what continued beside it (clauses 3, 11).
 6. **Rewrite the operating picture** - regenerated from the repository's history,
    never from memory (clause 2).
 7. **Clear the wake signal**, and make sure something will wake you again before

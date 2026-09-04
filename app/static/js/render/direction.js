@@ -10,12 +10,13 @@
 // The Reading view holds to the same rule. Editing a draft in place goes to
 // the same document-saving write the Changes view uses, and it is offered on a
 // paragraph only where that write can still land — the lock itself is read by
-// the server, never guessed here. Ask is the one control on this screen whose
-// route the app does not answer yet: it fails out loud and names the work
-// (converge-ddt) rather than looking like it did something.
+// the server, never guessed here. Ask reaches a route the app answers
+// (converge-ddt landed); when it fails, actions.js reports what refused, in
+// that refuser's own words, and asserts no cause of its own.
 import { $, qsa, state, data, escapeHtml, currentRepo, currentDoc, readBookmark } from '../state.js';
 import { hooks } from '../refresh.js';
 import { handleDecision, keepChange, saveChangeEdit, restoreChange, restoreScope, markAllRead, editDoc, reconcile, openAsk, copyText, confirmLock } from '../actions.js';
+import { startPresence, holdSection, paintPresence, presenceLineHtml, presenceStanding } from '../presence.js';
 
 const DECISION_BUTTONS = [
   ['ratified', 'Ratify', 'primary-button'],
@@ -152,6 +153,49 @@ function toggleObjective() {
 }
 
 // --------------------------------------------------------------------------
+// platform-web.v1 §10 — this document's own sync moment, on this document
+// --------------------------------------------------------------------------
+//
+// §10 asks that what is shown while the network is down is "marked with the
+// moment it came from". The offline banner says that for the device as a whole,
+// in the corner of the screen; this says it for the document the steward is
+// actually reading, beside its own title, at every width (converge-baz).
+//
+// The moment is the one `app/static/sw.js` stored with THIS document's payload,
+// carried out of that response by api.js as `doc.storedCopy`. A document read
+// from the server just now carries no mark at all, because there is nothing
+// stale to say about it.
+//
+// The words are formatted exactly as offline.js formats the banner's: two
+// surfaces naming one payload must name one time. They are not shared through
+// an import because offline.js is a plain script that has to be running before
+// any module loads, and so exports nothing.
+function syncedWord(iso) {
+  if (!iso) return 'an unrecorded moment';
+  const at = new Date(iso);
+  if (isNaN(at.getTime())) return 'an unrecorded moment';
+  const clock = at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const sameDay = at.toDateString() === new Date().toDateString();
+  return sameDay ? clock : `${at.toLocaleDateString([], { month: 'short', day: 'numeric' })} ${clock}`;
+}
+
+export function renderStoredMark(doc) {
+  const mark = $('docSyncedAt');
+  if (!mark) return;
+  const stored = doc && doc.storedCopy;
+  if (!stored) {
+    mark.hidden = true;
+    mark.textContent = '';
+    mark.removeAttribute('title');
+    return;
+  }
+  const when = syncedWord(stored.syncedAt);
+  mark.textContent = `Stored copy · as of ${when}`;
+  mark.title = `This document was not read from the server just now. What is on screen is the copy stored on this device, as of ${when}.`;
+  mark.hidden = false;
+}
+
+// --------------------------------------------------------------------------
 // §11 — the lock gate: four conditions, shown, and a control that tracks them
 // --------------------------------------------------------------------------
 //
@@ -249,6 +293,11 @@ export function renderLockGate() {
 //: check is made again here rather than trusted: what actually keeps a
 //: document from being locked is the server's write, so forcing the control
 //: in the browser reaches the same refusal.
+//:
+//: That write answers now (converge-eci). The four answers below are carried
+//: to it verbatim, because it counts them again at its end and puts them on
+//: the record beside the stamp — so what a steward reads back later is the
+//: same sentence they ticked here, and not this screen's word for it.
 function requestLock() {
   const doc = data.doc;
   if (!doc || doc.locked) return;
@@ -286,6 +335,10 @@ function wireDocTools() {
   $('lockButton').addEventListener('click', requestLock);
   readZoom();
   applyZoom();
+  // §10: start beating into the presence channel. Once, here, rather than in
+  // main.js — main.js is not this lane's file, and the Direction surface is
+  // the only place an editor is opened.
+  startPresence();
 }
 
 export function renderRepoTree() {
@@ -326,15 +379,17 @@ function shorten(text, limit = 64) {
 
 // experience-direction.v1 §10: while a person is editing, the section is shown
 // softly and a collision is met with a choice rather than a lost sentence.
-// What is honest here today: the soft marking and the three choices are real,
-// and the presence is this browser's own. There is no channel that carries a
-// second person's editing, which is why the fold below says so instead of
-// implying a company that is not there. The channel is converge-wmh.
+// The soft marking now carries a second person: `app/presence.py` keeps a mark
+// per section per steward, this browser beats into it while its editor is open
+// (presence.js), and a mark that stops being refreshed stops standing after a
+// minute. The marking is courtesy and nothing else — no control here is
+// disabled by someone else's mark, and the collision path is what actually
+// keeps two writes from overwriting each other.
 function editPanel(doc, card) {
   const lock = doc.locked || '';
   const clash = state.collision && String(state.collision.section) === String(card.section) ? state.collision : null;
   return `<div class="change-edit" data-editing="${escapeHtml(card.id)}">
-      <p class="muted lock-note">You are editing this section. It is shown softly while you write — that is the presence, so a change landing underneath you is offered as a choice rather than applied over you.${lock ? ` This document is ${escapeHtml(lock)}, so saving writes a proposal beside it and the document itself is not touched.` : ''}</p>
+      <p class="muted lock-note">You are editing this section. Anyone else reading this document sees it shown softly, with your name on it, while you write — that is the presence, so a change landing underneath you is offered as a choice rather than applied over you.${lock ? ` This document is ${escapeHtml(lock)}, so saving writes a proposal beside it and the document itself is not touched.` : ''}</p>
       <label for="read-edit-${escapeHtml(card.id)}">The wording you want instead</label>
       <textarea id="read-edit-${escapeHtml(card.id)}" rows="3">${escapeHtml(card.now || card.before)}</textarea>
       ${clash ? collisionPanel(clash) : ''}
@@ -342,7 +397,7 @@ function editPanel(doc, card) {
         <button class="outline-button" data-edit="cancel" type="button">Cancel</button>
         <button class="primary-button" data-edit="save" data-change-id="${escapeHtml(card.id)}" type="button">${lock ? 'Propose this wording' : 'Save'}</button>
       </div>
-      <details><summary class="muted">Details</summary><p class="muted">Presence is this browser only: the app carries no signal for someone else editing the same section, and the manager session is not told to queue. Filed as converge-wmh.</p></details>
+      <details><summary class="muted">Details</summary><p class="muted" data-presence-standing>${escapeHtml(presenceStanding())}</p></details>
     </div>`;
 }
 
@@ -381,9 +436,17 @@ export function renderRead() {
   const sectionHtml = (doc.sections || []).map(([title, content]) => {
     const mine = cards.filter((c) => sectionHead(c) === title);
     const editing = mine.some((c) => String(c.id) === String(state.editingChangeId));
+    // §10 presence. `is-editing` is this browser's own open editor;
+    // `is-editing-elsewhere` is somebody else's, carried by the channel in
+    // app/presence.py. Both are soft marks and neither disables anything.
+    // `data-section` is what presence.js repaints against between renders —
+    // it never rebuilds this HTML, because doing so while a steward is typing
+    // would throw their sentence away.
+    const elsewhere = presenceLineHtml(title);
     return `
-      <section class="${changedSections.has(title) ? 'marked-change' : ''}${editing ? ' is-editing' : ''}">
+      <section data-section="${escapeHtml(title)}" class="${changedSections.has(title) ? 'marked-change' : ''}${editing ? ' is-editing' : ''}${elsewhere ? ' is-editing-elsewhere' : ''}">
         <h2>${escapeHtml(title)}</h2>
+        ${elsewhere}
         ${content}
         ${sectionFooter(doc, title, mine)}
       </section>`;
@@ -568,6 +631,7 @@ export function renderDirection() {
   $('docPath').textContent = doc ? doc.path : (repo && navDoc ? `${repo.name} / ${navDoc.title}` : '—');
   $('docTitle').textContent = doc ? doc.title : (navDoc ? navDoc.fullTitle : '');
   $('docUpdated').textContent = doc ? doc.updated : '';
+  renderStoredMark(doc);
   const docState = doc ? doc.state : (navDoc ? navDoc.state : 'draft');
   $('docStateBadge').textContent = STATE_LABEL[docState] || 'Draft';
   $('docStateBadge').className = `state-badge ${docState}`;
@@ -589,6 +653,12 @@ export function renderDirection() {
     btn.setAttribute('aria-selected', active ? 'true' : 'false');
   });
 
+  // §10: say what this browser has open before drawing, so the mark this
+  // steward sets and the marks they are shown come from the same moment.
+  // Scoped to the Reading view's editor, which is the one the clause is about.
+  const openCard = ((doc && doc.changes) || []).find((c) => String(c.id) === String(state.editingChangeId));
+  holdSection(state.docMode === 'read' && openCard ? sectionHead(openCard) : '');
+
   let html = '';
   if (state.docMode === 'read') html = renderRead();
   if (state.docMode === 'changes') html = renderChanges();
@@ -596,6 +666,7 @@ export function renderDirection() {
   if (state.docMode === 'history') html = renderHistory();
   $('documentModeContent').innerHTML = html;
   attachDocumentModeHandlers();
+  paintPresence();
   renderProposalMini();
   renderLockGate();
   syncObjective();
