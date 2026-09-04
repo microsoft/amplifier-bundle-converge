@@ -635,12 +635,19 @@ def test_an_unprompted_brief_keeps_its_date_only_heading_and_is_not_a_return():
     assert verdict.evidence["complete_briefs"] == 1
 
 
-def test_the_parts_may_be_written_as_a_list_and_still_count_as_sentences():
-    """A rule that scored a correctly-written brief zero would fabricate a red."""
+@pytest.mark.parametrize("marker", ["- ", "* ", "1. ", ""])
+def test_the_parts_may_be_written_as_a_list_and_still_count_as_sentences(marker):
+    """A rule that scored a correctly-written brief zero would fabricate a red.
+
+    `context/manager/return-brief.md` prints the five parts as a NUMBERED list,
+    so a manager session copying the shape it was shown writes `1. **Time
+    away.** ...`. A check that read only the bare form would miss all five.
+    """
     listed = "## 2026-09-04 04:01 - list form\n" + "".join(
-        "- " + ln + "\n" for ln in FIVE_PARTS.splitlines())
+        marker + ln + "\n" for ln in FIVE_PARTS.splitlines())
     verdict = judge_log(listed)
     assert verdict.status == run.PASS, verdict.detail
+    assert verdict.evidence["judged"]["parts_missing"] == []
     assert verdict.evidence["judged"]["plain_sentences"] >= 3
 
 

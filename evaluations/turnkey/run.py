@@ -109,7 +109,7 @@ _PART_LABELS = [
 
 def _part_pattern(label: str) -> re.Pattern:
     return re.compile(
-        r"^[ \t]*(?:[-*+>][ \t]*)*"                       # a list marker or quote, if any
+        r"^[ \t]*(?:(?:[-*+>]|\d+[.)])[ \t]*)*"           # a list marker or quote, if any
         r"(?:"
         r"(?:\*\*|__)[ \t]*" + label + r"[ \t]*[.:\u2014]?[ \t]*(?:\*\*|__)"  # **Label.**
         r"|" + label + r"[ \t]*[.:\u2014]"                # Label. / Label: / Label --

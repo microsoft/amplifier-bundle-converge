@@ -141,7 +141,7 @@ An assertion nobody can make fail proves nothing.
 
 ```sh
 uv run evaluations/turnkey/run.py --self-check      # 29 cases, no environment needed
-uv run --with pytest pytest evaluations/turnkey -q  # 72 tests
+uv run --with pytest pytest evaluations/turnkey -q  # 75 tests
 ```
 
 `--self-check` runs every `assert_*` function against synthetic evidence that

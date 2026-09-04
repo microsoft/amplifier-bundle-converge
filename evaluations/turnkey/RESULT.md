@@ -371,6 +371,14 @@ because that rule discarded every line beginning with `*`. The step would have
 failed the one form the mode requires. Sentence counting now strips a leading
 list or emphasis marker instead of disqualifying the line behind it.
 
+Caught the same way, before it could fabricate a red of its own:
+`context/manager/return-brief.md` (as it stands on `main` after
+`lane/w8-brief-convention`) prints the five parts as a **numbered** list —
+`1. **Time away.** …` — so a manager copying the shape it was shown writes
+numbered items. The first draft of this check accepted `-`, `*`, `+` and `>` as
+list markers and would have found none of the five. It accepts `1.` and `1)`
+now, and a parametrized test runs the whole brief through four markers.
+
 What the new readings say, in the step's own words:
 
 ```
@@ -397,17 +405,17 @@ stopped" in their own words. Same colour, exact reason. The check was not tuned
 until the repository passed.
 
 **Not re-run in a container.** This is a change to how one step judges text it
-is handed, so it is proven where it can be proven exactly: 16 self-test cases,
-five of them one per part. Fifteen of the sixteen fail against the pre-fix
-`run.py` in a control tree (15 failed, 57 passed); the sixteenth — a missing log
-file is a failure — is the one behaviour that did not change. A driven run
+is handed, so it is proven where it can be proven exactly: 19 self-test cases,
+five of them one per part. Eighteen of the nineteen fail against the pre-fix
+`run.py` in a control tree (18 failed, 57 passed); the nineteenth — a missing
+log file is a failure — is the one behaviour that did not change. A driven run
 would now hold a fixture manager session to the labelled form its mode already
 requires; that has not been observed yet and is not claimed here.
 
 ```
 $ uv run --with pytest pytest evaluations/turnkey -q
 ........................................................................ [100%]
-72 passed in 0.25s
+75 passed in 0.18s
 
 $ uv run evaluations/turnkey/run.py --self-check
 verdict: PASS | passed: 29 | failed: []
@@ -421,7 +429,7 @@ verdict: PASS | passed: 29 | failed: []
 Five of those cases are new: the environment-free self-check carries the same
 two named failures as the pytest suite, so `--self-check` alone still proves
 this step can go red. It stood at 24 cases and 57 tests when this file recorded
-the green run above; it is 29 and 72 now.
+the green run above; it is 29 and 75 now.
 
 **Handoff, not done here.** `ledger/rows.yaml` CVG-020 records that "nothing
 counts returns", so a brief count has no denominator. Step (i) now produces that
