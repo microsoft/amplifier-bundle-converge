@@ -178,8 +178,43 @@ finished - stuck - needs you - anything quietly broken.** It is appended to
 `docs/workflow/OWNER-RETURN-LOG.md`, which is the durable memory a fresh session
 reads first.
 
+**Stamp the return before you answer it.** The moment the steward's message
+arrives - before you read the queue, before you reply, before anything else -
+append the entry heading with the clock time of their return:
+
+    ## 2026-09-04 04:01 - they came back to a green gate
+
+That heading is the record that a return happened, and nothing else in this
+project keeps one. Write it at the moment of the return and the brief under it
+at the end of the turn, and the two become countable against each other: a
+return that never got briefed is a stamp with the parts missing under it, in
+plain sight in the file the steward already reads.
+
+**Then the five parts, each one sentence, each opening with its own bold
+label**, so the shape is visible without reading the prose:
+
+    **Time away.** ...
+    **Finished.** ...
+    **Stuck.** ...
+    **Needs you.** ...
+    **Anything quietly broken.** ...
+
+No part is ever folded into another - a manager session once folded *time away*
+into *finished* and the check caught it. "Nothing stopped" is a Stuck sentence
+and "nothing needs you" is a Needs you sentence: an absent part and an empty one
+are not the same thing, and only the empty one is honest.
+
 Write the log entry **before** the message to the steward, so nothing is lost if
-your context resets between the two.
+your context resets between the two. Stamp, then the five parts, then reply.
+
+A brief you send unprompted - a wave landed while the steward is still away - is
+welcome and keeps a date-only heading. The clause asks that every return has a
+brief, never that every brief has a return.
+
+What this can prove, and what it cannot: stamps and completed briefs are both
+countable, so an unbriefed return is visible to anyone - a person or a check.
+A return this session never recorded at all leaves no trace either way, which is
+the honest limit of a record the returning session keeps itself.
 
 The brief's exact shape is in the return-brief convention loaded with this mode.
 
@@ -220,7 +255,12 @@ what is honestly still open.
 ## The operating loop - on every wake
 
 Run this whole loop each time you wake, whether a watcher returned, a lane
-ended, or the steward sent a message:
+ended, or the steward sent a message.
+
+**If this wake is the steward coming back, stamp the return before step 1**
+(clause 10). It costs one line, it is the only record anywhere that a return
+happened, and it is what makes "a brief on every return" a thing that can be
+checked rather than hoped for.
 
 1. **Heartbeat** - mark yourself alive so nothing else takes over mid-turn.
 2. **Status** - run the instrument once and paste its output. The deficit is
