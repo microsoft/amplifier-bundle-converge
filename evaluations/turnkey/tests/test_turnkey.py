@@ -558,3 +558,40 @@ def test_a_live_reading_still_wins_over_an_observation():
         HELD_ONE, live, ["/w/lanes/a/repo"], None, IN_LANE_AT_T0)
     assert verdict["verdicts"][0]["verdict"] == run.PASS
     assert "read_at" not in verdict["verdicts"][0]
+
+
+# ---------------------------------------------------------------------------
+# base..branch is a question about refs, not about a directory
+# ---------------------------------------------------------------------------
+
+
+class _RepoOnlyEnv(run.Env):
+    """A worktree that has been removed; the main repository still has both refs."""
+
+    def __init__(self, alive="/w/repo"):
+        self.alive = alive
+        self.asked = []
+
+    def run(self, argv, cwd=None, timeout=120.0, env=None):
+        where = argv[argv.index("-C") + 1]
+        self.asked.append(where)
+        if where == self.alive:
+            return run.Ran(0, "3\n", "", argv=argv)
+        return run.Ran(128, "", f"cannot change to '{where}'", argv=argv)
+
+
+def test_a_removed_worktree_falls_back_to_the_repository_that_still_has_the_refs():
+    env = _RepoOnlyEnv()
+    assert run.commits_beyond(env, "/w/gone/lane", "base", "lane/a", "/w/repo") == 3
+    assert env.asked == ["/w/gone/lane", "/w/repo"]
+
+
+def test_the_lanes_own_worktree_is_asked_first():
+    env = _RepoOnlyEnv(alive="/w/gone/lane")
+    assert run.commits_beyond(env, "/w/gone/lane", "base", "lane/a", "/w/repo") == 3
+    assert env.asked == ["/w/gone/lane"]
+
+
+def test_no_repository_that_can_answer_is_still_unmeasured_not_zero():
+    env = _RepoOnlyEnv(alive="/nowhere")
+    assert run.commits_beyond(env, "/w/gone/lane", "base", "lane/a", "/w/repo") is None

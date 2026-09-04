@@ -38,6 +38,27 @@ BUNDLE_ROOT="$(cd "$HERE/../.." && pwd)"
 WORKSPACE_ROOT="$(cd "$BUNDLE_ROOT/.." && pwd)"
 OUTPUT_ROOT="$WORKSPACE_ROOT/.amplifier/evaluation/converge-turnkey"
 
+# Where a launched container is registered for teardown. A container is a
+# MACHINE-WIDE resource, so it belongs in the machine-wide ledger the sweep
+# actually reads -- not in a lane-local one nobody sweeps. Measured: with the
+# checkout's parent as the default, four containers registered into
+# <lane>/infra.tsv, a file the workspace sweep never opens. They were all
+# destroyed by the runs themselves, so nothing leaked; but had one survived,
+# its row would have been invisible where anyone would look for it.
+#
+# So: prefer the OUTERMOST ancestor that already keeps an infra.tsv (the shared
+# workspace), fall back to the checkout's parent, and let TURNKEY_LEDGER_ROOT
+# or an explicit --ledger-root override either.
+LEDGER_ROOT="${TURNKEY_LEDGER_ROOT:-}"
+if [ -z "$LEDGER_ROOT" ]; then
+    LEDGER_ROOT="$WORKSPACE_ROOT"
+    probe="$WORKSPACE_ROOT"
+    while [ "$probe" != "/" ] && [ "$probe" != "$HOME" ]; do
+        [ -f "$probe/infra.tsv" ] && LEDGER_ROOT="$probe"
+        probe="$(dirname "$probe")"
+    done
+fi
+
 GITHUB_REPO="https://github.com/microsoft/amplifier-bundle-converge"
 MIRROR_REPO="admin/amplifier-bundle-converge"
 
@@ -127,11 +148,12 @@ RUN_ID="$(date -u +%Y%m%dT%H%M%SZ)"
 OUTPUT_DIR="$OUTPUT_ROOT/$RUN_ID"
 mkdir -p "$OUTPUT_DIR"
 log "output: $OUTPUT_DIR"
+log "infra ledger: $LEDGER_ROOT/infra.tsv"
 
 # ---- run ------------------------------------------------------------------
 set +e
 uv run "$HERE/run.py" \
-    --ledger-root "$WORKSPACE_ROOT" \
+    --ledger-root "$LEDGER_ROOT" \
     --wave-log "$OUTPUT_DIR/manager-session.log" \
     "${ARGS[@]}" > "$OUTPUT_DIR/report.json"
 EXIT=$?

@@ -479,16 +479,31 @@ def holder_pid(holder: str | None) -> int | None:
     return int(match.group(1)) if match else None
 
 
-def commits_beyond(env: Env, repo: str, base: str, branch: str) -> int | None:
-    ran = env.run(
-        ["git", "-C", repo, "rev-list", "--count", f"{base}..{branch}"], timeout=60.0
-    )
-    if not ran.ok:
-        return None
-    try:
-        return int(ran.out.strip())
-    except ValueError:
-        return None
+def commits_beyond(env: Env, repo: str, base: str, branch: str,
+                   fallback_repo: str | None = None) -> int | None:
+    """How many commits `branch` carries beyond `base`, from any clone that knows.
+
+    `base..branch` is a question about two refs, and any repository holding
+    both can answer it. The lane's own worktree is asked first because it is
+    the lane's own copy — but a finished wave removes its worktrees after
+    merging, and `git -C <a directory that no longer exists>` fails. Measured
+    on run E: both lanes came back "git could not count commits", so clause 7's
+    commits-beyond-base check was unmeasured on a wave whose branches were
+    sitting right there in the main repository, merged.
+    """
+    for where in [repo, fallback_repo]:
+        if not where:
+            continue
+        ran = env.run(
+            ["git", "-C", where, "rev-list", "--count", f"{base}..{branch}"],
+            timeout=60.0,
+        )
+        if ran.ok:
+            try:
+                return int(ran.out.strip())
+            except ValueError:
+                return None
+    return None
 
 
 def contract_names(env: Env, repo: str) -> list[str]:
@@ -1387,7 +1402,8 @@ def step_lanes(ctx: Context) -> Result:
 
     progress = [
         assert_commits_beyond_base(
-            ln, commits_beyond(ctx.env, ln.worktree, ln.base_sha, ln.branch)
+            ln, commits_beyond(ctx.env, ln.worktree, ln.base_sha, ln.branch,
+                               ctx.wave_repo)
             if ln.base_sha else None,
         )
         for ln in lanes
