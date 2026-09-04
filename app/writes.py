@@ -27,6 +27,7 @@ ask is always a proposal — never a silent edit, and never a chat.
 from __future__ import annotations
 
 import base64
+import json
 import re
 import subprocess
 from datetime import datetime, timezone
@@ -399,6 +400,38 @@ def _shorten(text: str, limit: int = 1200) -> str:
     return text[:limit].rstrip() + "\n… (the rest of it is in the document)"
 
 
+#: Colour and cursor control, which a terminal shows as style and a document
+#: shows as gibberish. Stripped from anything a session hands back.
+ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+
+
+def _plain(text: str) -> str:
+    return ANSI.sub("", text or "").strip()
+
+
+def _session_answer(out: str) -> dict | None:
+    """The answer object a headless session printed, out of everything it printed.
+
+    The CLI writes a line of its own before the JSON, and measured on
+    2026-09-04 its text mode also carries a banner, a token-usage table and
+    colour codes. Reading the JSON object rather than the whole of stdout is
+    what keeps a steward's proposal from quoting the CLI's own furniture back
+    at them as if it were the drafted wording.
+    """
+    reader = json.JSONDecoder()
+    found = None
+    for index, character in enumerate(out or ""):
+        if character != "{":
+            continue
+        try:
+            value, _end = reader.raw_decode(out[index:])
+        except ValueError:
+            continue
+        if isinstance(value, dict) and ("response" in value or "status" in value):
+            found = value
+    return found
+
+
 def draft_with_amplifier(
     prompt: str,
     *,
@@ -415,7 +448,7 @@ def draft_with_amplifier(
     """
     try:
         done = subprocess.run(
-            ["amplifier", "run", "--mode", "single", "--output-format", "text", prompt],
+            ["amplifier", "run", "--mode", "single", "--output-format", "json", prompt],
             cwd=str(cwd),
             capture_output=True,
             text=True,
@@ -429,7 +462,14 @@ def draft_with_amplifier(
     if done.returncode != 0:
         detail = (done.stderr or done.stdout or "").strip().splitlines()
         return "", f"no wording was drafted: the drafting session exited {done.returncode} ({detail[-1][:120] if detail else 'no output'})"
-    wording = (done.stdout or "").strip()
+
+    answer = _session_answer(done.stdout or "")
+    if answer is None:
+        return "", "no wording was drafted: the drafting session printed no answer this could read"
+    status = str(answer.get("status") or "success")
+    if status != "success":
+        return "", f"no wording was drafted: the drafting session reported {status}"
+    wording = _plain(str(answer.get("response") or ""))
     if not wording:
         return "", "no wording was drafted: the drafting session answered nothing"
     return wording, "drafted by a headless Amplifier session reading this repository"
@@ -460,13 +500,17 @@ def _ask_prompt(*, rel: str, scope: str, section: str, question: str, current: s
     return "\n".join(lines)
 
 
-def _ask_block(*, scope: str, section: str, current: str, wanted: str, drafted: bool) -> str:
+def _ask_block(*, scope: str, section: str, current: str, wanted: str, drafted: bool, found_section: bool = True) -> str:
     """One change in the shape `documents.v1` §8 requires: current, then replacement."""
     where = {
         "paragraph": f"**{section or 'one paragraph'}**",
         "document": "**The whole document**",
         "all": "**Every document in this repository**",
     }.get(scope, f"**{section or 'the document'}**")
+    if scope == "paragraph" and not found_section:
+        # Quoting the whole document under a heading the document does not
+        # have would read as though that paragraph said all of this.
+        where += " (no section by that name is in the document, so the whole of it is quoted)"
     lead = (
         "the text below becomes the wording under it."
         if drafted
@@ -598,10 +642,11 @@ def record_ask(
         return {"ok": False, "error": f"could not read {rel}"}
 
     covers = [Path(one).relative_to(repo).as_posix() for one in documents] if scope == "all" else []
+    found_section = True
     if scope == "paragraph":
         current = _section_text(raw, section)
         if not current:
-            current = raw
+            current, found_section = raw, False
     elif scope == "document":
         current = raw
     else:
@@ -621,6 +666,7 @@ def record_ask(
         current=current,
         wanted=wording or question,
         drafted=bool(wording),
+        found_section=found_section,
     )
 
     evidence = _ask_evidence(

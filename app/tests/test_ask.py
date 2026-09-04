@@ -327,13 +327,23 @@ class _Ran:
         self.returncode, self.stdout, self.stderr = returncode, stdout, stderr
 
 
+#: What `amplifier run --output-format json` actually printed on 2026-09-04:
+#: a line of the CLI's own before the object it was asked for.
+def _session_output(response: str, status: str = "success") -> str:
+    import json as _json
+
+    return "Bundle 'anchors' prepared successfully\n" + _json.dumps(
+        {"status": status, "response": response, "session_id": "c40ac936", "model": "a-model"}
+    )
+
+
 def test_a_drafting_session_is_asked_for_the_wording(client, monkeypatch) -> None:
     seen: dict = {}
 
     def fake_run(argv, **kwargs):
         seen["argv"] = argv
         seen["cwd"] = kwargs.get("cwd")
-        return _Ran(0, "Evidence beats claims, in every document and every screen.\n")
+        return _Ran(0, _session_output("Evidence beats claims, in every document and every screen."))
 
     monkeypatch.setattr(writes.subprocess, "run", fake_run)
     monkeypatch.setattr(serve, "ASK_DRAFTER", "agent")
@@ -348,11 +358,61 @@ def test_a_drafting_session_is_asked_for_the_wording(client, monkeypatch) -> Non
     assert "Evidence beats claims, in every document and every screen." in Path(body["path"]).read_text(encoding="utf-8")
 
 
+def test_the_proposal_carries_the_answer_and_not_the_clis_furniture(client, monkeypatch) -> None:
+    """Caught live: the session's banner and token table were quoted as wording.
+
+    Reading the whole of stdout put "Bundle 'anchors' prepared successfully",
+    a token-usage table and colour codes into a steward's proposal as if the
+    session had proposed them. The answer is the JSON object's `response`.
+    """
+    noisy = (
+        "Bundle 'anchors' prepared successfully\n"
+        "\x1b[2m│  Token Usage (anthropic/claude-opus-5) [2.2s]\x1b[0m\n"
+        "\x1b[2m└─ Input: 121,713 | Output: 80 | Cost: $0.28\x1b[0m\n"
+        '{"status": "success", "response": "\\u001b[2mCore 2.\\u001b[0m A check that cannot run says so."}'
+    )
+    monkeypatch.setattr(writes.subprocess, "run", lambda argv, **kw: _Ran(0, noisy))
+    monkeypatch.setattr(serve, "ASK_DRAFTER", "agent")
+    sign_in(client)
+    code, body = ask(client, docId="demo", scope="document", text="Say what an unrunnable check reports.")
+
+    assert code == 200, body
+    assert body["drafted"] is True
+    text = Path(body["path"]).read_text(encoding="utf-8")
+    assert "Core 2. A check that cannot run says so." in text
+    assert "Token Usage" not in text
+    assert "prepared successfully" not in text
+    assert "\x1b" not in text, "colour codes reached the proposal"
+
+
+def test_a_session_that_reports_a_failure_is_not_read_as_wording(client, monkeypatch) -> None:
+    monkeypatch.setattr(
+        writes.subprocess, "run", lambda argv, **kw: _Ran(0, _session_output("half an answer", status="error"))
+    )
+    monkeypatch.setattr(serve, "ASK_DRAFTER", "agent")
+    sign_in(client)
+    code, body = ask(client, docId="demo", scope="document", text="Anything.")
+    assert code == 200, body
+    assert body["drafted"] is False
+    assert "reported error" in body["draftedBy"]
+    assert "half an answer" not in Path(body["path"]).read_text(encoding="utf-8")
+
+
+def test_an_ask_about_a_paragraph_that_is_not_there_says_so(client) -> None:
+    sign_in(client)
+    code, body = ask(client, docId="demo", scope="paragraph", section="Where this is going", text="Add a sentence.")
+    assert code == 200, body
+    text = Path(body["path"]).read_text(encoding="utf-8")
+    assert "no section by that name is in the document" in text
+    assert "**Core 1.** The app shows only what it can read." in text
+
+
 @pytest.mark.parametrize(
     "outcome",
     [
         _Ran(1, "", "the session fell over"),
         _Ran(0, "   \n"),
+        _Ran(0, _session_output("   ")),
         OSError("amplifier is not installed"),
         subprocess.TimeoutExpired(cmd="amplifier", timeout=1.0),
     ],
