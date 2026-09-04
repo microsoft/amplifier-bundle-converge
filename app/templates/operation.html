@@ -83,9 +83,13 @@
     </section>
 
     <!-- Core 6 reads "Lanes running are shown against lanes intended". The
-         gauge counts lanes that are RUNNING; Working / Quiet / Silent are
+         gauge counts lanes that are running; Working / Quiet / Silent are
          Core 8's words for one lane's state, and a Quiet lane is running
-         just the same. Saying "working" here read the two as one thing. -->
+         just the same. Saying "working" here read the two as one thing.
+         The machine's screaming form of "running" is not spelled out here on
+         purpose: experience.v1 Core 6 keeps the machine's words behind a fold,
+         and a served comment is not behind one — measured as a rule 6b FAIL on
+         this very line on 2026-09-04. -->
     <section class="lanes-card panel-card wide-card" id="lanes">
       <div class="card-heading"><div><span class="eyebrow">Live lanes</span><h2><span id="activeLaneCount">0</span> of <span id="laneBudgetCount">0</span> lanes running</h2></div><button id="fillLanesButton" class="primary-subtle-button" type="button">Fill lanes</button></div>
       <!-- The fill control belongs beside the gauge only while the gauge says
