@@ -13,15 +13,19 @@ change on disk. These tests drive a real Chromium against the real app over a
 real git repository and assert the file afterwards, which is the half the kit
 cannot buy.
 
+The ask route (converge-ddt) has since landed, and the Ask test below was
+rewritten to assert what it now produces. It used to pin the opposite — the ask
+failing out loud because no route answered it — with a comment saying that when
+the route landed this test had to fail and be replaced by one about the
+proposal. It did fail, exactly there, and this is that replacement
+(converge-1pb, converge-tm5).
+
 What is NOT covered here, honestly:
 
-- **Ask returns nothing**, because the app answers no route that makes a
-  proposal (`app/serve.py` and `app/writes.py` are another lane's files; the
-  server half is filed as converge-ddt). The test below pins the behaviour that
-  actually ships today — the ask fails out loud, names the gap, and writes
-  nothing — so that when the route lands, this test fails and has to be
-  rewritten to assert the proposal. A test that quietly tolerated both would be
-  worth nothing.
+- **Answering the proposal an ask makes.** These tests assert the file the ask
+  writes, the line the screen shows, and that the document itself did not move.
+  Accepting it, reverting parts of it, and ratifying with edits are §7 and §8,
+  and belong to whichever test drives Review.
 - **Presence is this browser's own** (converge-wmh). There is no channel that
   carries a second steward, so nothing here claims one.
 
@@ -87,18 +91,23 @@ Check — a collision offers all three choices
   FAILS IF: fewer than three choices appear, or anything was written before a
      choice was taken.
 
-Check — Ask is offered at all three scopes
+Check — Ask is offered at all three scopes, and each comes back a proposal
   n. SEE an "Ask…" button in the document toolbar, and an
      "Ask about this paragraph" button under each paragraph.
   o. Click "Ask…". SEE a scope chooser offering this paragraph, this document,
      and every document.
-  p. Write something and click Ask. SEE a message saying plainly that nothing
-     was asked because the app answers no proposal route yet, naming
-     converge-ddt.
-  FAILS IF: the message implies an ask was recorded, or any file changed.
+  p. Write something and click Ask. SEE a message naming the proposal it made
+     ("Proposal VISION.v1-candidate is waiting in Review.").
+  q. In a terminal: SEE `<doc-stem>.vN-candidate.md` beside the document,
+     carrying what you asked verbatim; SEE `git status` report the document
+     itself unmodified, and `git log -1` show no new commit.
+  r. Repeat (o)-(q) at each of the three scopes. SEE the same proposal named
+     each time, now carrying the further ask and its own evidence line.
+  FAILS IF: the document changed, or a commit was made, or the message names a
+     proposal that is not on disk.
 
 Check — it holds at both widths
-  q. Repeat (a)-(c) at 1280x800 and at 390x844. At each, in the devtools
+  s. Repeat (a)-(c) at 1280x800 and at 390x844. At each, in the devtools
      console run:
        document.documentElement.scrollWidth + ' vs ' + document.documentElement.clientWidth
      SEE the two numbers equal, with the editor open.
@@ -349,6 +358,40 @@ def _save_wording(page, wording: str) -> None:
     page.wait_for_timeout(900)
 
 
+def _changed_paths(repo: Path) -> set[str]:
+    """Every path git currently reports as changed or untracked, by name."""
+    return {line[3:].strip() for line in _git(repo, "status", "--porcelain").splitlines() if line.strip()}
+
+
+def _head(repo: Path) -> str:
+    return _git(repo, "rev-parse", "HEAD").strip()
+
+
+def _open_ask(page, *, from_paragraph: bool) -> None:
+    """Open the Ask dialog, from the paragraph control or the toolbar."""
+    page.click('[data-ask][data-ask-scope="paragraph"]' if from_paragraph else "#askButton[data-ask]")
+    page.wait_for_selector("#askScope", timeout=5000)
+
+
+def _send_ask(page, scope: str, wanted: str) -> str:
+    """Choose a scope, say what you want, send it, and return what the app said.
+
+    The toast is cleared first and then waited for, rather than slept on: a
+    stale line left over from the previous ask would read exactly like a fresh
+    success, which is the one mistake this test cannot afford to make.
+    """
+    page.select_option("#askScope", scope)
+    page.fill("#askWhat", wanted)
+    page.eval_on_selector("#toast", "el => { el.textContent = ''; }")
+    page.click('#dialogActions button:text-is("Ask")')
+    page.wait_for_function(
+        "() => ((document.getElementById('toast') || {}).textContent || '').trim().length > 0",
+        timeout=10000,
+    )
+    page.wait_for_timeout(300)
+    return _toast(page)
+
+
 # --------------------------------------------------------------------------
 # §5 — a draft is edited in place, and the save reaches the document
 # --------------------------------------------------------------------------
@@ -489,14 +532,39 @@ def test_a_collision_offers_all_three_choices_and_writes_nothing_until_one_is_ta
 
 
 # --------------------------------------------------------------------------
-# §9 — Ask is offered at all three scopes, and says plainly what it could not do
+# §9 — Ask is offered at all three scopes, and every one comes back a proposal
 # --------------------------------------------------------------------------
+
+#: What `app/writes.py` puts on a proposal's evidence to say what the ask
+#: covered. Pinned here as words on purpose: this is the sentence a steward
+#: reads to know which of the three scopes they asked at.
+ASK_COVERS = {
+    "paragraph": "The ask covers one paragraph.",
+    "document": "The ask covers this whole document.",
+    "all": "The ask covers every document in this repository.",
+}
+
+ASKED = {
+    "paragraph": "Say plainly what the console is for.",
+    "document": "Say what this vision promises, in one paragraph.",
+    "all": "Use the same words for the console in every document.",
+}
 
 
 @needs_browser
-def test_ask_is_offered_at_three_scopes_and_never_pretends_it_recorded_anything(
+def test_ask_returns_a_named_proposal_at_all_three_scopes_and_never_edits_the_document(
     server, project, browser
 ):
+    """§9: point at a paragraph, a document, or every document — a proposal returns.
+
+    Three asks, one per scope, each checked the same way: the screen names the
+    proposal, that proposal is a real file beside the document carrying what
+    was asked verbatim, and the document itself is byte-identical with no new
+    commit. The last part of the test takes the ask the server refuses, to show
+    that when the write cannot be made nothing on screen pretends it was.
+    """
+    repo, vision = project["repo"], project["vision"]
+    candidate = vision.with_name("VISION.v1-candidate.md")
     ctx, page, errors = _boot(browser, server, project)
     _open_doc(page, "Vision")
 
@@ -516,28 +584,90 @@ def test_ask_is_offered_at_three_scopes_and_never_pretends_it_recorded_anything(
     assert scopes == ["paragraph", "document", "all"], (
         f"§9 names a paragraph, a document, and every document; this offered {scopes}"
     )
+    page.click('#dialogActions button:text-is("Cancel")')
+    page.wait_for_timeout(200)
 
-    clean_before = _git(project["repo"], "status", "--porcelain")
-    head_before = _git(project["repo"], "rev-parse", "HEAD").strip()
-    page.fill("#askWhat", "Say plainly what the console is for.")
-    page.click('#dialogActions button:text-is("Ask")')
-    page.wait_for_timeout(900)
+    for scope in ("paragraph", "document", "all"):
+        wanted = ASKED[scope]
+        doc_before = vision.read_bytes()
+        head_before = _head(repo)
+        dirty_before = _changed_paths(repo)
 
-    said = _toast(page)
-    print(f"the app said: {said}")
-    print(f"working tree unchanged: {_git(project['repo'], 'status', '--porcelain') == clean_before}")
-    print(f"HEAD unchanged: {_git(project['repo'], 'rev-parse', 'HEAD').strip() == head_before}")
-    print(f"console errors: {errors or 'none'}")
+        # The paragraph scope is asked from the paragraph's own control, so a
+        # real section travels with it rather than a scope chosen in a vacuum.
+        _open_ask(page, from_paragraph=(scope == "paragraph"))
+        said = _send_ask(page, scope, wanted)
 
-    # Today the app answers no proposal-producing route (converge-ddt), so the
-    # only honest outcome is a refusal that names the gap. When the route lands
-    # this assertion must fail and be replaced by one about the proposal.
-    assert "Nothing was asked" in said, f"an ask that could not be carried did not say so: {said!r}"
-    assert "converge-ddt" in said, "the refusal did not name the work that would fix it"
-    assert _git(project["repo"], "status", "--porcelain") == clean_before, (
-        "the ask changed a file — §9 says an ask is never a silent edit"
+        body = candidate.read_text(encoding="utf-8") if candidate.is_file() else ""
+        arrived = sorted(_changed_paths(repo) - dirty_before)
+        print(f"\n[{scope}] the app said: {said}")
+        print(f"[{scope}] proposal on disk: {candidate.is_file()} ({candidate.name})")
+        print(f"[{scope}] the document is byte-identical: {vision.read_bytes() == doc_before}")
+        print(f"[{scope}] HEAD unchanged: {_head(repo) == head_before}")
+        print(f"[{scope}] what appeared in the tree: {arrived or 'nothing new — the proposal was already open'}")
+        print(f"[{scope}] the proposal records what was asked: {wanted in body}")
+
+        assert candidate.is_file(), (
+            f"the {scope} ask wrote no proposal beside the document — §9 says its output is always one"
+        )
+        assert candidate.stem in said, (
+            f"the {scope} ask did not name its proposal on screen; it said: {said!r}"
+        )
+        assert vision.read_bytes() == doc_before, (
+            f"the {scope} ask changed the document itself — §9 says an ask is never a silent edit"
+        )
+        assert _head(repo) == head_before, f"the {scope} ask made a commit; an ask proposes, it does not land"
+        assert arrived in ([], ["docs/VISION.v1-candidate.md"]), (
+            f"the {scope} ask touched more than its proposal: {arrived}"
+        )
+        assert "docs/VISION.md" not in _changed_paths(repo), (
+            "the document is dirty in the working tree — the ask wrote into it"
+        )
+        assert f'What they asked, verbatim: "{wanted}"' in body, (
+            f"the proposal does not carry the {scope} ask in the steward's own words"
+        )
+        assert ASK_COVERS[scope] in body, (
+            f"the proposal does not say it was asked at {scope} scope"
+        )
+
+    # Every document means every document: the widest scope names the other one.
+    print(f"\nthe repository-wide ask names the other document: {'contracts/demo.v1.md' in candidate.read_text(encoding='utf-8')}")
+    assert "contracts/demo.v1.md" in candidate.read_text(encoding="utf-8"), (
+        "the ask across every document did not record the documents it covered"
     )
-    assert _git(project["repo"], "rev-parse", "HEAD").strip() == head_before
+
+    # ------------------------------------------------------------------
+    # and when the write cannot be made, nothing pretends it was
+    # ------------------------------------------------------------------
+    standing = candidate.read_bytes()
+    doc_before = vision.read_bytes()
+    dirty_before = _changed_paths(repo)
+    _open_ask(page, from_paragraph=False)
+    # No control offers this scope. It is added to the chooser precisely
+    # because the question here is what the screen says when the server
+    # refuses the write — which cannot be asked through a control that only
+    # ever sends scopes the server accepts.
+    page.eval_on_selector(
+        "#askScope",
+        "el => { const o = document.createElement('option'); o.value = 'sideways';"
+        " o.textContent = 'sideways'; el.appendChild(o); }",
+    )
+    refused = _send_ask(page, "sideways", "Ask at a scope this app does not have.")
+    print(f"\nthe app said when the write was refused: {refused}")
+    print(f"the proposal is byte-identical: {candidate.read_bytes() == standing}")
+    print(f"the document is byte-identical: {vision.read_bytes() == doc_before}")
+    print(f"what appeared in the tree: {sorted(_changed_paths(repo) - dirty_before) or 'nothing'}")
+    print(f"console errors (a refused POST logs one): {errors or 'none'}")
+
+    assert "sideways" in refused, (
+        f"the refusal did not carry the reason the server gave: {refused!r}"
+    )
+    assert "waiting in Review" not in refused and candidate.stem not in refused, (
+        f"an ask that was refused claimed a proposal anyway: {refused!r}"
+    )
+    assert candidate.read_bytes() == standing, "a refused ask still wrote to the proposal"
+    assert vision.read_bytes() == doc_before, "a refused ask still wrote to the document"
+    assert _changed_paths(repo) == dirty_before, "a refused ask still changed the working tree"
     ctx.close()
 
 
