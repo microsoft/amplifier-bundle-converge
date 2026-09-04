@@ -38,7 +38,6 @@ The two halves of the acceptance, and what would falsify each
 
 from __future__ import annotations
 
-import json
 import os
 import sys
 import uuid
@@ -216,28 +215,3 @@ def test_rule_8a_passes_over_this_apps_own_boot(registered, tmp_path, capsys) ->
         print(f"  8a {row['status']}  {row['detail']}")
     assert row["status"] == "PASS", row
     assert row.get("stewards") == [MANAGER], row
-
-
-def test_rule_8a_reads_the_key_and_not_its_value(unregistered, tmp_path, capsys) -> None:
-    """A residual, asserted rather than left to be discovered again.
-
-    `conformance/experience-collaboration/run.py` finds a steward by looking
-    for a KEY matching /steward/i on each manager, never at what that key
-    says. So a manager card carrying `steward: ""` -- a registration nobody
-    finished -- satisfies rule 8a as written, even though `/api/boot` is
-    correctly answering "nobody" (the test above proves that half).
-
-    This is the check's own bar, not this app's behaviour, and the kit is not
-    this lane's file to change. It is recorded here so the next reader sees a
-    known limit rather than a green light, and filed for the kit's owner as
-    `converge-isf` -- which asks for this test to be deleted when it lands.
-    """
-    kit = _kit()
-    row = kit.check_one_steward(_snapshot(unregistered, tmp_path))
-    with capsys.disabled():
-        print(f"  8a {row['status']}  (nobody named) {row['detail']}")
-    assert row["status"] == "PASS", (
-        "the kit now reads the value -- good, and this characterisation test "
-        "should be deleted along with the work item that asked for it"
-    )
-    assert json.loads(_snapshot(unregistered, tmp_path).text("/api/boot"))["managers"][0]["steward"] == ""
