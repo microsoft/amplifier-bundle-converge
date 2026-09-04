@@ -74,7 +74,7 @@ service for provenance. One install verifies each and names what is missing.
 
 - **Turnkey:** fresh environment → one install → start a project, derive from a
   sample gap, run two lanes, tend, judge, integrate, re-check, brief → green.
-  **First green 2026-09-04 — nine of nine steps, twice, in fresh containers, with a manager session that was not the integrator (`evaluations/turnkey/RESULT.md`); it re-runs on every merge.
+  **First green 2026-09-04** — nine of nine steps, twice, in fresh containers, with a manager session that was not the integrator (`evaluations/turnkey/RESULT.md`); it re-runs on every merge.
 - Every lane has a terminal session and working copy on disk; in-session
   sub-agents never hold work items.
 - Lanes are filled only with disjoint items; adjacent items appear as one lane.
