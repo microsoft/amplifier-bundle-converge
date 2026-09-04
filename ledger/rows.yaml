@@ -724,13 +724,21 @@
     file: contracts/composition.v1.md
     clause: "Conformance kit asserts, bullet 2"
     quote: "A Converge session reaches a lean-base helper and one of Converge's own."
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'uv run conformance/composition/run.py . --json-only | python3 -c "import json,sys;r={x[\"id\"]:x[\"status\"] for x in json.load(sys.stdin)[\"results\"]};print(\"LIVE-REACHABILITY-STILL-SKIPPED\" if r[\"session_reaches_helpers\"]==\"SKIP\" else \"LIVE-REACHABILITY-NOW-\"+r[\"session_reaches_helpers\"])"'
     expect:
       exit: 0
-      stdout_contains: "LIVE-REACHABILITY-STILL-SKIPPED"
+      stdout_contains: "LIVE-REACHABILITY-NOW-PASS"
+  proves: >
+    That the composition kit's rule 3b stands up a REAL session on this
+    repository and finds it reaches both helper families — the lean base's
+    anchors:architect and Converge's own converge:negotiator. NOT that a session
+    reaches them on any other host, and not that every helper on disk is
+    reachable: the rule reads the roster the session actually composed, which is
+    the distinction no file scan can make, and it asserts one helper from each
+    family rather than all of them.
   notes: >
     RAN 2026-09-02 → LIVE-REACHABILITY-STILL-SKIPPED. Kit rule 2 reports SKIP,
     "needs a live Amplifier session; this kit reads files only". The kit's own
@@ -762,7 +770,28 @@
     never asks this question cannot answer it. converge-7ym carries the two honest
     routes — extend the turnkey, which already stands a fresh container up and
     installs into it, or write a separate session-reachability evaluation.
-  work: converge-7ym
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-wnp) AND MOVED GAP → CONFORMS. RAN →
+    LIVE-REACHABILITY-NOW-PASS.
+    THIS ROW WENT RED BEFORE IT WENT GREEN, AND THAT IS THE RATCHET WORKING.
+    The kit stopped declining and the row still pinned the decline, so
+    `uv run --with pyyaml ledger/checks/verify.py` failed with this row named —
+    drift TOWARD spec caught by the same tripwire that catches drift away from
+    it. converge-7ym filed converge-wnp rather than editing a ledger outside its
+    file ownership; this is that item.
+    WHAT THE RULE NOW READS, from the run this line was written on:
+    3b PASS — a real session on this repository reaches the lean base's
+    anchors:architect and its own converge:negotiator (roster of 12, delegation
+    tool mounted). Its structured evidence: roster_size 12, six lean-base
+    helpers composed, four of Converge's own composed, and four on disk — so
+    every helper this repository ships is reachable, not merely present.
+    NEITHER ROUTE THIS ROW PREDICTED WAS TAKEN, AND THE PREDICTION IS LEFT ABOVE
+    ON PURPOSE. It named two: extend the turnkey, or write a separate
+    session-reachability evaluation. converge-7ym did a third thing — the KIT
+    stands the session up itself, shelling out to the installed CLI's own
+    interpreter. A row that records what it expected and is then wrong is more
+    useful than one that quietly agrees with whatever happened.
+    THE `work` REF IS GONE, because a green row may not carry one.
 
 - id: CVG-009
   title: the neighbour promise — an unrelated session keeps its tools
@@ -772,13 +801,21 @@
     quote: |
       After installing Converge beside other work, a helper in an unrelated session
       keeps its shell, delegation, and skills tools.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'uv run conformance/composition/run.py . --json-only | python3 -c "import json,sys;r={x[\"id\"]:x[\"status\"] for x in json.load(sys.stdin)[\"results\"]};print(\"NEIGHBOUR-CHECK-STILL-SKIPPED\" if r[\"unrelated_session_keeps_tools\"]==\"SKIP\" else \"NEIGHBOUR-CHECK-NOW-\"+r[\"unrelated_session_keeps_tools\"])"'
     expect:
       exit: 0
-      stdout_contains: "NEIGHBOUR-CHECK-STILL-SKIPPED"
+      stdout_contains: "NEIGHBOUR-CHECK-NOW-PASS"
+  proves: >
+    That the composition kit's rule 6b stands up an UNRELATED session twice —
+    once on the lean base alone as a control, once per install path with this
+    repository installed beside it — and finds the spawned helper keeps its
+    shell, delegation and skills tools in every treatment. NOT that no bundle
+    anywhere strips them: this reading is of THIS repository's two install
+    paths. A different Converge bundle on the same host can and did break the
+    same promise (converge-w3v), and this row would stay green through it.
   notes: >
     RAN 2026-09-02 → NEIGHBOUR-CHECK-STILL-SKIPPED. Kit rule 3 reports SKIP,
     "needs two live Amplifier sessions (Converge plus unrelated work) side by
@@ -805,7 +842,28 @@
     re-taken by nothing in the two days since. The rule is enforced statically
     (CVG-006 asserts the absence of a `spawn:` key); the harm it prevents is not
     re-measured. A static absence is a good guard and a poor witness.
-  work: converge-7ym
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-wnp) AND MOVED GAP → CONFORMS. RAN →
+    NEIGHBOUR-CHECK-NOW-PASS.
+    THE POOR WITNESS HAS BEEN REPLACED BY A MEASUREMENT, WHICH IS EXACTLY WHAT
+    THE PARAGRAPH ABOVE ASKED FOR. The 2026-09-02 hand measurement behind
+    PINS.md's standing rule is now re-taken on every run of the kit.
+    WHAT THE RULE NOW READS, from the run this line was written on:
+    6b PASS — across 2 install path(s), an unrelated session's spawned helper
+    keeps shell, delegation, skills (tool-bash, tool-delegate, tool-skills),
+    control and treatment measured side by side. Both install paths this
+    repository declares (bundle.md and behaviors/converge.yaml) were measured,
+    each with `lost: []`.
+    THE CONTROL IS WHY THE GREEN MEANS ANYTHING. Without a baseline the rule
+    would report green whenever the tools were ALREADY gone, or blame this
+    repository for a policy it did not set. On this run the control's own
+    `spawn_policy` read null and it carried all three promised tools.
+    WHAT THIS ROW STILL DOES NOT WITNESS, AND IT IS NOT SMALL: converge-7ym's
+    own control run found a DIFFERENT, published Converge bundle app-installed
+    on this host stripping those three tools from every spawned helper
+    (converge-w3v, still open). This row asserts THIS repository's install
+    paths; it is not a statement about the machine.
+    THE `work` REF IS GONE, because a green row may not carry one.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # operation.v1 — 15 rows.  The contract names its own gate "**Red today** —
@@ -838,6 +896,40 @@
 # not distinguish "unbuilt" from "built-but-unobserved", and 14 rows in the very
 # first seed hit that. PROTOCOL.md is RATIFIED; changing it is a §5 CANDIDATE
 # that only the owner ratifies, and one seed does not clear the evidence bar.
+#
+# RE-READ AGAIN 2026-09-04 (converge-saz), AFTER TWO NEW HARNESS STEPS.  The
+# turnkey grew step (j), which reads what a wave LEFT BEHIND, and step (k),
+# which reads WHO produced an artifact rather than only that it exists
+# (converge-2ro, converge-6mi).  Ten rows here were still probing
+# modes/converge-manager.md, which proves the rule is written down and nothing
+# else.  All ten now read the recorded step: FIVE MOVED GAP -> CONFORMS
+# (CVG-012, CVG-014, CVG-016, CVG-022, CVG-023) and FIVE STAYED GAP with the
+# observation each still waits on named in the harness's own words (CVG-013,
+# CVG-019, CVG-021 -> converge-5vz; CVG-017, CVG-018 -> converge-blg).
+#
+# EACH PROBE PINS ITS CLAUSE'S VERDICT WORD -- `Core 6 (CVG-016) PASS` -- AND
+# NOT THE COUNTS IN THE SENTENCE AFTER IT.  Those counts are of one wave: "4
+# lane brief(s)", "79 resolution(s)", "11 of its 35 dated decisions".  A row
+# keyed on them goes red on the next honest re-run, which is noise that reads
+# exactly like drift; a row keyed on the verdict word goes red when the
+# harness's answer for THAT CLAUSE changes, in either direction, which is the
+# movement the ratchet exists to catch.  The sentence itself is quoted in each
+# row's notes, where a reader can check what the verdict was earned on.
+#
+# THE RED ROWS ARE KEYED THE SAME WAY, ON `SKIP`, AND THAT IS THE BIGGER
+# CHANGE.  A red row that greps a file which has not moved since 2026-09-02
+# cannot notice its own clause being kept.  These five now read the step that
+# declines them, so the day the harness answers PASS for one of them, that row
+# fails its expect and must be re-read.  Drift toward spec is caught by the
+# same tripwire as drift away from it.
+#
+# ONE CHARACTER STOOD IN THE WAY, AND IT IS WORTH RECORDING AS A DEFECT CLASS.
+# ledger/checks/turnkey_step.py accepted step letters `[a-i]` -- correct when
+# the harness had nine steps, silently wrong the day it grew two more.  Asked
+# for step (j) it answered "no step (j) is recorded in
+# evaluations/turnkey/RESULT.md" while (j) sat in that file, four lines below
+# (i): a false "the record changed", indistinguishable from real drift by
+# anything except opening the file.  The class is now `[a-z]`.
 # ─────────────────────────────────────────────────────────────────────────────
 
 - id: CVG-010
@@ -976,16 +1068,22 @@
     quote: |
       **The plan is visible.** Order, dependencies, collisions, and opportunistic
       picks are shown with reasons.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 2 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-2 || echo MODE-LOST-CLAUSE-2'
+    ref: 'if grep -q "^## Clause 2 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 2 (CVG-012) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-2-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J; else echo CLAUSE-2-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-2"
+      stdout_contains: "CLAUSE-2-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:51) — not that any
-    plan was ever shown.
+    That the mode still encodes this clause, AND that the turnkey's step (j)
+    read a wave's own leavings and recorded Core 2 PASS — the lane briefs each
+    declare the paths their lane owns, and the plan record gives REASONS for
+    dated decisions rather than only announcing them. NOT that every plan is
+    visible. The recorded reading is four briefs and 11 of 35 dated decisions,
+    on one host on one day; the clause names four things — order, dependencies,
+    collisions, opportunistic picks — and this reading covers ownership and
+    reasons. A decision nobody wrote down is invisible to it.
   notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-2. See CVG-010 for the shared cause.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-2. The
@@ -1001,8 +1099,26 @@
     dependencies, collisions and opportunistic picks were shown with reasons,
     because a wave that ran leaves no artifact saying what was shown before it.
     converge-2ro carries this clause and six others in the same position, with
-    what each one would need observed."
-  work: converge-2ro
+    what each one would need observed.
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz) AND MOVED GAP → CONFORMS. RAN →
+    CLAUSE-2-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J.
+    THE STEP THIS ROW SAID DID NOT EXIST NOW EXISTS. Four lines up this row
+    reads 'not one of them reads a plan'. converge-2ro landed step (j), which
+    reads what a wave left behind, and evaluations/turnkey/RESULT.md records its
+    reading of this clause: Core 2 (CVG-012) PASS: 4 lane brief(s) each declare
+    the paths that lane owns, and the plan record at
+    /home/bkrabach/dev/hw-converge/HIGHWAY.md gives reasons for 11 of its 35
+    dated decisions.
+    THE PROBE NOW READS THAT, AND NOT THE MODE FILE ALONE, so this row flips if
+    the harness's answer for this clause changes. It pins the verdict word and
+    not the counts — the section header above CVG-010 says why, and the counts
+    are quoted here instead.
+    ELEVEN OF THIRTY-FIVE IS NOT THIRTY-FIVE OF THIRTY-FIVE. The clause asks for
+    order, dependencies, collisions and opportunistic picks with reasons; this
+    reading covers the ownership half of a brief and the reason half of a plan
+    entry, on one wave, on one host. `proves` says so.
+    THE `work` REF IS GONE, because a green row may not carry one."
 
 - id: CVG-013
   title: never the bottleneck
@@ -1015,13 +1131,18 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 3 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-3 || echo MODE-LOST-CLAUSE-3'
+    ref: 'if grep -q "^## Clause 3 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 3 (CVG-013) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-3-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS; else echo CLAUSE-3-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-3"
+      stdout_contains: "CLAUSE-3-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:62) — not that the
-    steward was never the bottleneck, which is measurable only across a real wave.
+    That the mode still encodes this clause, AND that the harness's own reading
+    of it still DECLINES, in the words step (j) recorded: it can see that work
+    was parked on the steward's word and that other lanes kept running, which is
+    the clause's shape and not its promise. NOT that the steward was never the
+    bottleneck. A red row keyed on a declining reading is worth more than one
+    keyed on a file that has not moved since 2026-09-02 — this one fails its
+    expect the day the harness answers PASS here, and forces a re-read.
   notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-3. See CVG-010.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-3. The
@@ -1038,8 +1159,27 @@
     measurement — an unattended run proves nothing was ASKED, never that
     everything askable was maximised.
     converge-2ro carries this clause and six others in the same position, with
-    what each one would need observed."
-  work: converge-2ro
+    what each one would need observed.
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz). STILL GAP, AND NOW RED FOR A REASON A
+    CHECK CAN STATE. RAN → CLAUSE-3-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS.
+    THE CLAUSE HAS A READER NOW, AND THE READER DECLINED. converge-2ro landed
+    step (j); evaluations/turnkey/RESULT.md records what it said here: Core 3
+    (CVG-013) SKIP: this run can see that work was parked on the steward's word
+    and that other lanes kept running (5 plan entries record a park), which is
+    the clause's shape but not its promise.
+    WHY THAT IS NOT A PASS, IN THE HARNESS'S OWN LOGIC: the clause is a
+    MAXIMISATION, and a maximisation is a comparison against the work that could
+    have proceeded. Five parks in a plan record show that parking happened; what
+    continued beside each park, and what could have, is stored nowhere.
+    WHAT THE ROW GAINED BY MOVING ITS PROBE: it can now notice being kept. The
+    old probe grepped a mode file unchanged since 2026-09-02 and would have gone
+    on printing green through any wave whatsoever.
+    THE `work` REF MOVED converge-2ro → converge-5vz. converge-2ro is RESOLVED
+    — it gave all seven clauses a runner — and closed without a successor for
+    the three that runner could not reach. converge-5vz is that successor, and
+    names the missing observation for each of the three separately."
+  work: converge-5vz
 
 - id: CVG-014
   title: feedback is signal, not a ticket
@@ -1050,17 +1190,22 @@
       **Feedback is signal, not a ticket.** Before filing: read and quote the
       evidence; confirm which version was seen; merge reports sharing a cause and
       split one hiding several
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 4 - " modes/converge-manager.md && [ -f context/manager/feedback-intake.md ]; then echo MODE-ENCODES-CLAUSE-4-WITH-INTAKE; else echo MODE-LOST-CLAUSE-4-OR-INTAKE; fi'
+    ref: 'if grep -q "^## Clause 4 - " modes/converge-manager.md && [ -f context/manager/feedback-intake.md ] && python3 ledger/checks/turnkey_step.py j "Core 4 (CVG-014) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-4-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J; else echo CLAUSE-4-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-4-WITH-INTAKE"
+      stdout_contains: "CLAUSE-4-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J"
   proves: >
-    The mode (modes/converge-manager.md:71) plus context/manager/feedback-intake.md
-    encode all eight intake rules — not that any raw report was actually enriched
-    before filing.
+    That the mode plus context/manager/feedback-intake.md still encode the eight
+    intake rules, AND that step (j) held a raw report and its filed item side by
+    side and recorded Core 4 PASS — the item quotes the report and names the
+    version it was said about. NOT the whole clause. The reading covers the
+    first two intake rules (quote the evidence, confirm the version) on ONE
+    filed item; MERGING reports that share a cause and SPLITTING one that hides
+    several is read by nothing, and the same run recorded a triage naming no
+    item at all, reported unresolved rather than passed.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-4-WITH-INTAKE. The kit assert "No raw
     feedback becomes work without a quoted source and enrichment" has no runner
@@ -1081,7 +1226,24 @@
     all. Measuring this needs a raw report and its filed item side by side.
     converge-2ro carries this clause and six others in the same position, with
     what each one would need observed.
-  work: converge-2ro
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz) AND MOVED GAP → CONFORMS. RAN →
+    CLAUSE-4-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J.
+    THE MEASUREMENT THIS ROW ASKED FOR WAS TAKEN, IN THE WORDS IT ASKED FOR IT.
+    Two lines up: "Measuring this needs a raw report and its filed item side by
+    side." Step (j) does exactly that, and evaluations/turnkey/RESULT.md records
+    it: Core 4 (CVG-014) PASS: 1 item(s) filed from feedback quote the report and
+    name the version it was said about (converge-f5f); 1 triage(s) name no item
+    and are unresolved, not passed.
+    THE SECOND HALF OF THAT SENTENCE IS WHY THE READING IS WORTH SOMETHING. A
+    triage that named no item was NOT counted as a pass; the step reports it
+    unresolved. A check that can only find what it is looking for would have
+    reported one of one.
+    WHAT IS STILL UNREAD, AND IT IS HALF THE CLAUSE: "merge reports sharing a
+    cause and split one hiding several". One item cannot demonstrate a merge or
+    a split. `proves` says so, and this row is green on the quoting-and-version
+    half only.
+    THE `work` REF IS GONE, because a green row may not carry one.
 
 - id: CVG-015
   title: lanes are real sessions
@@ -1157,17 +1319,21 @@
       **Width is a collision decision.** Lanes fill to the steward's count only
       with items that provably touch different files; adjacent items run as one
       lane.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 6 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-6 || echo MODE-LOST-CLAUSE-6'
+    ref: 'if grep -q "^## Clause 6 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 6 (CVG-016) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-6-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J; else echo CLAUSE-6-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-6"
+      stdout_contains: "CLAUSE-6-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:120) — not that lanes
-    were ever filled only with disjoint items, nor that a shortfall ever surfaced
-    as the repair card rather than silently.
+    That the mode still encodes this clause, AND that step (j) judged four lanes
+    running at once and recorded Core 6 PASS on the DECLARED half — each brief
+    declares paths that collide with no other lane's. NOT the ACTUAL half: the
+    same reading says only one of the four had commits yet, so the files the
+    lanes really touched could not be compared, and two empty branches share no
+    file by not having one. NOT the shortfall half either — a width shortfall
+    surfacing as a repair the steward answers with a word is read by nothing.
   notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-6. See CVG-010.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-6. The
@@ -1186,8 +1352,25 @@
     interval becoming a repair the steward answers with a word — is read by
     nothing either.
     converge-2ro carries this clause and six others in the same position, with
-    what each one would need observed."
-  work: converge-2ro
+    what each one would need observed.
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz) AND MOVED GAP → CONFORMS. RAN →
+    CLAUSE-6-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J.
+    REACHING A WIDTH AND EARNING IT ARE STILL DIFFERENT FACTS, AND THE SECOND
+    ONE IS NOW READ. Above, this row says step (f) checks only that the wave
+    REACHED its width. Step (j) asks the other question, and
+    evaluations/turnkey/RESULT.md records the answer: Core 6 (CVG-016) PASS: 4
+    lanes ran at once, each brief declares paths that collide with no other
+    lane's, and the actual half is unmeasured: only 1 of them has commits yet,
+    and two empty branches share no file by not having one.
+    THE STEP REPORTS ITS OWN BLIND SPOT IN THE SAME SENTENCE, which is why the
+    green is worth taking: a check that counted two empty branches as disjoint
+    would have claimed four of four. This one says unmeasured.
+    WHAT IS STILL UNREAD: the files the lanes actually changed (three of the
+    four had no commits at read time), and the clause's shortfall half — a
+    shortfall past a bounded interval becoming a repair card. `proves` carries
+    both.
+    THE `work` REF IS GONE, because a green row may not carry one."
 
 - id: CVG-017
   title: done means the manager session re-ran the check
@@ -1200,13 +1383,19 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 7 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-7 || echo MODE-LOST-CLAUSE-7'
+    ref: 'if grep -q "^## Clause 7 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py k "Core 7 (CVG-017) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-7-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY; else echo CLAUSE-7-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-7"
+      stdout_contains: "CLAUSE-7-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:133) — not that any
-    marker was ever checked against its branch.
+    That the mode still encodes this clause, AND that step (k) — which reads WHO
+    produced an artifact — still declines its subject, for a reason it states:
+    the newest record of a check run came in through a lane merge, so this
+    wave's verification is unattributed. The step's own line also carries the
+    half that IS measured, from step (f): a marker on an unchanged branch is
+    recorded stuck. NOT that the manager session re-ran anything. Red on the
+    subject of the sentence, green on its parenthetical, and the probe now says
+    which.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-7. This is the clause the ledger most
     wants asserted, because it is the one a lane can most easily fake: the kit
@@ -1237,7 +1426,30 @@
     OBSERVED run, which needs a wave to be running at that moment; a probe keyed
     on it would go red whenever this workspace happened to be idle — a false
     alarm, not drift. It is recorded here in the words the run printed instead.
-  work: converge-6mi
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz). STILL GAP, AND THE PROBE NO LONGER
+    READS THE MODE ALONE. RAN → CLAUSE-7-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY.
+    THE PARAGRAPH ABOVE IS SUPERSEDED, AND IT IS WORTH SAYING WHY IT WAS RIGHT
+    THEN. It reasoned that a probe keyed on an OBSERVED run goes red whenever
+    the workspace is idle. converge-6mi's step (k) writes its reading into
+    evaluations/turnkey/RESULT.md, and ledger/checks/turnkey_step.py reads THE
+    RECORDED RUN, not a live one — the same route CVG-011 and CVG-015 already
+    take. A file does not go idle. The objection applied to re-running the
+    harness, never to reading what it recorded.
+    WHAT STEP (k) SAID HERE: Core 7 (CVG-017) SKIP: step (f) PASS: a marker on
+    an unchanged branch is recorded stuck; and on the subject of the sentence —
+    the newest record of a check run (ledger/rows.yaml at 36bd6572) came in
+    through a lane merge, so this wave's verification is unattributed here; the
+    integrator has written 6 such record(s) before, most recently 2921181e.
+    THE MISSING OBSERVATION IS NOW PRECISE, WHICH IT WAS NOT ON 2026-09-02. It
+    is no longer 'an artifact does not record which process produced it' — it
+    does, and the step reads it. It is: on this host the newest check record
+    arrived through a lane merge, so there is nothing of the MANAGER session's
+    own to attribute. That is a condition of the wave, not a defect in the step.
+    THE `work` REF MOVED converge-6mi → converge-blg. converge-6mi is RESOLVED
+    — it built the step — and closed without a successor for the half the step
+    could not reach. converge-blg is that successor and carries both routes.
+  work: converge-blg
 
 - id: CVG-018
   title: integrate, verify, re-check
@@ -1251,14 +1463,19 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 8 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-8 || echo MODE-LOST-CLAUSE-8'
+    ref: 'if grep -q "^## Clause 8 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py k "Core 8 (CVG-018) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-8-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY; else echo CLAUSE-8-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-8"
+      stdout_contains: "CLAUSE-8-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:150) — not that a
-    manager session re-runs the contract check after a merge, nor that a
-    post-merge gate fires for a multi-lane merge.
+    That the mode still encodes this clause, AND that step (k) carries its three
+    parts separately: the post-merge gate fires when two or more lanes land
+    (step (g) PASS), the contract check follows it (step (h) PASS, by the
+    harness, which is the gate and not the manager session), and WHOSE
+    verification it was is still unread — the newest record of a check run came
+    in through a lane merge. NOT that the manager session's own verification is
+    the one that happens. The clause's opening words remain the unmeasured part,
+    and the step now names why rather than leaving it to a reader.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-8. The "contract check" half is now
     RUNNABLE for three of four contracts (conformance/composition, /documents,
@@ -1287,7 +1504,29 @@
     CVG-017 gives. The probe still reads only the mode, for the same reason too:
     an observed run needs a live wave, and a row keyed on one would go red on a
     quiet afternoon.
-  work: converge-6mi
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz). STILL GAP, AND THE PROBE NOW READS THE
+    STEP THAT JUDGES THIS CLAUSE. RAN →
+    CLAUSE-8-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY.
+    THE 'QUIET AFTERNOON' OBJECTION ABOVE IS ANSWERED, NOT OVERRULED. It applied
+    to keying a row on RE-RUNNING an observed harness. This probe reads what the
+    harness RECORDED, in evaluations/turnkey/RESULT.md — the file
+    contracts/operation.v1.md itself names as the gate's evidence, and the same
+    route CVG-011 and CVG-015 already take.
+    WHAT STEP (k) SAID HERE: Core 8 (CVG-018) SKIP: step (g) PASS: two or more
+    lanes landed in one repository; step (h) PASS: the contract check was re-run
+    after integration — by this harness, which is the post-merge gate and not
+    the manager session; and on whose verification it was — the newest record of
+    a check run (ledger/rows.yaml at 36bd6572) came in through a lane merge, so
+    this wave's verification is unattributed here.
+    TWO OF THREE PARTS GREEN IS STILL NOT THE CLAUSE. 'The manager session's own
+    verification, never the worker session's' is the opening phrase and the one
+    a lane can most easily fake; it stays unasserted, and it is now unasserted
+    for a reason a check states rather than for a reason a reader supplies.
+    THE `work` REF MOVED converge-6mi → converge-blg, RESOLVED converge-6mi's
+    successor for the attribution half, which carries CVG-017 for the same
+    reason and by the same reading.
+  work: converge-blg
 
 - id: CVG-019
   title: stalls are decisions, not loops
@@ -1301,13 +1540,16 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 9 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-9 || echo MODE-LOST-CLAUSE-9'
+    ref: 'if grep -q "^## Clause 9 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 9 (CVG-019) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-9-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS; else echo CLAUSE-9-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-9"
+      stdout_contains: "CLAUSE-9-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:164) — not that any
-    stall was ever declared stuck rather than retried.
+    That the mode still encodes this clause, AND that step (j)'s reading of it
+    RAN and found nothing to judge — no lane ended without commits, so no stall
+    existed for the reading to judge. NOT that a stall would be declared stuck
+    rather than retried. An empty denominator is not a pass, and the difference
+    between the two is exactly what this row exists to hold open.
   notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-9. See CVG-010.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-9. The
@@ -1324,8 +1566,22 @@
     what happens when work stops moving. This one needs a wave deliberately
     made to stall.
     converge-2ro carries this clause and six others in the same position, with
-    what each one would need observed."
-  work: converge-2ro
+    what each one would need observed.
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz). STILL GAP, AND THE READING NOW RUNS.
+    RAN → CLAUSE-9-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS.
+    THE READER EXISTS AND FOUND NOTHING, WHICH IS NOT THE SAME AS PASSING.
+    evaluations/turnkey/RESULT.md records step (j)'s words: Core 9 (CVG-019)
+    SKIP: no lane ended without commits, so no stall exists for this reading to
+    judge — the reading ran and found nothing.
+    THAT IS THE HONEST SHAPE OF THIS CLAUSE'S PROBLEM, AND IT HAS NOT CHANGED
+    SINCE 2026-09-02: every wave so far finished. A gate that has only ever seen
+    work move cannot say what happens when work stops. What it needs is a wave
+    deliberately made to stall — named in converge-5vz as the cheapest of the
+    three routes there, because it is the only one that needs no new event store.
+    THE `work` REF MOVED converge-2ro → converge-5vz, which is RESOLVED
+    converge-2ro's successor for the three clauses its step could not reach."
+  work: converge-5vz
 
 - id: CVG-020
   title: a brief on every return — returns and briefs are countable now, and there are none of either
@@ -1443,13 +1699,17 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 11 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-11 || echo MODE-LOST-CLAUSE-11'
+    ref: 'if grep -q "^## Clause 11 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 11 (CVG-021) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-11-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS; else echo CLAUSE-11-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-11"
+      stdout_contains: "CLAUSE-11-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:186) — not that
-    owner-facing prompts across a real wave all fell inside the four.
+    That the mode still encodes this clause, AND that step (j)'s reading of it
+    still declines for a stated reason: nothing in the run reads a prompt as an
+    EVENT, so the four calls cannot be counted or classified. NOT that every
+    owner-facing prompt fell inside the four. This row is red on a missing
+    instrument, not on a missing wave — the waves happened; nobody recorded the
+    prompts as countable things.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-11. Measuring this clause means counting
     owner-facing prompt events across a real wave. evaluations/ratchet does
@@ -1473,7 +1733,23 @@
     every prompt falling inside the four.
     converge-2ro carries this clause and six others in the same position, with
     what each one would need observed.
-  work: converge-2ro
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz). STILL GAP, AND THE MISSING PIECE IS
+    NAMED BY A CHECK NOW. RAN →
+    CLAUSE-11-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS.
+    evaluations/turnkey/RESULT.md records step (j)'s words: Core 11 (CVG-021)
+    SKIP: nothing in this run reads a prompt as an event, so the four calls
+    cannot be counted or classified.
+    THAT IS THE SAME DIAGNOSIS THIS ROW MADE ON 2026-09-02, NOW MADE BY THE
+    HARNESS RATHER THAN BY A READER. evaluations/ratchet counts exactly these
+    events for the reconciler; nothing counts them for a manager session, and a
+    headless run that never prompted is still not the same fact as every prompt
+    falling inside the four.
+    THE `work` REF MOVED converge-2ro → converge-5vz. converge-2ro is RESOLVED;
+    converge-5vz is its successor for the three clauses the step could not reach,
+    and asks first whether the ratchet's counter can be pointed at a manager
+    session at all.
+  work: converge-5vz
 
 - id: CVG-022
   title: the queue is the shared one, with custody
@@ -1483,17 +1759,22 @@
     quote: |
       **The queue is the shared one, with custody.** Atomic claim, heartbeat while
       held, resolution written for whoever asked.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 12 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-12 || echo MODE-LOST-CLAUSE-12'
+    ref: 'if grep -q "^## Clause 12 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py k "Core 12 (CVG-022) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-12-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-K; else echo CLAUSE-12-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-12"
+      stdout_contains: "CLAUSE-12-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-K"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:199) — not that a
-    MANAGER session uses the queue this way, and not that any resolution was
-    written for whoever asked.
+    That the mode still encodes this clause, AND that step (k) read every
+    resolution in the queue and judged each one written in sentences that answer
+    the ASKER rather than pointing at a commit — the last third of the sentence,
+    which nothing read until now. The first two thirds rest on step (f)'s
+    placement of 60 held items from outside their holding processes, recorded
+    below. NOT that a resolution is CORRECT, and not that the asker agreed: the
+    reading judges the shape of the writing, which is what the clause asks for
+    and is not the same as the reader being served.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-12. The queue mechanism is real and in
     use: install-check reports "Work queue command  ok" and "Work queue service
@@ -1521,7 +1802,24 @@
     and may not stay cited. converge-6mi names this remainder explicitly rather
     than folding it in with the other two, which are about attribution; this one
     is about a record nobody writes.
-  work: converge-6mi
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz) AND MOVED GAP → CONFORMS. RAN →
+    CLAUSE-12-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-K.
+    THE RECORD NOBODY WROTE IS NOW WRITTEN, AND IT IS THE WHOLE REASON THIS ROW
+    MOVED. Above: 'Resolution written for whoever asked is read by nothing …
+    Nothing in this repository could fail on it today.' converge-6mi's step (k)
+    reads exactly that, and evaluations/turnkey/RESULT.md records the reading:
+    Core 12 (CVG-022) PASS: all 79 resolution(s) in the queue are written in
+    sentences that answer the asker rather than pointing at a commit.
+    SEVENTY-NINE OF SEVENTY-NINE, AND THE DENOMINATOR IS THE POINT: this is not
+    one sampled resolution, it is every resolution the shared queue holds.
+    THE OTHER TWO THIRDS ARE STILL STEP (f)'s, NOT STEP (k)'s. Atomic claim and
+    custody-while-held rest on the 60 holders placed from outside their
+    processes, recorded above. This row is green on three parts asserted by two
+    different steps, and neither one asserts the others.
+    WHAT IT DOES NOT PROVE: that a resolution is TRUE, or that the person who
+    asked was satisfied. A shape can be judged; being served cannot.
+    THE `work` REF IS GONE, because a green row may not carry one.
 
 - id: CVG-023
   title: hand off when done
@@ -1531,16 +1829,20 @@
     quote: |
       **Hand off when done.** A manager session that has lost its footing says so,
       writes a hand-off a fresh session can resume from, and stops.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'grep -q "^## Clause 13 - " modes/converge-manager.md && echo MODE-ENCODES-CLAUSE-13 || echo MODE-LOST-CLAUSE-13'
+    ref: 'if grep -q "^## Clause 13 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 13 (CVG-023) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-13-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J; else echo CLAUSE-13-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-13"
+      stdout_contains: "CLAUSE-13-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J"
   proves: >
-    The mode encodes this clause (modes/converge-manager.md:211) — not that any
-    hand-off was ever written.
+    That the mode still encodes this clause, AND that step (j) read the recorded
+    closes of a real wave and found each one names what REMAINED — residuals,
+    what was parked, what was still live — so a fresh session could resume from
+    the record alone. NOT that a manager session which LOST ITS FOOTING wrote
+    one: two closes were read, both of sessions that finished. The clause's
+    hardest case, the session that stops badly, has still never been observed.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-13. The kit assert "a hand-off exists for
     every manager session that ended by choice" has no runner and no artifact to
@@ -1560,7 +1862,25 @@
     tell "none was owed" from "one was owed and not written".
     converge-2ro carries this clause and six others in the same position, with
     what each one would need observed.
-  work: converge-2ro
+    ──────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-saz) AND MOVED GAP → CONFORMS. RAN →
+    CLAUSE-13-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J.
+    THERE IS AN ARTIFACT TO COUNT NOW, AND A CHECK THAT JUDGES ITS CONTENT.
+    Above, this row says the kit assert has no runner and no artifact to count.
+    evaluations/turnkey/RESULT.md records step (j)'s reading: Core 13 (CVG-023)
+    PASS: each of 2 recorded close(s) names what remained — residuals, what was
+    parked, or what was still live — so a fresh session could pick the run up
+    from the record alone.
+    IT JUDGES THE CONTENT, NOT THE EXISTENCE, which is the whole difficulty of
+    this clause: converge-2ro's own resolution records that a close listing only
+    what FINISHED fails the reading. A hand-off that says what went well is not
+    a hand-off.
+    WHAT IT STILL DOES NOT PROVE, AND IT IS THE CLAUSE'S FIRST WORDS: 'a manager
+    session that has LOST ITS FOOTING says so'. Both closes read were of sessions
+    that finished. The harness still has no way to tell 'none was owed' from
+    'one was owed and not written' — it can now only judge the ones that were
+    written. `proves` carries that.
+    THE `work` REF IS GONE, because a green row may not carry one.
 
 - id: CVG-024
   title: declared dependencies are verified at install, each absence named with its cost
@@ -2353,7 +2673,7 @@
     ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"rule\"]==\"5b\"][0];o=r[\"observed\"];print((\"KITS-ALL-NUMBERED-TO-CORE-CLAUSES=%d\" % len(o)) if o and all(k[\"aligned\"] for k in o) else \"KIT-NUMBERING-DRIFTED\")"'
     expect:
       exit: 0
-      stdout_contains: "KITS-ALL-NUMBERED-TO-CORE-CLAUSES=5"
+      stdout_contains: "KITS-ALL-NUMBERED-TO-CORE-CLAUSES=7"
   notes: >
     RE-READ 2026-09-03 (converge-pq2, the fourth reconcile) AND MOVED
     OPEN-PINNED → CONFORMS. THE QUOTE THIS ROW HELD NO LONGER EXISTS — clause 5
@@ -2369,7 +2689,7 @@
     and asserts all five are aligned. It goes red if any kit drifts, and it goes
     red if a sixth kit lands unaligned, which is the case that matters now that
     the experience family has three kits of its own.
-    RAN 2026-09-03 → KITS-ALL-NUMBERED-TO-CORE-CLAUSES=5 (composition, documents,
+    RAN 2026-09-03 → KITS-ALL-NUMBERED-TO-CORE-CLAUSES=7 (composition, documents,
     experience-console, experience-direction, experience-operation — every one
     `aligned: True`).
     THE ORIGINAL PINNING, KEPT FOR THE RECORD —
@@ -3082,7 +3402,85 @@
 # by hand.
 #
 # ──────────────────────────────────────────────────────────────────────────────
-# TALLY — 64 rows, the clause 9 split 2026-09-03 (converge-njn).
+# TALLY — 175 rows, the reconcile after wave 8, 2026-09-04 (converge-dgc).
+# COPIED VERBATIM out of `uv run --with pyyaml ledger/checks/verify.py`. Nothing
+# below this line to the blank line was typed by hand or adjusted to agree with
+# anything.
+#
+# ROW COUNT PER CONTRACT
+#   contracts/composition.v1.md          9 rows  CONFORMS=7  GAP=2
+#   contracts/documents.v1.md           28 rows  CONFORMS=18  NOT-ASSERTABLE=9  OPEN-PINNED=1
+#   contracts/experience-collaboration.v1.md  10 rows  CONFORMS=4  NOT-ASSERTABLE=5  OPEN-PINNED=1
+#   contracts/experience-console.v1.md  10 rows  CONFORMS=7  GAP=3
+#   contracts/experience-direction.v1.md  11 rows  CONFORMS=4  GAP=7
+#   contracts/experience-operation.v1.md  13 rows  CONFORMS=5  GAP=8
+#   contracts/experience.v1.md          15 rows  CONFORMS=2  GAP=9  NOT-ASSERTABLE=3  OPEN-PINNED=1
+#   contracts/operation.v1.md           15 rows  CONFORMS=4  GAP=11
+#   contracts/platform-android.v1.md     9 rows  NOT-ASSERTABLE=9
+#   contracts/platform-ios.v1.md         9 rows  NOT-ASSERTABLE=9
+#   contracts/platform-macos.v1.md       9 rows  NOT-ASSERTABLE=9
+#   contracts/platform-web.v1.md        14 rows  CONFORMS=4  GAP=4  NOT-ASSERTABLE=6
+#   contracts/platform-windows.v1.md     9 rows  NOT-ASSERTABLE=9
+#   contracts/surface.v1.md             13 rows  CONFORMS=12  GAP=1
+#   TOTAL (non-SYNC)                   174 rows  CONFORMS=67  GAP=45  NOT-ASSERTABLE=59  OPEN-PINNED=3
+#   TOTAL (with SYNC)                  175
+#
+# In the steward's words (documents.v1 Core 10): 67 Kept · 45 Not yet ·
+# 0 Broken · 3 Pinned open · 59 Can't check.
+#
+# WHAT THIS PASS MOVED — three rows, and nothing else:
+#   CVG-209  GAP -> CONFORMS.     Reality moved toward the contract. The service
+#            worker now keeps a synced copy of every GET /api with the moment it
+#            was fetched, and the page prints one per payload. Proved in a real
+#            browser at 1280 and 390, not read off a file.
+#   CVG-186  CONFORMS -> OPEN-PINNED.  The app's write path grew a second
+#            process — a headless drafting session, off by default. Whether that
+#            is "the manager session in the hot path" is the steward's call, and
+#            this pass refused to make it either way. converge-nn6.
+#   CVG-106  CONFORMS -> OPEN-PINNED.  The app keeps a per-steward reading store
+#            outside the repository, and clause 7 says it holds no data of its
+#            own. The contract's own Reserved section already asked this. A
+#            candidate proposes the wording; converge-71q.
+#   Arithmetic: CONFORMS 68->67 (+1 from 209, -1 each from 186 and 106),
+#   GAP 46->45, OPEN-PINNED 1->3, NOT-ASSERTABLE unchanged at 59, 175 rows
+#   before and after — no row was added, split or removed.
+#
+# WHAT THE INTEGRATOR WILL SEE — measured in a scratch merge 2026-09-04, not
+# guessed. This lane branched at 94c87b7; main had moved twelve commits ahead to
+# c28d6de by the time the work was done. Those twelve touch app/data.py,
+# app/static/js/render/operation.js, app/templates/operation.html,
+# conformance/composition/** and evaluations/turnkey/** — and NOT ledger/rows.yaml,
+# contracts/, app/writes.py, app/serve.py, app/state_store.py, app/static/sw.js or
+# app/static/js/offline.js, which is every file the three rows above read. So the
+# re-derivation was re-run on c28d6de with this file dropped in, and all three
+# passed there: CVG-106, CVG-186 and CVG-209 [OK], same tally, 174 non-SYNC rows,
+# 67 / 45 / 0 / 3 / 59.
+# TWO ROWS ARE RED ON THAT SCRATCH MERGE AND NEITHER IS THIS LANE'S: CVG-008
+# prints LIVE-REACHABILITY-NOW-PASS and CVG-009 prints NEIGHBOUR-CHECK-NOW-PASS,
+# because the w8-composition-live lane gave the composition kit's live rules real
+# runners and both now PASS where the rows still expect a SKIP. That is drift
+# toward the contract, it is filed as converge-wnp, and re-deriving those rows
+# from this lane — without running their kit or owning the reading — is the blind
+# bump this file forbids. Named here so the integrator is not surprised by a red
+# verify.py and does not attribute it to this change.
+#
+# THE SAME LESSON, THIRD CONSECUTIVE PASS, WORTH THE REPETITION: two of the three
+# rows above were passing on the absence of a WORD, not the absence of the thing.
+# CVG-106 grepped for `sqlite3|shelve|pickle.dump` and printed
+# APP-KEEPS-NO-STORE-OF-ITS-OWN for a whole wave while a JSON store sat on disk;
+# CVG-186 (last pass) read a bare `subprocess` as proof of a manager round trip.
+# Both probes were rebuilt to read what the code DOES. When a probe goes stale
+# the row is not green — it is unmeasured, and it looks exactly the same.
+#
+# THE BLOCK BELOW WAS STALE BY A FACTOR OF NEARLY THREE when this pass found it.
+# It read "64 rows, 35 / 18 / 0 / 3 / 8" while the tree it sat in measured, on the
+# same command, 175 rows and 68 / 46 / 0 / 1 / 59 — before this pass changed
+# anything. How many merges opened that gap was not counted, and is not claimed.
+# Kept below, unedited, because the standing rule it states is the one it kept
+# breaking. Everything from here down is HISTORY.
+#
+# ──────────────────────────────────────────────────────────────────────────────
+# HISTORY — TALLY as of 64 rows, the clause 9 split 2026-09-03 (converge-njn).
 # Printed by `uv run --with pyyaml ledger/checks/verify.py`, not counted by hand.
 #
 #   contract          rows   CONFORMS  GAP  VIOLATION  OPEN-PINNED  NOT-ASSERTABLE
@@ -3499,24 +3897,107 @@
       **The app holds no data of its own.** It shows the project's documents, code
       record, work queue, lanes, return log, and pending decisions. A second copy
       of the truth is a defect, not a cache.
-  disposition: CONFORMS
+  disposition: OPEN-PINNED
   assertion:
-    kind: absence
-    ref: 'if grep -rlE "sqlite3|shelve|pickle\.dump" app/*.py | grep -q .; then echo APP-KEEPS-A-STORE; else echo APP-KEEPS-NO-STORE-OF-ITS-OWN; fi'
+    kind: probe
+    ref: 'if grep -rlE "sqlite3|shelve|pickle\.dump" app/*.py | grep -q .; then echo APP-KEEPS-A-DATABASE; elif [ "$(grep -rlE "\.write_text\(|json\.dump\(" app/*.py | sort | tr "\n" " ")" != "app/state_store.py app/writes.py " ]; then echo A-THIRD-MODULE-WRITES-FILES; elif ! grep -q "DEFAULT_STATE_PATH = Path.home() / \".amplifier\" / \"converge-app.state.json\"" app/state_store.py; then echo THE-READING-STORE-MOVED; elif [ "$(grep -cE "mine\.setdefault\(" app/state_store.py)" != "2" ]; then echo THE-STORE-HOLDS-MORE-THAN-A-READ-POINT-AND-KEPT-MARKS; else echo ONE-PER-STEWARD-READING-STORE-OUTSIDE-THE-REPOSITORY; fi'
     expect:
       exit: 0
-      stdout_contains: "APP-KEEPS-NO-STORE-OF-ITS-OWN"
+      stdout_contains: "ONE-PER-STEWARD-READING-STORE-OUTSIDE-THE-REPOSITORY"
+  justification: >
+    PINNED OPEN 2026-09-04 (converge-dgc) BECAUSE THE CONTRACT ITSELF LEAVES THIS
+    UNDECIDED, IN WRITING. experience.v1's own "Reserved / open questions" section
+    asks: "Where the reading cursor behind 'what changed since you last read' is
+    kept, given the app holds no data of its own." That is precisely this
+    question, written by the clause's own author, and it has never been answered.
+    PROTOCOL.md section 3.3: an undecided call is a ledger row asserting current
+    behaviour without forging a decision - not a vision, and not a quiet green.
+    THE TWO FACTS PULL OPPOSITE WAYS, AND BOTH ARE TRUE.
+    The clause's TEETH are kept: "A second copy of the truth is a defect, not a
+    cache." The store holds no document text, no work item, no lane state, no
+    return log, no pending decision. A commit sha is a pointer INTO the truth, not
+    a copy of it, and it goes stale in the one direction that is safe - pointing
+    at a commit that still exists.
+    The clause's LETTER is contradicted: the app does now hold a file of its own,
+    per steward, outside the repository, and it did not before wave 7.
+    A CANDIDATE IS WRITTEN RATHER THAN THE ROW BENT.
+    contracts/experience.v1-candidate.md carries a second proposed change (clause
+    7) distinguishing the project's truth - never copied - from the steward's own
+    reading, and answering the Reserved question by name. The reading it proposes:
+    where you have read to is not a fact about the project. Two stewards reading
+    the same repository have different, equally correct answers, and neither
+    belongs in the repository's history. experience.v1 stays the law until the
+    steward answers: ratified / ratified with edits / declined / later. Tracked as
+    converge-71q.
   proves: >
-    That the app carries no persistent store of its own in its own code - no
-    database, no shelf, no pickled state. It does NOT prove every value on
-    screen is read back from the project; that is what the app's README table
-    claims source by source, and no machine here checks it.
-    An `absence` assertion on purpose (LEDGER-FORMAT section 2): a future silent
-    store flips this row red rather than passing unnoticed.
+    That the app keeps no database, shelf or pickled state; that exactly two
+    modules in app/ write files at all - app/writes.py, which writes into the
+    steward's repository (CVG-186 asserts that path), and app/state_store.py,
+    which writes the reading store; that the reading store is at
+    ~/.amplifier/converge-app.state.json; and that it holds exactly two things per
+    steward and no third.
+    THE ROW NOW ASSERTS WHAT THE STORE HOLDS, NOT THAT NO STORE EXISTS. The
+    previous probe grepped app/*.py for `sqlite3|shelve|pickle.dump` and would
+    never have caught this: a plain JSON file is none of those three words, so the
+    row went on printing APP-KEEPS-NO-STORE-OF-ITS-OWN for a whole wave after the
+    store appeared. A row that can only see a store spelled three particular ways
+    is not asserting this clause; it is asserting the absence of a word - the same
+    failure CVG-186 was rebuilt for.
+    WHAT IT DOES NOT PROVE, named so it is not read as more: that every value on
+    screen is read back from the project. That is what app/README.md's table
+    claims source by source, and no machine here checks it. Nor does it read the
+    store's contents at runtime - it reads the code that decides them.
   notes: >
-    Measured 2026-09-03 (converge-pq2) against the app running at
-    127.0.0.1:8788. The app's one piece of local state is the browser bookmark
-    in localStorage, which is the reader's, not the project's.
+    RE-DERIVED 2026-09-04 (converge-dgc, the reconcile after wave 8). CONFORMS ->
+    OPEN-PINNED. The disposition moved because the CODE moved and the old probe
+    could not see it, not because the reading of the clause changed.
+    WHAT EXISTS NOW, read before judging. app/state_store.py (125 lines) writes
+    ~/.amplifier/converge-app.state.json, one JSON document rewritten whole and
+    moved into place, `--state` overriding the path (app/serve.py:428). Per
+    steward it holds exactly two things: the read point (the commit a steward has
+    read a document up to, `{"sha": …, "at": …}`) and the kept marks (which
+    changes that steward has already said they are keeping). Every method takes
+    the steward explicitly - the module's own docstring says there is deliberately
+    no ambient current user, "because a reading that quietly belonged to whoever
+    asked last would be worse than no reading at all". Introduced by converge-f5f
+    (wave 7's Changes view); before it, Keep was a toast and the read point did
+    not exist.
+    READ LIVE 2026-09-04 on this machine, not inferred from the code:
+      $ ls -l ~/.amplifier/converge-app.state.json
+      -rw------- 1 bkrabach bkrabach 251 Sep  3 23:25
+      top-level keys: ['stewards']
+      steward 'bkrabach' read keys: ['amplifier-bundle-converge/vision'] kept keys: []
+        read amplifier-bundle-converge/vision ->
+          {'at': '2026-09-03T23:25:47-07:00', 'sha': 'afd83c8b457da6b8c98e40346d85d485b457ace0'}
+    251 bytes, one steward, one sha, one timestamp, no kept marks. No document
+    text, no work item, no lane state. THE APP ALREADY SAYS SO OUT LOUD:
+    app/README.md:38 lists "your read point, your kept marks |
+    ~/.amplifier/converge-app.state.json, per steward" in the same source-by-source
+    table that names git and the work queue for everything else. This was never
+    hidden; it was simply never rowed.
+    WHY THE BROWSER WAS REJECTED, which is the fact that makes this the steward's
+    call rather than an implementation detail: state_store.py's docstring records
+    that keeping the read point in the browser "would have been easier and wrong -
+    the steward reads on a laptop and again on a phone, and the same person must
+    see the same reading". So the choice is not store-or-no-store; it is whose
+    data this is. The candidate argues it is the steward's.
+    RAN 2026-09-04 -> ONE-PER-STEWARD-READING-STORE-OUTSIDE-THE-REPOSITORY.
+    NEGATIVE-CONTROLLED 2026-09-04 on a scratch copy, each break observed to fire
+    and then restored: `import sqlite3` added to app/data.py -> APP-KEEPS-A-DATABASE;
+    a third module given a `write_text` -> A-THIRD-MODULE-WRITES-FILES; the store's
+    path changed to /tmp -> THE-READING-STORE-MOVED; a third per-steward key
+    (`mine.setdefault("documents", {})`) added -> 
+    THE-STORE-HOLDS-MORE-THAN-A-READ-POINT-AND-KEPT-MARKS. Restored ->
+    ONE-PER-STEWARD-READING-STORE-OUTSIDE-THE-REPOSITORY. The fourth of those is
+    the one that matters: the day this store starts holding a document, a lane or
+    a decision - an actual second copy of the truth - the row goes red.
+    KEPT FOR THE RECORD - what the row said before this pass: measured 2026-09-03
+    (converge-pq2) against the app running at 127.0.0.1:8788, "the app's one piece
+    of local state is the browser bookmark in localStorage, which is the reader's,
+    not the project's". That sentence was true when written and is the same
+    argument the candidate now makes for the reading store; what changed is that
+    the state left the browser, which is exactly why it needs the steward's word.
+  work: converge-71q
 - id: CVG-107
   title: "whatever you can do here, the manager session can do too"
   contract:
@@ -4582,66 +5063,126 @@
       **The manager session is not in the hot path.** A write made in the app goes
       through the ordinary repository and proposal mechanism directly; the manager
       session learns of it as an event and folds it into its next turn.
-  disposition: CONFORMS
+  disposition: OPEN-PINNED
   assertion:
-    kind: absence
-    ref: 'if grep -nE "tmux|send_keys|httpx|requests\.|urllib|socket\." app/writes.py | grep -q .; then echo WRITES-REACH-A-SESSION-OR-THE-NETWORK; elif [ "$(grep -cE "subprocess\.run\(" app/writes.py)" != "1" ] || [ "$(grep -cE "\[\"git\", \*args\]" app/writes.py)" != "1" ]; then echo WRITES-START-A-PROCESS-THAT-IS-NOT-GIT; else echo WRITES-GO-STRAIGHT-TO-THE-REPOSITORY-GIT-ONLY; fi'
+    kind: probe
+    ref: 'if grep -nE "tmux|send_keys|httpx|requests\.|urllib|socket\." app/writes.py | grep -q .; then echo WRITES-REACH-A-SESSION-OR-THE-NETWORK; elif [ "$(grep -cE "subprocess\.run\(" app/writes.py)" != "2" ]; then echo WRITE-PATH-PROCESS-COUNT-CHANGED; elif ! grep -q "\[\"git\", \*args\]" app/writes.py; then echo GIT-IS-NO-LONGER-THE-REPOSITORY-PROCESS; elif ! grep -q "\[\"amplifier\", \"run\", \"--mode\", \"single\"" app/writes.py; then echo THE-SECOND-PROCESS-IS-NOT-THE-DRAFTING-SESSION; elif ! grep -q "if drafter == \"agent\":" app/writes.py; then echo THE-DRAFTING-SESSION-IS-NO-LONGER-GATED; elif ! grep -q "CONVERGE_ASK_DRAFTER\", \"fixture\"" app/serve.py; then echo THE-DRAFTING-SESSION-IS-ON-BY-DEFAULT; else echo GIT-PLUS-ONE-DRAFTING-SESSION-THAT-IS-OFF-BY-DEFAULT; fi'
     expect:
       exit: 0
-      stdout_contains: "WRITES-GO-STRAIGHT-TO-THE-REPOSITORY-GIT-ONLY"
+      stdout_contains: "GIT-PLUS-ONE-DRAFTING-SESSION-THAT-IS-OFF-BY-DEFAULT"
+  justification: >
+    PINNED OPEN 2026-09-04 (converge-dgc) BECAUSE THE READING IS GENUINELY
+    UNDECIDED, AND PROTOCOL.md section 3.3 SAYS AN UNDECIDED CALL IS A LEDGER ROW
+    THAT ASSERTS CURRENT BEHAVIOUR WITHOUT FORGING THE DECISION. Two readings, and
+    this lane can honestly reach neither:
+    (a) KEPT, THE PROBE WAS TOO NARROW. A headless `amplifier run --mode single`
+    is not *the* manager session: it is unregistered, has no steward (Core 8 -
+    "one steward per manager session"), and is discarded after one turn. The
+    clause's words are about the manager session, and no manager session is
+    reached by any write.
+    (b) BROKEN. The property this clause exists to protect is written in its own
+    contract's Conformance-kit-asserts section: "A write made in the app lands
+    through the repository mechanism without waiting for a manager turn." With
+    CONVERGE_ASK_DRAFTER=agent the ask write waits on an agent turn, up to
+    DRAFT_TIMEOUT = 240 seconds, before the proposal file is written. Whether that
+    agent is called the manager session is a naming question; the waiting is not.
+    WHY NOT SIMPLY PICK ONE. Moving this row to CONFORMS would require a probe
+    that reads "the only session-shaped process is behind an off-by-default
+    switch" - which redefines an unconditional clause as a claim about one
+    configuration, and is the weakening-a-check-to-make-it-green that AGENTS.md
+    rule 3 forbids. Moving it to VIOLATION would require calling a drafting
+    session the manager session, which it demonstrably is not, and calling a
+    switched-off capability broken. The decision is the steward's, at negotiation.
+    Filed as converge-nn6, which states the decision in one sentence and names
+    what each answer costs. converge-76y, the red-on-main report, asked for
+    exactly this: the probe re-derived to assert what clause 7 actually forbids,
+    with the reading recorded - not the `expect` edited to match the failure.
   proves: >
-    That the app's write path reaches no manager session at all - app/writes.py
-    speaks no tmux, sends no keys, makes no outbound call, and starts exactly one
-    process, which is git, in the steward's own repository. It speaks to the
-    filesystem and to the repository, and to nothing else.
-    THE PROBE IS READ AGAINST CODE, NOT PROSE. Its first form matched the word
-    'manager' anywhere in the file and reported WRITES-GO-THROUGH-THE-MANAGER on
-    two sentences of documentation explaining that the manager session is what
-    ACTS on a steer. A write is a call. That is the whole of this clause's first
-    half. Its second half - 'the manager session learns of it as an event and
-    folds it into its next turn' - is a claim about a running agent, and nothing
-    here checks it.
-    WHAT THE PROBE CANNOT SAY, NAMED SO IT IS NOT MISTAKEN FOR MORE: it reads
-    app/writes.py and only app/writes.py. A hot path opened from a route handler
-    or a data module would not be seen here. This row asserts the writer, which
-    is where every write in the app is funnelled today.
+    That the app's write path speaks no tmux, sends no keys and makes no outbound
+    call, that it starts exactly two processes, that the first is git in the
+    steward's own repository, that the second is the drafting session and nothing
+    else, that the drafting session is reached only through an explicit `drafter
+    == "agent"` gate, and that the only caller of that gate defaults it OFF.
+    That is the whole of the current behaviour, asserted without saying whether it
+    keeps the clause.
+    THE PROBE IS READ AGAINST CODE, NOT PROSE - inherited from the row's second
+    form and still load-bearing. An earlier form matched the word 'manager'
+    anywhere in the file and reported WRITES-GO-THROUGH-THE-MANAGER on two
+    sentences of documentation explaining that the manager session is what ACTS on
+    a steer. A write is a call.
+    WHAT THE PROBE CANNOT SAY, NAMED SO IT IS NOT MISTAKEN FOR MORE. It reads
+    app/writes.py and app/serve.py. A hot path opened from a data module or
+    another route handler would not be seen. It reads the DEFAULT, never the
+    running process's environment: a deployment that exports
+    CONVERGE_ASK_DRAFTER=agent is invisible to it, and is the case where reading
+    (b) bites. And the clause's second half - "the manager session learns of it as
+    an event and folds it into its next turn" - is a claim about a running agent
+    that nothing here checks.
   notes: >
-    Measured 2026-09-03 (converge-pq2). A decision appends to
+    RE-DERIVED 2026-09-04 (converge-dgc, the reconcile after wave 8). CONFORMS ->
+    OPEN-PINNED. THE SUBJECT MOVED THIS TIME, NOT THE PROXY: the previous
+    re-derivation rebuilt a stale probe over unchanged behaviour, and this one
+    reports behaviour that actually changed.
+    WHAT CHANGED, MEASURED. `app/writes.py` has grown from 467 to 843 lines and
+    now has TWO `subprocess.run(` sites, not one: line 258 `["git", *args]` (the
+    repository write, unchanged) and line 451 `["amplifier", "run", "--mode",
+    "single", "--output-format", "json", prompt]` inside `draft_with_amplifier`,
+    with DRAFT_TIMEOUT = 240.0. The three commits that introduced it are afb1273,
+    672b6fc and 52452e1 - the Ask route (converge-ddt). The old probe demanded
+    exactly one process and printed WRITES-START-A-PROCESS-THAT-IS-NOT-GIT, and
+    `uv run --with pyyaml ledger/checks/verify.py` exited 1 on main because of it.
+    THE GATE, WHICH IS THE FACT THAT MAKES THIS UNDECIDED RATHER THAN BROKEN.
+    `draft_with_amplifier` is reached from `record_ask()` only under `if drafter ==
+    "agent":` (app/writes.py:656). Its one caller passes `ASK_DRAFTER`, which is
+    `os.environ.get("CONVERGE_ASK_DRAFTER", "fixture").strip().lower()`
+    (app/serve.py:38) - off as shipped, and serve.py's own comment says why: "a
+    route that shells out to a minutes-long session on every call should be asked
+    for, not assumed". On failure or timeout the ask still becomes a proposal
+    carrying the steward's own words, so the write never disappears with the
+    session.
+    THE FIRST HALF OF THE CLAUSE IS STILL LITERALLY KEPT. A decision appends to
     docs/workflow/owner-ratifications-<date>.md; feedback writes
-    .converge/feedback/<ts>.md; a steer rewrites .width. No round trip.
-    RE-DERIVED 2026-09-04 (converge-nf4, the reconcile after wave 7). STAYS
-    CONFORMS; THE PROBE WAS REBUILT BECAUSE ITS PROXY WENT STALE, NOT ITS
-    SUBJECT. The old probe read a bare `subprocess` anywhere in the file as
-    proof of a manager round trip. Wave 7's Changes view (converge-f5f) gave
-    Edit and Restore real writes, and a real write to a governed document is a
-    git commit - so app/writes.py grew `import subprocess` and one call site,
-    and the probe printed WRITES-GO-THROUGH-THE-MANAGER about a local `git`.
-    A row that cannot tell git from a manager session is not asserting this
-    clause; it is asserting the absence of a word.
-    WHAT app/writes.py ACTUALLY DOES, read before judging (467 lines, read-only).
-    One subprocess call site: `_git()` at line 248, `subprocess.run(["git",
-    *args], cwd=repo, ...)`. Its three callers are all inside `apply_change()`:
-    `git status --porcelain -- <file>` (refuse the edit if the file is already
-    dirty, so the steward's sentence carries nothing else), `git -c user.name=…
-    commit -q -m <subject> -- <file>` (the draft's rewording, in the steward's
-    name, reverted in-process if the commit fails), and `git log -1 --format=%H`
-    (the sha to show back). A LOCKED document is never touched at all: it gets
-    `<doc-stem>.vN-candidate.md` written beside it, which is the proposal
-    mechanism `documents.v1` §8 requires. No tmux, no send_keys, no httpx, no
-    requests, no urllib, no socket - grep count 0 for all six.
-    SO THE CLAUSE IS MORE KEPT THAN IT WAS, NOT LESS. "A write made in the app
-    goes through the ordinary repository and proposal mechanism directly" is now
-    literal: the repository half is a git commit into the repository, the
-    proposal half is a candidate file beside the locked document. The manager
-    session is in neither path.
-    THE NEW PROBE PINS THREE THINGS AND WAS NEGATIVE-CONTROLLED 2026-09-04 on a
-    scratch copy, each break observed to fire and then restored: a session or
-    network mechanism appearing (added `tmux send_keys` ->
-    WRITES-REACH-A-SESSION-OR-THE-NETWORK); a second process appearing (added a
-    `subprocess.run(["amplifier", "run"])` ->
-    WRITES-START-A-PROCESS-THAT-IS-NOT-GIT); and the one process ceasing to be
-    git (argv changed to `[BINARY, *args]` -> the same marker). Restored ->
-    WRITES-GO-STRAIGHT-TO-THE-REPOSITORY-GIT-ONLY.
+    .converge/feedback/<ts>.md; a steer rewrites .width; an edit to a locked
+    document writes `<doc-stem>.vN-candidate.md` beside it, the proposal mechanism
+    `documents.v1` section 8 requires; an unlocked one is a git commit in the
+    steward's name. No tmux, no send_keys, no httpx, no requests, no urllib, no
+    socket - grep count 0 for all six, unchanged.
+    THE NEW PROBE WAS NEGATIVE-CONTROLLED 2026-09-04 on a scratch copy, each break
+    observed to fire and then restored: a session or network mechanism appearing
+    (`tmux send_keys` -> WRITES-REACH-A-SESSION-OR-THE-NETWORK); a third process
+    appearing (`subprocess.run(["curl", "x"])` -> WRITE-PATH-PROCESS-COUNT-CHANGED);
+    git ceasing to be the repository process (argv -> `[BINARY, *args]` ->
+    GIT-IS-NO-LONGER-THE-REPOSITORY-PROCESS); the second process becoming something
+    else (argv -> `["other", "run", ...]` ->
+    THE-SECOND-PROCESS-IS-NOT-THE-DRAFTING-SESSION); the gate removed (`if True:` ->
+    THE-DRAFTING-SESSION-IS-NO-LONGER-GATED); and the default flipped
+    (`"CONVERGE_ASK_DRAFTER", "agent"` -> THE-DRAFTING-SESSION-IS-ON-BY-DEFAULT).
+    Restored -> GIT-PLUS-ONE-DRAFTING-SESSION-THAT-IS-OFF-BY-DEFAULT. The last of
+    those six is the one that matters: the day someone makes the drafter the
+    default, this row goes red rather than passing unnoticed.
+    KEPT FOR THE RECORD - what the row said on 2026-09-04 before this pass
+    (converge-nf4, the reconcile after wave 7), when it was CONFORMS: the probe was
+    rebuilt because its proxy went stale, not its subject. The form before THAT
+    read a bare `subprocess` anywhere in the file as proof of a manager round trip,
+    and wave 7's Changes view (converge-f5f) gave Edit and Restore real writes - a
+    real write to a governed document being a git commit - so app/writes.py grew
+    `import subprocess` and one call site and the probe printed
+    WRITES-GO-THROUGH-THE-MANAGER about a local `git`. A row that cannot tell git
+    from a manager session is not asserting this clause; it is asserting the
+    absence of a word. That reading still stands, and it is why this pass did not
+    simply widen the count from one process to two and call it green.
+    WHAT THE GIT HALF DOES, still true and unchanged, measured 2026-09-03
+    (converge-pq2) and re-read 2026-09-04. `_git()` at line 258,
+    `subprocess.run(["git", *args], cwd=repo, ...)`. Its three callers are all
+    inside `apply_change()`: `git status --porcelain -- <file>` (refuse the edit
+    if the file is already dirty, so the steward's sentence carries nothing
+    else), `git -c user.name=… commit -q -m <subject> -- <file>` (the draft's
+    rewording, in the steward's name, reverted in-process if the commit fails),
+    and `git log -1 --format=%H` (the sha to show back). A decision appends to
+    docs/workflow/owner-ratifications-<date>.md; feedback writes
+    .converge/feedback/<ts>.md; a steer rewrites .width. None of those is a round
+    trip to anything.
+  work: converge-nn6
 - id: CVG-187
   title: "one steward per manager session"
   contract:
@@ -4901,21 +5442,81 @@
       **Offline it reads what it last synced, and says when that was.** A small
       helper the browser keeps beside the app serves the documents already
       fetched, each marked with the moment it came from. Nothing that is not
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'grep -q ''is never written to the cache'' app/static/sw.js && echo API-NEVER-CACHED-SO-NOTHING-TO-READ-OFFLINE || echo SW-CACHING-CHANGED'
+    ref: "if ! grep -q 'cache.put(req, keep)' app/static/sw.js; then echo API-IS-NOT-STORED; elif ! grep -q 'SYNCED_AT, new Date().toISOString()' app/static/sw.js; then echo STORED-WITHOUT-THE-MOMENT-IT-CAME-FROM; elif ! grep -q 'withHeader(hit, FROM_CACHE' app/static/sw.js; then echo STORED-COPY-SERVED-UNMARKED-OR-NOT-AT-ALL; elif ! grep -q \"' as of ' + when(entry.syncedAt)\" app/static/js/offline.js; then echo PAGE-NEVER-SAYS-WHEN-EACH-CAME-FROM; elif ! grep -q 'isConsole(url)' app/static/sw.js; then echo THE-LIVE-CONSOLE-COULD-BE-REPLAYED; else echo SYNCED-API-READ-BACK-OFFLINE-EACH-WITH-ITS-MOMENT; fi"
     expect:
       exit: 0
-      stdout_contains: "API-NEVER-CACHED-SO-NOTHING-TO-READ-OFFLINE"
+      stdout_contains: "SYNCED-API-READ-BACK-OFFLINE-EACH-WITH-ITS-MOMENT"
+  proves: >
+    That the browser's helper stores every GET under /api with the moment it was
+    fetched, serves a stored copy ONLY when the request actually failed, marks it
+    as stored when it does, and that the page prints a separate moment for each
+    payload it is showing. Both halves of the clause, asserted at their cause:
+    what is served offline was last synced, and it says when.
+    WHAT IT DOES NOT PROVE, named so it is not read as more: the probe reads
+    files, and the behaviour lives in a service worker that only exists inside a
+    browser. The live half is app/tests/test_offline.py, whose nine checks drive
+    a real Chromium over a real repository with the network actually taken away;
+    the run is recorded below rather than re-run by this probe, because a ledger
+    that takes 40 seconds and needs Playwright installed is a ledger that stops
+    being run.
+    THE ONE PART OF THE CLAUSE THAT IS SHAPE, NOT BEHAVIOUR, AND IS NOT WHERE THE
+    CLAUSE ASKS: each document's moment is printed in the offline banner, one
+    line per payload naming the document, rather than beside the document's own
+    title. The fact is on screen and per document; its placement is not. Filed as
+    converge-baz by the lane that built this, which owns neither the render files
+    nor the templates. This row does not carry that item as `work`, because the
+    clause's behaviour is kept and a tracker ref on a green row would read as red.
   notes: >
-    Measured 2026-09-03 (converge-pq2). Read from the service worker's own
-    stated rule: /api is network-first and
-    never written to the cache. Offline the shell loads and every payload behind
-    it is empty, so there is nothing that was 'last synced' to read and nothing
-    that says when. The probe asserts the cause, so it flips the moment the
-    caching policy changes in either direction.
-  work: converge-719
+    RE-DERIVED 2026-09-04 (converge-dgc, the reconcile after wave 8). GAP ->
+    CONFORMS. REALITY MOVED TOWARD THE CONTRACT; the row did not bend toward
+    reality.
+    WHAT THE ROW SAID BEFORE, and why it was right when it was written: measured
+    2026-09-03 (converge-pq2) the service worker's own stated rule was that /api
+    is network-first and never written to the cache at all, so offline the shell
+    loaded and every panel behind it was empty. There was nothing that was 'last
+    synced' to read and nothing that said when. The probe asserted that cause, so
+    it flipped the moment the caching policy changed -- which is exactly what
+    happened. Its fix, converge-719, is resolved.
+    WHAT app/static/sw.js DOES NOW, read before judging: a GET under /api is
+    network-first and the network's answer always wins; on success the response is
+    copied into a `converge-synced-v1` cache carrying an `X-Converge-Synced-At`
+    header stamped at the moment of the fetch. A stored copy is served ONLY from
+    the `catch` branch -- that is, only when the request actually failed -- and it
+    is served with `X-Converge-Offline: 1` so nothing stale can pass as live.
+    /api/tmux is never stored (Core 12: the console is live or plainly
+    disconnected), /login and /logout are never stored, and signing out empties
+    the shell and synced caches. `app/static/js/offline.js` reads the cache back
+    out of the worker and prints one line per payload, each with its own moment,
+    under a headline that uses the OLDEST of them -- never the newest, which would
+    claim an older payload beside it is fresher than it is.
+    RAN 2026-09-04 -> SYNCED-API-READ-BACK-OFFLINE-EACH-WITH-ITS-MOMENT.
+    RAN 2026-09-04, the live half, `uv run --extra app --with pytest --with httpx
+    --with playwright pytest -q app/tests/test_offline.py` -> 9 passed in 41.23s
+    (the same suite skips all seven browser checks without Playwright, which is
+    why it is named here rather than assumed). Printed by the two Core 10 checks
+    at both widths, verbatim:
+      [1280] payloads stored while online: ['/api/boot', '/api/managers/demo',
+             '/api/managers/demo/docs/demo-repo/vision', '/api/managers/demo/operation']
+      [1280] banner says: Offline - showing what was last synced, as of 03:25 AM.
+      [1280] marks: ['manager sessions as of 03:25 AM', 'direction as of 03:25 AM',
+             'vision as of 03:25 AM', 'operation as of 03:25 AM']
+      [390]  the same four marks, the same sentence, scrollWidth=390 clientWidth=390
+      online  /api/boot -> {'status': 200, 'offline': None, 'syncedAt': None}
+      offline /api/boot -> {'status': 200, 'offline': '1',
+                            'syncedAt': '2026-09-04T10:25:29.455Z', 'managers': 1}
+    Nothing cut off at either width and no console errors at either.
+    THE NEW PROBE WAS NEGATIVE-CONTROLLED 2026-09-04 on a scratch copy, each break
+    observed to fire and then restored: /api no longer stored -> API-IS-NOT-STORED;
+    stored with an empty stamp -> STORED-WITHOUT-THE-MOMENT-IT-CAME-FROM; the
+    stored copy served without its offline mark ->
+    STORED-COPY-SERVED-UNMARKED-OR-NOT-AT-ALL; the page's per-payload time removed
+    -> PAGE-NEVER-SAYS-WHEN-EACH-CAME-FROM. Restored ->
+    SYNCED-API-READ-BACK-OFFLINE-EACH-WITH-ITS-MOMENT. The branches are ordered and
+    the first mismatch wins, so a break that changes two things at once is reported
+    by the earlier branch -- observed, not assumed.
 - id: CVG-210
   title: "offline it refuses the five writes in a plain sentence"
   contract:

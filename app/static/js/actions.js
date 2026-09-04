@@ -414,6 +414,45 @@ export async function sendAsk(scope, text, section) {
   }
 }
 
+// --------------------------------------------------------------------------
+// §11 — locking a document, once the four conditions are met
+// --------------------------------------------------------------------------
+//
+// The gate lives in render/direction.js: it is what decides whether the
+// control is live at all, and it never ticks a condition on the steward's
+// behalf. This is only the last step — the confirmation, and the write.
+//
+// Locking is irreversible in the way that matters: from the moment a document
+// carries a locking word in its H1, `app/writes.py` refuses to touch it and
+// every later change becomes a proposal to answer. So the dialog says that in
+// those words before anything leaves the browser, and the conditions the
+// steward answered are carried into the write rather than summarised away.
+
+export function confirmLock(doc, answered) {
+  if (!doc) return;
+  openDialog('Lock this document', 'Direction decision', `
+      <p><strong>${escapeHtml(doc.path || doc.title || 'This document')}</strong> becomes law when you lock it.</p>
+      <p class="muted">From then on it is not edited in place: every change to it, including your own, is written as a proposal beside it for you to answer. That is the guard in <code>app/writes.py</code> reading the document's own first line, not a setting.</p>
+      <p class="muted">The four conditions you are answering for:</p>
+      <ul>${answered.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul>`, [
+    { label: 'Cancel', kind: 'outline', action: closeDialog },
+    { label: 'Lock it', kind: 'primary', action: () => sendLock(answered) },
+  ]);
+}
+
+export async function sendLock(answered) {
+  closeDialog();
+  try {
+    const res = await api.lock(state.managerId, state.repoId, state.docId, { conditions: answered });
+    toast(res && res.locked ? `Locked: ${res.locked}` : 'This document is locked.');
+    await hooks.reloadDoc();
+  } catch (err) {
+    // Said out loud rather than swallowed: this app answers no lock route yet,
+    // so nothing was stamped and no file moved. The server half is converge-eci.
+    toast(`Nothing was locked — this app answers no lock route yet (${err.message}). Filed as converge-eci.`);
+  }
+}
+
 function readImage(input) {
   const file = input && input.files && input.files[0];
   if (!file) return Promise.resolve(null);

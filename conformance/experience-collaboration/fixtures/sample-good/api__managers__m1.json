@@ -1,0 +1,13 @@
+{
+ "id": "m1",
+ "name": "Example",
+ "steward": "a-steward",
+ "repositories": [
+  {
+   "id": "r1",
+   "name": "Repo one",
+   "path": "/tmp/r1",
+   "docs": []
+  }
+ ]
+}

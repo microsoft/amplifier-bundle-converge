@@ -310,7 +310,26 @@ def test_seeding_refuses_to_overwrite_existing_work(tmp_path):
 
 def test_every_step_is_named_and_ordered():
     letters = [letter for letter, _, _, _ in run.STEPS]
-    assert letters == list("abcdefghi")
+    assert letters == list("abcdefghijk")
+
+
+def test_the_turnkey_sentence_is_still_exactly_nine_steps():
+    """(j) and (k) read other clauses; they are not part of the gate's sentence.
+
+    The contract records a green gate for the nine steps of one sentence. A
+    clause reading is a different fact about a different promise, and letting
+    it into that count would make the sentence's own verdict unreadable.
+    """
+    assert run.TURNKEY_STEPS == "abcdefghi"
+    assert len([s for s in run.STEPS if s[0] in run.TURNKEY_STEPS]) == 9
+
+
+def test_every_clause_reading_names_its_ledger_row():
+    """A reading a reconciler cannot place is a reading nobody can re-derive."""
+    for number, (row, title) in run.OPERATION_CLAUSES.items():
+        assert row.startswith("CVG-"), (number, row)
+        assert title and title == title.lower(), (number, title)
+    assert len(set(run.OPERATION_CLAUSES.values())) == len(run.OPERATION_CLAUSES)
 
 
 def test_a_skip_always_carries_a_reason():
@@ -760,3 +779,368 @@ def test_the_lanes_own_worktree_is_asked_first():
 def test_no_repository_that_can_answer_is_still_unmeasured_not_zero():
     env = _RepoOnlyEnv(alive="/nowhere")
     assert run.commits_beyond(env, "/w/gone/lane", "base", "lane/a", "/w/repo") is None
+
+
+# ---------------------------------------------------------------------------
+# steps (j) and (k) — the clauses about what a MANAGER SESSION did
+# ---------------------------------------------------------------------------
+#
+# Every assertion below reads an artifact a wave left: a lane brief, the plan
+# record, git's merge shape, the queue's own resolution text. None of them
+# reads modes/converge-manager.md, whose text proves only that the rule was
+# written down — which is exactly what the ledger's ten probes for these
+# clauses already prove, and exactly why they are still GAP.
+
+
+def test_a_brief_declares_the_paths_its_lane_owns_and_not_its_neighbours():
+    """The same line names the OTHER lanes' paths, for context.
+
+    Reading the whole line would hand every lane its neighbours' paths and
+    manufacture a collision in every pair — a fabricated red on a wave whose
+    ownership split was correct.
+    """
+    brief = ("**File ownership — edit ONLY:** `evaluations/turnkey/**`. Never merge "
+             "to main. Other lanes are live on other paths (ask-route: `app/serve.py`).")
+    assert run.brief_ownership(brief) == ["evaluations/turnkey"]
+
+
+def test_a_brief_with_no_ownership_line_declares_nothing():
+    assert run.brief_ownership("# Lane w9\nDo the thing.\n") == []
+    assert run.brief_ownership(None) == []
+
+
+def test_prose_on_the_ownership_line_is_not_mistaken_for_a_path():
+    brief = "**File ownership — edit ONLY:** `ledger/**`. `Never merge to main`"
+    assert run.brief_ownership(brief) == ["ledger"]
+
+
+@pytest.mark.parametrize(("a", "b", "collide"), [
+    ("app", "app/data.py", True),
+    ("app/data.py", "app/data.py", True),
+    ("app/data.py", "app/static/js/api.js", False),
+    ("ledger", "evaluations/turnkey", False),
+])
+def test_a_directory_collides_with_what_is_under_it(a, b, collide):
+    assert run._paths_collide(a, b) is collide
+
+
+def test_a_plan_entry_that_gives_a_reason_is_told_from_one_that_announces():
+    text = ("- 2026-09-04T09:30:00Z W8 cycle 1: merged x. 8 live. No refill: every "
+            "ready item collides with a live lane.\n"
+            "- 2026-09-04T09:41:56Z W8 cycle 4: merged y. Live 4.\n")
+    entries = run.parse_plan_entries(text)
+    assert [e["reason"] for e in entries] == [True, False]
+    assert all(e["decision"] for e in entries)
+
+
+def test_the_file_header_is_not_a_plan_entry():
+    assert run.parse_plan_entries("# HIGHWAY — CLOSED 2026-09-03\n\nsome prose\n") == []
+
+
+# --- clause 2 -------------------------------------------------------------
+
+REASONED = [{"at": "T0", "decision": True, "reason": True, "close": False,
+             "feedback": False, "text": "cycle 4: no refill without a collision"}]
+
+
+def test_clause_2_fails_when_a_concurrent_lane_has_no_ownership_split():
+    reading = run.assert_plan_is_visible([{"lane": "a", "declared": []}], REASONED, "P")
+    assert reading["verdict"] == run.FAIL
+    assert reading["row"] == "CVG-012"
+
+
+def test_clause_2_fails_on_a_plan_that_only_announces_what_happened():
+    briefs = [{"lane": "a", "declared": ["ledger"]}]
+    announced = [dict(REASONED[0], reason=False)]
+    assert run.assert_plan_is_visible(briefs, announced, "P")["verdict"] == run.FAIL
+
+
+def test_clause_2_with_no_plan_record_is_a_skip_that_names_where_it_looked():
+    reading = run.assert_plan_is_visible([{"lane": "a", "declared": ["ledger"]}], [],
+                                         None, "looked in /w")
+    assert reading["verdict"] == run.SKIP
+    assert reading["awaits"] == "looked in /w"
+
+
+# --- clause 6 -------------------------------------------------------------
+
+
+def test_clause_6_fails_when_two_concurrent_lanes_were_given_the_same_path():
+    lanes = [{"lane": "a", "declared": ["app"], "touched": []},
+             {"lane": "b", "declared": ["app/data.py"], "touched": []}]
+    reading = run.assert_lanes_touch_different_files(lanes)
+    assert reading["verdict"] == run.FAIL
+    assert reading["declared_collisions"][0]["lanes"] == ["a", "b"]
+
+
+def test_clause_6_fails_when_the_split_held_on_paper_and_not_in_git():
+    lanes = [{"lane": "a", "declared": ["app/x.py"], "touched": ["app/shared.py"]},
+             {"lane": "b", "declared": ["app/y.py"], "touched": ["app/shared.py"]}]
+    reading = run.assert_lanes_touch_different_files(lanes)
+    assert reading["verdict"] == run.FAIL
+    assert reading["actual_collisions"][0]["files"] == ["app/shared.py"]
+
+
+def test_clause_6_says_so_when_the_actual_half_is_unmeasured():
+    lanes = [{"lane": "a", "declared": ["app/x.py"], "touched": []},
+             {"lane": "b", "declared": ["ledger"], "touched": []}]
+    reading = run.assert_lanes_touch_different_files(lanes)
+    assert reading["verdict"] == run.PASS
+    assert "unmeasured" in reading["why"]
+
+
+def test_a_lane_git_could_not_read_is_recorded_unmeasured_not_disjoint():
+    lanes = [{"lane": "a", "declared": ["app/x.py"], "touched": None},
+             {"lane": "b", "declared": ["ledger"], "touched": ["ledger/rows.yaml"]}]
+    reading = run.assert_lanes_touch_different_files(lanes)
+    assert any("could not name its changed files" in u for u in reading["unmeasured"])
+
+
+# --- clause 9 -------------------------------------------------------------
+
+
+def test_a_lane_still_running_on_an_unchanged_branch_is_not_a_stall():
+    """Only an ENDED lane with nothing on its branch is a stall.
+
+    Step (f) records a live lane on an unchanged branch as stuck, which is the
+    right reading for a marker. Counting the same lane here would call a lane
+    that is still working a stall nobody declared — a fabricated red.
+    """
+    assert run.assert_stalls_are_declared([], [])["verdict"] == run.SKIP
+
+
+def test_a_stall_no_record_names_fails_clause_9():
+    reading = run.assert_stalls_are_declared([{"lane": "w6-x"}],
+                                             [{"text": "cycle 3: merged y"}])
+    assert reading["verdict"] == run.FAIL
+    assert reading["undeclared"] == ["w6-x"]
+
+
+def test_a_stall_named_with_its_cause_is_clause_9_kept():
+    records = [{"text": "cycle 20: w6-x died mid-work, 0 commits; relaunched"}]
+    assert run.assert_stalls_are_declared([{"lane": "w6-x"}],
+                                          records)["verdict"] == run.PASS
+
+
+# --- clause 4 -------------------------------------------------------------
+
+
+QUOTED = {"id": "p-1", "title": "changes view misaligned",
+          "description": "the steward on build b7ed3f0, quoted: 'the rows are off "
+                         "by one and there is no save'"}
+
+
+def test_feedback_filed_without_a_quoted_source_fails_clause_4():
+    thin = {"id": "p-2", "title": "changes view is wrong", "description": "fix it"}
+    reading = run.assert_feedback_was_enriched([{"entry": "feedback", "item": thin}])
+    assert reading["verdict"] == run.FAIL
+
+
+def test_feedback_quoted_and_versioned_is_clause_4_kept():
+    reading = run.assert_feedback_was_enriched([{"entry": "feedback", "item": QUOTED}])
+    assert reading["verdict"] == run.PASS
+    assert reading["enriched"][0]["named_version"] is True
+
+
+def test_a_triage_naming_no_item_is_unresolved_never_a_pass():
+    reading = run.assert_feedback_was_enriched([{"entry": "feedback", "item": None}])
+    assert reading["verdict"] == run.SKIP
+    assert reading["unresolved"] == ["feedback"]
+
+
+# --- clause 13 ------------------------------------------------------------
+
+
+def test_a_close_that_lists_only_what_finished_fails_clause_13():
+    reading = run.assert_handoff_on_close([{"text": "CLOSED: three lanes merged"}])
+    assert reading["verdict"] == run.FAIL
+
+
+def test_a_close_that_names_what_remains_is_clause_13_kept():
+    reading = run.assert_handoff_on_close(
+        [{"text": "CLOSED: three lanes merged. Residuals: two items parked."}])
+    assert reading["verdict"] == run.PASS
+
+
+# --- clause 12 ------------------------------------------------------------
+
+
+@pytest.mark.parametrize("resolution", ["", "   ", "done", "Fixed in abc1234.",
+                                        "see #12"])
+def test_a_resolution_that_is_not_written_for_a_person_fails_clause_12(resolution):
+    items = [{"id": "p-1", "status": "resolved", "resolution": resolution}]
+    assert run.assert_resolutions_written_for_the_asker(items)["verdict"] == run.FAIL
+
+
+def test_a_resolution_in_sentences_is_clause_12_kept():
+    items = [{"id": "p-1", "status": "resolved",
+              "resolution": "The export now refreshes before rule 9a runs, so the "
+                            "kit reads the queue as it stands today."}]
+    assert run.assert_resolutions_written_for_the_asker(items)["verdict"] == run.PASS
+
+
+def test_an_open_item_is_not_judged_for_a_resolution_it_does_not_owe():
+    items = [{"id": "p-1", "status": "open", "resolution": None}]
+    assert run.assert_resolutions_written_for_the_asker(items)["verdict"] == run.SKIP
+
+
+# --- clauses 7 and 8, the attribution ------------------------------------
+
+
+INTEGRATOR = {"path": "ledger/rows.yaml", "sha": "a" * 40, "at": "T2",
+              "subject": "ledger: re-derived from a live run", "author": "integrator",
+              "lane_merge_before": {"sha": "b" * 40, "subject": "merge lane/x"}}
+FROM_A_LANE = {"path": "ledger/rows.yaml", "sha": "c" * 40, "at": "T1",
+               "subject": "ledger: row", "author": "lane", "lane_merge_before": None}
+
+
+def test_a_check_record_written_outside_every_lane_is_the_integrators():
+    reading = run.assert_check_record_attributed([INTEGRATOR], [INTEGRATOR])
+    assert reading["verdict"] == run.PASS
+    assert "merge lane/x" in reading["why"]
+
+
+def test_a_repository_whose_check_records_are_all_a_lanes_own_green_fails():
+    reading = run.assert_check_record_attributed([FROM_A_LANE], [FROM_A_LANE])
+    assert reading["verdict"] == run.FAIL
+
+
+def test_a_newest_lane_record_where_the_integrator_has_written_before_is_a_skip():
+    """Not a failure: an integrator who re-ran the check and wrote nothing down
+    leaves exactly this trace, and calling that broken is a fabricated red."""
+    reading = run.assert_check_record_attributed(
+        [FROM_A_LANE], [FROM_A_LANE, INTEGRATOR])
+    assert reading["verdict"] == run.SKIP
+    assert "awaits" in reading
+
+
+def test_an_unplaceable_record_is_unknown_and_never_credited():
+    unknown = dict(FROM_A_LANE, author="unknown")
+    reading = run.assert_check_record_attributed([unknown], [unknown])
+    assert reading["verdict"] == run.SKIP
+    assert reading["by_integrator"] == 0
+
+
+# --- the readers the two steps rest on ------------------------------------
+
+
+class _GitLog:
+    """A git that answers the three questions step (k) asks of it."""
+
+    kind = "fake"
+
+    def __init__(self, merges, brought):
+        self.merges, self.brought = merges, brought
+
+    def run(self, argv, cwd=None, timeout=120.0, env=None):
+        if "log" in argv:
+            return run.Ran(0, self.merges, "", argv=argv)
+        if "rev-list" in argv:
+            return run.Ran(0, self.brought.get(argv[-1], ""), "", argv=argv)
+        return run.Ran(1, "", "unexpected", argv=argv)
+
+
+def test_a_commit_a_lane_merge_carried_in_is_attributed_to_that_merge():
+    merges = "m1\tp1 l1\t2026-09-04 01:00:00 +0000\tmerge lane/x: work"
+    env = _GitLog(merges, {"p1..l1": "c1\nc2\n"})
+    carried, scanned, complete = run.lane_authored_commits(env, "/r", "main")
+    assert set(carried) == {"c1", "c2"}
+    assert carried["c1"]["subject"] == "merge lane/x: work"
+    assert [m["sha"] for m in scanned] == ["m1"]
+    assert complete is True
+
+
+def test_a_merge_that_is_not_a_lane_merge_carries_nobody():
+    merges = "m1\tp1 i1\t2026-09-04 01:00:00 +0000\tMerge pull request #27"
+    env = _GitLog(merges, {"p1..i1": "c1\n"})
+    carried, scanned, _ = run.lane_authored_commits(env, "/r", "main")
+    assert carried == {} and scanned == []
+
+
+def test_a_history_longer_than_the_scan_is_reported_incomplete():
+    merges = "\n".join(f"m{i}\tp{i} l{i}\t2026-09-04 01:00:00 +0000\tmerge lane/{i}"
+                       for i in range(3))
+    env = _GitLog(merges, {})
+    _, _, complete = run.lane_authored_commits(env, "/r", "main", limit=3)
+    assert complete is False
+
+
+# --- the two steps, wired end to end against an environment that answers ---
+
+
+class _Workspace(run.Env):
+    """An environment that answers exactly what it is given, and nothing else.
+
+    Enough to run steps (j) and (k) without a container: git, tmux, the queue
+    and the filesystem all answer through `Env.run`, so a dict of canned
+    answers exercises the whole step including its wiring.
+    """
+
+    kind = "fake"
+    label = "fake"
+
+    def __init__(self, files=None, answers=None):
+        self.files, self.answers = files or {}, answers or {}
+
+    def run(self, argv, cwd=None, timeout=120.0, env=None):
+        if argv[:1] == ["cat"]:
+            body = self.files.get(argv[1])
+            return run.Ran(0 if body is not None else 1, body or "", "", argv=argv)
+        if argv[:1] == ["test"]:
+            return run.Ran(0 if argv[-1] in self.files else 1, "", "", argv=argv)
+        for key, answer in self.answers.items():
+            if key in " ".join(argv):
+                return run.Ran(0, answer, "", argv=argv)
+        return run.Ran(1, "", "no answer for " + " ".join(argv), argv=argv)
+
+
+def _context(env, **kw):
+    return run.Context(env=env, host=env, mode=run.OBSERVED, workspace="/w",
+                       repo="/w/repo", project="p", integration_branch="main",
+                       answer_key={}, **kw)
+
+
+def test_a_bare_workspace_produces_skips_with_reasons_and_never_a_pass():
+    """Nothing to read is not the same as nothing wrong.
+
+    A driven container starts empty. Every clause must come back SKIP with its
+    reason, and the step itself must be a SKIP carrying one — a fabricated PASS
+    on an empty workspace is the failure this harness exists to prevent.
+    """
+    result = run.step_clauses(_context(_Workspace()))
+    assert result.status == run.SKIP
+    assert result.reason
+    readings = result.evidence["clause_readings"]
+    assert {r["verdict"] for r in readings} == {run.SKIP}
+    assert all(r.get("awaits") for r in readings)
+
+
+def test_a_lane_brief_that_declares_nothing_fails_the_step_not_just_the_clause():
+    env = _Workspace(
+        files={
+            "/w/manifest.tsv": "lane\tworktree\tbranch\tbase_sha\ttmux\tgoal\n"
+                               "a\t/w/lanes/a\tlane/a\tbase\ttm-a\t/w/goals/a.md\n"
+                               "b\t/w/lanes/b\tlane/b\tbase\ttm-b\t/w/goals/b.md\n",
+            "/w/goals/a.md": "**File ownership — edit ONLY:** `app/one.py`.\n",
+            "/w/goals/b.md": "# Lane b\nJust do the thing.\n",
+        },
+        answers={"list-panes": "tm-a\t/w/lanes/a\ntm-b\t/w/lanes/b\n",
+                 "diff --name-only": "", "rev-list --count": "1"},
+    )
+    result = run.step_clauses(_context(env))
+    assert result.status == run.FAIL
+    clause2 = next(r for r in result.evidence["clause_readings"] if r["row"] == "CVG-012")
+    assert clause2["verdict"] == run.FAIL
+    assert "b" in clause2["why"]
+
+
+def test_step_k_names_the_step_that_measured_the_other_half():
+    """Clause 7 and 8 have halves other steps measure. (k) reports which."""
+    env = _Workspace()
+    ctx = _context(env)
+    ctx.results.append({"step": "f", "status": run.PASS})
+    reading = run.step_attribution(ctx)
+    seven = next(r for r in reading.evidence["clause_readings"] if r["row"] == "CVG-017")
+    assert "step (f) PASS" in seven["why"]
+    eight = next(r for r in reading.evidence["clause_readings"] if r["row"] == "CVG-018")
+    assert "step (g) did not run in this invocation" in eight["why"]

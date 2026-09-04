@@ -1,0 +1,23 @@
+{
+ "id": "m1",
+ "name": "Example",
+ "status": "running",
+ "statusLabel": "RUNNING",
+ "summary": "",
+ "repositories": [
+  {
+   "id": "r1",
+   "name": "Repo one",
+   "path": "/tmp/r1",
+   "docs": [
+    {
+     "id": "vision",
+     "title": "Vision",
+     "state": "draft",
+     "standing": "RESOLVED",
+     "path": "docs/VISION.md"
+    }
+   ]
+  }
+ ]
+}

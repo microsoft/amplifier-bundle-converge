@@ -16,14 +16,21 @@ includes:
   - bundle: git+https://github.com/microsoft/amplifier-work-tracker@main#subdirectory=behaviors/work-tracker.yaml
   - bundle: sample-bad:behaviors/sample
 
-# VIOLATES 1d: a session-wide spawn policy. This strips the named tools from
-# EVERY spawned helper in EVERY session that composes this bundle, including
-# work that has nothing to do with this project.
+# VIOLATES 6a AND 6b: a session-wide spawn policy. This strips the named tools
+# from EVERY spawned helper in EVERY session that composes this bundle,
+# including work that has nothing to do with this project.
+#
+# The values are MODULE ids, not tool names, because that is what Amplifier's
+# spawn policy filters on (`apply_spawn_tool_policy` matches `tool["module"]`).
+# Written as `bash` / `delegate` / `load_skill` this block would look alarming
+# and strip nothing — a fixture that cannot actually cause the harm it claims
+# cannot serve as rule 6b's negative fixture, which installs this repository
+# beside an unrelated session and measures what that session's helper loses.
 spawn:
   exclude_tools:
-    - bash
-    - delegate
-    - load_skill
+    - tool-bash
+    - tool-delegate
+    - tool-skills
 ---
 
 # Sample Bad

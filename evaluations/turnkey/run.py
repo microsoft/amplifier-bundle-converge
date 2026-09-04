@@ -171,6 +171,99 @@ LAUNCHER_GLOBS = [
 # parse, the check says so and SKIPs rather than guessing.
 HOLDER_PID = re.compile(r"-(\d+)$")
 
+# ---------------------------------------------------------------------------
+# operation.v1's OTHER clauses — the ones the nine steps never read
+# ---------------------------------------------------------------------------
+#
+# Steps (a)-(i) run the contract's turnkey SENTENCE. Ten Core clauses sit
+# outside that sentence, and every one of them is a promise about what a
+# MANAGER SESSION does across a wave rather than about what a file contains.
+# The ledger's probes for those ten read `modes/converge-manager.md` for the
+# clause's own section heading, which proves the rule was written down and
+# nothing about whether anybody followed it.
+#
+# Steps (j) and (k) read what a wave LEFT: the lane briefs the manager session
+# wrote, its own plan record, git's first-parent line, the queue's resolutions.
+# Never the mode file.
+#
+# Each clause names its ledger row here, so a reading can be re-derived into
+# `ledger/rows.yaml` by whoever owns that file. This harness never writes it.
+OPERATION_CLAUSES: dict[int, tuple[str, str]] = {
+    2: ("CVG-012", "the plan is visible"),
+    3: ("CVG-013", "never the bottleneck"),
+    4: ("CVG-014", "feedback is signal, not a ticket"),
+    6: ("CVG-016", "width is a collision decision"),
+    7: ("CVG-017", "done means the manager session re-ran the check"),
+    8: ("CVG-018", "integrate, verify, re-check"),
+    9: ("CVG-019", "stalls are decisions, not loops"),
+    11: ("CVG-021", "four calls reach the steward"),
+    12: ("CVG-022", "the queue is the shared one, with custody"),
+    13: ("CVG-023", "hand off when done"),
+}
+
+# The manager session's own plan record, in the launcher's workspace beside
+# `manifest.tsv`. Several names are looked for and the one that answered is
+# reported, so a workspace using another convention is a named SKIP rather
+# than a silent one.
+PLAN_RECORDS = ("HIGHWAY.md", "PLAN.md", "WAVE-LOG.md")
+
+# A dated entry in that record: `- <ISO timestamp> <what happened>`.
+PLAN_ENTRY = re.compile(r"^[-*][ \t]*(20\d{2}-\d{2}-\d{2}T[0-9:Z+-]+)[ \t]+(.*)$",
+                        re.MULTILINE)
+
+# A decision about how wide the wave ran, and a reason for it. Clause 2 asks
+# for reasons, not announcements: "merged X. Live 4." records what happened;
+# "No refill possible without a collision" records why.
+PLAN_DECISION = re.compile(r"\b(refill|width|collis|collide|park|merged|launch)", re.I)
+PLAN_REASON = re.compile(
+    r"\b(because|since|collides?|collision|justified|no ready|no refill|blocked|"
+    r"hung|died|stuck|needs|waiting|deferred|parked)", re.I
+)
+
+# A close: the manager session ending by choice, which clause 13 says must
+# leave a hand-off a fresh session can resume from.
+PLAN_CLOSE = re.compile(r"\bCLOSED\b")
+# What makes a close resumable: it says what REMAINS, not only what finished.
+PLAN_REMAINS = re.compile(
+    r"\b(residual|parked|live|open|next|remaining|unexplained|blocked|pending)", re.I
+)
+
+# A feedback triage recorded in the plan: raw report in, work item out. The
+# item id is what lets the harness put the report and the filing side by side,
+# and it is matched against THIS run's project name rather than any dashed
+# word, so a lane name in the same sentence is never fetched as an item.
+PLAN_FEEDBACK = re.compile(r"feedback", re.I)
+
+# A lane brief's file-ownership split (`skills/lane-brief` calls it "an
+# explicit file-ownership split"; every brief in this workspace writes it as
+# **File ownership — edit ONLY:** followed by backticked paths).
+BRIEF_OWNERSHIP = re.compile(r"^.*file[ \t]+ownership.*$", re.IGNORECASE | re.MULTILINE)
+BACKTICKED = re.compile(r"`([^`]+)`")
+
+# Files that record a CHECK HAVING BEEN RUN — the ledger's `RAN <date>` notes
+# and this harness's own recorded result. Clause 7 and clause 8 are about who
+# re-ran the check, and these are the only artifacts in the repository that a
+# check run leaves behind.
+CHECK_RECORDS = ("ledger/rows.yaml", "evaluations/turnkey/RESULT.md")
+
+# What a resolution must not be if it was written for whoever asked: a sha, an
+# issue number, a path, a bare status word.
+WORD = re.compile(r"[A-Za-z][A-Za-z'\u2019-]+")
+POINTER_ONLY = re.compile(r"^(?:[0-9a-f]{7,40}|#\d+|\S+/\S+|done|fixed|ok|wontfix)$", re.I)
+
+# The two observations nothing in this harness takes yet, written out once so
+# a SKIP names the same thing every time it is read.
+AWAITED = {
+    3: "a count of the items parked on the steward's word, taken at each park, "
+       "beside the work that continued without them — the maximisation clause 3 "
+       "promises is a comparison against the work that COULD have proceeded, and "
+       "neither the queue nor the plan record stores a park event to count",
+    11: "the manager session's owner-facing prompt events, classified into the "
+        "four calls. evaluations/ratchet counts exactly these events for the "
+        "RECONCILER; no equivalent reading exists for a manager session, and "
+        "neither the queue nor the return log records a prompt as an event",
+}
+
 
 # ---------------------------------------------------------------------------
 # plumbing
@@ -362,6 +455,11 @@ class Lane:
     base_sha: str | None = None
     tmux: str | None = None
     source: str = "manifest"
+    # The launcher also records WHERE the brief it was given lives and WHEN it
+    # started. Steps (j) and (k) read both; steps (a)-(i) do not, so these stay
+    # optional and a manifest without the columns is not a failure.
+    goal: str | None = None
+    launched_at: str | None = None
 
 
 def read_worktrees(env: Env, repo: str) -> list[dict]:
@@ -447,6 +545,8 @@ def read_manifest(env: Env, workspace: str) -> list[Lane]:
                 branch=record.get("branch", ""),
                 base_sha=record.get("base_sha") or None,
                 tmux=record.get("tmux") or None,
+                goal=record.get("goal") or None,
+                launched_at=record.get("launched_at") or None,
             )
         )
     return lanes
@@ -594,6 +694,173 @@ def merge_commits(env: Env, repo: str, branch: str, limit: int = 60) -> list[dic
             out.append({"sha": sha.strip(), "subject": subject.strip()})
     return out
 
+
+def changed_files(env: Env, repo: str, base: str, branch: str,
+                  fallback_repo: str | None = None) -> list[str] | None:
+    """Which files `branch` changed beyond `base`. None when git cannot answer.
+
+    The same two-repository fallback `commits_beyond` uses, for the same
+    measured reason: a merged lane's own worktree is gone, and the question is
+    about two refs any clone holding both can answer.
+    """
+    for where in [repo, fallback_repo]:
+        if not where:
+            continue
+        ran = env.run(["git", "-C", where, "diff", "--name-only", f"{base}..{branch}"],
+                      timeout=60.0)
+        if ran.ok:
+            return [line.strip() for line in ran.out.splitlines() if line.strip()]
+    return None
+
+
+def read_plan_record(env: Env, workspace: str) -> tuple[str | None, str | None]:
+    """The manager session's own plan record, and where it was found.
+
+    Clause 2 says the plan is VISIBLE — which means visible to somebody who was
+    not in the session. The only place that can be true is a file, and the
+    launcher's workspace is where this system's manager sessions keep one.
+    """
+    for name in PLAN_RECORDS:
+        path = f"{workspace}/{name}"
+        text = env.read(path)
+        if text:
+            return path, text
+    return None, None
+
+
+def parse_plan_entries(text: str) -> list[dict]:
+    """The dated entries of a plan record, each with what it decided and why."""
+    entries = []
+    for stamp, body in PLAN_ENTRY.findall(text or ""):
+        entries.append({
+            "at": stamp,
+            "text": body.strip(),
+            "decision": bool(PLAN_DECISION.search(body)),
+            "reason": bool(PLAN_REASON.search(body)),
+            "close": bool(PLAN_CLOSE.search(body)),
+            "feedback": bool(PLAN_FEEDBACK.search(body)),
+        })
+    return entries
+
+
+def _declaration(line: str) -> str:
+    """The part of an ownership line that is the DECLARATION, not the prose.
+
+    Briefs in this workspace write the split as
+    `**File ownership — edit ONLY:** `a`, `b`. Never merge to main. Other lanes
+    are live on other paths (ask-route: `app/serve.py`)` — so the same line
+    carries the lane's own paths AND, sometimes, other lanes' paths named for
+    context. Reading the whole line would give every lane its neighbours'
+    paths and manufacture a collision in every pair.
+
+    The declaration ends at the first sentence break outside backticks, after
+    at least one path has been named. `app/data.py` keeps its dot because the
+    break must be a period FOLLOWED BY A SPACE and outside a quote.
+    """
+    inside, seen_path = False, False
+    for i, char in enumerate(line):
+        if char == "`":
+            inside = not inside
+            seen_path = seen_path or not inside
+        elif char == "." and not inside and seen_path:
+            if i + 1 >= len(line) or line[i + 1] in " \t\n":
+                return line[:i]
+    return line
+
+
+def brief_ownership(text: str | None) -> list[str]:
+    """The paths a lane brief says its lane owns, normalised for comparison.
+
+    `evaluations/turnkey/**` and `evaluations/turnkey` are the same claim; so
+    are `app/data.py` and `` `app/data.py` ``. A backticked token that is prose
+    rather than a path is dropped rather than compared, because comparing prose
+    produces collisions that are not real ones.
+    """
+    if not text:
+        return []
+    line = BRIEF_OWNERSHIP.search(text)
+    if not line:
+        return []
+    out = []
+    for token in BACKTICKED.findall(_declaration(line.group(0))):
+        path = token.strip()
+        if not path or not re.fullmatch(r"[A-Za-z0-9._*/\-]+", path):
+            continue
+        path = path.rstrip("*").rstrip("/").lstrip("./")
+        if path and path not in out:
+            out.append(path)
+    return out
+
+
+def _paths_collide(a: str, b: str) -> bool:
+    """Do two declared paths overlap? `app` collides with `app/data.py`."""
+    pa, pb = a.strip("/").split("/"), b.strip("/").split("/")
+    n = min(len(pa), len(pb))
+    return pa[:n] == pb[:n]
+
+
+def _log(env: Env, repo: str, argv: list[str]) -> list[dict]:
+    """`git log` with parents, date and subject, parsed into rows."""
+    ran = env.run(["git", "-C", repo, "log", "--pretty=format:%H\t%P\t%ci\t%s"] + argv,
+                  timeout=90.0)
+    if not ran.ok:
+        return []
+    out = []
+    for line in ran.out.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 4:
+            continue
+        parents = parts[1].split()
+        out.append({"sha": parts[0].strip(), "parents": parents,
+                    "merge": len(parents) > 1, "at": parts[2].strip(),
+                    "subject": "\t".join(parts[3:]).strip()})
+    return out
+
+
+def lane_authored_commits(env: Env, repo: str, branch: str, limit: int = 120
+                          ) -> tuple[dict[str, dict], list[dict], bool]:
+    """Every commit a lane merge carried in, and the merges that carried them.
+
+    This is the attribution step (k) rests on, and it is structural rather than
+    nominal: every session in this system commits as the same person, so an
+    author field settles nothing. What settles it is which side of a merge a
+    commit arrived on. A lane commits on its own branch, so its work reaches
+    the integration branch ONLY as the second parent of a `merge lane/...`
+    commit -- `M^1..M^2` is exactly the set that merge brought in, and a commit
+    outside every such set was made by whoever was integrating.
+
+    The cheaper test -- "is it on the integration branch's first-parent line?"
+    -- is wrong here, and was measured wrong: on this repository lanes merge
+    onto an integration branch which then reaches main through a pull-request
+    merge, so main's first-parent line is almost entirely PR merges and an
+    integrator's own commit sits off it. Asking which side of the lane merge a
+    commit came from does not care how many branches deep the integration went.
+
+    Returns each lane-authored commit mapped to the merge that carried it, the
+    lane merges scanned, and whether the scan reached the end of the history.
+    When it did not, a commit that is merely ABSENT from the map is reported
+    unknown rather than credited to the integrator.
+    """
+    merges = [m for m in _log(env, repo, [f"--max-count={limit}", "--merges", branch])
+              if "lane/" in m["subject"] and len(m["parents"]) >= 2]
+    complete = len(merges) < limit
+    carried: dict[str, dict] = {}
+    for merge in merges:
+        ran = env.run(["git", "-C", repo, "rev-list", "--no-merges",
+                       f"{merge['parents'][0]}..{merge['parents'][1]}"], timeout=60.0)
+        if not ran.ok:
+            continue
+        brought = [s.strip() for s in ran.out.split() if s.strip()]
+        merge["brought"] = len(brought)
+        for sha in brought:
+            carried.setdefault(sha, merge)
+    return carried, merges, complete
+
+
+def commits_touching(env: Env, repo: str, branch: str, path: str, limit: int = 25
+                     ) -> list[dict]:
+    """The newest commits on `branch` that changed `path`, newest first."""
+    return _log(env, repo, [f"--max-count={limit}", branch, "--", path])
 
 # ---------------------------------------------------------------------------
 # THE ASSERTIONS — clause 5, "lanes are real sessions"
@@ -974,6 +1241,406 @@ def assert_lanes_observed_live(samples: list[dict], width: int = 2) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# THE ASSERTIONS — the clauses about what a MANAGER SESSION DID
+#
+# Same discipline as the clause-5 block above, and for the same reason: pure
+# functions over evidence already collected, so every one can be made to fail
+# from synthetic input, with no container, no wave and no workspace.
+#
+# A verdict is one of three things and never a fourth. PASS: the promise was
+# kept, and here is the reading. FAIL: it was broken, and here is the reading.
+# SKIP: this run could not read it, and here is exactly what it waits on.
+#
+# A clause that was never EXERCISED — no lane stalled, no feedback arrived, no
+# session closed — is a SKIP that says so. Not a PASS: nothing was kept, and a
+# green line nobody can back up is the failure this harness exists to prevent.
+# ---------------------------------------------------------------------------
+
+
+def _clause(number: int, verdict: str, why: str, **extra) -> dict:
+    """One clause's reading, carrying the ledger row it re-derives."""
+    row, title = OPERATION_CLAUSES[number]
+    reading = {"clause": f"Core {number}", "row": row, "title": title,
+               "verdict": verdict, "why": why}
+    reading.update(extra)
+    return reading
+
+
+def assert_plan_is_visible(briefs: list[dict], entries: list[dict],
+                           where: str | None, looked_in: str = "") -> dict:
+    """Clause 2 — order, dependencies, collisions and picks, shown with reasons.
+
+    "Visible" means visible to somebody who was not in the session, so this
+    reads the two artifacts a wave leaves that a stranger could open: the lane
+    briefs the manager session wrote (each one declaring the paths its lane
+    owns — the collision decision, per lane) and the plan record it keeps
+    (dated entries giving the reason for a refill, a width, a park).
+
+    Both halves must hold. A brief with no ownership split is the plan not
+    being written down where the lane can see it; a plan record that only
+    announces what happened ("merged X, 4 live") is the announcement clause 2
+    is explicitly not satisfied by.
+    """
+    undeclared = [b["lane"] for b in briefs if not b.get("declared")]
+    reasoned = [e for e in entries if e.get("decision") and e.get("reason")]
+    facts = {"briefs": len(briefs), "briefs_declaring_ownership": len(briefs) - len(undeclared),
+             "plan_record": where, "plan_entries": len(entries),
+             "entries_with_a_reason": len(reasoned)}
+    if not briefs and not entries:
+        return _clause(2, SKIP, "no lane brief and no plan record could be read, so "
+                                "there is nothing to judge", awaits=looked_in, **facts)
+    if undeclared:
+        return _clause(
+            2, FAIL,
+            f"{len(undeclared)} of {len(briefs)} lane brief(s) declare no file "
+            f"ownership at all ({', '.join(undeclared)}) — the collision decision "
+            "for those lanes is not written anywhere their worker session can read it",
+            **facts)
+    if where is None:
+        return _clause(
+            2, SKIP,
+            "every lane brief declares the paths it owns, but no plan record was "
+            "found, so order and opportunistic picks could not be read",
+            awaits=looked_in, **facts)
+    if not reasoned:
+        return _clause(
+            2, FAIL,
+            f"the plan record at {where} carries {len(entries)} dated entries and "
+            "not one gives a reason for a width, a refill or a park — clause 2 asks "
+            "for reasons, and an announcement of what happened is not one",
+            **facts)
+    return _clause(
+        2, PASS,
+        f"{len(briefs)} lane brief(s) each declare the paths that lane owns, and the "
+        f"plan record at {where} gives reasons for {len(reasoned)} of its "
+        f"{len(entries)} dated decisions",
+        sample_reason=reasoned[-1]["text"][:200], **facts)
+
+
+def assert_lanes_touch_different_files(lanes: list[dict]) -> dict:
+    """Clause 6 — lanes fill only with items that provably touch different files.
+
+    Two readings, because the clause has two halves and they can disagree:
+
+    - **declared** — what each lane's own brief says it owns. This is the
+      manager session's collision DECISION, in the artifact it wrote before the
+      work started.
+    - **actual** — what each lane's commits changed, from git. This is whether
+      the decision held.
+
+    A collision on either side fails. Where fewer than two lanes have commits
+    yet, the actual half is reported as unmeasured rather than passed: two
+    empty branches touch no file in common and prove nothing by it.
+    """
+    if len(lanes) < 2:
+        return _clause(6, SKIP,
+                       f"{len(lanes)} lane(s) were running at once, so no width "
+                       "decision was made for this reading to judge",
+                       lanes=[ln["lane"] for ln in lanes],
+                       awaits="two or more lanes running at the same time")
+    declared_hits, actual_hits, unmeasured = [], [], []
+    with_files = [ln for ln in lanes if ln.get("touched")]
+    for i, a in enumerate(lanes):
+        for b in lanes[i + 1:]:
+            for pa in a.get("declared", []):
+                for pb in b.get("declared", []):
+                    if _paths_collide(pa, pb):
+                        declared_hits.append({"lanes": [a["lane"], b["lane"]],
+                                              "paths": [pa, pb]})
+            shared = sorted(set(a.get("touched") or []) & set(b.get("touched") or []))
+            if shared:
+                actual_hits.append({"lanes": [a["lane"], b["lane"]], "files": shared})
+    for lane in lanes:
+        if not lane.get("declared"):
+            unmeasured.append(f"{lane['lane']} declares no paths")
+        if lane.get("touched") is None:
+            unmeasured.append(f"{lane['lane']}: git could not name its changed files")
+    facts = {"lanes": [ln["lane"] for ln in lanes],
+             "declared_collisions": declared_hits, "actual_collisions": actual_hits,
+             "lanes_with_commits": len(with_files), "unmeasured": unmeasured}
+    if declared_hits:
+        first = declared_hits[0]
+        return _clause(6, FAIL,
+                       f"{len(declared_hits)} pair(s) of lanes running at once were "
+                       f"given overlapping paths: {first['lanes'][0]} and "
+                       f"{first['lanes'][1]} both own {first['paths'][0]!r}",
+                       **facts)
+    if actual_hits:
+        first = actual_hits[0]
+        return _clause(6, FAIL,
+                       f"{first['lanes'][0]} and {first['lanes'][1]} ran at once and "
+                       f"both changed {', '.join(first['files'][:3])} — the ownership "
+                       "split held on paper and not in git",
+                       **facts)
+    measured = "and their commits touch no file in common" if len(with_files) >= 2 else (
+        f"and the actual half is unmeasured: only {len(with_files)} of them has "
+        "commits yet, and two empty branches share no file by not having one")
+    return _clause(6, PASS,
+                   f"{len(lanes)} lanes ran at once, each brief declares paths that "
+                   f"collide with no other lane's, {measured}",
+                   **facts)
+
+
+def assert_stalls_are_declared(stalls: list[dict], records: list[dict]) -> dict:
+    """Clause 9 — no progress becomes stuck WITH CAUSE, not another iteration.
+
+    A stall this can see: a lane whose terminal session is gone and whose
+    branch carries no commit beyond its base. That is the shape clause 7 calls
+    stuck, arrived at by a lane that has already stopped — a lane still running
+    on an unchanged branch has not stalled, it is working, and counting it here
+    would fabricate a red.
+
+    For each, the question is whether anybody wrote down that it stopped and
+    why. The record has to name the lane; a record naming no lane cannot be
+    said to be about it.
+    """
+    if not stalls:
+        return _clause(9, SKIP,
+                       "no lane ended without commits, so no stall exists for this "
+                       "reading to judge — the reading ran and found nothing",
+                       stalls=0, records=len(records),
+                       awaits="a lane that ends with an unchanged branch")
+    undeclared, declared = [], []
+    for stall in stalls:
+        hit = next((r for r in records if stall["lane"] in (r.get("text") or "")), None)
+        (declared if hit else undeclared).append(
+            {"lane": stall["lane"], "record": (hit or {}).get("text", "")[:160] or None})
+    facts = {"stalled": [s["lane"] for s in stalls], "declared": declared,
+             "undeclared": [u["lane"] for u in undeclared]}
+    if undeclared:
+        return _clause(9, FAIL,
+                       f"{len(undeclared)} lane(s) stopped with an unchanged branch "
+                       f"and no record names them or says why: "
+                       f"{', '.join(u['lane'] for u in undeclared)}",
+                       **facts)
+    return _clause(9, PASS,
+                   f"{len(declared)} lane(s) stopped with an unchanged branch and each "
+                   "is named in a record that says what stopped it",
+                   **facts)
+
+
+def assert_feedback_was_enriched(pairings: list[dict]) -> dict:
+    """Clause 4 — no raw report becomes work without a quoted source.
+
+    Reads the raw report and the item filed from it side by side: the plan
+    record's own triage entry names the item, and the item's record either
+    carries the report's words and the version they were said about, or it does
+    not. An entry that names no item id is UNRESOLVED, never a pass — the same
+    refusal `assert_no_subagent_held_work` makes for an exited holder.
+    """
+    if not pairings:
+        return _clause(4, SKIP,
+                       "no feedback triage is recorded in the plan record, so no "
+                       "report and filing exist to put side by side",
+                       awaits="a plan entry recording feedback, naming the item "
+                              "filed from it")
+    thin, unresolved, good = [], [], []
+    for pair in pairings:
+        item = pair.get("item")
+        if item is None:
+            unresolved.append(pair)
+            continue
+        text = f"{item.get('title', '')}\n{item.get('description', '') or ''}"
+        quoted = bool(re.search(r"quoted:|[\"“”].{20,}", text, re.S))
+        version = bool(re.search(r"\b[0-9a-f]{7,40}\b|build |20\d{2}-\d{2}-\d{2}|v\d+\.\d+",
+                                 text))
+        record = {"item": item.get("id"), "quoted": quoted, "named_version": version}
+        (good if (quoted and version) else thin).append(record)
+    facts = {"pairings": len(pairings), "enriched": good, "thin": thin,
+             "unresolved": [p.get("entry", "")[:120] for p in unresolved]}
+    if thin:
+        first = thin[0]
+        missing = "quotes the report" if not first["quoted"] else "names the version seen"
+        return _clause(4, FAIL,
+                       f"{len(thin)} item(s) filed from feedback carry no enrichment: "
+                       f"{first['item']} never {missing}",
+                       **facts)
+    if not good:
+        return _clause(4, SKIP,
+                       f"{len(unresolved)} feedback triage(s) are recorded and none "
+                       "names the item it produced, so no filing could be read back",
+                       awaits="a triage record that names the item id it filed",
+                       **facts)
+    return _clause(4, PASS,
+                   f"{len(good)} item(s) filed from feedback quote the report and name "
+                   f"the version it was said about ({', '.join(g['item'] for g in good)})"
+                   + (f"; {len(unresolved)} triage(s) name no item and are unresolved, "
+                      "not passed" if unresolved else ""),
+                   **facts)
+
+
+def assert_handoff_on_close(closes: list[dict]) -> dict:
+    """Clause 13 — a session that ends by choice leaves a resumable hand-off.
+
+    A close that lists only what finished is a report. A close a fresh session
+    can resume from also says what REMAINS — residuals, what is parked, what is
+    still live. That is the difference this reads, and it is the difference
+    between a hand-off and a farewell.
+    """
+    if not closes:
+        return _clause(13, SKIP,
+                       "no session close is recorded, so no hand-off is owed",
+                       awaits="a plan entry recording a manager session ending by "
+                              "choice")
+    bare = [c for c in closes if not PLAN_REMAINS.search(c.get("text", ""))]
+    facts = {"closes": len(closes), "resumable": len(closes) - len(bare),
+             "newest": closes[-1].get("text", "")[:200]}
+    if bare:
+        return _clause(13, FAIL,
+                       f"{len(bare)} of {len(closes)} recorded close(s) say only what "
+                       "finished and never what remains, so a fresh session has "
+                       "nothing to resume from",
+                       bare=[c.get("text", "")[:160] for c in bare], **facts)
+    return _clause(13, PASS,
+                   f"each of {len(closes)} recorded close(s) names what remained — "
+                   "residuals, what was parked, or what was still live — so a fresh "
+                   "session could pick the run up from the record alone",
+                   **facts)
+
+
+def assert_resolutions_written_for_the_asker(items: list[dict]) -> dict:
+    """Clause 12 — "resolution written for whoever asked".
+
+    The queue stores a string and judges nothing about it, so a resolved item
+    can carry "done", a bare sha, or nothing at all and look closed from every
+    angle. Three things are read, and each names what makes it false:
+
+    - it exists (a resolved item with an empty resolution is the commonest);
+    - it is written in sentences — at least one of six words or more, so
+      "fixed" and "see abc1234" do not qualify;
+    - it says something beyond a pointer: eight words that are not a sha, an
+      issue number or a path.
+
+    What this does NOT judge is whether the sentences are TRUE. Nothing here
+    can, and pretending otherwise would be the fabricated green again.
+    """
+    resolved = [i for i in items if str(i.get("status", "")).lower() == "resolved"]
+    if not resolved:
+        return _clause(12, SKIP,
+                       "no resolved item is in the queue, so no resolution exists to "
+                       "read",
+                       awaits="an item this wave resolved")
+    offenders = []
+    for item in resolved:
+        text = (item.get("resolution") or "").strip()
+        words = WORD.findall(text)
+        plain = [w for w in text.split() if not POINTER_ONLY.match(w.strip(".,;:()"))]
+        sentences = [s for s in re.split(r"(?<=[.!?])[ \t\n]+", text)
+                     if len(WORD.findall(s)) >= 6]
+        if not text:
+            why = "is empty — the item is closed and says nothing to whoever asked"
+        elif not sentences:
+            why = f"has no sentence in it ({text[:60]!r})"
+        elif len(words) < 12 or len(plain) < 8:
+            why = f"is a pointer, not an answer ({text[:60]!r})"
+        else:
+            continue
+        offenders.append({"item": item.get("id"), "why": why})
+    facts = {"resolved": len(resolved), "offenders": offenders}
+    if offenders:
+        first = offenders[0]
+        return _clause(12, FAIL,
+                       f"{len(offenders)} of {len(resolved)} resolution(s) were not "
+                       f"written for whoever asked: {first['item']} {first['why']}",
+                       **facts)
+    return _clause(12, PASS,
+                   f"all {len(resolved)} resolution(s) in the queue are written in "
+                   "sentences that answer the asker rather than pointing at a commit",
+                   **facts)
+
+
+def assert_check_record_attributed(newest: list[dict], history: list[dict]) -> dict:
+    """Clauses 7 and 8 — WHO re-ran the check, read from git's own shape.
+
+    The nine steps read artifacts, and an artifact does not record which
+    process made it. This reads that, for the only artifacts a check run leaves
+    behind in the repository: the ledger's `RAN` notes and this harness's own
+    recorded result.
+
+    `lane_authored_commits` supplies the discriminator — which side of a lane
+    merge a commit arrived on. A record written outside every lane merge was
+    written by whoever was integrating; a record that came in as a lane merge's
+    second parent is the lane's own green, which is precisely what clause 8
+    says the verification may not be.
+
+    Three outcomes, and the middle one matters most:
+
+    - PASS — the newest record of a check run was written outside every lane.
+    - SKIP — the newest records all came in through a lane merge, but the
+      integrator HAS written such records before. That does not show the
+      promise broken: an integrator who re-ran the check after the last merge
+      and wrote nothing down leaves exactly this trace. What it needs is named.
+    - FAIL — no check record in this repository was EVER written outside a
+      lane. Then the only verification on record is the worker session's own.
+
+    What a PASS does not prove: that the check was re-run for THIS wave, or
+    that the run behind the record was clean. Step (h) re-runs the check itself
+    and answers that; this answers who.
+    """
+    if not newest:
+        return {"verdict": SKIP,
+                "why": "no check-run record was found in the repository",
+                "awaits": "a file recording a check having been run ("
+                          + ", ".join(CHECK_RECORDS) + ")",
+                "records": [], "by_integrator": 0, "by_lane": 0}
+    integrator = [r for r in newest if r.get("author") == "integrator"]
+    by_lane = [r for r in newest if r.get("author") == "lane"]
+    unknown = [r for r in newest if r.get("author") not in ("integrator", "lane")]
+    ever = [h for h in history if h.get("author") == "integrator"]
+    facts = {"records": newest, "by_integrator": len(integrator),
+             "by_lane": len(by_lane), "unknown": len(unknown),
+             "integrator_records_in_history": len(ever),
+             "history_examined": len(history)}
+    if integrator:
+        best = integrator[0]
+        merge = best.get("lane_merge_before")
+        return {
+            "verdict": PASS,
+            "why": (f"the newest record of a check run, {best['path']} at "
+                    f"{best['sha'][:8]} ({best['subject']!r}), was written outside "
+                    "every lane merge — a lane's work reaches this branch only as a "
+                    "merge's second parent, and this commit is on neither, so it was "
+                    "the integrator's own hand and not the lane whose work was checked"
+                    + (f"; the lane merge before it is {merge['sha'][:8]} "
+                       f"({merge['subject']!r})" if merge else
+                       "; no lane merge precedes it, so its position relative to an "
+                       "integration is unread")),
+            **facts,
+        }
+    if unknown and not by_lane:
+        return {
+            "verdict": SKIP,
+            "why": (f"{len(unknown)} check record(s) could not be placed on either "
+                    "side of a lane merge, so who wrote them is unread"),
+            "awaits": "a git history this run can read to the end",
+            **facts,
+        }
+    if ever:
+        newest_ever = ever[0]
+        return {
+            "verdict": SKIP,
+            "why": (f"the newest record of a check run ({by_lane[0]['path']} at "
+                    f"{by_lane[0]['sha'][:8]}) came in through a lane merge, so this "
+                    f"wave's verification is unattributed here; the integrator has "
+                    f"written {len(ever)} such record(s) before, most recently "
+                    f"{newest_ever['sha'][:8]} ({newest_ever['subject']!r})"),
+            "awaits": ("a check-run record written outside every lane after the "
+                       "newest lane merge — or a reading taken while the check runs, "
+                       "of the process running it, which only a driven wave can take"),
+            **facts,
+        }
+    return {
+        "verdict": FAIL,
+        "why": (f"no check-run record in this repository was ever written outside a "
+                f"lane ({len(history)} change(s) to {', '.join(CHECK_RECORDS)} "
+                "examined, every one carried in by a lane merge) — the only "
+                "verification on record is the worker session's own, which is the "
+                "half of clause 8 that says never the worker session's"),
+        **facts,
+    }
+
+
+# ---------------------------------------------------------------------------
 # the run context
 # ---------------------------------------------------------------------------
 
@@ -996,6 +1663,11 @@ class Context:
     wave: dict | None = None
     batch_dir: str = WAVE_BATCH_IN_ENV
     width: int = 2
+    # Rows already produced by this run, in order. Step (k) reports the halves
+    # of clauses 7 and 8 that steps (f), (g) and (h) measured, and it names the
+    # step that measured them rather than measuring them a second time. Empty
+    # when those steps were not asked for, which is a SKIP and says so.
+    results: list[dict] = field(default_factory=list)
 
     # The repository the WAVE happens in, and where its lane state lives.
     #
@@ -1782,6 +2454,251 @@ def step_brief(ctx: Context) -> Result:
     )
 
 
+def _lanes_running_at_once(ctx: Context, lanes: list[Lane], panes: list[dict]
+                           ) -> tuple[list[Lane], str]:
+    """The lanes that were running AT THE SAME TIME, and how that was read.
+
+    Two sources, in order of strength. The multiplexer's live session list is
+    the present tense and needs no wave to have been recorded. The readings
+    taken while a driven wave ran answer for a wave that has since finished and
+    tidied its sessions away — the same evidence `assert_lanes_observed_live`
+    rests on, reused rather than re-invented.
+    """
+    live_sessions = {p["session"] for p in panes}
+    live = [ln for ln in lanes if ln.tmux and ln.tmux in live_sessions]
+    best, source = live, "the multiplexer's live session list"
+    for sample in (ctx.wave or {}).get("samples", []):
+        seen = [ln for ln in lanes if ln.tmux and ln.tmux in sample.get("sessions", [])]
+        if len(seen) > len(best):
+            best, source = seen, f"the reading taken at {sample.get('at')} while the wave ran"
+    return best, source
+
+
+def step_clauses(ctx: Context) -> Result:
+    """(j) The seven Core clauses the nine steps never read.
+
+    Every reading here is taken from something a wave LEFT — a lane brief, the
+    plan record, git, the queue — and never from `modes/converge-manager.md`,
+    which says only that the rule was written down. Two of the seven have no
+    reading at all yet, and each of those names the observation it waits on
+    instead of being quietly dropped.
+    """
+    repo, workspace = ctx.wave_repo, ctx.wave_workspace
+    panes = read_tmux_panes(ctx.env)
+    worktrees = read_worktrees(ctx.env, repo)
+    lanes = read_manifest(ctx.env, workspace) or lanes_from_worktrees(worktrees, panes)
+    where, plan_text = read_plan_record(ctx.env, workspace)
+    entries = parse_plan_entries(plan_text or "")
+    looked_in = "a plan record in " + workspace + " (" + ", ".join(PLAN_RECORDS) + ")"
+
+    # --- the lanes that ran at once, with what they were told to own and what
+    # --- they actually changed
+    concurrent, concurrency_source = _lanes_running_at_once(ctx, lanes, panes)
+    briefs, measured_lanes = [], []
+    for lane in concurrent:
+        text = ctx.env.read(lane.goal) if lane.goal else None
+        declared = brief_ownership(text)
+        briefs.append({"lane": lane.name, "goal": lane.goal,
+                       "brief_read": text is not None, "declared": declared})
+        measured_lanes.append({
+            "lane": lane.name,
+            "declared": declared,
+            "touched": (changed_files(ctx.env, lane.worktree, lane.base_sha,
+                                      lane.branch, repo)
+                        if lane.base_sha else None),
+        })
+
+    # --- lanes that stopped without producing anything
+    live_sessions = {p["session"] for p in panes}
+    stalls = []
+    for lane in lanes:
+        if lane.tmux and lane.tmux in live_sessions:
+            continue  # still working; an unchanged branch is not yet a stall
+        if not lane.base_sha:
+            continue
+        count = commits_beyond(ctx.env, lane.worktree, lane.base_sha, lane.branch, repo)
+        if count == 0:
+            stalls.append({"lane": lane.name, "branch": lane.branch})
+    return_log = ctx.env.read(f"{repo}/{RETURN_LOG}") or ""
+    records = entries + [{"text": e["heading"] + " " + str(e.get("parts_present"))}
+                         for e in parse_return_log(return_log)]
+
+    # --- feedback: the raw report and the item filed from it, side by side
+    pairings = []
+    for entry in [e for e in entries if e["feedback"]]:
+        ids = re.findall(rf"\b{re.escape(ctx.project)}-[a-z0-9]{{3,}}\b", entry["text"])
+        if not ids:
+            pairings.append({"entry": entry["text"], "item": None})
+            continue
+        for item_id in dict.fromkeys(ids):
+            pairings.append({"entry": entry["text"],
+                             "item": read_tracker_item(ctx.env, ctx.project, item_id)})
+
+    parked = [e for e in entries if re.search(r"park", e["text"], re.I)]
+    readings = [
+        assert_plan_is_visible(briefs, entries, where, looked_in),
+        _clause(3, SKIP,
+                "this run can see that work was parked on the steward's word and that "
+                f"other lanes kept running ({len(parked)} plan entries record a park), "
+                "which is the clause's shape but not its promise",
+                awaits=AWAITED[3], parked_entries=len(parked),
+                lanes_running_at_once=len(concurrent)),
+        assert_feedback_was_enriched(pairings),
+        assert_lanes_touch_different_files(measured_lanes),
+        assert_stalls_are_declared(stalls, records),
+        _clause(11, SKIP,
+                "nothing in this run reads a prompt as an event, so the four calls "
+                "cannot be counted or classified",
+                awaits=AWAITED[11]),
+        assert_handoff_on_close([e for e in entries if e["close"]]),
+    ]
+
+    evidence = {
+        "repo_read": repo, "workspace_read": workspace,
+        "plan_record": where, "plan_entries": len(entries),
+        "lanes_running_at_once": [ln.name for ln in concurrent],
+        "concurrency_source": concurrency_source,
+        "briefs": briefs, "stalled_lanes": stalls,
+        "feedback_pairings": len(pairings),
+        "clause_readings": readings,
+    }
+    detail = " · ".join(f"{r['clause']} ({r['row']}) {r['verdict']}: {r['why']}"
+                        for r in readings)
+    fails = [r for r in readings if r["verdict"] == FAIL]
+    live = [r for r in readings if r["verdict"] == PASS]
+    waiting = [r for r in readings if r["verdict"] == SKIP]
+    if fails:
+        return Result(
+            FAIL,
+            f"{len(fails)} of {len(readings)} clause readings say the promise was "
+            f"broken. {detail}",
+            evidence=evidence,
+        )
+    if not live:
+        return Result(
+            SKIP,
+            f"None of the {len(readings)} clauses could be read on this run. {detail}",
+            reason=("no lane brief, plan record, stall, feedback triage or session "
+                    "close was readable here; each clause above names the observation "
+                    "it waits on"),
+            evidence=evidence,
+        )
+    return Result(
+        PASS,
+        f"{len(live)} of {len(readings)} clauses carry a live reading of what a "
+        f"manager session did, and {len(waiting)} name the observation they still "
+        f"wait on. {detail}",
+        evidence=evidence,
+    )
+
+
+def step_attribution(ctx: Context) -> Result:
+    """(k) Who produced the artifact — clauses 7, 8 and 12.
+
+    Steps (f), (g) and (h) measure the halves of clauses 7 and 8 that live in
+    an artifact: commits beyond base, a lane merge, a contract check re-run.
+    None of them can say WHO. This step reads that from git's own shape and
+    from the queue's own text, and where it cannot, it says what it waits on.
+    """
+    repo, branch = ctx.wave_repo, ctx.integration_branch
+    carried, lane_merges, complete = lane_authored_commits(ctx.env, repo, branch)
+
+    def classify(commit: dict, path: str) -> dict:
+        if commit["sha"] in carried:
+            # The merge that carried it is known exactly, not guessed by date.
+            author, merge = "lane", carried[commit["sha"]]
+        elif complete:
+            author, merge = "integrator", next(
+                (m for m in lane_merges if m["at"] <= commit["at"]), None)
+        else:
+            author, merge = "unknown", None
+        return {"path": path, "sha": commit["sha"], "at": commit["at"],
+                "subject": commit["subject"], "author": author,
+                "lane_merge_before": ({"sha": merge["sha"], "subject": merge["subject"]}
+                                      if merge else None)}
+
+    newest, history = [], []
+    for path in CHECK_RECORDS:
+        if not ctx.env.exists(f"{repo}/{path}"):
+            continue
+        touches = [classify(c, path) for c in commits_touching(ctx.env, repo, branch, path)]
+        if touches:
+            newest.append(touches[0])
+            history.extend(touches)
+    history.sort(key=lambda r: r["at"], reverse=True)
+    attribution = assert_check_record_attributed(newest, history)
+
+    items, tracker_error = read_tracker_items(ctx.env, ctx.project)
+    resolutions = assert_resolutions_written_for_the_asker(items)
+
+    measured = {row["step"]: row for row in ctx.results}
+
+    def half(letter: str, what: str) -> tuple[str, str]:
+        row = measured.get(letter)
+        if row is None:
+            return SKIP, f"step ({letter}) did not run in this invocation, so {what} is unread"
+        return row["status"], f"step ({letter}) {row['status']}: {what}"
+
+    def weakest(*verdicts: str) -> str:
+        if FAIL in verdicts:
+            return FAIL
+        if SKIP in verdicts:
+            return SKIP
+        return PASS
+
+    f_status, f_said = half("f", "a marker on an unchanged branch is recorded stuck")
+    g_status, g_said = half("g", "two or more lanes landed in one repository")
+    h_status, h_said = half("h", "the contract check was re-run after integration")
+
+    seven = _clause(
+        7, weakest(f_status, attribution["verdict"]),
+        f"{f_said}; and on the subject of the sentence — {attribution['why']}",
+        measured_half=f_said, attribution=attribution)
+    eight = _clause(
+        8, weakest(g_status, h_status, attribution["verdict"]),
+        f"{g_said}; {h_said} — by this harness, which is the post-merge gate and not "
+        f"the manager session; and on whose verification it was — {attribution['why']}",
+        measured_halves=[g_said, h_said], attribution=attribution)
+    twelve = dict(resolutions)
+    if tracker_error:
+        twelve = _clause(12, SKIP, f"the queue did not answer: {tracker_error}",
+                         awaits="a reachable work queue")
+
+    readings = [seven, eight, twelve]
+    evidence = {
+        "repo_read": repo, "integration_branch": branch,
+        "lane_merges_scanned": len(lane_merges),
+        "lane_authored_commits": len(carried),
+        "history_reached_the_end": complete,
+        "check_records": newest,
+        "check_record_history": len(history),
+        "tracker_error": tracker_error,
+        "clause_readings": readings,
+    }
+    detail = " · ".join(f"{r['clause']} ({r['row']}) {r['verdict']}: {r['why']}"
+                        for r in readings)
+    fails = [r for r in readings if r["verdict"] == FAIL]
+    live = [r for r in readings if r["verdict"] == PASS]
+    if fails:
+        return Result(FAIL,
+                      f"{len(fails)} of {len(readings)} attribution readings say the "
+                      f"promise was broken. {detail}",
+                      evidence=evidence)
+    if not live:
+        return Result(
+            SKIP,
+            f"None of the {len(readings)} clauses could be attributed on this run. "
+            f"{detail}",
+            reason=("neither a check-run record on the integration branch nor a "
+                    "resolution in the queue could be read here"),
+            evidence=evidence,
+        )
+    return Result(PASS,
+                  f"{len(live)} of {len(readings)} clauses carry a reading of who "
+                  f"produced the artifact, not only that it exists. {detail}",
+                  evidence=evidence)
+
+
 STEPS = [
     ("a", "environment", "a fresh isolated environment stood up", step_environment),
     ("b", "install", "the one documented install performed", step_install),
@@ -1792,7 +2709,17 @@ STEPS = [
     ("g", "integrated", "results integrated and verified", step_integrated),
     ("h", "rechecked", "contracts re-checked", step_rechecked),
     ("i", "brief", "a plain-sentence return brief produced", step_brief),
+    # (a)-(i) are the contract's turnkey SENTENCE. (j) and (k) are not part of
+    # that sentence and never change its verdict: they read the Core clauses
+    # the sentence does not reach, and the report keeps the two tallies apart
+    # so a clause reading can never be mistaken for the gate going green.
+    ("j", "clauses", "the seven Core clauses the nine steps never read", step_clauses),
+    ("k", "attribution", "who produced the artifact, not only that it exists",
+     step_attribution),
 ]
+
+# The steps that ARE the turnkey sentence. Everything else is a clause reading.
+TURNKEY_STEPS = "abcdefghi"
 
 
 # ---------------------------------------------------------------------------
@@ -2218,6 +3145,130 @@ def self_check() -> dict:
                   parse_return_log("## 2026-09-04 - a wave landed\n" + five)[0]["stamped"]
                   is False))
 
+    # --- steps (j) and (k): the clauses about what a MANAGER SESSION did.
+    # Same bar as everything above: each assertion is shown failing on evidence
+    # that must make it fail, and passing on evidence that must not.
+
+    brief_ok = [{"lane": "a", "declared": ["evaluations/turnkey"]}]
+    brief_bare = [{"lane": "a", "declared": []}]
+    reasoned = [{"at": "T0", "decision": True, "reason": True, "close": False,
+                 "feedback": False,
+                 "text": "cycle 4: merged x. No refill possible without a collision."}]
+    announced = [{"at": "T0", "decision": True, "reason": False, "close": False,
+                  "feedback": False, "text": "cycle 4: merged x. 4 live."}]
+    cases.append(("a lane brief with no file-ownership split fails clause 2",
+                  assert_plan_is_visible(brief_bare, reasoned, "P")["verdict"] == FAIL))
+    cases.append(("a plan record that only announces what happened fails clause 2",
+                  assert_plan_is_visible(brief_ok, announced, "P")["verdict"] == FAIL))
+    cases.append(("declared ownership plus a reasoned plan entry is clause 2 kept",
+                  assert_plan_is_visible(brief_ok, reasoned, "P")["verdict"] == PASS))
+    cases.append(("no brief and no plan record is a skip naming where it looked",
+                  assert_plan_is_visible([], [], None, "looked in W")["awaits"]
+                  == "looked in W"))
+
+    disjoint = [{"lane": "a", "declared": ["app/data.py"], "touched": ["app/data.py"]},
+                {"lane": "b", "declared": ["ledger/rows.yaml"],
+                 "touched": ["ledger/rows.yaml"]}]
+    overlapping = [{"lane": "a", "declared": ["app"], "touched": []},
+                   {"lane": "b", "declared": ["app/data.py"], "touched": []}]
+    collided = [{"lane": "a", "declared": ["app/x.py"], "touched": ["app/shared.py"]},
+                {"lane": "b", "declared": ["app/y.py"], "touched": ["app/shared.py"]}]
+    cases.append(("two concurrent lanes owning the same path FAIL clause 6",
+                  assert_lanes_touch_different_files(overlapping)["verdict"] == FAIL))
+    cases.append(("two concurrent lanes that changed one file FAIL clause 6 even when "
+                  "their briefs were disjoint",
+                  assert_lanes_touch_different_files(collided)["verdict"] == FAIL))
+    cases.append(("disjoint briefs and disjoint commits are clause 6 kept",
+                  assert_lanes_touch_different_files(disjoint)["verdict"] == PASS))
+    cases.append(("one lane is not a width decision, so it is a skip",
+                  assert_lanes_touch_different_files(disjoint[:1])["verdict"] == SKIP))
+
+    cases.append(("a lane that stopped with nothing and is named nowhere FAILS clause 9",
+                  assert_stalls_are_declared(
+                      [{"lane": "w6-x"}], [{"text": "cycle 3: merged y"}]
+                  )["verdict"] == FAIL))
+    cases.append(("a stall named with its cause is clause 9 kept",
+                  assert_stalls_are_declared(
+                      [{"lane": "w6-x"}],
+                      [{"text": "cycle 3: w6-x died at the provider prompt"}]
+                  )["verdict"] == PASS))
+    cases.append(("no stall at all is a skip, never a pass",
+                  assert_stalls_are_declared([], [])["verdict"] == SKIP))
+
+    quoted = {"id": "p-1", "title": "the changes view is misaligned",
+              "description": "Source — the steward on build b7ed3f0, quoted: 'the "
+                             "diff is misaligned and the rows are off by one'"}
+    unquoted = {"id": "p-2", "title": "the changes view is wrong",
+                "description": "the changes view is wrong and should be fixed"}
+    cases.append(("an item filed from feedback with no quoted source FAILS clause 4",
+                  assert_feedback_was_enriched(
+                      [{"entry": "feedback triaged", "item": unquoted}]
+                  )["verdict"] == FAIL))
+    cases.append(("an item quoting the report and naming the version is clause 4 kept",
+                  assert_feedback_was_enriched(
+                      [{"entry": "feedback triaged", "item": quoted}]
+                  )["verdict"] == PASS))
+    cases.append(("a feedback entry naming no item is unresolved, never a pass",
+                  assert_feedback_was_enriched(
+                      [{"entry": "feedback triaged", "item": None}]
+                  )["verdict"] == SKIP))
+
+    cases.append(("a close that says only what finished FAILS clause 13",
+                  assert_handoff_on_close(
+                      [{"text": "CLOSED: three lanes merged"}])["verdict"] == FAIL))
+    cases.append(("a close that names what remains is clause 13 kept",
+                  assert_handoff_on_close(
+                      [{"text": "CLOSED: three lanes merged. Residuals: two parked"}]
+                  )["verdict"] == PASS))
+    cases.append(("no close is a skip: no hand-off is owed",
+                  assert_handoff_on_close([])["verdict"] == SKIP))
+
+    answered = {"id": "p-1", "status": "resolved",
+                "resolution": "The export now refreshes before rule 9a runs, so the "
+                              "kit reads the queue as it stands rather than as it "
+                              "stood yesterday."}
+    empty = {"id": "p-2", "status": "resolved", "resolution": ""}
+    pointer = {"id": "p-3", "status": "resolved", "resolution": "Fixed in abc1234."}
+    cases.append(("a resolved item with an empty resolution FAILS clause 12",
+                  assert_resolutions_written_for_the_asker([empty])["verdict"] == FAIL))
+    cases.append(("'Fixed in abc1234.' is a pointer, not an answer",
+                  assert_resolutions_written_for_the_asker([pointer])["verdict"] == FAIL))
+    cases.append(("a resolution written in sentences is clause 12 kept",
+                  assert_resolutions_written_for_the_asker([answered])["verdict"] == PASS))
+    cases.append(("no resolved item is a skip, never a pass",
+                  assert_resolutions_written_for_the_asker(
+                      [{"id": "p-4", "status": "open"}])["verdict"] == SKIP))
+
+    by_integrator = [{"path": "ledger/rows.yaml", "sha": "a" * 40, "at": "T2",
+                      "subject": "ledger: re-derived from a live run",
+                      "author": "integrator",
+                      "lane_merge_before": {"sha": "b" * 40,
+                                            "subject": "merge lane/x"}}]
+    through_a_merge = [{"path": "ledger/rows.yaml", "sha": "c" * 40, "at": "T1",
+                        "subject": "ledger: row", "author": "lane",
+                        "lane_merge_before": None}]
+    unplaceable = [{"path": "ledger/rows.yaml", "sha": "d" * 40, "at": "T0",
+                    "subject": "ledger: row", "author": "unknown",
+                    "lane_merge_before": None}]
+    cases.append(("a check record only ever written inside a lane FAILS the "
+                  "attribution",
+                  assert_check_record_attributed(
+                      through_a_merge, through_a_merge)["verdict"] == FAIL))
+    cases.append(("a check record written outside every lane is the integrator's own",
+                  assert_check_record_attributed(
+                      by_integrator, by_integrator)["verdict"] == PASS))
+    cases.append(("a newest record from a lane, where the integrator has written one "
+                  "before, is a skip and not a failure",
+                  assert_check_record_attributed(
+                      through_a_merge, through_a_merge + by_integrator)["verdict"]
+                  == SKIP))
+    cases.append(("a record that cannot be placed either side of a merge is unknown, "
+                  "never credited",
+                  assert_check_record_attributed(
+                      unplaceable, unplaceable)["verdict"] == SKIP))
+    cases.append(("no check record at all is a skip naming what it looked for",
+                  assert_check_record_attributed([], [])["verdict"] == SKIP))
+
     failed = [name for name, ok in cases if not ok]
     return {
         "tool": "converge-turnkey-self-check",
@@ -2244,12 +3295,24 @@ def _wave_summary(wave: dict | None) -> dict | None:
     return summary
 
 
-def build_report(ctx: Context, rows: list[dict], started: float) -> dict:
-    summary = {
+def _tally(rows: list[dict]) -> dict:
+    return {
         "pass": sum(r["status"] == PASS for r in rows),
         "fail": sum(r["status"] == FAIL for r in rows),
         "skip": sum(r["status"] == SKIP for r in rows),
     }
+
+
+def build_report(ctx: Context, rows: list[dict], started: float) -> dict:
+    summary = _tally(rows)
+    # The turnkey SENTENCE and the clause readings are tallied apart on
+    # purpose. The contract's conformance list records a green gate for the
+    # nine steps; a clause reading going red is a different fact about a
+    # different promise, and rolling them into one number would make each one
+    # unreadable through the other. Both are reported; the exit code follows
+    # the whole run, because a broken promise is a broken promise.
+    turnkey_rows = [r for r in rows if r["step"] in TURNKEY_STEPS]
+    clause_rows = [r for r in rows if r["step"] not in TURNKEY_STEPS]
     return {
         "tool": "converge-turnkey",
         "schema": 1,
@@ -2266,6 +3329,18 @@ def build_report(ctx: Context, rows: list[dict], started: float) -> dict:
         "elapsed_s": round(time.time() - started, 1),
         "steps": rows,
         "summary": summary,
+        "turnkey": {
+            "steps": [r["step"] for r in turnkey_rows],
+            "summary": _tally(turnkey_rows),
+            "verdict": FAIL if any(r["status"] == FAIL for r in turnkey_rows) else PASS,
+        },
+        "clauses": {
+            "steps": [r["step"] for r in clause_rows],
+            "summary": _tally(clause_rows),
+            "verdict": FAIL if any(r["status"] == FAIL for r in clause_rows) else PASS,
+            "readings": [reading for r in clause_rows
+                         for reading in (r.get("evidence") or {}).get("clause_readings", [])],
+        },
         "verdict": FAIL if summary["fail"] else PASS,
         "notes": ctx.notes,
     }
@@ -2302,8 +3377,20 @@ def render_summary(report: dict) -> str:
         "",
         f"  VERDICT: {report['verdict']}  (pass={s['pass']} fail={s['fail']} skip={s['skip']})",
         "  A SKIP is not a pass: it is this harness refusing to claim work it did not do.",
-        "",
     ]
+    turnkey, clauses = report.get("turnkey"), report.get("clauses")
+    if turnkey and clauses and clauses["steps"]:
+        t, c = turnkey["summary"], clauses["summary"]
+        lines += [
+            f"  the turnkey sentence (a-i): {turnkey['verdict']} "
+            f"{t['pass']}·{t['fail']}·{t['skip']}   ·   "
+            f"the clause readings (j-k): {clauses['verdict']} "
+            f"{c['pass']}·{c['fail']}·{c['skip']}",
+        ]
+        for reading in clauses["readings"]:
+            lines.append(f"         {reading['clause']:8} {reading['row']} "
+                         f"[{reading['verdict']:4}] {reading['title']}")
+    lines.append("")
     for note in report.get("notes", []):
         lines.append(f"  note: {note}")
     if report.get("notes"):
@@ -2338,6 +3425,16 @@ def build_parser() -> argparse.ArgumentParser:
             "  g integrated     results integrated and verified\n"
             "  h rechecked      contracts re-checked, by this harness\n"
             "  i brief          a plain-sentence return brief produced\n"
+            "\n"
+            "Beyond the sentence, reading the Core clauses it does not reach\n"
+            "(tallied apart, so a clause reading is never mistaken for the gate):\n"
+            "  j clauses        Core 2, 3, 4, 6, 9, 11, 13 — read from the lane\n"
+            "                   briefs, the plan record, git and the queue, never\n"
+            "                   from the mode file; a clause with no reading yet\n"
+            "                   names the observation it waits on\n"
+            "  k attribution    Core 7, 8, 12 — WHO re-ran the check and who the\n"
+            "                   resolution was written for, from git's first-parent\n"
+            "                   line and the queue's own text\n"
             "\n"
             "Examples:\n"
             "  uv run evaluations/turnkey/run.py --self-check\n"
@@ -2495,7 +3592,7 @@ def main(argv: list[str] | None = None) -> int:
     # did. It is a phase, not a tenth step -- the contract's sentence has nine.
     wave_after = "d" if (wanted is None or "d" in wanted) else None
     want_wave = (args.wave is not False) and mode == DRIVEN and (
-        wanted is None or bool(wanted & set("efghi"))
+        wanted is None or bool(wanted & set("efghijk"))
     )
     if args.wave is False:
         notes.append("--no-wave: no manager session was run; steps (e)-(i) judge "
@@ -2538,7 +3635,7 @@ def main(argv: list[str] | None = None) -> int:
                                 reason="the harness failed while running this step")
             row = {
                 "step": letter, "name": name, "asserts": description,
-                "mode": ctx.mode if letter in "defghi" else DRIVEN,
+                "mode": ctx.mode if letter in "defghijk" else DRIVEN,
                 "status": result.status, "detail": result.detail,
             }
             if result.reason:
@@ -2546,6 +3643,9 @@ def main(argv: list[str] | None = None) -> int:
             if result.evidence is not None:
                 row["evidence"] = result.evidence
             rows.append(row)
+            # Step (k) reports the halves of clauses 7 and 8 that earlier steps
+            # measured, and names the step that measured them.
+            ctx.results.append(row)
     finally:
         if host_home_to_clean:
             shutil.rmtree(host_home_to_clean, ignore_errors=True)

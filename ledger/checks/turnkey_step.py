@@ -40,8 +40,18 @@ import sys
 RESULT = pathlib.Path("evaluations/turnkey/RESULT.md")
 # `[PASS] (f) lanes: <detail>` -- detail runs to the next step line or the
 # VERDICT line, wrapped across however many lines the file happens to use.
+#
+# THE LETTER CLASS IS `[a-z]`, AND IT USED TO BE `[a-i]`. That ceiling was
+# written when the harness had exactly nine steps, and it silently became a bug
+# the day it grew two more: asked for step (j) this file answered "no step (j)
+# is recorded in evaluations/turnkey/RESULT.md" while (j) sat in that file,
+# recorded, four lines from (i) -- a false "the record changed" that reads
+# exactly like drift and is not. A step letter the harness writes down must be
+# readable here; a letter it never wrote still answers "no step (x) is
+# recorded", which is the honest sentence for that case and the only one this
+# ceiling was ever needed for. converge-saz carries the measurement.
 STEP = re.compile(
-    r"\[(PASS|FAIL|SKIP)\] \((?P<letter>[a-i])\) (?P<name>\w+): "
+    r"\[(PASS|FAIL|SKIP)\] \((?P<letter>[a-z])\) (?P<name>\w+): "
     r"(?P<detail>.*?)(?= \[(?:PASS|FAIL|SKIP)\] \(| VERDICT:)"
 )
 

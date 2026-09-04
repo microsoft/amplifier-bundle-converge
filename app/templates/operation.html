@@ -21,6 +21,10 @@
     <section class="return-card panel-card">
       <div class="card-heading"><div><span class="eyebrow">While you were away</span><h2 id="awayDuration">—</h2></div><button id="timelineButton" class="text-button" type="button">Timeline →</button></div>
       <div id="returnBrief" class="brief-list"></div>
+      <!-- Core 3 fixes five parts. This strip says which of them the brief on
+           record actually labels, so a part that is missing reads as missing
+           rather than disappearing into the prose. -->
+      <div id="briefParts" style="margin-top:12px"></div>
     </section>
 
     <section class="throughput-card panel-card">
@@ -46,13 +50,48 @@
       </div>
     </section>
 
+    <!-- Core 10 and Core 13, on the page rather than only in the top bar.
+         The top bar's Feedback control is not drawn at 390 at all, so on a
+         phone the Operation page offered no way to say what you saw. -->
+    <section class="panel-card wide-card operation-say" id="say">
+      <div class="say-grid">
+        <div id="feedback" class="say-drop">
+          <span class="eyebrow">Drop feedback</span>
+          <p class="muted say-note">Say what you saw. The manager session decides what it becomes — you are never asked to write a piece of work.</p>
+          <textarea id="feedbackDropText" rows="3" placeholder="The lane words on this page do not match the contract&#8230;"></textarea>
+          <button id="feedbackDropSend" class="primary-subtle-button" type="button">Send to this manager session</button>
+        </div>
+        <div id="managers" class="say-managers">
+          <span class="eyebrow">Every manager session you run</span>
+          <p class="muted say-note">Sorted by which one needs you.</p>
+          <div id="managersList" class="managers-list"></div>
+          <button id="tellAllButton" class="primary-subtle-button" type="button">Tell all manager sessions</button>
+        </div>
+      </div>
+    </section>
+
     <section class="waves-card panel-card wide-card">
       <div class="card-heading"><div><span class="eyebrow">Execution plan</span><h2 id="wavesHeadline">Waves</h2></div><span class="muted">Manager-owned · visible to you</span></div>
       <div id="wavesGrid" class="waves-grid"></div>
+      <!-- Core 2's second sentence: when the plan is redrawn, the reason for
+           the redraw is shown too. Each entry is quoted from the manager
+           session's own weave-in log; nothing here is composed. -->
+      <div id="planRedraws" style="margin-top:14px">
+        <span class="eyebrow">Why the plan was redrawn</span>
+        <div id="planRedrawList"></div>
+      </div>
     </section>
 
-    <section class="lanes-card panel-card wide-card">
-      <div class="card-heading"><div><span class="eyebrow">Live lanes</span><h2><span id="activeLaneCount">0</span> of <span id="laneBudgetCount">0</span> working</h2></div><button id="fillLanesButton" class="primary-subtle-button" type="button">Fill lanes</button></div>
+    <!-- Core 6 reads "Lanes running are shown against lanes intended". The
+         gauge counts lanes that are RUNNING; Working / Quiet / Silent are
+         Core 8's words for one lane's state, and a Quiet lane is running
+         just the same. Saying "working" here read the two as one thing. -->
+    <section class="lanes-card panel-card wide-card" id="lanes">
+      <div class="card-heading"><div><span class="eyebrow">Live lanes</span><h2><span id="activeLaneCount">0</span> of <span id="laneBudgetCount">0</span> lanes running</h2></div><button id="fillLanesButton" class="primary-subtle-button" type="button">Fill lanes</button></div>
+      <!-- The fill control belongs beside the gauge only while the gauge says
+           there is something to fill. When every lane you asked for is
+           carrying work, offering to fill them says something untrue. -->
+      <p id="fillNote" class="muted lanes-note"></p>
       <div id="lanesGrid" class="lanes-grid"></div>
     </section>
 

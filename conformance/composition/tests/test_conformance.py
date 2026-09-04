@@ -5,9 +5,17 @@ against a repository that conforms (fixtures/sample-good) and RED — with named
 rule failures — against one that does not (fixtures/sample-bad).
 
 The load-bearing test here is `test_every_rule_has_a_negative_fixture`: a rule
-nobody can make fail is a rule that proves nothing. Rules that cannot be judged
-from files at all are SKIPped with a reason, and the SKIP set is pinned so a
-rule cannot quietly drift into SKIP to avoid a failure.
+nobody can make fail is a rule that proves nothing.
+
+Two rules — 3b and 6b — are about a RUNNING session rather than files on disk.
+They used to SKIP unconditionally. They now stand real sessions up (see
+`live.py`) and return PASS/FAIL like every other rule, INCLUDING on
+`sample-bad`, so both are proven by a negative fixture rather than exempted
+from proof. They remain the only two rules allowed to SKIP at all, and only
+when a named capability is missing from the host — `test_only_the_live_rules_may_skip`
+pins that, and `test_live_rules_decline_honestly_when_switched_off` exercises
+the decline path so the honest-SKIP behaviour is itself tested rather than
+merely asserted.
 
 Runnable two ways (the assertions are identical):
   * with pytest:  uv run --with pytest pytest conformance/composition/tests/ -q
@@ -18,6 +26,7 @@ provisions its declared pyyaml dependency).
 """
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -29,9 +38,12 @@ REPO = KIT.parent.parent  # the repository root this kit ships in
 GOOD = KIT / "fixtures" / "sample-good"
 BAD = KIT / "fixtures" / "sample-bad"
 
-# Declared in run.py as un-judgeable from files. Pinned here so a rule cannot
-# be moved into SKIP to dodge a failure without this test going red.
-EXPECTED_SKIPS = {"3b", "6b"}
+# The only two rules that may ever report SKIP: the two that need a running
+# session. Every other rule must reach a verdict from files, always.
+LIVE_RULES = {"3b", "6b"}
+
+# The env switch `live.py` reads. "0" declines the live probes deliberately.
+LIVE_TOGGLE = "AMPLIFIER_COMPOSITION_KIT_LIVE"
 
 
 def _uv() -> str:
@@ -43,11 +55,17 @@ def _uv() -> str:
     return uv
 
 
-def run_kit(target):
-    """Invoke the kit on a target repo root; return (exit_code, parsed_report)."""
+def run_kit(target, env_extra=None):
+    """Invoke the kit on a target repo root; return (exit_code, parsed_report).
+
+    The live rules stand real sessions up, so the timeout allows for a first
+    run that has to fetch the lean base.
+    """
+    env = dict(os.environ)
+    env.update(env_extra or {})
     proc = subprocess.run(
         [_uv(), "run", str(RUN), str(target), "--json-only"],
-        capture_output=True, text=True, timeout=300, check=False,
+        capture_output=True, text=True, timeout=1200, check=False, env=env,
     )
     assert proc.stdout.strip(), f"kit produced no JSON report; stderr:\n{proc.stderr}"
     return proc.returncode, json.loads(proc.stdout)
@@ -76,7 +94,9 @@ def test_bad_repo_fails_named_rules():
     assert report["verdict"] == "FAIL", report
     assert code == 1
     failed = {r["rule"] for r in report["results"] if r["status"] == "FAIL"}
-    assert failed == {"1a", "1b", "2a", "2b", "3a", "4", "5", "6a", "7a", "7b"}, failed
+    assert failed == {
+        "1a", "1b", "2a", "2b", "3a", "3b", "4", "5", "6a", "6b", "7a", "7b",
+    }, failed
 
 
 def test_bad_failures_carry_readable_detail():
@@ -92,6 +112,11 @@ def test_bad_failures_carry_readable_detail():
     assert "bundle.md" in rules["6a"]["detail"]
     assert "candidate" in rules["7a"]["detail"].lower()
     assert "FROZEN" in rules["7b"]["detail"]
+    # The two live rules name what a live session showed, not a category.
+    assert "anchors:" in rules["3b"]["detail"]
+    assert "sample-bad:reader" in rules["3b"]["detail"]
+    assert "tool-bash" in rules["6b"]["detail"]
+    assert "bundle.md" in rules["6b"]["detail"]
 
 
 # --------------------------------------------------------------------------- #
@@ -118,17 +143,75 @@ def test_every_rule_has_a_negative_fixture():
     )
 
 
-def test_skips_are_exactly_the_declared_set_and_carry_a_reason():
-    """An honest SKIP names why. A rule may not drift into SKIP silently."""
+def test_only_the_live_rules_may_skip():
+    """A file-readable rule may never SKIP, and any SKIP names why.
+
+    Before 2026-09-04 this test pinned the SKIP set to exactly {3b, 6b}, which
+    made an honest decline permanent: both rules were guaranteed to skip and so
+    could never be wrong. They now stand sessions up. What is still worth
+    pinning is the ceiling — nothing OUTSIDE those two may ever decline, and a
+    decline that does happen must say what capability was missing.
+    """
     for fixture in (GOOD, BAD):
         _, report = run_kit(fixture)
         skipped = {r["rule"] for r in report["results"] if r["status"] == "SKIP"}
-        assert skipped == EXPECTED_SKIPS, (
-            f"{fixture.name}: SKIP set drifted — expected {EXPECTED_SKIPS}, got {skipped}"
+        assert skipped <= LIVE_RULES, (
+            f"{fixture.name}: rule(s) {sorted(skipped - LIVE_RULES)} declined, and only "
+            f"{sorted(LIVE_RULES)} may — a file-readable rule that SKIPs is dodging a verdict"
         )
         for r in report["results"]:
             if r["status"] == "SKIP":
                 assert r.get("reason", "").strip(), f"rule {r['rule']} SKIPs with no reason"
+
+
+def test_live_rules_reach_a_real_verdict_on_this_host():
+    """The live probes actually run here — they do not quietly decline.
+
+    This is the test that would have caught the old state of the world, where
+    3b and 6b were guaranteed SKIPs. If the host genuinely cannot run them the
+    assertion message names the reason the kit gave, so a red here is readable
+    as "this host lacks X", not as a mystery.
+    """
+    _, report = run_kit(GOOD)
+    rows = by_rule(report)
+    for rule in sorted(LIVE_RULES):
+        row = rows[rule]
+        assert row["status"] in {"PASS", "FAIL"}, (
+            f"rule {rule} declined instead of judging: {row.get('reason') or row['detail']}"
+        )
+    # And the verdict is backed by evidence from the run, not by a category.
+    assert rows["3b"]["roster_size"] > 0
+    assert rows["3b"]["delegation_tool_mounted"] is True
+    assert rows["6b"]["control_promised_tools_present"], (
+        "the control session carried none of the promised tools, so 6b measured nothing"
+    )
+    assert rows["6b"]["treatments"], "6b measured no install path"
+
+
+def test_live_rules_decline_honestly_when_switched_off():
+    """With live probing off, both rules SKIP with a named reason — and only those two.
+
+    The honest-decline path is a behaviour, so it is tested rather than trusted:
+    switching the probes off must produce a reason a reader can act on, must not
+    fabricate a PASS, and must not disturb any file-readable rule.
+    """
+    _, live_report = run_kit(GOOD)
+    _, off_report = run_kit(GOOD, env_extra={LIVE_TOGGLE: "0"})
+    off = by_rule(off_report)
+    for rule in sorted(LIVE_RULES):
+        assert off[rule]["status"] == "SKIP", off[rule]
+        assert LIVE_TOGGLE in off[rule]["reason"], (
+            f"rule {rule} declined without naming the missing capability: {off[rule]['reason']}"
+        )
+    unchanged = {
+        r["rule"]: r["status"] for r in live_report["results"] if r["rule"] not in LIVE_RULES
+    }
+    still = {
+        r["rule"]: r["status"] for r in off_report["results"] if r["rule"] not in LIVE_RULES
+    }
+    assert unchanged == still, (
+        "switching the live probes off changed a file-readable rule's verdict"
+    )
 
 
 def test_no_rule_is_ever_fabricated():

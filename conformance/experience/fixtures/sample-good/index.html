@@ -1,0 +1,39 @@
+<!doctype html><html><head><title>Converge</title>
+<link rel="stylesheet" href="/static/css/shell.css"></head><body>
+<div id="app" class="app-shell">
+<header class="topbar">
+  <div id="workspaceSwitch" class="workspace-switch" role="tablist" aria-label="Workspace view">
+    <button class="workspace-tab active" id="directionTab" role="tab" type="button">Direction</button>
+    <button class="workspace-tab" id="operationTab" role="tab" type="button">Operation</button>
+  </div>
+  <button id="needsYouButton" type="button"><strong id="needsYouCount">3</strong> need your word</button>
+  <button id="consoleToggle" type="button">Manager Console</button>
+</header>
+<div class="body-grid"><main class="workspace">
+  <section id="homeView" class="view home-view hidden" aria-label="All manager sessions">
+    <strong id="homeAttentionTotal">3</strong><div id="homeSessionGrid"></div>
+  </section>
+  <section id="directionView" class="view direction-view" aria-label="Direction">
+    <div class="review-actions">
+      <button data-decision="ratified" type="button" title="manager-session operation: record the word">Ratified</button>
+      <button data-ask type="button" title="manager-session operation: ask for a proposal">Ask</button>
+    </div>
+    <div class="limits">
+      <details><summary class="muted">Details</summary><p class="muted">A lane whose worker stopped reporting is RESOLVED in the queue and Quiet here.</p></details>
+    </div>
+  </section>
+  <section id="operationView" class="view operation-view hidden" aria-label="Operation">
+    <button id="steerButton" type="button" title="manager-session operation: steer the objective">Steer</button>
+    <button data-priority="up" type="button" title="manager-session operation: raise a priority">Raise this</button>
+    <button id="feedbackButton" type="button">Feedback</button>
+    <div class="dialog-field"><label for="feedbackText">Feedback</label><textarea id="feedbackText"></textarea></div>
+    <div class="dialog-field"><label for="feedbackImage">Optional screenshot</label><input id="feedbackImage" type="file" accept="image/*" /></div>
+    <div class="dialog-field"><label for="feedbackVoice">Or a voice note</label><input id="feedbackVoice" type="file" accept="audio/*" /></div>
+  </section>
+</main>
+  <aside class="manager-console" id="managerConsole" aria-label="Manager Console">
+    <div id="consoleBody" class="console-body"></div>
+    <form id="consoleForm"><input id="consoleInput" autocomplete="off" /><button type="submit">Send</button></form>
+  </aside>
+</div></div>
+<script src="/static/js/main.js"></script></body></html>

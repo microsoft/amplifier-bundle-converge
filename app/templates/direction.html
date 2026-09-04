@@ -1,8 +1,18 @@
 <section id="directionView" class="view direction-view" aria-label="Direction">
   <div class="workspace-header">
+    <!-- The objective is one sentence a steward wrote, and in a real batch it
+         runs to ~300 characters. Rendered whole it made the header a third of
+         the screen (converge-2ib: 215px of an 800px viewport at 1280 with the
+         console open), and the document below is the actual work. So the
+         sentence is clamped to two lines and the rest is one gesture away:
+         hover for the whole of it, or "Show all" to unclamp in place. The
+         clamp is `.direction-view .objective-block strong` in direction.css;
+         the button below is wired in render/direction.js. -->
     <div class="objective-block">
       <span class="eyebrow">Current objective</span>
       <strong id="objectiveText">&nbsp;</strong>
+      <button id="objectiveMore" class="text-button objective-more hidden" type="button"
+              aria-expanded="false" aria-controls="objectiveText">Show all</button>
     </div>
     <div class="constraint-strip">
       <div><span>Hard limit</span><strong id="deadlineText">—</strong></div>
@@ -31,8 +41,20 @@
         <div class="doc-tools">
           <button id="wideToggle" class="tiny-button" type="button" aria-pressed="false">Wide</button>
           <button id="rawToggle" class="tiny-button" type="button" aria-pressed="false">Raw</button>
-          <button id="copyRendered" class="tiny-button" type="button">Copy</button>
+          <!-- §3 names five reader abilities, and two of them are copies: what
+               the page shows, and the file behind it. They are different text
+               and one control cannot stand for both — this one used to be
+               called "Copy rendered" and hand over the source (converge-jdm).
+               Both are wired in render/direction.js, each to the text its
+               label promises. -->
+          <button id="copyRendered" class="tiny-button" type="button">Copy rendered</button>
+          <button id="copySource" class="tiny-button" type="button">Copy source</button>
           <button id="downloadDoc" class="tiny-button" type="button">Download</button>
+          <span class="zoom-controls" role="group" aria-label="Zoom the document text">
+            <button id="zoomOut" class="tiny-button" type="button" title="Smaller text">A&minus;</button>
+            <span id="zoomLevel" class="zoom-level" aria-live="polite">100%</span>
+            <button id="zoomIn" class="tiny-button" type="button" title="Larger text">A+</button>
+          </span>
           <!-- Ask at document scope. The paragraph-scoped one sits beside each
                paragraph in the Reading view; every-document scope is chosen in
                the dialog this opens. Wired in render/direction.js, not main.js,
@@ -48,6 +70,47 @@
         </div>
         <button id="bookmarkButton" class="round-button" type="button" aria-pressed="false" title="Bookmark">☆</button>
       </div>
+
+      <!-- §11: the lock control is gated on the four conditions, and they are
+           shown. It sits in the document surface rather than the context rail
+           because the rail is display:none below 1320px, and a steward at 1280
+           must still be able to see why a document is not lockable.
+
+           Three of the four are the steward's own word and nothing ticks them
+           for them; the fourth — "it can be checked against reality" — the app
+           can answer from the document's own ledger standing, so it does, with
+           the evidence beside it, and no tick can get past it. The state is
+           written by renderLockGate() in render/direction.js on every render,
+           so it tracks this document rather than the last one read. -->
+      <details class="lock-gate" id="lockGate">
+        <summary>
+          <span id="lockGateHead">Locking this document</span>
+          <span class="lock-gate-count" id="lockGateCount">—</span>
+        </summary>
+        <p class="muted" id="lockGateWhy"></p>
+        <ul class="lock-conditions">
+          <li data-lock-row="means">
+            <label><input type="checkbox" data-lock-check="means" /><span>It says what it means</span></label>
+            <span class="lock-evidence" data-lock-evidence="means"></span>
+          </li>
+          <li data-lock-row="example">
+            <label><input type="checkbox" data-lock-check="example" /><span>It carries a real example of right and wrong</span></label>
+            <span class="lock-evidence" data-lock-evidence="example"></span>
+          </li>
+          <li data-lock-row="reality">
+            <span class="lock-mark" data-lock-mark="reality" aria-hidden="true">•</span><span class="lock-said">It can be checked against reality</span>
+            <span class="lock-evidence" data-lock-evidence="reality"></span>
+          </li>
+          <li data-lock-row="steward">
+            <label><input type="checkbox" data-lock-check="steward" /><span>You have read it and agreed</span></label>
+            <span class="lock-evidence" data-lock-evidence="steward"></span>
+          </li>
+        </ul>
+        <div class="lock-gate-actions">
+          <button id="lockButton" class="primary-button" type="button" data-lock disabled>Lock this document</button>
+          <span class="muted" id="lockGateNote"></span>
+        </div>
+      </details>
 
       <div class="mode-tabs" role="tablist" aria-label="Document mode">
         <button data-doc-mode="read" class="mode-tab active" role="tab" aria-selected="true" type="button">Read</button>
