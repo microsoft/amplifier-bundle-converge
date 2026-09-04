@@ -64,3 +64,11 @@ Merged the wave-8 lanes launched on the steward's word "loosely, ratified, go" (
     uv run --extra app pytest -q app/tests                -> 189 passed, 112 skipped, 2 warnings in 11.89s
     uv run --extra web pytest -q tests/                   -> 151 passed, 2 warnings in 51.45s
 Three lanes are still at work (collab-bridge, direction-polish, writes-named); their merges get the next entry.
+
+## 2026-09-04 13:49 - wave 8 closed, forty-nine lanes merged in all
+Merged the last lanes (priority-write, feedback-ask-words) and wired the voice-feedback router into main at 4450d18, then re-ran the check myself:
+    uv run --with pyyaml ledger/checks/verify.py          ->   [FAIL] CVG-013  exit=0 expect=0  'CLAUSE-3-LIVE-READING-SAYS-THE-WAVE-DID-NOT-GO-IDLE'   [FAIL] CVG-019  exit=0 expect=0  'CLAUSE-9-READIN
+    uv run conformance/documents/run.py . --work-items    -> PASS
+    ledger tally                                          -> {None: 1, 'CONFORMS': 109, 'GAP': 10, 'NOT-ASSERTABLE': 53, 'OPEN-PINNED': 3}
+    uv run --extra app pytest -q app/tests                -> 1 failed, 294 passed (test_writes_named pins the two writes the wave just added — converge-f9ac/6pbg)
+The wave is closed; the queue holds the follow-ups the lanes discovered (33) and the steward's decisions.
