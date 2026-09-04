@@ -1,9 +1,12 @@
 """Unit tests for app/tmux_view.py against a real, isolated tmux server.
 
-The socket is ``cvtest`` and nothing here ever touches another socket: the only
-destructive command in this file is ``tmux -L cvtest kill-server``.  There is no
-``pkill``/``pgrep -f`` anywhere — a pattern that appears in your own command
-line kills your own shell (field guide §7).
+The socket is named for **this run** — ``cvtest-<pid>-<random>`` — and nothing
+here ever touches another socket: the only destructive command in this file is
+``tmux -L <that socket> kill-server``.  A fixed name would be machine-wide, and
+two lanes testing at once would kill each other's sessions and report the loss
+as a failure in a file neither had touched; ``conftest.py`` records the
+measurement.  There is no ``pkill``/``pgrep -f`` anywhere — a pattern that
+appears in your own command line kills your own shell (field guide §7).
 
 Skips cleanly when tmux is not installed.
 
@@ -27,6 +30,7 @@ import shutil
 import subprocess
 import sys
 import time
+import uuid
 from pathlib import Path
 
 import pytest
@@ -35,7 +39,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from app import tmux_view as tv  # noqa: E402
 
-SOCKET = "cvtest"
+#: One server per run, never a fixed machine-wide name.  The convention and the
+#: measurement behind it are in ``conftest.py``; the pid is what its end-of-run
+#: reaper looks for.
+SOCKET = f"cvtest-{os.getpid()}-{uuid.uuid4().hex[:8]}"
 MARKER = "ZZMARKERZZ"
 
 pytestmark = pytest.mark.skipif(shutil.which("tmux") is None, reason="tmux is not installed")
@@ -56,25 +63,45 @@ def _tmux(*args: str, check: bool = False) -> subprocess.CompletedProcess:
     )
 
 
+def _refuse_if_a_server_is_already_up() -> None:
+    """Say so and stop, rather than kill a server this run did not start.
+
+    On a per-run socket name this should be unreachable.  If it ever fires,
+    the naming is wrong, and the honest answer is to report that — not to
+    ``kill-server`` and take someone else's sessions out from under them.
+    """
+    found = _tmux("ls")
+    if found.returncode == 0:
+        pytest.fail(
+            f"a tmux server is already running on socket {SOCKET!r}, which this run "
+            f"expected to have to itself. Refusing to kill it. Sessions found:\n"
+            f"{found.stdout.strip()}"
+        )
+
+
 @pytest.fixture(scope="module", autouse=True)
 def cvtest_server(tmp_path_factory):
-    _tmux("kill-server")
+    _refuse_if_a_server_is_already_up()
     long_file = tmp_path_factory.mktemp("tmuxview") / "long.txt"
     long_file.write_text("\n".join(str(i) for i in range(1, 5001)) + "\n")
 
-    _tmux(
-        "new", "-d", "-s", "colors",
-        'while :; do printf "\\033[31mred \\033[32mgreen\\033[0m %s\\n" $(date +%T); sleep 1; done',
-        check=True,
-    )
-    _tmux("new", "-d", "-s", "tui", "top", check=True)
-    _tmux("new", "-d", "-s", "altscr", f"less {long_file}", check=True)
-    _tmux("new", "-d", "-s", "empty", "sleep 600", check=True)
-    _tmux("new", "-d", "-s", "marker", f'while :; do echo {MARKER}; sleep 1; done', check=True)
-    _tmux("new", "-d", "-s", "victim", 'while :; do echo VICTIMLINE; sleep 1; done', check=True)
-    time.sleep(2.0)  # let the panes paint
-    yield
-    _tmux("kill-server")
+    # try/finally, not a bare yield: a `check=True` failure below would
+    # otherwise skip the teardown and leak this run's server.
+    try:
+        _tmux(
+            "new", "-d", "-s", "colors",
+            'while :; do printf "\\033[31mred \\033[32mgreen\\033[0m %s\\n" $(date +%T); sleep 1; done',
+            check=True,
+        )
+        _tmux("new", "-d", "-s", "tui", "top", check=True)
+        _tmux("new", "-d", "-s", "altscr", f"less {long_file}", check=True)
+        _tmux("new", "-d", "-s", "empty", "sleep 600", check=True)
+        _tmux("new", "-d", "-s", "marker", f'while :; do echo {MARKER}; sleep 1; done', check=True)
+        _tmux("new", "-d", "-s", "victim", 'while :; do echo VICTIMLINE; sleep 1; done', check=True)
+        time.sleep(2.0)  # let the panes paint
+        yield
+    finally:
+        _tmux("kill-server")
 
 
 def frame(session: str, lines: int = 200, cache: tv.CaptureCache | None = None) -> tv.Frame:
@@ -106,6 +133,22 @@ def test_one_tmux_round_trip_with_explicit_socket():
 def test_socket_path_form_uses_dash_S():
     assert tv._socket_args("hw") == ["-L", "hw"]
     assert tv._socket_args("/tmp/tmux-1000/hw") == ["-S", "/tmp/tmux-1000/hw"]
+
+
+def test_the_socket_name_is_private_to_this_run():
+    """A socket name is the one machine-wide name these tests use.
+
+    A fixed one means two runs share a server: each fails to create a session
+    name the other already took, and each ``kill-server`` takes the other's
+    sessions out from under it.  Measured, and recorded in ``conftest.py``.
+    """
+    print(f"\nthis run's socket: {SOCKET}")
+    assert SOCKET != "cvtest", "never the bare, machine-wide name"
+    assert SOCKET.startswith("cvtest-")
+    assert f"-{os.getpid()}-" in SOCKET, "the pid is what conftest's end-of-run reaper looks for"
+    assert tv.CaptureCache.command(SOCKET, "colors", 200)[1:3] == ["-L", SOCKET], (
+        "and it is the socket the viewer is actually pointed at"
+    )
 
 
 def test_child_env_drops_ambient_tmux_but_keeps_tmpdir():
