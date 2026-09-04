@@ -6,7 +6,7 @@ export function wireEditing() {
     api.save(state.managerId, { repoId: state.repoId, docId: state.docId, body: editorText() });
   }));
   document.querySelectorAll('[data-restore]').forEach((btn) => btn.addEventListener('click', () => {
-    restoreScope(btn.dataset.restore, btn.dataset.restoreKey || '');
+    restoreScope(btn.dataset.restore);
   }));
   document.querySelectorAll('[data-change-action]').forEach((btn) => btn.addEventListener('click', () => {
     api.decision(state.managerId, { proposalId: openProposalId(), staged: btn.dataset.changeAction });
@@ -16,13 +16,11 @@ export function wireEditing() {
   }));
 }
 
-// §6 -- restoring is restoring FROM somewhere. The snapshot the steward picked
-// in History travels with the write, so the wording that goes back is the one
-// that stood at that commit rather than the nearest one this browser holds.
-export function restoreScope(scope, snapshot) {
-  const since = snapshot || readPoint();
-  return post(`${docBase(state.managerId, state.repoId, state.docId)}/changes/${scope}/restore`,
-    since ? { since } : {});
+// §6, half-kept: restore is a real write, but nothing tells it WHICH snapshot.
+// It puts back the wording at the reader's own read point -- one snapshot, however
+// many the History view lists.
+export function restoreScope(scope) {
+  return post(`${docBase(state.managerId, state.repoId, state.docId)}/changes/${scope}/restore`, {});
 }
 
 export function openFeedback() {
