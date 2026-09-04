@@ -2673,7 +2673,7 @@
     ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"rule\"]==\"5b\"][0];o=r[\"observed\"];print((\"KITS-ALL-NUMBERED-TO-CORE-CLAUSES=%d\" % len(o)) if o and all(k[\"aligned\"] for k in o) else \"KIT-NUMBERING-DRIFTED\")"'
     expect:
       exit: 0
-      stdout_contains: "KITS-ALL-NUMBERED-TO-CORE-CLAUSES=5"
+      stdout_contains: "KITS-ALL-NUMBERED-TO-CORE-CLAUSES=7"
   notes: >
     RE-READ 2026-09-03 (converge-pq2, the fourth reconcile) AND MOVED
     OPEN-PINNED → CONFORMS. THE QUOTE THIS ROW HELD NO LONGER EXISTS — clause 5
@@ -2689,7 +2689,7 @@
     and asserts all five are aligned. It goes red if any kit drifts, and it goes
     red if a sixth kit lands unaligned, which is the case that matters now that
     the experience family has three kits of its own.
-    RAN 2026-09-03 → KITS-ALL-NUMBERED-TO-CORE-CLAUSES=5 (composition, documents,
+    RAN 2026-09-03 → KITS-ALL-NUMBERED-TO-CORE-CLAUSES=7 (composition, documents,
     experience-console, experience-direction, experience-operation — every one
     `aligned: True`).
     THE ORIGINAL PINNING, KEPT FOR THE RECORD —
