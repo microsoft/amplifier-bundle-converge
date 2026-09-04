@@ -1,8 +1,9 @@
-/* app/static/js/tmux.js — the read-only tmux pane viewer.
+/* app/static/js/tmux.js — the tmux pane viewer, and the way in to the session.
  *
- * Owner: the tmux lane.  The front end calls exactly two things:
+ * Owner: the tmux lane.  The front end calls exactly three things:
  *
- *     window.ConvergeTmux.attach(el, socket, session)
+ *     window.ConvergeTmux.attach(el, socket, session, { writable: true })
+ *     window.ConvergeTmux.send(text, enter)
  *     window.ConvergeTmux.detach()
  *
  * Field guide (ai-context/BROWSER-TMUX-VIEWER.md) rules enforced here:
@@ -20,7 +21,20 @@
  *    session does not match what we attached to is dropped on the floor; on
  *    loss we render `ended` and stop.  We never fall through to another
  *    session's pane (§6, the other real defect).
- *  - Read-only in this version: no input, no send-keys.
+ *
+ * Writing (experience-console.v1 Core 3, "it IS that session"):
+ *
+ *  - A writable view sends every keystroke to the pane it is attached to, as
+ *    code points, through POST {API_BASE}/{socket}/{session}/keys.  Control
+ *    keys included: Ctrl-C, Escape, the arrow keys.
+ *  - **Nothing typed is ever painted locally.**  What appears on screen is the
+ *    next capture of the pane, so the screen only ever shows what the session
+ *    actually did with the keystroke.  A send that fails cannot leave a ghost
+ *    line behind, because there was never a local line to leave.
+ *  - The send carries the same session identity the view is bound to, and a
+ *    reply for another session is dropped exactly as a frame would be.
+ *  - A view attached read-only (the default) does not send, and says so in its
+ *    own banner rather than swallowing keystrokes silently.
  */
 
 (function () {
@@ -101,7 +115,7 @@
 
     var ro = document.createElement("span");
     ro.className = "tmux-readonly";
-    ro.textContent = "read-only in this version";
+    ro.textContent = "watching";
 
     banner.appendChild(state);
     banner.appendChild(who);
@@ -117,7 +131,7 @@
     root.appendChild(banner);
     root.appendChild(term);
     el.appendChild(root);
-    return { root: root, banner: banner, state: state, fresh: fresh, term: term };
+    return { root: root, banner: banner, state: state, fresh: fresh, term: term, mode: ro };
   }
 
   function ageText(capturedAt) {
@@ -131,11 +145,14 @@
 
   // ----------------------------------------------------------------- view
 
-  function View(el, socket, session) {
+  function View(el, socket, session, writable) {
     this.el = el;
     this.socket = socket;
     this.session = session;
+    this.writable = !!writable;
     this.dom = buildDom(el, socket, session);
+    this.dom.mode.textContent = this.writable ? "typing goes to this session" : "watching";
+    this.dom.root.setAttribute("data-writable", this.writable ? "1" : "0");
     this.term = null;
     this.timer = null;
     this.freshTimer = null;
@@ -146,7 +163,65 @@
     this.lastState = null;
     this.lastCapturedAt = null;
     this.frames = 0;
+    this.sends = 0;
+    this.lastSend = null;
   }
+
+  // The one place a keystroke leaves the browser.  Nothing is painted here:
+  // the pane's own next capture is what shows up, so the screen can never say
+  // a line arrived when it did not.
+  View.prototype.send = function (text, enter) {
+    if (this.stopped) return Promise.resolve(null);
+    if (!this.writable) {
+      return Promise.resolve({ sent: false, state: "failed", detail: "this view is read-only" });
+    }
+    if (!text && !enter) return Promise.resolve(null);
+    var self = this;
+    var socket = this.socket;
+    var session = this.session;
+    var url =
+      API_BASE + "/" + encodeURIComponent(socket) + "/" + encodeURIComponent(session) + "/keys";
+    this.sends += 1;
+    return fetch(url, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keys: String(text || ""), enter: !!enter }),
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (answer) {
+        // Identity gate on the WAY BACK too: an answer about another session
+        // never becomes this view's status.
+        if (self.stopped) return answer;
+        if (
+          (answer.session && answer.session !== session) ||
+          (answer.socket && answer.socket !== socket) ||
+          session !== self.session ||
+          socket !== self.socket
+        ) {
+          return answer;
+        }
+        self.lastSend = answer;
+        self.dom.root.setAttribute("data-sends", String(self.sends));
+        if (!answer.sent) {
+          // A refused keystroke is said out loud rather than swallowed.
+          self.dom.mode.textContent =
+            "not delivered — " + (answer.detail || answer.state || "unknown");
+        } else {
+          self.dom.mode.textContent = "typing goes to this session";
+        }
+        return answer;
+      })
+      .catch(function (err) {
+        if (self.stopped) return null;
+        self.dom.mode.textContent =
+          "not delivered — " + String(err && err.message ? err.message : err);
+        return null;
+      });
+  };
 
   View.prototype.start = function () {
     var self = this;
@@ -159,7 +234,8 @@
         if (self.stopped) return;
         self.term = new Terminal({
           convertEol: true, // capture-pane emits bare \n
-          disableStdin: true, // read-only in this version
+          // A writable view takes the keyboard; a watching one does not.
+          disableStdin: !self.writable,
           cursorBlink: false,
           scrollback: 0, // every tick paints the whole captured buffer
           fontSize: 12,
@@ -167,6 +243,14 @@
           theme: { background: "#0b0d10", foreground: "#d8dee9" },
         });
         self.term.open(self.dom.term);
+        if (self.writable && typeof self.term.onData === "function") {
+          // Every keystroke xterm resolves — letters, Enter as \r, Ctrl-C as
+          // \x03, an arrow key as its escape sequence — goes straight to the
+          // pane. Nothing is echoed locally; the next capture is the echo.
+          self.term.onData(function (data) {
+            self.send(data, false);
+          });
+        }
         self.tick();
       })
       .catch(function (err) {
@@ -294,14 +378,25 @@
   window.ConvergeTmux = {
     tickMs: TICK_MS,
 
-    attach: function (el, socket, session) {
+    attach: function (el, socket, session, options) {
       if (typeof el === "string") el = document.querySelector(el);
       if (!el) throw new Error("ConvergeTmux.attach: no element");
       if (!socket || !session) throw new Error("ConvergeTmux.attach: socket and session are required");
       this.detach();
-      current = new View(el, String(socket), String(session));
+      // Read-only unless the caller asks for the keyboard, so a new call site
+      // cannot start writing to somebody's session by forgetting an argument.
+      var writable = !!(options && options.writable);
+      current = new View(el, String(socket), String(session), writable);
       current.start();
       return current;
+    },
+
+    // Send a line (or a single keystroke) to whatever this viewer is attached
+    // to. Returns the app's own answer: sent / state / socket / session, so a
+    // caller can prove where the line went instead of assuming.
+    send: function (text, enter) {
+      if (!current) return Promise.resolve({ sent: false, state: "failed", detail: "nothing attached" });
+      return current.send(text, enter);
     },
 
     detach: function () {
@@ -323,6 +418,9 @@
         frames: current.frames,
         cols: current.cols,
         rows: current.rows,
+        writable: current.writable,
+        sends: current.sends,
+        last_send: current.lastSend,
       };
     },
   };
