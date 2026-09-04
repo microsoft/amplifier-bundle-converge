@@ -45,6 +45,24 @@ def run_kit(target):
     return proc.returncode, json.loads(proc.stdout)
 
 
+def kit_module():
+    """The kit itself, loaded from its own path under a unique module name.
+
+    `import run` would collide: all three experience kits ship `run.py`, and the
+    first one imported wins `sys.modules["run"]` for the whole pytest session —
+    measured, and it made this file assert against a sibling kit's constants.
+    """
+    import importlib.util
+    sys.path.insert(0, str(KIT.parent))          # for `appsnapshot` / `kitreport`
+    name = f"kit_{KIT.name.replace('-', '_')}"
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(name, RUN)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+    return sys.modules[name]
+
+
 def by_rule(report):
     return {r["rule"]: r for r in report["results"]}
 
@@ -145,8 +163,7 @@ def test_a_function_is_read_from_its_definition_not_its_import():
     """`script.find("fillLanes")` lands on `import { … fillLanes … }` at the top of
     main.js and returns whatever brace follows. Measured: that read reported the
     fill control reaching no write, when `fillLanes` calls `api.steer`."""
-    sys.path.insert(0, str(KIT))
-    import run as kit  # noqa: E402
+    kit = kit_module()
     script = ("import { openSteer, fillLanes } from './actions.js';\n"
               "const other = { a: 1 };\n"
               "export function fillLanes() { api.steer(mid, { fill: true }); }")
@@ -156,8 +173,7 @@ def test_a_function_is_read_from_its_definition_not_its_import():
 
 
 def test_a_word_in_a_message_is_not_a_write():
-    sys.path.insert(0, str(KIT))
-    import run as kit  # noqa: E402
+    kit = kit_module()
     assert not kit.reaches_a_write("{ toast('the steer landed'); }", {"steer"})
 
 
@@ -172,8 +188,7 @@ def test_a_wave_title_that_repeats_its_lane_names_is_not_a_reason():
 def test_the_lane_vocabulary_is_the_contracts_not_the_kits():
     """Working · Quiet · Silent — may have died. A work word shown for a lane
     (`Done`) is reported, not quietly accepted."""
-    sys.path.insert(0, str(KIT))
-    import run as kit  # noqa: E402
+    kit = kit_module()
     assert kit.LANE_WORDS == ("working", "quiet", "silent")
 
 

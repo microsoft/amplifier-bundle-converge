@@ -45,6 +45,24 @@ def run_kit(target):
     return proc.returncode, json.loads(proc.stdout)
 
 
+def kit_module():
+    """The kit itself, loaded from its own path under a unique module name.
+
+    `import run` would collide: all three experience kits ship `run.py`, and the
+    first one imported wins `sys.modules["run"]` for the whole pytest session —
+    measured, and it made this file assert against a sibling kit's constants.
+    """
+    import importlib.util
+    sys.path.insert(0, str(KIT.parent))          # for `appsnapshot` / `kitreport`
+    name = f"kit_{KIT.name.replace('-', '_')}"
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(name, RUN)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+    return sys.modules[name]
+
+
 def by_rule(report):
     return {r["rule"]: r for r in report["results"]}
 
@@ -146,8 +164,7 @@ def test_a_word_in_a_message_is_not_a_write():
     "Restore staged for the next proposal decision." and nothing else. Matched as
     a bare word, `decision` in that sentence read as a write and rule 8 reported a
     fabricated PASS. A write is a CALL."""
-    sys.path.insert(0, str(KIT))
-    import run as kit  # noqa: E402
+    kit = kit_module()
     tokens = {"decision", "feedback", "steer"}
     message_only = "{ toast('Restore staged for the next proposal decision.'); }"
     assert not kit.reaches_a_write(message_only, tokens)
@@ -159,8 +176,7 @@ def test_a_handler_is_read_from_its_selector_not_its_markup():
     """`data-restore="document"` appears first inside a markup template; the
     wiring is at `[data-restore]`. Reading the markup returns a template
     interpolation, not the handler."""
-    sys.path.insert(0, str(KIT))
-    import run as kit  # noqa: E402
+    kit = kit_module()
     script = ("const html = `<button data-restore=\"document\">${label}</button>`;\n"
               "qsa('[data-restore]').forEach((b) => b.addEventListener('click', () => {"
               " api.ask(mid, { scope: b.dataset.restore }); }));")

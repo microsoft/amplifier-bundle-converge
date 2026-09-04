@@ -1,26 +1,43 @@
 # Conformance kits
 
-Three runnable kits, one per contract. Each is the **executable version of the
-promises its contract makes** — point it at a target and it reports, rule by
-rule, whether they are kept. All three number their rules to their contract's
-Core clauses; see *Numbering follows the contract* below.
+Five runnable kits, one per contract that has a checkable body. Each is the
+**executable version of the promises its contract makes** — point it at a target
+and it reports, rule by rule, whether they are kept. All five number their rules
+to their contract's Core clauses; see *Numbering follows the contract* below.
 
 | Kit | Contract | Target | What it judges |
 |---|---|---|---|
 | [`composition/`](composition/) | [`composition.v1`](../contracts/composition.v1.md) | a repository root | Does this repository sit lightly on its host, and does its guard protect a locked contract? |
 | [`documents/`](documents/) | [`documents.v1`](../contracts/documents.v1.md) | a repository root | Do this repository's contracts, vision, proposals, and participant kit keep their shape? |
-| [`surface/`](surface/) | [`surface.v1`](../contracts/surface.v1.md) | the companion app (running, or its rendered pages) | Are the promised interactions present and wired to one another? |
+| [`experience-direction/`](experience-direction/) | [`experience-direction.v1`](../contracts/experience-direction.v1.md) | the companion app | Can a steward read the agreement, see what moved, answer a proposal and ask for one, without leaving? |
+| [`experience-operation/`](experience-operation/) | [`experience-operation.v1`](../contracts/experience-operation.v1.md) | the companion app | Does the operation show what is being pursued, how it is going, and the evidence behind the claim? |
+| [`experience-console/`](experience-console/) | [`experience-console.v1`](../contracts/experience-console.v1.md) | the companion app | Is the console a pane beside the work — carrying the manager session, ratifying nothing, reaching nothing else? |
 
 There is no `operation/` kit here. That contract's promises are about a running
 system, and closing them needs the turnkey harness (`converge-qtp`), not a file
-scan.
+scan. There is no `experience/` or `experience-collaboration/` kit either, and no
+`platform-*` kit: the umbrella's clauses are kept by the section contracts that
+hang off it, collaboration's boundary is a repository-host question, and four of
+the five platform bodies do not exist. `ledger/rows.yaml` says so row by row
+rather than leaving the silence unexplained.
+
+[`_superseded/`](_superseded/) holds kits whose contract has been superseded.
+They are kept for the record and are **not** part of this suite —
+`conformance/surface/` moved there on 2026-09-03 when `surface.v1` was
+superseded by the experience family.
 
 ## Run them
 
 ```sh
 uv run conformance/composition/run.py .
 uv run conformance/documents/run.py .
-uv run conformance/surface/run.py <running app URL, or a page set written by conformance/surface/render.py>
+
+# the three experience kits read the running app
+uv run --extra app python -m app.serve --port 8788 &
+export CONVERGE_APP_COOKIE="…"          # see below
+uv run conformance/experience-direction/run.py http://127.0.0.1:8788
+uv run conformance/experience-operation/run.py http://127.0.0.1:8788
+uv run conformance/experience-console/run.py  http://127.0.0.1:8788
 ```
 
 Every kit behaves the same way, on purpose:
@@ -30,19 +47,48 @@ Every kit behaves the same way, on purpose:
 - **exit 0** when no rule FAILs, **exit 1** when any does
 - `--json-only` to suppress the summary
 
+The three experience kits get that shape from one place —
+[`kitreport.py`](kitreport.py) — so the promise cannot drift kit by kit.
+
+The documents kit's rule 9a reads the work queue, which is not a file in this
+tree — refresh its export with `uv run scripts/export-work-items.py --project
+converge --out docs/work-items.json` before you trust that rule's verdict.
+
+### Reading the app needs a cookie, and that is not an oversight
+
+The app gates every route behind its signed session cookie and has **no loopback
+exemption** (`app/auth.py`): a request from 127.0.0.1 is a request like any
+other, because binding to the LAN is the point. So a live target needs a cookie
+minted by the app's own signer:
+
+```sh
+export CONVERGE_APP_COOKIE="$(python3 -c "import pathlib;from itsdangerous import \
+URLSafeTimedSerializer as S;print(S(pathlib.Path.home().joinpath('.amplifier',\
+'converge-app.secret').read_text().strip(), salt='converge-app-session')\
+.dumps({'u':'$USER'}))")"
+```
+
+Without one the kit fails loudly with that instruction rather than reporting an
+empty app — a target that answers the sign-in gate is a target that was never
+read, not a body with no content.
+
+`--capture <dir>` writes every route a kit read, with a manifest naming the route
+each file came from. That directory is a target in its own right, which is what
+the good/bad fixtures are and how a verdict can be re-judged later.
+
 ## Three statuses, and only three
 
 | Status | Means |
 |---|---|
 | `PASS` | The kit checked this and the promise is kept. |
-| `FAIL` | The kit checked this and the promise is broken. The detail names the file, the line, and what it expected. |
+| `FAIL` | The kit checked this and the promise is broken. The detail names the file, the route, and what it expected. |
 | `SKIP` | The kit **could not check this**, and says why in a `reason` field. |
 
 **A `SKIP` is never a soft pass.** It is the kit refusing to claim work it did
-not do — a rule that needs a live session, a running application, or a named
-human reader cannot be settled by reading files, and pretending otherwise is
-how a green report stops meaning anything. Each kit pins its own SKIP set in
-its self-test, so a rule cannot quietly drift into SKIP to dodge a failure.
+not do — a rule that needs a live session, a rendered viewport, or a named human
+reader cannot be settled by reading files, and pretending otherwise is how a
+green report stops meaning anything. Each kit pins its own SKIP set in its
+self-test, so a rule cannot quietly drift into SKIP to dodge a failure.
 
 ## Every rule has a negative fixture
 
@@ -55,9 +101,17 @@ kit emits either FAILs on `sample-bad` or is a declared SKIP with a reason.**
 A rule nobody can make fail proves nothing. That test is what stops this
 directory from becoming decoration.
 
+The three experience kits' fixtures are **captured app snapshots** — the same
+shape `--capture` writes — so a fixture is judged through exactly the code path a
+live app is. They are rewritten in place by
+[`experience-fixtures/make_fixtures.py`](experience-fixtures/make_fixtures.py),
+which is how they are kept in step when a rule is added; it is not a build step
+anyone has to run first.
+
 ```sh
-uv run --with pytest pytest conformance/ -q          # all three kits
-uv run --with pytest pytest conformance/documents/ -q # one kit
+uv run --with pytest pytest conformance/ -q             # every live kit
+uv run --with pytest pytest conformance/documents/ -q   # one kit
+python3 conformance/experience-console/tests/test_conformance.py   # no deps
 ```
 
 ## Numbering follows the contract — one anchor, the Core clauses
@@ -69,14 +123,16 @@ one row per promise, lettered inside it (`1a`, `1b`, …) — a failure names th
 exact promise rather than a whole paragraph. Each kit's README carries the full
 table with the contract sentence quoted beside each row.
 
-**All three kits anchor to their contract's Core clauses**, and every clause has
+**All five kits anchor to their contract's Core clauses**, and every clause has
 a row:
 
 | Kit | Core clauses | Rule ids | Every clause has a row |
 |---|---|---|---|
 | `composition/` | 1–7 | 1a–7b | `test_every_core_clause_has_a_row` |
-| `documents/` | 1–13 | 1–13 | `test_every_core_clause_has_a_row` |
-| `surface/` | 1–10 | 1a–10 | `test_every_core_clause_has_a_row` |
+| `documents/` | 1–14 | 1–14 | `test_every_core_clause_has_a_row` |
+| `experience-direction/` | 1–11 | 1–11 | `test_every_core_clause_has_a_row` |
+| `experience-operation/` | 1–13 | 1–13 | `test_every_core_clause_has_a_row` |
+| `experience-console/` | 1–10 | 1–10 | `test_every_core_clause_has_a_row` |
 
 It was not always one anchor. Two kits were numbered to their contract's
 *Conformance kit asserts* bullets, and that **hid a real gap**: a contract's
@@ -92,69 +148,48 @@ behind five — and under the bullets, `composition.v1` Core 3, 4 and 5 and
 The steward settled it on 2026-09-03 (see
 [`docs/workflow/owner-ratifications-2026-09-03.md`](../docs/workflow/owner-ratifications-2026-09-03.md),
 call 2): **conformance-kit rule ids anchor to the contract's clause numbers**,
-`documents.v1` §5 as written. The `composition` and `surface` tables were
-renumbered to match, and each grew the rows its uncovered clauses needed.
-`test_every_core_clause_has_a_row` — which only means anything under this anchor
-— now runs in all three kits, so a clause added to a contract later cannot go
-unchecked without a test going red.
+`documents.v1` §5 as written. The three experience kits were built under that
+anchor from the start, and each carries
+`test_every_core_clause_has_a_row` and `test_rule_ids_match_the_readme_table`
+— the second because `ledger/checks/verify.py` resolves a ledger row's
+`run.py (rule N)` reference against the kit README's table, and a ref pointing
+confidently at the wrong rule is worse than one that dangles.
 
-Check the alignment at any time:
+Check a kit's alignment at any time:
 
 ```sh
 uv run conformance/documents/run.py . --json-only \
   | python3 -c "import json,sys; print(*[o for o in [r for r in json.load(sys.stdin)['results'] if r['rule']=='5b'][0]['observed']], sep='\n')"
 ```
 
-## The 2026-09-03 renumbering, and what still points at the old ids
-
-Two tables moved. Nothing about what a rule asserts changed — only its number.
-
-| composition, was | now | surface, was | now |
-|---|---|---|---|
-| `1a` no heavy-package reference | `1a` | `1a` places switch | `1a` |
-| `1c` lean base named | `1b` | `1b` answering shortens the strip | `1b` |
-| `1b` no heavy helper in a step | `2a` | `4` answers land in the record | `2` |
-| `1e` every step is declared | `2b` | `3a` exactly four writes | `3a` |
-| `2` a session reaches both helpers | `3b` | `3b` writes map to operations | `3b` |
-| `1d` no session-wide tool stripping | `6a` | `1e` what-changed shows removals | `6` |
-| `3` an unrelated session keeps its tools | `6b` | `1d` the lock gate | `7` |
-| `4a` guard admits both proposal names | `7a` | `5` no internal vocabulary | `8c` |
-| `4b` guard knows the locked marker | `7b` | `1c` fill updates the gauge | `9a` |
-| — | `3a`, `4`, `5` are **new** rows | `9` the whole operation in view | `9b` |
-| | | `2` renders at two widths | `10` |
-| | | — | `4`, `5` are **new** rows |
-
-`ledger/checks/verify.py` names every ledger row still pointing at an old id.
-Measured 2026-09-03, four rows need re-pointing (this lane does not own
-`ledger/`):
-
-| Row | Clause | `ref` today | should name |
-|---|---|---|---|
-| CVG-001 | composition Core 1 | `run.py (rules 1a, 1b, 1c)` | `rules 1a, 1b` |
-| CVG-002 | composition Core 2 | `run.py (rules 1b, 1e)` | `rules 2a, 2b` |
-| CVG-006 | composition Core 6 | `run.py (rule 1d)` | `rules 6a, 6b` |
-| CVG-007 | composition Core 7 | `… + run.py (rules 4a, 4b)` | `rules 7a, 7b` |
-
-**CVG-001 and CVG-002 both name `1b`, which still resolves — to a different
-rule.** That is the failure mode `verify.py`'s rule-id tripwire exists for: a
-ref pointing confidently at the wrong rule is worse than one that dangles.
-
-Two further consequences, neither of them this directory's to fix:
-
-- `tests/test_plain_words_on_the_surface.py:427` selects the surface kit's
-  vocabulary rule by id (`== "5"`, now `"8c"`) — one line, and the row it wants
-  is the one that moved. CVG-066's probe runs that very test, so that row goes
-  green again the moment the line changes.
-- `composition` Core 3, 4 and 5 and `surface` Core 4 and 5 now have kit rules
-  (3a, 4, 5 and 4, 5). Their ledger rows — CVG-003/004/005, CVG-033/034 — are
-  hand-written probes or point at the app's own tests; each could now name a kit
-  rule instead. That is an upgrade, not a defect.
-
 ## When a kit reports a finding
 
-A `FAIL` against this repository is a **true finding**, not a bug in the kit to
-be tuned away. File it; do not weaken the rule. The kits deliberately avoid
-several *fabricated* findings — a template's own instruction comment, a status
-quoted as an illustration, a project's name matching a jargon term, another
-kit's deliberately-broken fixture — and each of those exemptions is documented
-in the kit's README and covered by its own test.
+A `FAIL` against this repository or its app is a **true finding**, not a bug in
+the kit to be tuned away. File it; do not weaken the rule.
+
+The kits deliberately avoid several *fabricated* findings, and each exemption is
+documented in the kit's README and covered by its own test — a template's own
+instruction comment, a status quoted as an illustration, a project's name
+matching a jargon term, another kit's deliberately-broken fixture. The three
+experience kits added three more, each caught while they were being built and
+each now a test:
+
+- **A write is a call, not a word in a message.** The app's per-change handler
+  shows *"Restore staged for the next proposal decision."* — and `decision`
+  matched the app's decision write, so the rule reported a PASS for a control
+  that does nothing. String literals are blanked before a handler is read.
+- **A handler is found by its selector**, `[data-restore]`, not by the same
+  attribute inside a markup template, which returns a template interpolation.
+- **A function is read from its definition, not its import.** `fillLanes` first
+  appears in `import { … } from './actions.js'`, and reading the brace after it
+  reported the fill control reaching no write when it calls `api.steer`.
+
+## What each kit will not claim
+
+| Kit | The line it does not cross |
+|---|---|
+| `composition/` | it reads a repository's files, never a live session's tool set |
+| `documents/` | it reads documents, never the app's markup — rule 11b SKIPs and says where the app-side promise is judged instead |
+| `experience-direction/` | it never proves what a write records once it lands, and never judges a render |
+| `experience-operation/` | the same, and it reads the brief's five parts as a keyword pass over the brief's own sentences |
+| `experience-console/` | it never claims a typed line **arrived** (rule 3 judges only that a path exists), and rule 4 reads the stylesheet's rules, not a viewport |

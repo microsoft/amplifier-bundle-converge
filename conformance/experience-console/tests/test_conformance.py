@@ -45,6 +45,24 @@ def run_kit(target):
     return proc.returncode, json.loads(proc.stdout)
 
 
+def kit_module():
+    """The kit itself, loaded from its own path under a unique module name.
+
+    `import run` would collide: all three experience kits ship `run.py`, and the
+    first one imported wins `sys.modules["run"]` for the whole pytest session —
+    measured, and it made this file assert against a sibling kit's constants.
+    """
+    import importlib.util
+    sys.path.insert(0, str(KIT.parent))          # for `appsnapshot` / `kitreport`
+    name = f"kit_{KIT.name.replace('-', '_')}"
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(name, RUN)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+    return sys.modules[name]
+
+
 def by_rule(report):
     return {r["rule"]: r for r in report["results"]}
 
@@ -161,9 +179,7 @@ def test_rule_4_reads_the_stylesheet_and_says_so():
 def test_rule_4_skips_rather_than_fails_when_no_stylesheet_was_served(tmp_path=None):
     """A target with no CSS cannot be judged on shape — that is a SKIP with a
     reason, never a FAIL against a body that may well be fine."""
-    sys.path.insert(0, str(KIT))
-    sys.path.insert(0, str(KIT.parent))
-    import run as kit  # noqa: E402
+    kit = kit_module()
     from appsnapshot import AppSnapshot  # noqa: E402
     bare = AppSnapshot("bare", "snapshot", {"/": "<html></html>"}, ["/"], {"manager": "m1"})
     row = kit.check_pane_when_wide_tray_when_small(bare)
@@ -171,8 +187,7 @@ def test_rule_4_skips_rather_than_fails_when_no_stylesheet_was_served(tmp_path=N
 
 
 def test_a_word_in_a_message_is_not_a_write():
-    sys.path.insert(0, str(KIT))
-    import run as kit  # noqa: E402
+    kit = kit_module()
     assert not kit.reaches_a_write("{ toast('recorded your decision'); }", {"decision"})
     assert kit.reaches_a_write("{ api.decision(mid, {}); }", {"decision"})
 

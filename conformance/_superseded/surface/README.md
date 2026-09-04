@@ -1,3 +1,20 @@
+> **SUPERSEDED 2026-09-03 — this kit is retired and no longer runs.**
+>
+> `surface.v1` was superseded by the experience family on 2026-09-03 (steward's
+> word: *"Yes, ratified, please go."* — see
+> [`docs/workflow/owner-ratifications-2026-09-03.md`](../../../docs/workflow/owner-ratifications-2026-09-03.md)).
+> The promises this kit checked are now held by
+> [`experience.v1`](../../../contracts/experience.v1.md) and its section
+> contracts, and judged by three kits that read the **companion app** rather
+> than a set of rendered pages:
+> [`conformance/experience-direction/`](../../experience-direction/) ·
+> [`conformance/experience-operation/`](../../experience-operation/) ·
+> [`conformance/experience-console/`](../../experience-console/).
+>
+> **No live ledger row cites a rule in this kit.** It is kept for the record —
+> and because the three kits that replaced it inherited its machinery and its
+> lessons, which are recorded below. Nothing here is maintained.
+
 # surface.v1 conformance kit
 
 The runnable definition of **"the companion app keeps its promises."** Point it

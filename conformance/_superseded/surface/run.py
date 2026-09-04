@@ -2,7 +2,9 @@
 # requires-python = ">=3.9"
 # dependencies = []
 # ///
-"""surface.v1 conformance kit — the runnable definition of "the companion app keeps its promises".
+"""SUPERSEDED 2026-09-03 — retired kit, kept for the record. See README.md.
+
+surface.v1 conformance kit — the runnable definition of "the companion app keeps its promises".
 
 Point it at the **companion app**: either a running server (a URL) or a
 directory of pages rendered from it (`render.py` writes one). It mechanically
