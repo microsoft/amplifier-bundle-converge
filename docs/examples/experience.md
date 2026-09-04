@@ -40,9 +40,11 @@ Neither `platform-browser.v1` nor `platform-web-app.v1` exists, and neither ever
 did — the browser and the installable web app were written as one contract,
 `platform-web.v1`, whose own clause 9 covers installing. The umbrella and the
 family disagree about the family's own membership, and both were ratified in the
-same pass. That is a steward's call, not a lane's, so it is filed as
-`converge-d3n` and the clause stands as written until a word settles it. This
-example quotes it whole rather than tidying the sentence away.
+same pass. That is a steward's call, not a lane's: it is filed as `converge-d3n`
+and a proposal now sits beside the contract as
+`contracts/experience.v1-candidate.md`, awaiting the steward's word. Until that
+word lands the clause stands exactly as written, so this example quotes it whole
+rather than tidying the sentence away.
 
 So the umbrella's teeth bite through the sections. Three kits exist and run
 against the same body:
