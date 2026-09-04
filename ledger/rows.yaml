@@ -1786,22 +1786,36 @@
   disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"no_progress_words_as_status\"][0];print(\"PROGRESS-WORD-RULE-PASSES-ON-\"+str(len(r[\"files\"]))+\"-DOCS\" if r[\"status\"]==\"PASS\" else \"PROGRESS-WORD-RULE-\"+r[\"status\"])"'
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"no_progress_words_as_status\"][0];f=[e[\"file\"] for e in r[\"files\"]];print(\"PROGRESS-WORD-RULE-PASSES-WITH-THE-VISION-AMONG-\"+str(len(f))+\"-DOCS\" if r[\"status\"]==\"PASS\" and \"docs/VISION.md\" in f and len(f)>=15 else \"PROGRESS-WORD-RULE-\"+r[\"status\"]+\"-VISION-READ=\"+str(\"docs/VISION.md\" in f)+\"-DOCS=\"+str(len(f)))"'
     expect:
       exit: 0
-      stdout_contains: "PROGRESS-WORD-RULE-PASSES-ON-5-DOCS"
+      stdout_contains: "PROGRESS-WORD-RULE-PASSES-WITH-THE-VISION-AMONG-"
   notes: >
-    RAN 2026-09-02 → rule 6b (`no_progress_words_as_status`) PASS, "all 5
-    document(s) leave progress out of their status" →
-    PROGRESS-WORD-RULE-PASSES-ON-5-DOCS. The five are the four contracts AND
-    docs/VISION.md, each reported individually: this is the whole clause, not
-    the contract half of it. WAS GAP (work converge-nht) because rule 6 (then
-    1d) reads contracts only and the clause names visions too; wave 4 added
-    rule 6b, which scans both, in status position only.
-    THE DOCUMENT COUNT IS IN THE EXPECTATION ON PURPOSE: a rule that quietly
-    stopped reading the vision would still say PASS, and this row would still
-    be green. It goes red at 4.
-    MOVED BY converge-jc9, on this run and not on that item's mapping.
+    RAN 2026-09-03 (converge-ck8) → rule 6b (`no_progress_words_as_status`)
+    PASS, "all 15 document(s) leave progress out of their status", and
+    docs/VISION.md is one of the fifteen →
+    PROGRESS-WORD-RULE-PASSES-WITH-THE-VISION-AMONG-15-DOCS.
+    WAS EXPECTING PROGRESS-WORD-RULE-PASSES-ON-5-DOCS, and had been red since
+    the experience family landed. The old expectation pinned the document count
+    at exactly five — the four contracts plus the vision — to catch a rule that
+    quietly stopped reading the vision. Ten more contracts arrived
+    (experience.v1 and its four members, and the rest of wave 5); the count went
+    to fifteen; the row went red for growth, which is not drift. An expectation
+    that fires on every contract added is one nobody re-derives, and this one
+    was not re-derived for two merges.
+    WHAT THE EXPECTATION PINS NOW, and why it is not weaker. It still refuses a
+    silent stop-reading, more directly than a count ever did: the probe asserts
+    docs/VISION.md is named in the rule's own per-file list, so dropping the
+    vision goes red no matter how many contracts exist. The count survives as a
+    FLOOR (>=15), so losing any document still goes red, and the actual number
+    is printed either way for a reader. Adding a contract no longer reddens it.
+    Both failure modes it must catch — the vision dropped, a document dropped —
+    still do.
+    WAS GAP (work converge-nht) because rule 6 (then 1d) reads contracts only
+    and the clause names visions too; wave 4 added rule 6b, which scans both,
+    in status position only. MOVED TO CONFORMS BY converge-jc9, on that run and
+    not on that item's mapping; RE-DERIVED HERE by converge-ck8, disposition
+    unchanged.
 
 - id: CVG-048
   title: visions are written as though already true
@@ -1941,31 +1955,46 @@
     and the header's note stands for the next one.
 
 - id: CVG-051
-  title: a work item names its contract and defines done — the mechanical half, which cannot run here
+  title: a work item names its contract and defines done in plain words — asserted against the exported queue
   contract:
     file: contracts/documents.v1.md
     clause: "Core 9"
     quote: "**A work item names its contract** in one line, defines done in plain words,"
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"work_item_names_a_contract\"][0];print(\"WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT\" if r[\"status\"]==\"SKIP\" and \"no work-item export\" in r[\"reason\"] else \"WORK-ITEM-CHECK-NOW-RUNS-\"+r[\"status\"])"'
     expect:
       exit: 0
-      stdout_contains: "WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT"
+      stdout_contains: "WORK-ITEM-CHECK-NOW-RUNS-PASS"
   proves: >
-    Only that rule 9a is present, mechanical, and still has nothing to read in
-    this tree. It proves NOTHING about whether this repository's work items name
-    their contract or define done in plain words — that is the promise, and it is
-    unasserted here, which is what GAP says. The probe is written to flip the
-    moment the gap closes: land a work-queue export and it reports
-    WORK-ITEM-CHECK-NOW-RUNS-PASS or -FAIL instead, forcing this row to be
-    re-derived rather than quietly enjoying a check that started passing.
+    That rule 9a runs and PASSes over the work queue AS EXPORTED to
+    docs/work-items.json — every item there names a contract that exists in
+    contracts/, and defines done without a machine state word standing in it.
+    What it does NOT prove: that the export is current. Rule 9a reads a
+    snapshot, so a queue that has changed since the last
+    `uv run scripts/export-work-items.py` can leave this row green over items
+    the tracker no longer holds. Refresh the export in the same pass as any
+    change to the queue; that hazard is the export script's own warning, kept
+    here because this row is the one it would make lie.
   notes: >
-    RAN 2026-09-03 (converge-njn) → rule 9a (`work_item_names_a_contract`) SKIP,
-    "no work-item export at docs/work-items.json and none named with
-    --work-items — work items live in the work queue, not in this tree, so the
-    kit has nothing to read" → WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT.
+    RAN 2026-09-03 (converge-ck8) → rule 9a (`work_item_names_a_contract`) PASS,
+    "all 53 work item(s) name a contract and define done" →
+    WORK-ITEM-CHECK-NOW-RUNS-PASS. Whole-kit verdict on the same run:
+    PASS (pass=18 fail=0 skip=9).
+    WAS GAP, EXPECTING WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT, until this run.
+    Two merges closed the gap this row was written around and neither
+    re-derived it, so it sat expecting a SKIP that had stopped happening:
+    converge-gmo landed docs/work-items.json (the missing subject rule 9a
+    declined for), and converge-ck8 rewrote the nine items rule 9a then FAILed
+    — eight defining done with a ledger disposition where clause 10's plain
+    word belongs, one defining done nowhere, one naming no contract that
+    exists. The probe was built to flip exactly here, and it did; this is the
+    re-derivation it was demanding.
+    THE `work` REF IS GONE, not moved. It cited converge-gmo, the item that
+    would land the export. The export is landed and the row is no longer red,
+    and this file's own rule is that a `work` ref does not outlive the redness
+    it was filed against.
     QUOTE NARROWED AND THE ROW SPLIT 2026-09-03 by converge-njn. This row used to
     carry the WHOLE of clause 9 under one GAP, against `(rules 9a, 9b)`. After
     wave 4 the clause's two halves stopped being the same kind of thing:
@@ -1976,19 +2005,15 @@
     splitting CVG-059 → CVG-067. The second half is now CVG-069, quoting the
     disjoint remainder of the sentence. Fresh id, per this file's never-renumber
     rule; this id keeps the half it was mostly about.
-    WHY THIS HALF IS GAP AND NOT NOT-ASSERTABLE. Rule 9a is complete and
-    mechanical: it asserts both promises the sentence makes — that an item names
-    a contract which EXISTS in `contracts/`, by stem and version, and that its
-    definition of done carries no machine state word. It declines only for want
-    of a subject. Supply the export and it runs; converge-8om already ran it
-    against the live 24-item queue and got a real FAIL (4 items named no
-    contract, filed as converge-vc0). A check that works and has nothing to read
-    is a gap with a named fix, not a refusal.
-    THE FIX IS NOW FILED AND THIS ROW CITES IT. The `work` ref moved from
-    converge-8om to converge-gmo. converge-8om is RESOLVED — it built these
-    rules — and this file's own tally already says "a closed item may not stay
-    cited as the thing that will fix a red row". converge-gmo is the open item
-    for the export itself.
+    WHY THIS HALF WAS GAP AND NOT NOT-ASSERTABLE (history, and the reason it
+    could move). Rule 9a is complete and mechanical: it asserts both promises
+    the sentence makes — that an item names a contract which EXISTS in
+    `contracts/`, by stem and version, and that its definition of done carries
+    no machine state word. It only ever declined for want of a subject.
+    converge-8om had already run it against the live 24-item queue and got a
+    real FAIL (4 items named no contract, filed as converge-vc0). A check that
+    works and has nothing to read is a gap with a named fix, not a refusal —
+    and the fix landed, which is why this row is now Kept.
     THE PROBE REPLACED AN `indexed` REF, for the reason the third reconcile gives
     in the header: an `indexed` ref proves only that the rule exists. This one
     pins rule 9a's own verdict AND its reason, so it flips on every event that
@@ -1998,7 +2023,8 @@
     export → WORK-ITEM-CHECK-NOW-RUNS-PASS; rewording rule 9a's SKIP reason →
     WORK-ITEM-CHECK-NOW-RUNS-SKIP. Renaming the rule id makes the probe exit 1
     rather than pass on a vanished rule (controlled on 9b, same probe shape).
-  work: converge-gmo
+    The first of those two controls is no longer hypothetical — it is what
+    actually happened, and the observed string matched the predicted one.
 
 - id: CVG-069
   title: a work item quotes the feedback or gap it came from — telling a quotation from a cited filename needs a reader
