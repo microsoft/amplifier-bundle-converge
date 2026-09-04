@@ -909,6 +909,46 @@ def test_a_lane_still_running_on_an_unchanged_branch_is_not_a_stall():
     assert run.assert_stalls_are_declared([], [])["verdict"] == run.SKIP
 
 
+def test_the_clause_9_skip_says_how_many_lanes_it_could_actually_read():
+    """"Found nothing" must not be able to mean "could not look".
+
+    `commits_beyond` answers None for a lane whose worktree is gone and whose
+    branch no reachable checkout still holds -- the normal end state of a
+    merged lane. Such a lane is correctly not a stall, but it used to be
+    dropped in silence, so the SKIP's "the reading ran and found nothing" read
+    as a claim about the whole manifest when it was a claim about the readable
+    lanes only. Measured on this host 2026-09-04: 107 lanes in the manifest,
+    ONE the reading could ask about.
+    """
+    reading = run.assert_stalls_are_declared(
+        [], [], {"lanes": 107, "read": 1,
+                 "unreadable": [f"w{n}-gone" for n in range(103)]})
+    assert reading["verdict"] == run.SKIP
+    assert reading["lanes_read"] == 1
+    assert reading["lanes_in_manifest"] == 107
+    assert reading["lanes_unreadable"] == 103
+    assert "read 1 of 107" in reading["why"]
+    assert "could not be read" in reading["why"]
+    # Named, not just counted: a reader can go and check one.
+    assert "w0-gone" in reading["why"]
+
+
+def test_the_clause_9_skip_with_full_coverage_claims_nothing_extra():
+    """A wave whose lanes are all readable says so, and adds no caveat."""
+    reading = run.assert_stalls_are_declared(
+        [], [], {"lanes": 3, "read": 3, "unreadable": []})
+    assert reading["verdict"] == run.SKIP
+    assert "read 3 of 3" in reading["why"]
+    assert "could not be read" not in reading["why"]
+
+
+def test_the_clause_9_reading_still_answers_without_coverage():
+    """Coverage is an addition, not a new requirement: no caller is broken."""
+    reading = run.assert_stalls_are_declared([], [])
+    assert reading["verdict"] == run.SKIP
+    assert "found nothing" in reading["why"]
+
+
 def test_a_stall_no_record_names_fails_clause_9():
     reading = run.assert_stalls_are_declared([{"lane": "w6-x"}],
                                              [{"text": "cycle 3: merged y"}])

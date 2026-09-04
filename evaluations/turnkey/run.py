@@ -1659,7 +1659,8 @@ def assert_lanes_touch_different_files(lanes: list[dict]) -> dict:
                    **facts)
 
 
-def assert_stalls_are_declared(stalls: list[dict], records: list[dict]) -> dict:
+def assert_stalls_are_declared(stalls: list[dict], records: list[dict],
+                               coverage: dict | None = None) -> dict:
     """Clause 9 — no progress becomes stuck WITH CAUSE, not another iteration.
 
     A stall this can see: a lane whose terminal session is gone and whose
@@ -1685,12 +1686,40 @@ def assert_stalls_are_declared(stalls: list[dict], records: list[dict]) -> dict:
     count of attempts, and nothing on disk here records one. A record that
     declares the stop and then relaunches in place reads as declared, which is
     the honest limit of what an artifact left on disk can settle.
+
+    HOW MANY LANES THE READING COULD ACTUALLY ASK ABOUT, which the SKIP used to
+    leave out. `commits_beyond` answers None for a lane whose worktree is gone
+    AND whose branch no ancestor checkout still holds -- the normal end state of
+    a merged lane, whose branch is deleted after the merge. Such a lane is
+    correctly not counted as a stall (unknown is not zero), but it was dropped
+    silently, so "the reading ran and found nothing" was a claim about every
+    lane in the manifest when it was only ever a claim about the readable ones.
+    Measured on this host 2026-09-04: 107 lanes in the manifest, 4 with a
+    branch this checkout could resolve. `coverage` carries that split so the
+    sentence says which it means; conformance/README.md's rule -- a check that
+    cannot run says so -- applies to the part of a check that cannot run too.
     """
+    cover = dict(coverage or {})
+    unreadable = list(cover.get("unreadable") or [])
+    read_n = cover.get("read")
+    total_n = cover.get("lanes")
+    scope = ""
+    if read_n is not None and total_n is not None:
+        scope = f" — read {read_n} of {total_n} lane(s) in the manifest"
+        if unreadable:
+            scope += (f"; {len(unreadable)} could not be read at all (worktree gone "
+                      f"and branch not in any checkout reachable from here): "
+                      + ", ".join(unreadable[:6])
+                      + (f", and {len(unreadable) - 6} more" if len(unreadable) > 6 else ""))
     if not stalls:
         return _clause(9, SKIP,
                        "no lane ended without commits, so no stall exists for this "
-                       "reading to judge — the reading ran and found nothing",
+                       "reading to judge — the reading ran and found nothing"
+                       + scope,
                        stalls=0, records=len(records),
+                       lanes_read=read_n, lanes_in_manifest=total_n,
+                       lanes_unreadable=len(unreadable),
+                       unreadable_lanes=unreadable[:20],
                        awaits="a lane that ends with an unchanged branch")
     unnamed, mentioned, declared = [], [], []
     for stall in stalls:
@@ -3069,15 +3098,27 @@ def step_clauses(ctx: Context) -> Result:
 
     # --- lanes that stopped without producing anything
     live_sessions = {p["session"] for p in panes}
-    stalls = []
+    stalls, still_working, no_base, unreadable, read = [], [], [], [], 0
     for lane in lanes:
         if lane.tmux and lane.tmux in live_sessions:
+            still_working.append(lane.name)
             continue  # still working; an unchanged branch is not yet a stall
         if not lane.base_sha:
+            no_base.append(lane.name)
             continue
         count = commits_beyond(ctx.env, lane.worktree, lane.base_sha, lane.branch, repo)
+        if count is None:
+            # Unknown, not zero. A merged lane's worktree is removed and its
+            # branch deleted, so nothing here can answer base..branch any more.
+            # Counted and named rather than dropped, so the clause reading can
+            # say how much of the wave it was actually able to look at.
+            unreadable.append(lane.name)
+            continue
+        read += 1
         if count == 0:
             stalls.append({"lane": lane.name, "branch": lane.branch})
+    coverage = {"lanes": len(lanes), "read": read, "unreadable": unreadable,
+                "still_working": still_working, "no_base_sha": no_base}
     return_log = ctx.env.read(f"{repo}/{RETURN_LOG}") or ""
     records = entries + [{"text": e["heading"] + " " + str(e.get("parts_present"))}
                          for e in parse_return_log(return_log)]
@@ -3099,7 +3140,7 @@ def step_clauses(ctx: Context) -> Result:
         assert_parks_kept_the_wave_moving(parks),
         assert_feedback_was_enriched(pairings),
         assert_lanes_touch_different_files(measured_lanes),
-        assert_stalls_are_declared(stalls, records),
+        assert_stalls_are_declared(stalls, records, coverage),
         assert_calls_are_one_of_the_four(parks),
         assert_handoff_on_close([e for e in entries if e["close"]]),
     ]
@@ -3110,6 +3151,7 @@ def step_clauses(ctx: Context) -> Result:
         "lanes_running_at_once": [ln.name for ln in concurrent],
         "concurrency_source": concurrency_source,
         "briefs": briefs, "stalled_lanes": stalls,
+        "stall_reading_coverage": coverage,
         "feedback_pairings": len(pairings),
         "park_events": parks,
         "clause_readings": readings,
