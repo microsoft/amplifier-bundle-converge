@@ -553,9 +553,21 @@ export async function sendLock(answered) {
     toast(res && res.locked ? `Locked: ${res.locked}` : 'This document is locked.');
     await hooks.reloadDoc();
   } catch (err) {
-    // Said out loud rather than swallowed: this app answers no lock route yet,
-    // so nothing was stamped and no file moved. The server half is converge-eci.
-    toast(`Nothing was locked — this app answers no lock route yet (${err.message}). Filed as converge-eci.`);
+    // What refused, in its own words, and no cause of our own on top of it
+    // (converge-8r5). This used to say "this app answers no lock route yet",
+    // which was true while converge-eci was open and false the moment it
+    // landed: `app/serve.py` answers this route and `writes.lock_document`
+    // refuses it for four real reasons — the document already carries a
+    // locking word, fewer than four conditions arrived, the file has
+    // uncommitted changes that a lock commit would carry along, or there is
+    // no H1 to put a status in. Each of those arrives here as `err.message`,
+    // already a whole sentence a steward can act on, and each was reaching
+    // them under a cause nobody had observed. AGENTS.md §5 cuts both ways: a
+    // screen may not claim a cause it did not observe either.
+    //
+    // "Nothing was locked" stays, because it is this file's own true
+    // observation: the write threw, so no stamp was made.
+    toast(`Nothing was locked — ${err.message}`);
   }
 }
 
