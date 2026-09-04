@@ -1,0 +1,187 @@
+/* The host panel: pull requests read as proposals.
+ *
+ * Collapsed it is one summary line, so including the partial costs a steward
+ * no room until they open it. Open, it is two columns at desk width and one
+ * column on a phone -- the same anatomy either way, never a second layout.
+ *
+ * Everything here is under `.collab-panel`, and every value comes from
+ * `tokens.css`, so this file cannot reach any other view by accident.
+ */
+
+.collab-panel {
+  margin: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.collab-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.collab-summary::-webkit-details-marker { display: none; }
+.collab-summary::before {
+  content: "▸";
+  color: var(--muted);
+  transform: translateY(-1px);
+}
+.collab-panel[open] > .collab-summary::before { content: "▾"; }
+.collab-summary .eyebrow {
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.collab-summary strong { font-weight: 700; }
+.collab-count {
+  margin-left: auto;
+  min-width: 26px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--purple-bg);
+  color: var(--purple);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Bounded on purpose: an open panel with twenty pull requests in it would
+ * otherwise run the page off the bottom of the shell, and the shell's own
+ * console sheet is already there on a narrow screen. The panel scrolls
+ * inside itself instead. */
+.collab-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--line);
+  max-height: min(64vh, 680px);
+  overflow-y: auto;
+}
+
+.collab-freshness {
+  margin: 12px 0;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.collab-note {
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--amber-bg);
+  color: var(--amber);
+  font-size: 13px;
+}
+
+.collab-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.collab-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.collab-empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+
+.collab-row {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+.collab-row:hover { border-color: var(--line-strong); }
+.collab-row.active { border-color: var(--purple); background: var(--purple-bg); }
+.collab-row strong { font-size: 13px; }
+.collab-row span { font-size: 12px; color: var(--muted); }
+
+.collab-review {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  background: var(--surface);
+  min-width: 0;
+}
+.collab-review .muted { color: var(--muted); }
+
+.collab-hero { margin-bottom: 10px; }
+.collab-hero .eyebrow {
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.collab-hero h3 { margin: 2px 0 4px; font-size: 17px; }
+.collab-link { font-size: 12px; color: var(--blue); }
+
+.collab-section { padding: 10px 0; border-top: 1px solid var(--line); }
+.collab-section:first-of-type { border-top: 0; }
+.collab-section h4 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.collab-section p { margin: 0 0 6px; }
+.collab-section ul, .collab-section ol { margin: 0; padding-left: 18px; }
+.collab-section li { margin-bottom: 4px; }
+
+.collab-comments { list-style: none; padding: 0; }
+.collab-comments li {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  margin-bottom: 6px;
+}
+.collab-comments b { font-size: 13px; }
+.collab-comments .muted { font-size: 12px; }
+.collab-comments p { margin: 4px 0 0; white-space: pre-wrap; }
+
+.collab-askbox { display: grid; gap: 4px; margin: 8px 0; }
+.collab-askbox > span { font-size: 12px; color: var(--muted); }
+.collab-askbox textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  resize: vertical;
+}
+
+.collab-button {
+  padding: 7px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 13px;
+}
+.collab-button:hover { border-color: var(--purple); color: var(--purple); }
+
+.collab-decisions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.collab-outcome { margin: 10px 0 0; font-size: 13px; color: var(--ink); min-height: 1.2em; }
+
+.collab-foot { margin: 14px 0 0; font-size: 12px; color: var(--muted); }
+
+/* One column on a phone. The panel keeps every part it has at desk width --
+ * nothing is dropped, so a steward on a phone answers the same proposal with
+ * the same evidence in front of them. */
+@media (max-width: 720px) {
+  .collab-panel { margin: 8px; }
+  .collab-layout { grid-template-columns: minmax(0, 1fr); }
+  .collab-body { padding: 0 12px 12px; }
+  .collab-decisions .collab-button { flex: 1 1 45%; }
+}

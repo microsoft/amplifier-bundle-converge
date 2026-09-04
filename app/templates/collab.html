@@ -1,0 +1,76 @@
+{#
+  The host half of collaboration, as one self-contained partial.
+
+  `contracts/experience-collaboration.v1.md` clause 1 says git is the protocol
+  and Converge is the lens: what a teammate proposes on the repository host is
+  read here, answered here, and the answer goes back there. Clause 10 says
+  Converge keeps no collaboration surface of its own, so nothing below stores
+  anything -- every row is the host's own pull request, read fresh.
+
+  It wires with one line in `app/templates/shell.html`:
+
+      {% raw %}{% include "collab.html" %}{% endraw %}
+
+  and brings its own stylesheet and its own module script, so nothing else has
+  to be edited to make it work. Collapsed it is a single summary line; the
+  panel only costs room when a steward opens it.
+
+  **Where that line goes, and why it is not obvious.** Put it inside `#app`,
+  after the `.body-grid` div and beside `{% raw %}{% include "dialogs.html" %}{% endraw %}` -- not
+  inside `<main class="workspace">`. Measured at 1280x800 on 2026-09-04 with
+  the partial inside `<main>`: `.workspace` is `overflow:hidden` and the
+  console is the grid's third column, so the foot of this panel was drawn
+  underneath the console pane and its last paragraph could not be read or
+  clicked. Below the grid it is in the page's own flow and scrolls into view.
+
+  On screens narrower than 980px the console becomes a fixed sheet over the
+  bottom of the viewport (`console.css`), so it covers this panel there as it
+  covers everything else; closing the console shows it. That is the shell's
+  behaviour, not this partial's.
+
+  The sentence under the summary is deliberately written into the markup rather
+  than left for the script to fill in. Clause 6 asks for the freshness
+  mechanism to be *named rather than assumed*, and a sentence that only exists
+  once JavaScript has run is not named to a reader whose script failed. The
+  script replaces it with the live wording; the words below are what is true
+  when nothing has been told to us yet.
+#}
+<link rel="stylesheet" href="/static/css/collab.css" />
+
+<details class="collab-panel" id="collabPanel">
+  <summary class="collab-summary">
+    <span class="eyebrow">From the host</span>
+    <strong>Pull requests, read as proposals</strong>
+    <b class="collab-count" id="collabCount">—</b>
+  </summary>
+
+  <div class="collab-body">
+    <p class="collab-freshness" id="collabFreshness">
+      Polling — checked every 60 seconds. No webhook call has arrived from the
+      host, so this app asks rather than waiting to be told. Either way you are
+      not the one keeping this fresh.
+    </p>
+
+    <p class="collab-note" id="collabTrouble" hidden></p>
+
+    <div class="collab-layout">
+      <ul class="collab-list" id="collabList" aria-label="Open pull requests">
+        <li class="collab-empty">Nothing read from the host yet.</li>
+      </ul>
+
+      <article class="collab-review" id="collabReview" aria-live="polite">
+        <p class="muted">Choose a pull request to read what it proposes.</p>
+      </article>
+    </div>
+
+    <p class="collab-foot">
+      A comment written here lands on the pull request itself, and your word is
+      written to this repository’s dated ratification record <em>and</em> posted
+      back where the proposal came from. Nothing about this conversation is kept
+      inside Converge — a teammate who never opens this app sees all of it on the
+      host.
+    </p>
+  </div>
+</details>
+
+<script type="module" src="/static/js/render/collab.js"></script>
