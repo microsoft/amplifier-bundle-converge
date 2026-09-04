@@ -145,17 +145,21 @@ RULEBOOK_RULES = [
 #: An `@namespace:path` mention inside one of Converge's own helper files.
 MENTION_RE = re.compile(r"@([A-Za-z0-9_-]+):([\w./-]+)")
 
-# Core 4: "The host requirement is one sentence in the README. Steps can use
-# only helpers present in the session they run in; Converge needs its own full
-# setup or a host on the same lean base." One sentence must carry all three
-# halves — a README that names the host without saying why leaves a reader to
-# guess whether their own session can run the steps.
+# Core 4 (amended 2026-09-04, steward word "ratified"): "The host requirement
+# is one sentence in the README. A step that declares no helpers of its own can
+# use only those present in the session it runs in ...; a step that declares its
+# helpers resolves them from that closure instead, and asks nothing of its host."
+# One sentence must carry all three halves -- the host, HOW a step's helpers
+# resolve (only the session's, or only the closure it declares), and the lean
+# base -- so a reader knows whether their own session can run the steps.
 HOST_SENTENCE_TESTS = [
     ("names the host", re.compile(r"\bhost\b", re.I)),
-    ("says a step's helpers come only from the session it runs in",
+    ("says how a step's helpers resolve: only the session's, or only the closure it declares",
      re.compile(r"only\s+(?:from|in|helpers?\s+present\s+in)\s+the\s+session"
                 r"|helpers?\s+only\s+from\s+the\s+session"
-                r"|only\s+helpers?\s+present\s+in\s+the\s+session", re.I)),
+                r"|only\s+helpers?\s+present\s+in\s+the\s+session"
+                r"|only\s+from\s+(?:that|the|its)\s+(?:declared\s+)?closure"
+                r"|declares\s+its\s+own\s+helpers", re.I)),
     ("names the lean base", re.compile(r"anchors|lean\s+base", re.I)),
 ]
 

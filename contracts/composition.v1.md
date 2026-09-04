@@ -21,9 +21,11 @@ the helpers they need.
    no step secretly depends on the heavy package.
 3. **Its own helpers carry a small local rulebook** — stop honestly when a thing
    cannot be proven; sign commits; cite locations — and borrow nothing else.
-4. **The host requirement is one sentence in the README.** Steps can use only
-   helpers present in the session they run in; Converge needs its own full setup
-   or a host on the same lean base.
+4. **The host requirement is one sentence in the README.** A step that declares
+   no helpers of its own can use only those present in the session it runs in,
+   and needs Converge's own full setup or a host on the same lean base; a step
+   that declares its helpers resolves them from that closure instead, and asks
+   nothing of its host.
 5. **The shared work queue rides on both install paths,** so the contract
    checker can file and read work anywhere.
 6. **Nothing touches the tools of other work in your session.** A setting that
@@ -38,7 +40,9 @@ the helpers they need.
 ## What v1 deliberately does NOT freeze
 
 - Enforced per-role tool limits — promoted when upstream #388 lands.
-- Automated steps that bring their own helpers — when the engine supports it.
+- A tagged release of the lean base — promoted when the foundation repository
+  tags a release that ships `bundles/anchors`; until then Core 4's pin of the
+  lean base is its `main` branch, recorded in PINS.md.
 - The companion app as its own product — see Surface.
 
 ## Conformance kit asserts
@@ -51,8 +55,17 @@ the helpers they need.
   keeps its shell, delegation, and skills tools.
 - The guard denies a write to a locked contract and admits a `*.vN-candidate.md`
   beside it.
+- A step that declares its own helpers resolves them from that closure, not
+  from the calling session: the recipe validates at `schema_version: 2` and its
+  plan names every helper against the dependency that supplies it.
 
 ## Reserved / open questions (NOT frozen)
 
 - A namespace for Converge's own worker helpers, should the lean base's prove
   insufficient.
+
+## Changelog
+
+| Date | Change | Evidence |
+|---|---|---|
+| 2026-09-04 | Amended (still v1, DRAFT): clause 4's second sentence names the two cases — a step that declares no helpers uses the session's; a step that declares its helpers resolves them from that closure; the "when the engine supports it" item leaves the not-frozen list (condition met); a new not-frozen item tracks a tagged lean-base release; one kit assert added. Proposal: `contracts/composition.v1-candidate.md` (converge-qwk), kept as `docs/workflow/composition.v1-candidate.ratified.md`. Steward's word, verbatim: `ratified, and go ahead w/ that PR, merge it` (PR #25, converge-may). | The recipe failed on a non-anchors host with "Agent 'anchors:explorer' not found in configuration" (2026-09-04); the engine now supports declared helpers — `recipe-runner validate` → schema_version 2, ok; `plan` names both helpers against their suppliers |

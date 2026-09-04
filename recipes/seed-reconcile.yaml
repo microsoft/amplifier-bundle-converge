@@ -69,6 +69,31 @@
 #
 # CHANGELOG
 # -----------------------------------------------------------------------------
+# v1.4.1 (2026-09-04):
+#   - CHANGE: The self-referential dependency moves from `@main` (a branch) to
+#     tag `v0.1.0` — the follow-up v1.4.0 named ("move it to a tag the moment
+#     one is cut"; cut 2026-09-04 at 4507e46, the first tag on this repo) — and
+#     narrows from the whole root bundle to the behavior partial
+#     `#subdirectory=behaviors/converge.yaml`, which is what actually ships
+#     `converge:reconciler`.
+#     * WHY TWO ENTRIES NOW WORK: v1.4.0 measured that declaring the lean base
+#       BESIDE the root bundle collides (`context-intelligence:session-navigator`
+#       supplied twice), because the root bundle composes the lean base. The
+#       behavior partial does not compose it, so the lean base is declared once,
+#       on its own entry — plan resolves 12 agents, no collision (measured).
+#     * REMAINING BRANCH PIN, FLAGGED: `anchors:explorer` still comes from
+#       `amplifier-foundation@main#subdirectory=bundles/anchors/bundle.md`. No
+#       foundation tag ships `bundles/anchors` yet (v2.1.2 predates it); a SHA
+#       cannot be fetched (`git clone --branch`). Re-pin at the first tag that
+#       does — composition.v1's "does NOT freeze" list carries the trigger.
+#     * DRIVER: composition.v1 Core 4 as amended and ratified 2026-09-04
+#       (steps bring their own PINNED helpers). No step, prompt, context
+#       variable, agent name or output changes.
+#     * VERIFIED: `recipe-runner validate` → ok, schema_version 2;
+#       `recipe-runner plan` → anchors:explorer ⇐ foundation@main 52cbf74,
+#       converge:reconciler ⇐ converge@v0.1.0 4507e46; in-session run of a
+#       same-shape v2 probe → execution_mode v2-closed-world-legacy-engine.
+#
 # v1.4.0 (2026-09-04):
 #   - NEW: Schema v2 dependency manifest — this recipe now says what it needs
 #     instead of borrowing it from whoever calls it (composition.v1 Core 1–2:
@@ -196,29 +221,32 @@
 # --- Dependency manifest (contract: recipe-dependency-manifest.v1) ------------
 # `schema_version: 2` makes this recipe a self-contained dependency root: both
 # `agent:` references below resolve ONLY from the closure declared here, never
-# from the calling session's agent map. That is the file-level enforcement of
-# what the Requirements block above states in prose — a recipe can only reach
-# helpers that are actually present.
+# from the calling session's agent map (composition.v1 Core 4, as amended and
+# ratified 2026-09-04). Every namespaced agent the recipe names is listed under
+# the source that actually ships it; the runner never infers a dependency from a
+# namespace prefix (manifest.v1 Core 11), so the self-reference is required.
 #
-# ONE entry, deliberately. This bundle composes the lean anchors base
-# (PINS.md §Composition), so its closure already supplies `anchors:explorer`.
-# Declaring the lean base a SECOND time is a preflight collision error, not a
-# belt-and-braces — see the v1.4.0 changelog entry for the measured message.
-# The self-reference is required, not redundant: the runner never infers a
-# dependency from an agent name's namespace prefix (manifest.v1 Core 11).
+# TWO entries, and why that is collision-free: this repo's ROOT bundle composes
+# the lean anchors base, so declaring the lean base beside the root bundle is a
+# preflight collision (measured, v1.4.0 changelog). The BEHAVIOR PARTIAL below
+# does not compose the lean base, so each helper has exactly one supplier.
 #
-# PIN HONESTY (measured 2026-09-04, not assumed): this pins `@main`, not a SHA.
-# Foundation fetches a ref with `git clone --branch`, which accepts a branch or
-# a tag but NOT a commit SHA — a bare SHA fails with "Could not find remote
-# branch … to clone". This repository publishes no tags, so `@main` is the most
-# precise resolvable pin available. Move it to a tag the moment one is cut.
+# PIN HONESTY (measured 2026-09-04): Foundation fetches a `source:` ref with
+# `git clone --branch` — a tag or branch resolves, a commit SHA does not.
+#   - converge behavior partial: tag `v0.1.0` (immutable; cut 2026-09-04).
+#   - anchors base: `@main` — the one remaining branch pin. No foundation tag
+#     ships `bundles/anchors` yet (v2.1.2 predates it). Re-pin at the first tag
+#     that does; PINS.md carries this as a hard fact.
 schema_version: 2
 
 dependencies:
-  - source: "git+https://github.com/microsoft/amplifier-bundle-converge@main"
+  - source: "git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundles/anchors/bundle.md"
     kind: bundle
     required_agents:
       - "anchors:explorer"
+  - source: "git+https://github.com/microsoft/amplifier-bundle-converge@v0.1.0#subdirectory=behaviors/converge.yaml"
+    kind: behavior
+    required_agents:
       - "converge:reconciler"
 # -----------------------------------------------------------------------------
 
@@ -229,7 +257,7 @@ description: >
   conformance kit, files work-tracker items for every GAP/VIOLATION, records
   bidirectional drift, and emits a reconcile report. Flat, gate-free, and
   schedulable — it never prompts the steward.
-version: "1.4.0"
+version: "1.4.1"
 author: "converge bundle"
 tags: ["converge", "ratchet", "conformance", "ledger", "reconcile", "drift"]
 
