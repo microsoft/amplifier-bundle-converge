@@ -1,6 +1,12 @@
 /* Manager Console: dock on desktop, sheet on mobile. Terminal pane is owned by tmux.js. */
 .manager-console {
   min-width:0;
+  /* The pane is its own containing block. Without this the pane is static, so an
+     absolutely positioned descendant (the form's .sr-only label, xterm's helpers)
+     is laid out against the page instead and escapes the overflow:hidden below —
+     which is how a pane collapsed to a 0px column still pushed the document
+     11px sideways. */
+  position:relative;
   background:var(--navy);
   color:#e4ebf5;
   border-left:1px solid #17263a;
@@ -9,11 +15,16 @@
   overflow:hidden;
   transition:opacity .15s ease;
 }
-.body-grid.console-closed .manager-console { opacity:0; pointer-events:none; }
+/* Closed is a 0px column: there is no pane, so there is no divider to draw. The
+   1px border is the pane's whole remaining width, and it sits past the right edge. */
+.body-grid.console-closed .manager-console { opacity:0; pointer-events:none; border-left-width:0; }
 .console-header { min-height:60px; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 13px; border-bottom:1px solid rgba(255,255,255,.08); }
+/* The title block yields the width; the actions keep theirs. A long session name
+   shortens itself rather than pushing ● Connected and × out over the pane's edge. */
+.console-header > div { min-width:0; }
 .console-header .eyebrow { color:#7789a1; }
-.console-header strong { display:block; margin-top:4px; color:#fff; }
-.console-header-actions { display:flex; align-items:center; gap:9px; }
+.console-header strong { display:block; margin-top:4px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.console-header-actions { display:flex; align-items:center; gap:9px; flex:0 0 auto; }
 .connected-label { color:#55d99b; font-size:10px; }
 .connected-label.detached { color:#8b9ab0; }
 .console-icon-button { width:30px; height:30px; border-radius:8px; border:1px solid rgba(255,255,255,.09); background:#0c1828; color:#aab8c9; font-size:18px; }
