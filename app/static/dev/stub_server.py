@@ -119,6 +119,105 @@ async def steer(mid: str, request: Request):
     return {"ok": True}
 
 
+# --------------------------------------------------------------------------
+# the console's own two routes
+#
+# The front end asks for these on every load, whether or not anyone opens the
+# tab: the terminal view polls, and the collaboration panel polls (clause 6 --
+# a change on the host is already here when the panel is opened). A stub that
+# does not answer them is not a quiet gap; it is four console errors on every
+# run, and a terminal tab that reads "observation failed -- HTTP 404" against a
+# stub that is otherwise complete.
+#
+# Both answer in the shape the real app answers in -- `app/tmux_view.py`'s
+# Frame.as_dict() and `app/collab.py`'s list_pulls() -- so what the front end
+# is proved against here is the payload it will meet in production.
+# --------------------------------------------------------------------------
+
+
+@app.get("/api/tmux/{socket}/{session}")
+def tmux_frame(socket: str, session: str, lines: int = 200):
+    """One frame of one pane, shaped as app/tmux_view.py's Frame.as_dict().
+
+    The identity echo is taken from the REQUEST, never from the fixture, for
+    the same reason the real route echoes it: the client binds its viewer to
+    `socket`/`session` and can prove the frame it is painting belongs to the
+    session it asked for. A fixture that answered with its own baked-in
+    identity would let a mistargeted request look answered.
+
+    A session with no fixture gets `ended`, not `ok` with empty text -- the
+    four states are never conflated (field guide: an empty pane and a failed
+    observation both yield empty text, and presenting either as healthy is the
+    failure the design guards against).
+    """
+    lines = max(1, min(int(lines), 2000))
+    captured = fixture(f"tmux.{socket}.{session}")
+    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    if captured is None:
+        return {
+            "state": "ended",
+            "text": "",
+            "geometry": None,
+            "captured_at": now,
+            "socket": socket,
+            "session": session,
+            "lines": lines,
+            "detail": f"can't find session: {session}",
+        }
+    return {
+        "state": captured.get("state", "ok"),
+        "text": captured.get("text", ""),
+        "geometry": captured.get("geometry"),
+        "captured_at": now,
+        "socket": socket,
+        "session": session,
+        "lines": lines,
+        "detail": captured.get("detail", ""),
+    }
+
+
+@app.post("/api/tmux/{socket}/{session}/keys")
+async def tmux_keys(socket: str, session: str, request: Request):
+    """Carry a keystroke to the pane, and say what happened.
+
+    The stub cannot echo the line back into the fixture's pane text, so what it
+    proves is narrower than the real route: that the client's write reaches a
+    server, is bounded, and is answered in the shape the client reads. It says
+    so in `detail` rather than letting `ok` be read as "the pane received it".
+    """
+    body = await request.json()
+    keys = str(body.get("keys") or "")
+    enter = bool(body.get("enter"))
+    log(f"POST /api/tmux/{socket}/{session}/keys keys={keys[:60]!r} enter={enter}")
+    truncated = len(keys) > 4096
+    return {
+        "sent": True,
+        "state": "ok",
+        "socket": socket,
+        "session": session,
+        "keys": len(keys[:4096]),
+        "enter": enter,
+        "truncated": truncated,
+        "at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "detail": "the dev stub recorded this send; no live pane echoed it back",
+        "ambient_tmux_ignored": None,
+    }
+
+
+@app.get("/api/collab/{mid}/pulls")
+def collab_pulls(mid: str):
+    """Open pull requests as proposals, shaped as app/collab.py's list_pulls().
+
+    A manager with no fixture answers 404 exactly as the real route does for an
+    unknown manager -- the stub does not invent a session that was never
+    registered.
+    """
+    found = fixture(f"pulls.{mid}")
+    if found is None:
+        return JSONResponse({"error": f"no manager named {mid}"}, status_code=404)
+    return found
+
+
 app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
 app.mount("/branding", StaticFiles(directory=str(BRANDING)), name="branding")
 
