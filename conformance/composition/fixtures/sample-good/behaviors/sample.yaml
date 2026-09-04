@@ -34,6 +34,15 @@ hooks:
       candidate_target_field: "target"
       fail_closed_on_error: true
 
+agents:
+  # Compose this repository's own helper into the session (composition.v1
+  # Core 3, live half — rule 3b). Without an `agents:` block the helper is
+  # DISCOVERABLE on disk and never COMPOSED, so a live session cannot reach it.
+  # That difference is invisible to a file scan and is exactly what rule 3b
+  # stands a session up to see; `sample-bad` is the fixture that omits it.
+  include:
+    - sample-good:reader
+
 context:
   include:
     - sample-good:context/awareness.md
