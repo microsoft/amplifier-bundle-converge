@@ -14,8 +14,15 @@ breaks. Where one clause carries several independent promises, the kit emits
 one row per promise, lettered inside the clause (1a, 1b, ...), so a failure
 names the exact promise rather than a whole paragraph. Every Core clause has a
 row, and the self-test fails if one does not — a clause added later cannot go
-unchecked. Promises that need a LIVE Amplifier session to judge are reported
-SKIP with the reason — never a fabricated PASS.
+unchecked.
+
+Two promises (rules 3b and 6b) are about a RUNNING session rather than files.
+They are judged by ``live.py``, which stands real sessions up through the
+installed Amplifier — this file imports nothing from it. Where a live verdict is
+genuinely out of reach (no ``amplifier`` on PATH, an interpreter that cannot
+import the app, a probe that timed out, or the probe switched off), those two
+rows report SKIP naming the exact missing capability — never a fabricated PASS.
+They are the only two rows allowed to decline at all.
 
 The kit was numbered to the contract's *Conformance kit asserts* bullets until
 2026-09-03. The steward ratified the Core-clause anchor that day (see
@@ -50,6 +57,13 @@ except ImportError:  # pragma: no cover - surfaced loudly, never silently faked
     )
     raise SystemExit(3)
 
+# The live half (rules 3b and 6b). It imports nothing from Amplifier itself —
+# it shells out to the installed CLI's own interpreter — so this stays a script
+# with one declared dependency. Imported by path so `uv run <this file>` and
+# `import run` from the self-test both resolve it.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import live  # noqa: E402
+
 
 # --------------------------------------------------------------------------- #
 # the rule table — numbered to contracts/composition.v1.md's **Core** clauses.  #
@@ -82,11 +96,16 @@ RULES = [
      "the guard's locked-marker test recognizes an H1-parenthetical status"),
 ]
 
-# Rows that cannot be judged from files alone. Declared here so the self-test
-# can assert the SKIP set is exactly this — a rule may not drift into SKIP.
-UNFIXTURABLE = {
-    "3b": "needs a live Amplifier session; this kit reads files only",
-    "6b": "needs two live Amplifier sessions (Converge plus unrelated work) side by side",
+# Rows that cannot be judged from files at all: they are about a RUNNING
+# session. They are not "unfixturable" any more — `live.py` stands the sessions
+# up and they return PASS/FAIL like every other row. They remain the ONLY two
+# rows allowed to SKIP, and only with a reason naming the exact missing
+# capability (`live.MISSING`, or one of the two measurement-baseline reasons).
+# The self-test pins that: no other rule may drift into SKIP, and a SKIP here
+# must carry a reason from the declared vocabulary.
+LIVE_RULES = {
+    "3b": "a real session on this repository, and what it composes",
+    "6b": "a real unrelated session, with and without this repository installed beside it",
 }
 
 # The heavy package this contract forbids, and the lean base it requires.
@@ -155,8 +174,10 @@ def _result(rid, status, detail, **extra):
     return out
 
 
-def _skip(rid):
-    return _result(rid, "SKIP", UNFIXTURABLE[rid], reason=UNFIXTURABLE[rid])
+def _from_live(rid, row):
+    """Wrap a (status, detail, extra) triple from `live.py` as a rule row."""
+    status, detail, extra = row
+    return _result(rid, status, detail, **(extra or {}))
 
 
 # --------------------------------------------------------------------------- #
@@ -427,6 +448,39 @@ def helper_files(root: Path):
     if not d.is_dir():
         return []
     return sorted(p for p in d.rglob("*.md") if p.is_file())
+
+
+def own_agent_names(root: Path):
+    """The namespaced names of this repository's own helpers.
+
+    ``agents/reconciler.md`` in a bundle named ``converge`` is reachable from a
+    session as ``converge:reconciler``. Rule 3b needs the names, not the files:
+    what it asks is whether a live session composed one of them, and the
+    session's roster speaks in names.
+    """
+    meta, err = load_bundle_frontmatter(root)
+    if err:
+        return []
+    ns = ((meta.get("bundle") or {}).get("name") or "").strip()
+    if not ns:
+        return []
+    names = []
+    for p in helper_files(root):
+        text = p.read_text(encoding="utf-8", errors="replace")
+        fm = split_frontmatter(text)
+        name = p.stem
+        if fm:
+            try:
+                doc = yaml.safe_load(fm)
+            except yaml.YAMLError:
+                doc = None
+            if isinstance(doc, dict):
+                candidate = ((doc.get("meta") or {}).get("name")
+                             if isinstance(doc.get("meta"), dict) else None)
+                if isinstance(candidate, str) and candidate.strip():
+                    name = candidate.strip()
+        names.append(f"{ns}:{name}")
+    return sorted(set(names))
 
 
 def check_helpers_carry_the_rulebook(root: Path):
@@ -723,17 +777,20 @@ def check_guard_recognizes_locked_marker(root: Path):
 # driver                                                                       #
 # --------------------------------------------------------------------------- #
 def run_conformance(root: Path) -> dict:
+    # One live probe serves both live rows: standing sessions up is the
+    # expensive part, and 3b and 6b read the same captured run.
+    probe = live.probe(root, own_agent_names(root), behavior_files(root))
     results = [
         check_no_heavy_reference(root),        # 1a
         check_lean_base_named(root),           # 1b
         check_no_heavy_helper_in_steps(root),  # 2a
         check_steps_are_declared(root),        # 2b
         check_helpers_carry_the_rulebook(root),  # 3a
-        _skip("3b"),
+        _from_live("3b", probe.session_row()),
         check_host_requirement(root),          # 4
         check_work_queue_on_both_paths(root),  # 5
         check_no_tool_stripping(root),         # 6a
-        _skip("6b"),
+        _from_live("6b", probe.neighbour_row()),
         check_guard_admits_both(root),         # 7a
         check_guard_recognizes_locked_marker(root),  # 7b
     ]
