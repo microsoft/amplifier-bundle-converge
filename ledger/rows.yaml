@@ -1285,21 +1285,26 @@
     quote: |
       **Never the bottleneck.** Within the steward's objective, budget, and lane
       count, the manager session maximizes work that proceeds without them.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 3 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 3 (CVG-013) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-3-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS; else echo CLAUSE-3-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 3 - " modes/converge-manager.md && python3 ledger/checks/turnkey_clause.py CVG-013 PASS "name what kept moving beside them" | grep -q "ASSERTS-THIS"; then echo CLAUSE-3-LIVE-READING-SAYS-THE-WAVE-DID-NOT-GO-IDLE; else echo CLAUSE-3-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-3-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS"
+      stdout_contains: "CLAUSE-3-LIVE-READING-SAYS-THE-WAVE-DID-NOT-GO-IDLE"
   proves: >
     That the mode still encodes this clause, AND that the harness's own reading
-    of it still DECLINES, in the words step (j) recorded: it can see that work
-    was parked on the steward's word and that other lanes kept running, which is
-    the clause's shape and not its promise. NOT that the steward was never the
-    bottleneck. A red row keyed on a declining reading is worth more than one
-    keyed on a file that has not moved since 2026-09-02 — this one fails its
-    expect the day the harness answers PASS here, and forces a re-read.
+    of this host's wave now ANSWERS it rather than declining: of the parks
+    recorded in the plan record, all but one name what kept moving beside them
+    — read from the entry's own `Live:` list, at the moment of the park — so
+    the wave did not go idle on the steward's word. NOT that nothing MORE could
+    have proceeded: nothing on disk records the work that was available and not
+    launched, and the clause is a maximisation. The reading says the smaller,
+    checkable half of it and says so in its own sentence.
+    Its falsity condition is a park entry naming nothing continuing and giving
+    no reason for it; `Continued: none, because no ready item fails to collide
+    with it` is a different fact and is not failed. The probe fails its expect
+    the day such a park is recorded, and forces a re-read.
   notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-3. See CVG-010.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-3. The
@@ -1335,8 +1340,36 @@
     THE `work` REF MOVED converge-2ro → converge-5vz. converge-2ro is RESOLVED
     — it gave all seven clauses a runner — and closed without a successor for
     the three that runner could not reach. converge-5vz is that successor, and
-    names the missing observation for each of the three separately."
-  work: converge-5vz
+    names the missing observation for each of the three separately.
+    ─────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-mh5). GAP → CONFORMS. RAN →
+    CLAUSE-3-LIVE-READING-SAYS-THE-WAVE-DID-NOT-GO-IDLE.
+    THE READING ANSWERED. converge-5vz taught the park stamp and — more useful —
+    taught the step to read the looser form this workspace has been writing all
+    along: a cycle entry saying Parked: <items> beside Live: <lanes> records the
+    park and what continued beside it, at the same moment. Live on this host,
+    `uv run evaluations/turnkey/run.py --env local --workspace ~/dev/hw-converge
+    --project converge --steps j`, verbatim: Core 3 (CVG-013) PASS: 5 of 6
+    recorded park(s) name what kept moving beside them (read from the entry's
+    own `Live:` list; fewest at any one park: 1) — the wave did not go idle on
+    the steward's word, which is what this reading can say and not that nothing
+    more could have proceeded.
+    WHAT MOVED WAS THE REPOSITORY, NOT THE EXPECTATION. The 2026-09-04 reading
+    two sections up was SKIP for a stated reason — parks were recorded but what
+    continued beside them was not. It is recorded now, so the reading changed
+    from declining to answering. The row follows the reading; it was re-derived
+    by taking it, not by bumping a phrase.
+    THE PROBE MOVED FROM turnkey_step.py TO turnkey_clause.py, AND THAT IS THE
+    REAL REPAIR. The old probe pinned the sentence `Core 3 (CVG-013) SKIP` out
+    of evaluations/turnkey/RESULT.md. That file is written by whichever lane
+    owns evaluations/, so for a day this row asserted the last PASTE while the
+    harness itself was answering PASS — a green row making a claim the reader
+    no longer made. The new probe runs the reader. Its docstring carries the
+    measurement that answers the old objection (a live probe goes red on a quiet
+    afternoon) for each kind of reading separately.
+    NO `work` REF: a CONFORMS row must not carry one, and converge-5vz is
+    RESOLVED. What is still unmeasured about clause 3 is in `proves`, not in a
+    tracker item: nothing records the work that was available and not launched."
 
 - id: CVG-014
   title: feedback is signal, not a ticket
@@ -1537,22 +1570,30 @@
     quote: |
       **Done means the manager session re-ran the check.** A marker is a claim.
       Done requires commits beyond base (a marker on an unchanged branch is stuck)
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 7 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py k "Core 7 (CVG-017) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-7-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY; else echo CLAUSE-7-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 7 - " modes/converge-manager.md && python3 ledger/checks/turnkey_clause.py --attribution CVG-017 PASS "is on neither side of any lane merge" | grep -q "ASSERTS-THIS"; then echo CLAUSE-7-ATTRIBUTION-READ-THE-MANAGER-SESSIONS-OWN-CHECK-RECORD; else echo CLAUSE-7-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-7-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY"
+      stdout_contains: "CLAUSE-7-ATTRIBUTION-READ-THE-MANAGER-SESSIONS-OWN-CHECK-RECORD"
   proves: >
     That the mode still encodes this clause, AND that step (k) — which reads WHO
-    produced an artifact — still declines its subject, for a reason it states:
-    the newest record of a check run came in through a lane merge, so this
-    wave's verification is unattributed. The step's own line also carries the
-    half that IS measured, from step (f): a marker on an unchanged branch is
-    recorded stuck. NOT that the manager session re-ran anything. Red on the
-    subject of the sentence, green on its parenthetical, and the probe now says
-    which.
+    produced an artifact — now ANSWERS its subject on this repository: the
+    commit that added the newest `docs/workflow/CHECK-RECORD.md` entry is on
+    neither side of any lane merge, so it was the manager session's own hand and
+    not a worker session's, and the entry names the check that was run.
+    NOT that every integration was verified that way — the reading covers the
+    NEWEST entry, one integration, and says so. NOT that the run behind it was
+    clean or that it covered every merge: step (h) re-runs the contract check
+    itself and answers that separately. NOT the parenthetical either — that a
+    marker on an unchanged branch is recorded stuck is step (f)'s measurement,
+    live against whichever wave is running, and this probe deliberately does not
+    pin it: a row that folded a live wave's lane state into this assertion would
+    go red for reasons belonging to clause 5.
+    So: the attribution half, which is the half a lane can most easily fake and
+    the half that was unread until 2026-09-04. It fails its expect the day the
+    newest check-record entry arrives through a lane merge again.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-7. This is the clause the ledger most
     wants asserted, because it is the one a lane can most easily fake: the kit
@@ -1606,7 +1647,40 @@
     THE `work` REF MOVED converge-6mi → converge-blg. converge-6mi is RESOLVED
     — it built the step — and closed without a successor for the half the step
     could not reach. converge-blg is that successor and carries both routes.
-  work: converge-blg
+    ─────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-mh5). GAP → CONFORMS. RAN →
+    CLAUSE-7-ATTRIBUTION-READ-THE-MANAGER-SESSIONS-OWN-CHECK-RECORD.
+    THE AWAITED OBSERVATION LANDED, AND IT WAS ONE COMMIT. The paragraph above
+    named it exactly: on this host the newest check record arrived through a
+    lane merge, so there was nothing of the MANAGER session's own to attribute.
+    converge-blg wrote the convention (docs/workflow/CHECK-RECORD.md, taught in
+    modes/converge-manager.md clause 8) and converge-aaw is the manager session
+    writing the first entry — 705a5f0, on the integration branch, in its own
+    commit. Live, `uv run evaluations/turnkey/run.py --env local --steps k
+    --project converge`, verbatim: Core 7 (CVG-017) PASS: step (f) PASS: a
+    marker on an unchanged branch is recorded stuck; and on the subject of the
+    sentence — the newest entry in docs/workflow/CHECK-RECORD.md (2026-09-04
+    12:24 — 'wave 8, twenty-seven lanes merged so far') was added by 705a5f0f
+    ('check record: wave 8 integration re-check, written by the manager
+    session'), which is on neither side of any lane merge, so it was the manager
+    session's own hand and not a lane's; it names the check it ran ('uv run
+    --with pyyaml ledger/checks/verify.py -> ALL LEDGER SELF-CHECKS PASS').
+    THE PROBE PINS THE ATTRIBUTION HALF ONLY, ON PURPOSE. Run with steps f..k
+    the composite clause reading is PASS; run with step k alone it is SKIP,
+    because the harness refuses to report a half it did not measure in that
+    invocation. Both are honest and neither is stable enough to pin: the
+    composite folds in a live wave's lane state, so this row would go red when a
+    holder process exits at the wrong moment — a fact about clause 5, not this
+    one. `--attribution` reads the half this row's SKIP was always about.
+    THE 'QUIET AFTERNOON' OBJECTION IS ANSWERED FOR THIS ROW BY MEASUREMENT,
+    NOT BY ARGUMENT. The attribution reading touches this repository's git
+    history and nothing else — no wave, no workspace, no queue. Measured: the
+    same PASS with the workspace pointed at ~/dev/hw-converge and with it
+    pointed at /tmp, and again from the integration checkout in
+    ~/dev/vision-focused-team-ci, which sits outside the wave entirely.
+    NO `work` REF: a CONFORMS row must not carry one, and converge-blg is
+    RESOLVED. What is still unproven is in `proves` — one integration, not
+    every one — and it is not a filed gap; it is the reading's own scope.
 
 - id: CVG-018
   title: integrate, verify, re-check
@@ -1617,22 +1691,31 @@
       **Integrate, verify, re-check.** The manager session's own verification,
       never the worker session's; a post-merge gate when two or more lanes landed
       in one repository; then the contract check, before the next brief.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 8 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py k "Core 8 (CVG-018) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-8-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY; else echo CLAUSE-8-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 8 - " modes/converge-manager.md && python3 ledger/checks/turnkey_clause.py --attribution CVG-018 PASS "is on neither side of any lane merge" | grep -q "ASSERTS-THIS"; then echo CLAUSE-8-ATTRIBUTION-READ-THE-MANAGER-SESSIONS-OWN-CHECK-RECORD; else echo CLAUSE-8-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-8-ATTRIBUTION-UNREAD-AND-STEP-K-NAMES-WHY"
+      stdout_contains: "CLAUSE-8-ATTRIBUTION-READ-THE-MANAGER-SESSIONS-OWN-CHECK-RECORD"
   proves: >
-    That the mode still encodes this clause, AND that step (k) carries its three
-    parts separately: the post-merge gate fires when two or more lanes land
-    (step (g) PASS), the contract check follows it (step (h) PASS, by the
-    harness, which is the gate and not the manager session), and WHOSE
-    verification it was is still unread — the newest record of a check run came
-    in through a lane merge. NOT that the manager session's own verification is
-    the one that happens. The clause's opening words remain the unmeasured part,
-    and the step now names why rather than leaving it to a reader.
+    That the mode still encodes this clause, AND that its OPENING WORDS — the
+    manager session's own verification, never the worker session's — are now
+    read and answered: the commit that added the newest
+    `docs/workflow/CHECK-RECORD.md` entry is on neither side of any lane merge,
+    so it was the manager session's own hand, and the entry names the check it
+    ran. That is the phrase a lane can most easily fake, and it was unasserted
+    from 2026-09-02 until 2026-09-04.
+    NOT the other two parts, which this probe deliberately leaves to the steps
+    that measure them: the post-merge gate firing when two or more lanes land is
+    step (g), and the contract check following it is step (h) — by the harness,
+    which is the gate and not the manager session. Both were PASS in the full
+    run recorded below; neither is pinned here, because folding a live wave's
+    merge state into this row would make it go red for reasons belonging to
+    other clauses.
+    NOT every integration either — the reading covers the NEWEST entry, one
+    integration. It fails its expect the day that entry arrives through a lane
+    merge again.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-8. The "contract check" half is now
     RUNNABLE for three of four contracts (conformance/composition, /documents,
@@ -1683,7 +1766,34 @@
     THE `work` REF MOVED converge-6mi → converge-blg, RESOLVED converge-6mi's
     successor for the attribution half, which carries CVG-017 for the same
     reason and by the same reading.
-  work: converge-blg
+    ─────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-mh5). GAP → CONFORMS. RAN →
+    CLAUSE-8-ATTRIBUTION-READ-THE-MANAGER-SESSIONS-OWN-CHECK-RECORD.
+    THE OPENING PHRASE IS NO LONGER UNASSERTED. converge-blg wrote the check
+    record convention; converge-aaw is the manager session following it, in its
+    own commit 705a5f0 on the integration branch. Live, `uv run
+    evaluations/turnkey/run.py --env local --workspace ~/dev/hw-converge
+    --project converge --steps e,f,g,h,i,j,k`, verbatim: Core 8 (CVG-018) PASS:
+    step (g) PASS: two or more lanes landed in one repository; step (h) PASS:
+    the contract check was re-run after integration — by this harness, which is
+    the post-merge gate and not the manager session; and on whose verification
+    it was — the newest entry in docs/workflow/CHECK-RECORD.md (2026-09-04 12:24
+    — 'wave 8, twenty-seven lanes merged so far') was added by 705a5f0f, which
+    is on neither side of any lane merge, so it was the manager session's own
+    hand and not a lane's; it names the check it ran ('uv run --with pyyaml
+    ledger/checks/verify.py -> ALL LEDGER SELF-CHECKS PASS').
+    THREE PARTS, THREE OWNERS, AND THE ROW PINS ONE. See CVG-017's note for the
+    measurement behind that choice; the two rows read the same attribution and
+    move together, which is why they were re-derived in one pass.
+    WHAT WOULD PUT THIS ROW BACK TO GAP: a wave integrated without a check
+    record entry, or one whose newest entry arrives through a lane merge — a
+    worker session writing the record of the manager session's own verification,
+    which is the half of clause 8 that says never the worker session's. The
+    harness answers FAIL, not SKIP, in that case; it was measured both ways on a
+    purpose-built repository (evaluations/turnkey/RESULT.md, Amendment
+    2026-09-04), and the fixtures are in evaluations/turnkey/tests.
+    NO `work` REF: a CONFORMS row must not carry one, and converge-blg is
+    RESOLVED.
 
 - id: CVG-019
   title: stalls are decisions, not loops
@@ -1737,8 +1847,26 @@
     deliberately made to stall — named in converge-5vz as the cheapest of the
     three routes there, because it is the only one that needs no new event store.
     THE `work` REF MOVED converge-2ro → converge-5vz, which is RESOLVED
-    converge-2ro's successor for the three clauses its step could not reach."
-  work: converge-5vz
+    converge-2ro's successor for the three clauses its step could not reach.
+    ─────────────────────────────────────────────────────────────────────────
+    CITE REPAIRED 2026-09-04 (converge-mh5). THE READING IS UNCHANGED AND THE
+    CITE WAS DEAD. Re-run live alongside the other three operation clauses this
+    pass re-derived, step (j) still says: Core 9 (CVG-019) SKIP: no lane ended
+    without commits, so no stall exists for this reading to judge — the reading
+    ran and found nothing. Nothing about this row's expectation moved, so
+    nothing about it was touched.
+    THE `work` REF MOVED converge-5vz → converge-wb0. converge-5vz is RESOLVED,
+    and this file's own rule is that a closed item may not stay cited as the
+    thing that will fix a red row; the refreshed docs/work-items.json (4fd7592)
+    made that visible, and main is red on it. converge-wb0 is converge-5vz's
+    named successor for exactly this clause: a wave deliberately made to stall,
+    so the reading has something real to judge.
+    THIRTY-SEVEN OTHER RED ROWS ARE IN THE SAME POSITION and are NOT repaired
+    here, because a dead cite on most of them is a signal the row itself has
+    moved — several cite resolutions claiming the work is done against the very
+    clause the row calls red, so the honest move is to re-run each probe rather
+    than swap a ref. Filed as converge-g82 with the full list."
+  work: converge-wb0
 
 - id: CVG-020
   title: a brief on every return — returns and briefs are countable now, and there are none of either
@@ -1856,17 +1984,23 @@
   disposition: GAP
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 11 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 11 (CVG-021) SKIP" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-11-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS; else echo CLAUSE-11-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 11 - " modes/converge-manager.md && python3 ledger/checks/turnkey_clause.py CVG-021 SKIP "cannot say the calls that reached the steward were the four" | grep -q "ASSERTS-THIS"; then echo CLAUSE-11-CALLS-PARTLY-CLASSIFIED-AND-STEP-J-COUNTS-THE-REST; else echo CLAUSE-11-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-11-UNMEASURED-AND-STEP-J-NAMES-WHAT-IT-AWAITS"
+      stdout_contains: "CLAUSE-11-CALLS-PARTLY-CLASSIFIED-AND-STEP-J-COUNTS-THE-REST"
   proves: >
     That the mode still encodes this clause, AND that step (j)'s reading of it
-    still declines for a stated reason: nothing in the run reads a prompt as an
-    EVENT, so the four calls cannot be counted or classified. NOT that every
-    owner-facing prompt fell inside the four. This row is red on a missing
-    instrument, not on a missing wave — the waves happened; nobody recorded the
-    prompts as countable things.
+    still declines — but on a countable remainder now, not on a missing
+    instrument: the recorded calls ARE classified into the four, and some of
+    them name none, so this run cannot say the calls that reached the steward
+    were the four. NOT that every owner-facing prompt fell inside the four, and
+    NOT that any of them fell outside: a call stamped as something that is none
+    of the four is a FAIL, so the reading can go red, and it has nothing to go
+    red on yet.
+    This row is now red on a countable gap. It fails its expect in BOTH
+    directions — the day every recorded call names its kind (the reading turns
+    PASS and this row must move to CONFORMS), and the day one names a fifth kind
+    (the reading turns FAIL and this row must move to VIOLATION).
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-11. Measuring this clause means counting
     owner-facing prompt events across a real wave. evaluations/ratchet does
@@ -1906,7 +2040,40 @@
     converge-5vz is its successor for the three clauses the step could not reach,
     and asks first whether the ratchet's counter can be pointed at a manager
     session at all.
-  work: converge-5vz
+    ─────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-04 (converge-mh5). STILL GAP, AND THE REMAINDER IS NOW A
+    NUMBER. RAN → CLAUSE-11-CALLS-PARTLY-CLASSIFIED-AND-STEP-J-COUNTS-THE-REST.
+    THE INSTRUMENT ARRIVED. converge-5vz taught the call stamp and taught step
+    (j) to classify what the plan record already carries; converge-aaw wrote the
+    first two stamped calls on this host. Live, `uv run
+    evaluations/turnkey/run.py --env local --workspace ~/dev/hw-converge
+    --project converge --steps j`, verbatim: Core 11 (CVG-021) SKIP: 4 of 6
+    recorded call(s) name which of the four they are (ratify: 3, irreversible:
+    1); the other 2 name none, so this run cannot say the calls that reached the
+    steward were the four.
+    THAT IS A DIFFERENT SENTENCE FROM THE ONE THIS ROW PINNED. The old probe
+    asserted `nothing in this run reads a prompt as an event`, which stopped
+    being true the moment the classifier landed. Pinned to a recorded paste in
+    evaluations/turnkey/RESULT.md, the row went on asserting it anyway — green,
+    and describing a missing instrument that had already arrived. The probe now
+    runs the reader (ledger/checks/turnkey_clause.py) instead of reading a file
+    another lane owns.
+    THE TWO UNNAMED CALLS ARE PRE-CONVENTION ENTRIES, which is a fact about this
+    host's history and not a defect in the reading. Read from step (j)'s own
+    `park_events` evidence, they are 2026-09-03T08:17:33Z (Parked:
+    protocol-terms.) and 2026-09-03T08:29:04Z (protocol-terms parked on
+    lane/w6-protocol-terms for the steward.) — park sentences with no call word
+    in them. Two ways to close it are in the item; neither is this row's to
+    choose.
+    THE `work` REF MOVED converge-5vz → converge-0l8 → converge-bdt, INSIDE THIS
+    ONE RE-DERIVATION. converge-0l8 was filed by this pass and resolved within
+    the hour with 'every CALL line in the plan record names one of the four';
+    the reading, re-run after that resolution, still says 4 of 6, because it
+    counts recorded CALLS and not only stamped CALL lines. Rather than bump the
+    row to match the resolution or the resolution to match the row, the
+    remaining two entries are named exactly in converge-bdt, with both ways to
+    close them and whose call that is.
+  work: converge-bdt
 
 - id: CVG-022
   title: the queue is the shared one, with custody
