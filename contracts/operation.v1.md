@@ -1,4 +1,4 @@
-# Operation Contract — v1 (DRAFT)
+# Operation Contract — v1 (DRAFT — content owner-ratified 2026-09-02)
 
 **Who builds against this:** the intent steward who relies on a manager session;
 peer manager sessions; the shared work queue; the parallel-lane tooling that

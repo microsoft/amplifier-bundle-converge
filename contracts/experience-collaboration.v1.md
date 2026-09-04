@@ -1,4 +1,4 @@
-# Collaboration Contract — v1 (DRAFT)
+# Collaboration Contract — v1 (DRAFT — content owner-ratified 2026-09-03)
 
 **Who builds against this:** teammates who send and receive proposals, whether
 or not they run Converge; the intent steward, who answers them; the manager

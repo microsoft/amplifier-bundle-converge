@@ -1,4 +1,4 @@
-# Experience: Direction Contract — v1 (DRAFT)
+# Experience: Direction Contract — v1 (DRAFT — content owner-ratified 2026-09-03)
 
 **Who builds against this:** intent stewards and teammates who read, question,
 and ratify a vision or a contract; the manager session, which proposes into the

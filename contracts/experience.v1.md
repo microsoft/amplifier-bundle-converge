@@ -1,4 +1,4 @@
-# Experience Contract — v1 (DRAFT)
+# Experience Contract — v1 (DRAFT — content owner-ratified 2026-09-03)
 
 **Who builds against this:** intent stewards and teammates, who open the app in
 whatever body is at hand; whoever builds those bodies — browser, installable web

@@ -1,4 +1,4 @@
-# Platform Contract — Android — v1 (DRAFT)
+# Platform Contract — Android — v1 (DRAFT — content owner-ratified 2026-09-03)
 
 **Who builds against this:** whoever builds the Android body of Amplifier
 Converge — phone, foldable, and tablet — and the intent steward who carries it

@@ -1,4 +1,4 @@
-# Platform Contract — iOS — v1 (DRAFT)
+# Platform Contract — iOS — v1 (DRAFT — content owner-ratified 2026-09-03)
 
 **Who builds against this:** whoever builds the iOS body of Amplifier Converge
 — phone and tablet — and the intent steward who carries it in a pocket. It

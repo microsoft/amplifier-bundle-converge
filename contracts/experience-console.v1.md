@@ -1,4 +1,4 @@
-# Manager Console Contract — v1 (DRAFT)
+# Manager Console Contract — v1 (DRAFT — content owner-ratified 2026-09-03)
 
 **Who builds against this:** the intent steward, who talks to the manager
 session while looking at either place; whoever builds the console pane in any

@@ -1,4 +1,4 @@
-# Experience: Operation Contract — v1 (DRAFT)
+# Experience: Operation Contract — v1 (DRAFT — content owner-ratified 2026-09-03)
 
 **Who builds against this:** intent stewards returning to a project and
 deciding whether they can still trust it; the manager session, whose strategy,
