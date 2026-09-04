@@ -635,7 +635,27 @@ One residual, and it is one character: that helper's `STEP` regex accepts step
 letters `[a-i]`, so it cannot see `(j)` or `(k)` yet. Until it accepts `[a-k]`,
 a row keyed on a clause reading reports `CHANGED-REREAD-THIS-ROW`. The step
 lines above are written in exactly the form it parses, so the change is the
-regex and nothing else.
+regex and nothing else. Measured both ways, against this file:
+
+```
+$ python3 ledger/checks/turnkey_step.py j "Core 6 (CVG-016) PASS"
+TURNKEY-STEP-J-CHANGED-REREAD-THIS-ROW: no step (j) is recorded in evaluations/turnkey/RESULT.md
+
+$ sed 's/\[a-i\]/[a-k]/' ledger/checks/turnkey_step.py > /tmp/turnkey_step_ak.py
+$ python3 /tmp/turnkey_step_ak.py j "Core 6 (CVG-016) PASS"
+TURNKEY-STEP-J-PASS-ASSERTS-THIS
+$ python3 /tmp/turnkey_step_ak.py k "Core 12 (CVG-022) PASS"
+TURNKEY-STEP-K-PASS-ASSERTS-THIS
+$ python3 ledger/checks/turnkey_step.py f "no work item was held by a process outside a lane worktree"
+TURNKEY-STEP-F-PASS-ASSERTS-THIS
+```
+
+The last line is the check that this file's new section moved nothing: CVG-015
+still reads the green driven run's step (f), not this host's.
+
+That residual and the ten rows it unblocks are filed as **`converge-saz`**,
+which names each row, the phrase it would pin, and what the reading does not
+prove.
 
 ```
 $ uv run --with pytest pytest evaluations/turnkey -q
