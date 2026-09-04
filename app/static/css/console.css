@@ -88,6 +88,30 @@ body.console-resizing { cursor:col-resize; user-select:none; }
     box-shadow:0 28px 80px rgba(2,8,19,.35);
   }
   .body-grid.console-closed .manager-console { transform:translateY(calc(100% + 20px)); opacity:0; }
+
+  /* On Home the sheet is down, whatever the console's own open state
+     (converge-nxf).
+
+     `platform-web.v1` Core 1: the Manager Console is "a pane beside either
+     [Direction or Operation], never a third place". Home is neither -- it is
+     the list of manager sessions (`experience.v1` Core 1). At this width the
+     console is not a column beside anything, it is an overlay ON TOP of the
+     surface, so drawing it over Home makes it a third place AND takes the list
+     away: measured 2026-09-04 at 390x844, the sheet covered everything below
+     y=197 and a click on Home's own tell-all control at [16,418,211,457] was
+     refused, `#consoleBody` intercepting it. `experience.v1` §11's subtraction
+     test: a shape that removes the ability to act on the list is a divergence,
+     not an idiom.
+
+     `pointer-events` is the load-bearing line -- an element moved off-screen by
+     `transform` still takes clicks where it was. `#app.screen-home` is set by
+     `renderAll()` in `app/static/js/main.js`.
+
+     This changes only WHERE the sheet is drawn, never whether the console is
+     open: the pane is exactly as the steward left it the moment they open a
+     manager session, and §6's gesture -- pull it up, push it down -- is
+     untouched on the two places it belongs to. */
+  .screen-home .manager-console { transform:translateY(calc(100% + 20px)); opacity:0; pointer-events:none; }
 }
 
 @media (max-width: 520px) {

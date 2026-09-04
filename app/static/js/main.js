@@ -12,6 +12,26 @@ import {
   openFeedback, openSteer, fillLanes, closeDialog, downloadCurrentDoc, copyText, toggleBookmark,
 } from './actions.js';
 
+// Which screen the shell is on, said once on the shell's own root so a
+// stylesheet can read it.
+//
+// `platform-web.v1` Core 1: the Manager Console is "a pane beside either
+// [Direction or Operation], never a third place". Home is neither of those two
+// places. Where the console is a PANE that costs nothing (the laptop) drawing
+// it beside Home is harmless; where it is an OVERLAY (a phone, below 980px,
+// `app/static/css/console.css`) it lies over Home -- and Home IS the list of
+// manager sessions, so the list was drawn and not touchable (converge-nxf,
+// measured 2026-09-04 at 390x844: a click on Home's tell-all control at
+// [16,418,211,457] was intercepted by `#consoleBody`).
+//
+// So the class below is the fact, and console.css draws the consequence at the
+// overlay width only. The console's own open state is untouched: the pane is
+// exactly as the steward left it the moment they open a manager session.
+function reflectScreen() {
+  const shell = $('app');
+  if (shell) shell.classList.toggle('screen-home', state.screen === 'home');
+}
+
 export function renderAll() {
   renderTop();
   renderSessions();
@@ -20,6 +40,7 @@ export function renderAll() {
   renderOperation();
   renderConsole();
   renderManagerMenu();
+  reflectScreen();
 }
 
 function pickDoc() {
