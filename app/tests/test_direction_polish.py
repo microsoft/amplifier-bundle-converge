@@ -621,12 +621,12 @@ def test_the_history_panel_says_every_snapshot_is_restorable():
     hedging again, or the day the sentence it now carries disappears.
     """
     render = DIRECTION_JS.read_text(encoding="utf-8")
-    head, _, tail = render.partition("function restorePanel(")
-    body = tail.split("\nexport function renderHistory")[0]
-    assert body, "the restore panel is no longer in render/direction.js"
-    assert "older than your read point is not offered" not in body, (
+    assert "function restorePanel(" in render, "the restore panel is no longer in render/direction.js"
+    # The old refusal must be gone from the whole module, not just one function.
+    assert "older than your read point is not offered" not in render, (
         "the History panel still claims older snapshots cannot be restored — the route exists"
     )
-    assert "Every snapshot in this list can be restored from" in body, (
+    # The new truth is stated where the History list is rendered.
+    assert "Every snapshot in this list can be restored from" in render, (
         "the panel no longer tells the steward that every shown snapshot is restorable"
     )
