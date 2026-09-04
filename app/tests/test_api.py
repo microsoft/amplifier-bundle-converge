@@ -355,18 +355,25 @@ def test_operation_reads_waves_lanes_and_the_return_brief(client: TestClient) ->
     assert waves["w1"]["progress"] == 0
     assert waves["w2"]["progress"] == 100  # beta wrote DONE.json
 
+    # Lanes at work and lanes that have reported back are two lists, because
+    # they are read in two vocabularies — see test_operation_words.py.
     lanes = {lane["id"]: lane for lane in payload["lanes"]}
+    reported = {lane["id"]: lane for lane in payload["reported"]}
     # No tmux session exists on that socket, so nothing may claim to be working.
     assert lanes["w1-alpha"]["status"] == "silent"
+    assert lanes["w1-alpha"]["statusLabel"] == "Silent — may have died"
     assert lanes["w1-alpha"]["title"] == "make the path work"
     assert lanes["w1-alpha"]["tmux"] == {"socket": "test-socket-that-does-not-exist", "session": "hw__hw-demo__w1-alpha"}
-    assert lanes["w2-beta"]["status"] == "done"
-    assert lanes["w2-beta"]["evidence"] == "Beta landed."
+    assert lanes["w1-alpha"]["live"] is False
+    assert "w2-beta" not in lanes and "w1-gamma" not in lanes
+    assert reported["w2-beta"]["outcome"] == "done"
+    assert reported["w2-beta"]["outcomeLabel"] == "Done"
+    assert reported["w2-beta"]["evidence"] == "Beta landed."
     # A stopped lane says why, from its own marker — never from the date or
     # the branch line above the reason.
-    assert lanes["w1-gamma"]["status"] == "stuck"
-    assert lanes["w1-gamma"]["statusLabel"] == "Stuck"
-    assert lanes["w1-gamma"]["evidence"].startswith("The device cannot be reached from this host")
+    assert reported["w1-gamma"]["outcome"] == "stuck"
+    assert reported["w1-gamma"]["outcomeLabel"] == "Stuck"
+    assert reported["w1-gamma"]["evidence"].startswith("The device cannot be reached from this host")
 
     assert payload["timeline"][0][0] == "2026-09-02"  # newest first
     assert payload["returnBrief"][0].startswith("Every item landed")
