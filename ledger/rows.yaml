@@ -7,9 +7,16 @@
 # RECONCILED 2026-09-02, same day again, against repo @ c5fe505 — see
 # "THE SECOND RECONCILE" below.
 # RECONCILED AGAIN 2026-09-02, after the wave-4 merges, against repo @ 10a8d76
-# — see "THE THIRD RECONCILE" below. THIS LEDGER DESCRIBES 10a8d76, and only
-# its documents.v1 section was re-derived in that pass. Main moves hourly; a
-# ledger that chases it converges on nothing. Re-read on merge.
+# — see "THE THIRD RECONCILE" below.
+# RECONCILED AND EXTENDED 2026-09-03 (converge-pq2) — THE FOURTH RECONCILE AND
+# THE SECOND SEED. Two SYNC pins had drifted (documents.v1, surface.v1) and the
+# mandatory full re-review was run; and the ELEVEN CONTRACTS OF THE EXPERIENCE
+# FAMILY, ratified DRAFT that day, were seeded from nothing. 65 rows → 175.
+# THE RATCHET NOW COVERS THE WHOLE CONTRACT SET: every Core clause of all
+# fourteen contracts is cited by at least one row. See the section headed
+# "THE FOURTH RECONCILE AND THE SECOND SEED" for how a disposition was chosen.
+# Main moves hourly; a ledger that chases it converges on nothing. Re-read on
+# merge.
 #
 # WHAT THIS REPO OWES
 # -------------------
@@ -107,7 +114,9 @@
 # its definition: an undecided call whose current behaviour is pinned by a check.
 # The note stays for the next one.
 #
-# ALL FOUR CONTRACTS ARE (DRAFT) TODAY. None is locked. Two consequences:
+# ALL FOURTEEN CONTRACTS ARE (DRAFT) TODAY. None is locked. (This line said
+# "all four" until 2026-09-03, when the experience family made it eleven more.)
+# Two consequences:
 #   - The Freeze Bar has not been run against any of them; CONFORMS here means
 #     "this draft clause is kept today", not "a frozen clause is kept".
 #   - `VIOLATION` is defined against a frozen clause. NO ROW CARRIES IT NOW.
@@ -369,11 +378,32 @@
     - file: contracts/composition.v1.md
       sha256: f9b6e5ed54b07a031af8beec12d8181d977fea9b0abbe0c861544442b1af2dba
     - file: contracts/documents.v1.md
-      sha256: 314aef9986189ccdf0120399e7ff54f64f6ed1b76407d352f856442a94593355
+      sha256: 856026df5e3e56bf5f92080b3a81371462ffffb6d75be171d576cf62778234ea
     - file: contracts/operation.v1.md
       sha256: 30b5a11a6d82937b0d0880916db428ffd6927e82433cdf9c94656eab7ff850bc
     - file: contracts/surface.v1.md
-      sha256: bd665e27a0de01f6ec12165bcbdb3bf2597b8c7c14e4a4de52a6dea3c66da10c
+      sha256: ed3c65c803f9f167ed05f0d67e060c8da1d83b219eb3618f75a5a7069344e0de
+    # The experience family, ratified DRAFT 2026-09-03. Pinned by converge-pq2.
+    - file: contracts/experience.v1.md
+      sha256: d6ebe7c7723778be84603fb8078522aaf379ee7b4229179d84ef5d5c38f4fc14
+    - file: contracts/experience-direction.v1.md
+      sha256: a1768a4b9231e05ca3951d096cc6bda288aaf7afa69f3bfff7eeba7a4f44a194
+    - file: contracts/experience-operation.v1.md
+      sha256: 7e9a3626bec538e5587404e4d29d01dcc2e2144a9a2699048fd3c2d9d833f3e9
+    - file: contracts/experience-console.v1.md
+      sha256: bdc6e89faf04af0c47b595b857404a1fbaf4da0c282c7794b229d9a5a3664239
+    - file: contracts/experience-collaboration.v1.md
+      sha256: ec6384a875c3e6fec233076f88f8942f3e829881af6f70c797c5f0ae83b0315b
+    - file: contracts/platform-web.v1.md
+      sha256: 179285607abf8990d19b3345ad5b87f22994729f904544949192ddaa1cf0b076
+    - file: contracts/platform-ios.v1.md
+      sha256: b024e030ac5d84cd3ca7c4f948433896c924e6a2e5ee21a1bed667eb570cfda3
+    - file: contracts/platform-android.v1.md
+      sha256: 47040a45ecbfd3d523db32d6a18bd6502424cb5cea24176894b8ed2be24616e8
+    - file: contracts/platform-macos.v1.md
+      sha256: e543dd9f6c66f120d6ef50b726ad6723134d2e1531eec336776c9dd21289a631
+    - file: contracts/platform-windows.v1.md
+      sha256: 8459e971b141ffb607f2c318bad70a37ebff12ff867d3cda5e247310c262b8b1
   assertion:
     kind: probe
     ref: 'sha256sum contracts/*.md'
@@ -396,12 +426,34 @@
     were re-derived against contract text that has not moved. Wave 4 changed the
     KIT, not the contracts — which is the only reason a six-row edit is a
     legitimate response rather than a re-seed.
-    ONE OBSERVATION, DELIBERATELY NOT A PIN: `contracts/` now also holds
-    `documents.v2-candidate.md`, so this row's own `ref` glob (`contracts/*.md`)
-    matches five files where it pins four. A candidate is a proposal, not a
-    contract, and pinning one would make an unratified file's bytes trigger a
-    ledger re-review. The glob is left wide on purpose; the pin list is the
-    authority on what is a contract here.
+    ONE OBSERVATION, DELIBERATELY NOT A PIN: `contracts/` may also hold a
+    `*.vN-candidate.md`, so this row's own `ref` glob (`contracts/*.md`) can match
+    more files than it pins. A candidate is a proposal, not a contract, and
+    pinning one would make an unratified file's bytes trigger a ledger re-review.
+    The glob is left wide on purpose; the pin list is the authority on what is a
+    contract here.
+    ─────────────────────────────────────────────────────────────────────────────
+    THE FOURTH RECONCILE — 2026-09-03, converge-pq2. TWO PINS MISMATCHED, AND THE
+    MANDATORY RE-REVIEW WAS RUN RATHER THAN THE HASHES BUMPED (LEDGER-FORMAT §4).
+    What actually moved, from `git diff c2420ce HEAD -- contracts/<f>`:
+      documents.v1  — H1 gains "amended 2026-09-03, owner-ratified twice"; clause
+        4 gains a sentence permitting ONE extra section; clause 5 is rewritten to
+        anchor kit numbering to the Core clause numbers; clause 8 gains the fenced
+        before/after presentation; NEW clause 14 (one contract is one domain
+        component); two new kit-assert bullets; a Changelog section.
+      surface.v1    — ONE line added, the superseded banner. NO CLAUSE CHANGED, so
+        every surface row's READING still holds; only its status did.
+    Every documents.v1 and surface.v1 row was re-read against the new bytes. Three
+    rows moved and one was added; the rest were re-read and left standing, which
+    is recorded here rather than in each row so a reader can see the whole pass:
+      CVG-044  OPEN-PINNED → CONFORMS  the clause stopped being silent
+      CVG-046  OPEN-PINNED → CONFORMS  the clause named the numbering
+      CVG-051  GAP, re-pinned           the check can now run, and it FAILs
+      CVG-070  NEW                      Core 14, which did not exist before
+    ELEVEN CONTRACTS ADDED TO THE PIN LIST in the same pass — the experience family,
+    ratified DRAFT 2026-09-03. They were SEEDED, not reconciled: this is their first
+    ledger. surface.v1 stays pinned though it is superseded, because its rows are
+    still live and a superseded contract's bytes changing is still a re-review.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # composition.v1 — 9 rows.  The healthy one: 7 of 9 CONFORM, each by a kit rule
@@ -970,9 +1022,9 @@
     ref: 'if grep -q "^## Clause 10 - " modes/converge-manager.md && [ -f docs/workflow/OWNER-RETURN-LOG.md ]; then echo "MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=$(grep -c "^## " docs/workflow/OWNER-RETURN-LOG.md)"; else echo STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=4"
+      stdout_contains: "MODE-ENCODES-CLAUSE-10-LOG-EXISTS-BRIEFS=8"
   proves: >
-    That the mode encodes this clause and the log it names now exists with four
+    That the mode encodes this clause and the log it names now exists with eight
     briefs in it. NOT that a brief exists for EVERY return, which is what the
     clause requires and what nothing counts.
   notes: >
@@ -984,9 +1036,13 @@
     actually read does not exist." The log was then created (commit e659c3a) and
     now carries four dated briefs. Silent movement back toward spec is drift too
     (LEDGER-FORMAT §3), so the probe was re-pointed rather than quietly satisfied.
-    STILL GAP: four briefs in a log is not "a brief on every return". Nothing
+    STILL GAP: eight briefs in a log is not "a brief on every return". Nothing
     counts returns, and the turnkey's recorded step (i) is now stale — re-running
     it is what would settle this row.
+    RE-DERIVED 2026-09-03 (converge-pq2, the fourth reconcile): BRIEFS=4 → 8. The
+    count is the pin, so it flipped, which is the row working — four more returns
+    were briefed. The reading is unchanged: a count of briefs still cannot say
+    whether one exists per return. Re-pinned at 8.
   work: converge-qtp
 
 - id: CVG-021
@@ -1289,25 +1345,50 @@
     for the next time one is needed.
 
 - id: CVG-066
-  title: the shipped app's own words, scanned for internal vocabulary by the kit itself
+  title: the app's own words are no longer scanned — the kit that scanned them is retired
   contract:
     file: contracts/surface.v1.md
     clause: "Conformance kit asserts, bullet 5"
     quote: "No internal vocabulary outside Details folds."
-  disposition: CONFORMS
+  disposition: GAP
   assertion:
     kind: probe
     ref: 'if uv run --extra web --with pytest --with httpx pytest "tests/test_plain_words_on_the_surface.py::test_the_shipped_kit_reports_rule_8c_pass_on_every_page" -q >/dev/null 2>&1; then echo SURFACE-RULE-8C-PASSES-ON-EVERY-APP-PAGE; else echo SURFACE-RULE-8C-NOT-ASSERTED-AGAINST-THE-APP; fi'
     expect:
       exit: 0
-      stdout_contains: "SURFACE-RULE-8C-PASSES-ON-EVERY-APP-PAGE"
+      stdout_contains: "SURFACE-RULE-8C-NOT-ASSERTED-AGAINST-THE-APP"
   proves: >
+    That the wiring which used to carry this promise DOES NOT RUN any more. The
+    probe asserts the gap itself, so it flips green-ward the moment the caller is
+    re-pointed or the scan finds a new home — which is what converge-h5k decides.
+    THE READING THIS ROW CARRIED UNTIL 2026-09-03, KEPT FOR THE RECORD —
     That the SHIPPED kit — `conformance/surface/run.py`, imported from where it
     lives and not reimplemented — reports rule 8c PASS on the HTML of every page
     the app declares, rendered against a project deliberately written in the
     machinery's own words. It is the kit's verdict, not a test's opinion of the
     kit. NOT that the pinned mockup passes: it still does not (CVG-037).
   notes: >
+    RE-DERIVED 2026-09-03 (converge-pq2) AND MOVED CONFORMS → GAP. THE RATCHET
+    CAUGHT THE LANE THAT WAS WRITING IT. `surface.v1` was superseded by the
+    experience family, so the same lane that seeded the family's ledger also
+    retired its kit to `conformance/_superseded/surface/`. This row's probe runs
+    `tests/test_plain_words_on_the_surface.py`, which imports the kit by its OLD
+    path — so the move broke the one assertion this row rested on, and the probe
+    went red in the same run that made the move. Nothing was quietly bumped: the
+    disposition follows the fact.
+    WHAT IS ACTUALLY TRUE TODAY: the app's own words are scanned by nothing. The
+    retired kit's rule 8c still works and still reads the app's rendered pages,
+    but it is out of the suite; and none of the three experience kits carries a
+    vocabulary rule, because `experience.v1` Core 6's "no machine vocabulary
+    outside a Details fold" belongs to the umbrella, which has no kit
+    (converge-f1l).
+    THE FIX IS ONE LINE OR ONE RULE, AND IT IS NOT THIS LANE'S. converge-h5k
+    carries both options: re-point the import at the superseded path, keeping the
+    assertion and naming what it reads as retired; or lift rule 8c into a live
+    kit and retire the test with its contract. This row cites that item, and its
+    probe is unchanged — only its expectation moved, to the reading that is now
+    true.
+    THE READING BEFORE THAT, KEPT FOR THE RECORD —
     RAN 2026-09-03 → SURFACE-RULE-8C-PASSES-ON-EVERY-APP-PAGE. Behind it:
     `pytest tests/test_plain_words_on_the_surface.py` → 9 passed, of which three
     are the ones that make this row mean something —
@@ -1343,6 +1424,7 @@
     made under the earlier table; the row those lines name is the one numbered
     8c today.
 
+  work: converge-h5k
 - id: CVG-038
   title: the whole operation in view
   contract:
@@ -1644,19 +1726,32 @@
     whose "every time" is the text the extra section actually strains.
 
 - id: CVG-044
-  title: whether a contract may carry an EXTRA section — the clause is silent, and one does
+  title: an extra section is permitted, and the one that exists neither displaces nor reorders
   contract:
     file: contracts/documents.v1.md
     clause: "Core 4"
-    quote: "**The same sections, in the same order, every time.**"
-  disposition: OPEN-PINNED
+    quote: |
+      A contract may carry an additional section of its own, provided it neither
+      displaces nor reorders the ones above.
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'grep -q "^## Declared dependencies" contracts/operation.v1.md && echo EXTRA-SECTION-PRESENT || echo EXTRA-SECTION-GONE'
     expect:
       exit: 0
       stdout_contains: "EXTRA-SECTION-PRESENT"
-  justification: >
+  notes: >
+    RE-READ 2026-09-03 (converge-pq2, the fourth reconcile) AND MOVED
+    OPEN-PINNED → CONFORMS. THE CLAUSE STOPPED BEING SILENT: the steward ratified
+    the amendment on 2026-09-03 and clause 4 now carries the sentence this row
+    quotes, which is reading (b) of the two this row pinned between. converge-lnt
+    — the item that asked the question and wrote the candidate — is resolved, so
+    the `work` ref is dropped: a CONFORMS row may not carry one, and there is
+    nothing left to fix. The probe is unchanged and still asserts the fact the
+    row now claims (an extra section exists and is legal); order and presence are
+    asserted next door by CVG-043 through documents kit rule 4, which is the
+    "neither displaces nor reorders" half.
+    THE ORIGINAL PINNING, KEPT FOR THE RECORD —
     RAN 2026-09-02 → EXTRA-SECTION-PRESENT. contracts/operation.v1.md:58 carries
     "## Declared dependencies (checked at install)", between Core and the
     Backlogged section. No other contract has it, and Core 4's list does not
@@ -1671,7 +1766,6 @@
     FIXED BY THE CROSS-CHECK: the seed's ref was `grep -n '^## '
     contracts/operation.v1.md`, which exits 0 whether or not the extra section
     exists — an OPEN-PINNED pinned by nothing.
-  work: converge-lnt
 
 - id: CVG-045
   title: clauses lead with the rule as fact, in bold
@@ -1704,7 +1798,7 @@
     ref: 'awk ''FNR==1{if(n>4)t++;n=0;c=0} /^## Core \(the teeth\)/{c=1;next} /^## /{if(n>4)t++;n=0;c=0;next} c&&/^[0-9]+\. /{if(n>4)t++;n=1;next} c&&NF&&n{n++} END{if(n>4)t++;print "CLAUSES-PAST-THREE-LINES=" t+0}'' contracts/*.md'
     expect:
       exit: 0
-      stdout_contains: "CLAUSES-PAST-THREE-LINES=8"
+      stdout_contains: "CLAUSES-PAST-THREE-LINES=28"
   justification: >
     RAN 2026-09-02 → CLAUSES-PAST-THREE-LINES=8. Rule 1e checks only that a clause
     continues in bold; nothing enforces the limit. Measured: composition Core 6 (5
@@ -1718,21 +1812,58 @@
     without forging the decision. The count deliberately doubles as the pin.
     Same shape as CVG-046, which is the other half of this clause.
     ADDED BY THE CROSS-CHECK.
+    RE-DERIVED 2026-09-03 (converge-pq2, the fourth reconcile): 8 → 28, and the
+    row is re-pinned at 28. The count is the pin and it flipped, which is the row
+    working — but nothing regressed: eleven contracts landed on 2026-09-03 (the
+    experience family), and 17 of the 20 new over-length clauses are theirs. The
+    other three are documents.v1's own amendment (clauses 4, 8 and the new 14).
+    Measured, by contract: composition 6 · documents 4, 8, 12, 14 · operation 4, 5,
+    7 · surface 3, 5, 9 · experience 1, 11, 15 · experience-direction 6, 7, 11 ·
+    experience-collaboration 2 · platform-web 1, 2 · platform-ios 1, 2 ·
+    platform-android 1, 2 · platform-macos 1, 2 · platform-windows 1, 2.
+    THE READING IS UNCHANGED and still undecided: whether "lines" means SOURCE
+    lines or RENDERED sentences. Note what the new data adds to the argument —
+    every platform contract's clauses 1 and 2 are over the limit, and they are
+    over it because they RESTATE the umbrella's requirements, which is the shape
+    `experience.v1` clause 15 asks of them. That is a second reading the steward
+    may want: a clause that recites another contract is a different thing from a
+    clause that explains itself at length. Still OPEN-PINNED; still no decision
+    forged; still no work filed, because filing it would presume the reading.
 
 - id: CVG-046
-  title: "\"numbers match the conformance kit's rule table\" — which numbering?"
+  title: every kit's rule table is numbered to its contract's Core clauses
   contract:
     file: contracts/documents.v1.md
     clause: "Core 5"
-    quote: "Numbers match the conformance kit's rule table."
-  disposition: OPEN-PINNED
+    quote: |
+      The kit's rule table is numbered to these Core clause numbers, so a failing
+      rule names the clause it breaks.
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'grep -q "numbered to the contract" conformance/composition/README.md && echo KITS-NUMBER-TO-CONFORMANCE-BULLETS || echo KIT-NUMBERING-CHANGED'
+    ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"rule\"]==\"5b\"][0];o=r[\"observed\"];print((\"KITS-ALL-NUMBERED-TO-CORE-CLAUSES=%d\" % len(o)) if o and all(k[\"aligned\"] for k in o) else \"KIT-NUMBERING-DRIFTED\")"'
     expect:
       exit: 0
-      stdout_contains: "KITS-NUMBER-TO-CONFORMANCE-BULLETS"
-  justification: >
+      stdout_contains: "KITS-ALL-NUMBERED-TO-CORE-CLAUSES=5"
+  notes: >
+    RE-READ 2026-09-03 (converge-pq2, the fourth reconcile) AND MOVED
+    OPEN-PINNED → CONFORMS. THE QUOTE THIS ROW HELD NO LONGER EXISTS — clause 5
+    was rewritten by the ratified amendment, and the sentence it now carries is
+    the answer to the question this row pinned. The steward settled it on
+    2026-09-03 (owner-ratifications, call 2): kit rule ids anchor to the
+    contract's clause numbers. converge-bmp is answered, so the `work` ref is
+    dropped — a CONFORMS row may not carry one.
+    RE-POINTED, NOT JUST RE-QUOTED: the old probe grepped one kit's README for a
+    sentence about itself, which would go on passing if a kit renumbered. The new
+    one reads documents kit rule 5b's OWN observation — for every contract with a
+    kit beside it, the Core clause numbers against that kit's rule-table numbers —
+    and asserts all five are aligned. It goes red if any kit drifts, and it goes
+    red if a sixth kit lands unaligned, which is the case that matters now that
+    the experience family has three kits of its own.
+    RAN 2026-09-03 → KITS-ALL-NUMBERED-TO-CORE-CLAUSES=5 (composition, documents,
+    experience-console, experience-direction, experience-operation — every one
+    `aligned: True`).
+    THE ORIGINAL PINNING, KEPT FOR THE RECORD —
     RAN 2026-09-02 → KITS-NUMBER-TO-CONFORMANCE-BULLETS. All three shipped kits
     number their rules to the contract's **Conformance kit asserts** bullets, not
     to its Core clause numbers — conformance/composition/README.md says so in its
@@ -1743,7 +1874,6 @@
     bullets. Current behaviour pinned and asserted; no decision forged. Filed as
     converge-bmp — one sentence from the steward, then either the clause or three
     rule tables get one edit.
-  work: converge-bmp
 
 - id: CVG-047
   title: status lives in the H1 parenthetical and nowhere else
@@ -1789,7 +1919,7 @@
     ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"no_progress_words_as_status\"][0];print(\"PROGRESS-WORD-RULE-PASSES-ON-\"+str(len(r[\"files\"]))+\"-DOCS\" if r[\"status\"]==\"PASS\" else \"PROGRESS-WORD-RULE-\"+r[\"status\"])"'
     expect:
       exit: 0
-      stdout_contains: "PROGRESS-WORD-RULE-PASSES-ON-5-DOCS"
+      stdout_contains: "PROGRESS-WORD-RULE-PASSES-ON-15-DOCS"
   notes: >
     RAN 2026-09-02 → rule 6b (`no_progress_words_as_status`) PASS, "all 5
     document(s) leave progress out of their status" →
@@ -1800,8 +1930,13 @@
     rule 6b, which scans both, in status position only.
     THE DOCUMENT COUNT IS IN THE EXPECTATION ON PURPOSE: a rule that quietly
     stopped reading the vision would still say PASS, and this row would still
-    be green. It goes red at 4.
+    be green. It goes red if the count falls.
     MOVED BY converge-jc9, on this run and not on that item's mapping.
+    RE-DERIVED 2026-09-03 (converge-pq2, the fourth reconcile): 5 → 15 documents,
+    still PASS, re-pinned at 15. The count is the pin and it flipped, which is the
+    row working — and it flipped the right way: eleven contracts landed and every
+    one of them keeps progress out of its status too. 15 = 14 contracts +
+    docs/VISION.md.
 
 - id: CVG-048
   title: visions are written as though already true
@@ -1952,8 +2087,12 @@
     ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"work_item_names_a_contract\"][0];print(\"WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT\" if r[\"status\"]==\"SKIP\" and \"no work-item export\" in r[\"reason\"] else \"WORK-ITEM-CHECK-NOW-RUNS-\"+r[\"status\"])"'
     expect:
       exit: 0
-      stdout_contains: "WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT"
+      stdout_contains: "WORK-ITEM-CHECK-NOW-RUNS-FAIL"
   proves: >
+    That rule 9a now RUNS and returns FAIL against this repository's exported
+    queue. It proves the promise is broken, not merely unchecked — which is a
+    stronger thing than this row could say yesterday.
+    THE READING THIS ROW USED TO CARRY, KEPT FOR THE RECORD —
     Only that rule 9a is present, mechanical, and still has nothing to read in
     this tree. It proves NOTHING about whether this repository's work items name
     their contract or define done in plain words — that is the promise, and it is
@@ -1998,7 +2137,24 @@
     export → WORK-ITEM-CHECK-NOW-RUNS-PASS; rewording rule 9a's SKIP reason →
     WORK-ITEM-CHECK-NOW-RUNS-SKIP. Renaming the rule id makes the probe exit 1
     rather than pass on a vanished rule (controlled on 9b, same probe shape).
-  work: converge-gmo
+    ─────────────────────────────────────────────────────────────────────────────
+    THE CONTROL FIRED FOR REAL — RE-DERIVED 2026-09-03 (converge-pq2, the fourth
+    reconcile). The export landed (converge-gmo, resolved), rule 9a ran, and the
+    probe printed WORK-ITEM-CHECK-NOW-RUNS-FAIL where this row expected
+    CANNOT-RUN-NO-EXPORT. That is the simulated fix arriving in the tree, and the
+    row going red on movement TOWARD spec is exactly what LEDGER-FORMAT §3's
+    bidirectional rule asks for. Nothing was quietly bumped: the row was re-read.
+    STILL GAP, FOR A DIFFERENT AND BETTER REASON. Yesterday the clause was
+    unchecked; today it is checked and broken — 9 of 42 items, e.g. converge-12o
+    (does not define done in plain words), converge-5m8 and converge-8om (define
+    done with the machine state word `GAP`), converge-bmp (`OPEN-PINNED`).
+    THE `work` REF MOVED converge-gmo → converge-a5r, because this file's own rule
+    says a closed item may not stay cited as the thing that will fix a red row.
+    converge-a5r carries the nine, and carries the honest question inside them:
+    most are items ABOUT the ledger, whose definition of done genuinely is a
+    disposition. Whether clause 9's "plain words" admits a term of art is a
+    documents.v1 question, not nine edits — the item says so rather than assuming.
+  work: converge-a5r
 
 - id: CVG-069
   title: a work item quotes the feedback or gap it came from — telling a quotation from a cited filename needs a reader
@@ -2508,3 +2664,2803 @@
 # its expectation — drift toward spec flips the row just as loudly as drift away,
 # which is LEDGER-FORMAT §3's bidirectional rule made executable on one row.
 # ─────────────────────────────────────────────────────────────────────────────
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# THE FOURTH RECONCILE AND THE SECOND SEED — 2026-09-03, converge-pq2.
+#
+# Everything below this line was written in one pass, and the pass did two
+# different things which are kept apart on purpose:
+#
+#   RECONCILE  documents.v1 and surface.v1 mismatched their SYNC pins. The
+#              mandatory full re-review was run rather than the hashes bumped
+#              (LEDGER-FORMAT §4). Three rows moved, one was added (CVG-070),
+#              and four stale `expect` pins were re-derived. The whole pass is
+#              recorded in CVG-000's notes; the moved rows carry their own.
+#
+#   SEED       the eleven contracts of the experience family, ratified DRAFT on
+#              2026-09-03, had no ledger at all. 109 rows, one per Core clause,
+#              are below. This is their FIRST reading, so nothing here is a
+#              re-derivation and no row claims to be.
+#
+# HOW A DISPOSITION WAS CHOSEN HERE, since 109 rows landing at once is exactly
+# the moment a vocabulary goes soft:
+#
+#   CONFORMS        a kit rule PASSED against the running app on 2026-09-03, or
+#                   a command in this tree asserts the fact and was run.
+#   GAP             the promise is checkable and broken. Every one carries a
+#                   work ref, and the ref is an OPEN item — this file's own rule
+#                   is that a closed item may not stay cited as the fix for a
+#                   red row.
+#   NOT-ASSERTABLE  there is no subject (four platform bodies do not exist; a
+#                   second party never appeared), or the clause asks for a
+#                   reading no machine performs (idiom vs divergence, one domain
+#                   component). Never used to avoid filing work: where a check
+#                   could exist and does not, the row is GAP and cites
+#                   converge-f1l.
+#   VIOLATION       used by NO row. It is defined against a FROZEN clause, and
+#                   every contract here is (DRAFT).
+#
+# THE APP IS THE SUBJECT, AND IT WAS RUNNING. Every experience row's verdict
+# came from a kit run against http://127.0.0.1:8788 on 2026-09-03 — not from
+# reading app/, not from a lane's self-report. The three kits are
+# conformance/experience-direction, -operation and -console, and each row cites
+# the rule that judged it, so a reader can re-run exactly what produced the word.
+#
+# WHY THE ROWS CITE KIT RULES RATHER THAN NETWORK PROBES: a probe that fetches
+# the running app would make `ledger/checks/verify.py` fail whenever the app is
+# down, which would teach everyone to ignore it. `indexed` refs carry the
+# format's own honest limit (LEDGER-FORMAT §8: it proves the rule EXISTS, never
+# that it still asserts this row's clause) — and verify.py's rule-id tripwire
+# checks each named rule against its kit's README table, so a ref pointing
+# confidently at the wrong rule is caught.
+# ────────────────────────────────────────────────────────────────────────────
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# documents.v1 Core 14 - ADDED 2026-09-03 by the fourth reconcile (converge-pq2).
+# The clause did not exist when this ledger was seeded; it arrived with the
+# amendment the steward ratified on 2026-09-03, and a clause with no row is
+# invisible.
+# ────────────────────────────────────────────────────────────────────────────
+- id: CVG-070
+  title: "one contract is one domain component — the steward's judgment, not a machine's"
+  contract:
+    file: contracts/documents.v1.md
+    clause: "Core 14"
+    quote: |
+      **One contract is one domain component** — read in a minute, one "who builds
+      against this", one conformance kit. Split it when the audience divides, when
+      the kit would need two targets, or when the clauses stop referring to one
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: indexed
+    ref: 'conformance/documents/run.py (rule 14)'
+  justification: >
+    The documents kit carries rule 14 and it SKIPs, in its own words: size is
+    already judged by rule 2, and whether a contract is ONE domain component is
+    the steward's judgment, not a machine's. `docs/RIGHT-SIZING.md` carries the
+    split and merge tests, and every one of them turns on a reading - does the
+    audience divide, would the kit need two targets, have the clauses stopped
+    referring to one another. A file scan cannot tell one component from two.
+    RAN 2026-09-03 -> rule 14 SKIP. NOT-ASSERTABLE and not GAP because the check
+    is not missing; it is refused, with a reason, by a rule that exists.
+    WHAT WOULD SETTLE IT: the same thing that settled it once already. This
+    clause exists because a contract failed all three size signals at once and
+    had to be split into the experience family - a reader made that call, and
+    the record of it is `docs/RIGHT-SIZING.md` plus the eleven contracts.
+
+# ────────────────────────────────────────────────────────────────────────────
+# experience.v1 - 15 rows. SEEDED 2026-09-03 by converge-pq2. THE UMBRELLA.
+# Its clauses are mostly kept BY the section contracts hanging off it, so most
+# rows here cite a section kit's rule and inherit its verdict rather than
+# asserting the umbrella twice. The clauses that are the umbrella's OWN - the
+# write count, the four behaviour words, the three surface classes - have no kit
+# at all, and say so: converge-f1l is the item for that, and it is the single
+# work ref they share rather than eight items filed for one absence.
+# ────────────────────────────────────────────────────────────────────────────
+- id: CVG-100
+  title: "the anchor is a manager session, and home is the list of them sorted by need"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 1"
+    quote: |
+      **The anchor is a manager session, not a repository.** One manager session
+      may register several repositories and several work queues. Home is the list
+      of manager sessions you run, sorted by which one needs you — how many things
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 13)'
+  proves: >
+    Rule 13 asserts the home list, its sort by which manager needs you, and the
+    one message that reaches all of them. It PASSes the first two halves and
+    FAILs the third, which is why this row is GAP and not CONFORMS.
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 13 FAIL: every manager session is listed and sorted by
+    need; there is no way to tell them all at once.
+  work: converge-q66
+- id: CVG-101
+  title: "two places, and only two"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 2"
+    quote: |
+      **Two places, and only two.** *Direction* — the vision and contracts as one
+      experience. *Operation* — the manager session at work as one experience.
+      Conversation is a modality, not a place.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 1)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Console rule 1 PASS: the place switch offers exactly
+    Direction and Operation, the console is not listed among them, and the
+    place-switch renderer does not disturb it. That rule is the one that would
+    catch a third place appearing, whichever direction it came from.
+- id: CVG-102
+  title: "the Manager Console is a pane, never a third place"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 3"
+    quote: |
+      **The Manager Console is a pane, never a third place.** It stays open beside
+      either place and survives the switch between them; `experience-console.v1`
+      holds what it must do.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 1)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Console rule 1 PASS. Same rule as CVG-101 and a different
+    half of it: that row reads the place count, this one reads where the console
+    sits and whether switching places disturbs it.
+- id: CVG-103
+  title: "exactly five writes"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 4"
+    quote: |
+      **Exactly five writes.** Answer with a word (ratified · ratified with edits ·
+      declined · later) · raise or lower a priority · drop feedback · steer · ask
+      for a proposal. Nothing else, in any body, writes anything.
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 9)'
+  proves: >
+    Rule 9 asserts the FIFTH write - Ask - and its proposal-returning route.
+    It proves that write is absent, not that the other four are right.
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 9 FAIL: the app's own /openapi.json lists three POST
+    routes (decision, feedback, steer). The umbrella names five: answer with a
+    word, raise or lower a priority, drop feedback, steer, ask. Two are missing.
+  work: converge-6cc
+- id: CVG-104
+  title: "at most five things ask for your word at once, and every answer lands in a dated record"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 5"
+    quote: |
+      **At most five things ask for your word at once,** re-ranked each refresh.
+      Several small calls may arrive as one ratification sheet answered in a pass;
+      every answer lands in a dated ratification record.
+  disposition: GAP
+  assertion:
+    kind: probe
+    ref: 'ls docs/workflow/owner-ratifications-*.md >/dev/null 2>&1 && echo "DATED-RATIFICATION-RECORDS=$(ls docs/workflow/owner-ratifications-*.md | wc -l)" || echo NO-DATED-RATIFICATION-RECORD'
+    expect:
+      exit: 0
+      stdout_contains: "DATED-RATIFICATION-RECORDS="
+  proves: >
+    Only that dated ratification records EXIST in this repository, which is the
+    second half of the clause. The first half - that at most five things ask for
+    your word at once - is countable from the app's own /api/needs payload and
+    nothing counts it. The probe deliberately pins the presence of the records
+    and not their number, so adding one does not flip a row about a different
+    promise.
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. No kit asserts the five-at-once limit; converge-f1l is the
+    item for the umbrella's own clauses.
+  work: converge-f1l
+- id: CVG-105
+  title: "plain state words everywhere"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 6"
+    quote: |
+      **Plain state words everywhere.** Contracts: *Kept · Not yet · Broken ·
+      Pinned open · Can't check*. Work: *Truly ready · Waiting on you · Working ·
+      Stuck · Done*. Lanes: *Working · Quiet · Silent — may have died*.
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 8)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Operation rule 8 FAIL: the surface shows each lane's raw
+    `status`, and 42 lanes read 'done' with 2 reading 'stuck' - both outside the
+    lane vocabulary this clause fixes (Working / Quiet / Silent - may have
+    died).
+    'Done' and 'Stuck' are WORK words here, not lane words, which is the exact
+    confusion a fixed vocabulary exists to prevent. If a finished lane genuinely
+    needs a word, that is a candidate amendment to this clause, not a kit edit.
+  work: converge-q66
+- id: CVG-106
+  title: "the app holds no data of its own"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 7"
+    quote: |
+      **The app holds no data of its own.** It shows the project's documents, code
+      record, work queue, lanes, return log, and pending decisions. A second copy
+      of the truth is a defect, not a cache.
+  disposition: CONFORMS
+  assertion:
+    kind: absence
+    ref: 'if grep -rlE "sqlite3|shelve|pickle\.dump" app/*.py | grep -q .; then echo APP-KEEPS-A-STORE; else echo APP-KEEPS-NO-STORE-OF-ITS-OWN; fi'
+    expect:
+      exit: 0
+      stdout_contains: "APP-KEEPS-NO-STORE-OF-ITS-OWN"
+  proves: >
+    That the app carries no persistent store of its own in its own code - no
+    database, no shelf, no pickled state. It does NOT prove every value on
+    screen is read back from the project; that is what the app's README table
+    claims source by source, and no machine here checks it.
+    An `absence` assertion on purpose (LEDGER-FORMAT section 2): a future silent
+    store flips this row red rather than passing unnoticed.
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. The app's one piece of local state is the browser bookmark
+    in localStorage, which is the reader's, not the project's.
+- id: CVG-107
+  title: "whatever you can do here, the manager session can do too"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 8"
+    quote: |
+      **Whatever you can do here, the manager session can do too.** Every write
+      names a manager-session operation that does the same thing, so nothing the
+      project needs is reachable only by a person at a screen.
+  disposition: GAP
+  assertion:
+    kind: probe
+    ref: 'grep -rlE "manager operation|manager-session operation" app/templates app/static 2>/dev/null | wc -l | sed ''s/^/WRITE-TO-OPERATION-MAPPING-FILES=/'''
+    expect:
+      exit: 0
+      stdout_contains: "WRITE-TO-OPERATION-MAPPING-FILES=0"
+  proves: >
+    That the app publishes NO mapping from a write to the manager-session
+    operation that does the same thing - the thing this clause asks every write
+    to name. It does not prove the operations are unreachable; it proves the
+    surface never says which they are, so a reader cannot check the claim.
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. The superseded surface kit checked exactly this and the
+    old app published the mapping behind a Details fold; the app that shipped
+    does not. No experience kit picked the rule up - converge-f1l.
+  work: converge-f1l
+- id: CVG-108
+  title: "every behavior carries one of four words"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 9"
+    quote: |
+      **Every behavior carries one of four words** — `REQUIRED`, `IDIOM`,
+      `OPTIONAL`, `EXCLUDED`. Required is present and behaves as described, and its
+      absence is a gap; optional a surface may carry; excluded it must not, and its
+  disposition: GAP
+  assertion:
+    kind: probe
+    ref: 'for f in contracts/experience-console.v1.md contracts/experience-collaboration.v1.md; do printf "%s " "$(grep -c ''(REQUIRED)\|(IDIOM)\|(OPTIONAL)\|(EXCLUDED)'' $f)"; done | sed ''s/^/SECTION-CONTRACTS-WITH-NO-BEHAVIOUR-WORDS: /'''
+    expect:
+      exit: 0
+      stdout_contains: "SECTION-CONTRACTS-WITH-NO-BEHAVIOUR-WORDS: 0 0 "
+  proves: >
+    That two of the four section contracts tag not one clause with any of the
+    four words. experience-direction tags all 11 of its clauses and
+    experience-operation all 13; experience-console and
+    experience-collaboration tag none. The probe asserts the gap itself, so it
+    flips the moment either contract starts tagging.
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Read from the contracts, not the app: this clause is a
+    promise about how the family is WRITTEN.
+  work: converge-f1l
+- id: CVG-109
+  title: "IDIOM means the behavior is required and its shape is not"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 10"
+    quote: |
+      **`IDIOM` means the behavior is required and its shape is not.** Review asks
+      "is the behavior satisfied?", never "does it look the same?" — which is how
+      a body gets to be wholly native without drifting.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    This clause governs how a REVIEW is conducted - it asks the reviewer to ask
+    'is the behavior satisfied?' rather than 'does it look the same?'. There is
+    no artifact in the tree whose state could be read to answer it, and no
+    second body to review against a first. A machine can check that a clause
+    carries the word IDIOM (CVG-108 does); it cannot check that a reader
+    honoured what the word means.
+    WHAT WOULD SETTLE IT: a second body, and a recorded review of one against
+    the other, by name and date - which is what this contract's own conformance
+    list asks for in its last bullet.
+- id: CVG-110
+  title: "idioms satisfy behaviors; they never subtract them"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 11"
+    quote: |
+      **Idioms satisfy behaviors; they never subtract them.** Three tests settle
+      idiom against divergence — *behavior*: same thing done, same fact learned,
+      same refusal for the same reason; *transfer*: is the person surprised, or
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    The clause names three tests - behavior, transfer, subtraction - and every
+    one of them is a judgment about a PAIR of bodies. One body exists. There is
+    nothing to compare, so any verdict here would be invented.
+    WHAT WOULD SETTLE IT: a second body. Until then this is 'can't check', which
+    is a different answer from 'not yet' and is recorded as one.
+- id: CVG-111
+  title: "a body may exceed this umbrella in idiom, never in features"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 12"
+    quote: |
+      **A body may exceed this umbrella in idiom, never in features.** Richer
+      gestures and better affordances are welcome everywhere. A feature in one
+      body and nowhere else is either a behavior that belongs in this family or
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    'A feature in one body and nowhere else is either a behavior that belongs in
+    this family or it is debt.' With one body, every feature is in one body and
+    nowhere else, and the clause's own test cannot separate the two cases.
+    WHAT WOULD SETTLE IT: a second body, and the comparison this contract's
+    conformance list calls 'a behavior found in one body and named in no
+    contract is reported as debt'.
+- id: CVG-112
+  title: "three surface classes, and every behavior placed against all three"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 13"
+    quote: |
+      **Three surface classes, named once:** *full app* · *quick-access* (widget,
+      tray, menu bar) · *notification*. Every behavior is placed against all
+      three, so "nobody thought about the widget" cannot pass as a decision.
+  disposition: GAP
+  assertion:
+    kind: probe
+    ref: 'grep -rl ''quick-access'' contracts/experience-*.v1.md | wc -l | sed ''s/^/SECTION-CONTRACTS-PLACING-BEHAVIOUR-AGAINST-THE-THREE-CLASSES=/'''
+    expect:
+      exit: 0
+      stdout_contains: "SECTION-CONTRACTS-PLACING-BEHAVIOUR-AGAINST-THE-THREE-CLASSES=0"
+  proves: >
+    That no section contract places any behavior against the three surface
+    classes - not one of the four so much as names 'quick-access'. The five
+    platform contracts do name it; the sections, where the behaviours live, do
+    not. So 'nobody thought about the widget' can still pass as a decision,
+    which is the exact failure this clause exists to stop.
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Read from the contracts. converge-f1l carries the missing
+    matrix.
+  work: converge-f1l
+- id: CVG-113
+  title: "where a body genuinely cannot do a thing, it says so in the app"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 14"
+    quote: |
+      **Where a body genuinely cannot do a thing, it says so in the app** — what
+      the limit is, and what to do instead. Silence is the only wrong answer.
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 10)'
+  proves: >
+    Rule 10 PASSes - feedback works in every form the body CLAIMS - and its
+    report names the forms it does not offer. That naming is the evidence for
+    this row, not the rule's verdict: the rule judges the section clause, this
+    row judges the umbrella's, and they disagree on purpose.
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 10 reports forms_accepted ['text', 'a screenshot'],
+    forms_absent ['voice']. The app says nothing anywhere about not taking a
+    voice note - no limit stated, no alternative offered. Silence is the one
+    wrong answer this clause names.
+  work: converge-f1l
+- id: CVG-114
+  title: "this umbrella governs a family — and it names two contracts that do not exist"
+  contract:
+    file: contracts/experience.v1.md
+    clause: "Core 15"
+    quote: |
+      **This umbrella governs a family.** The places are held by
+      `experience-direction.v1` · `experience-operation.v1` ·
+      `experience-console.v1` · `experience-collaboration.v1`; the idioms of one
+      body by one `platform-*.v1` — `platform-browser.v1` and
+  disposition: GAP
+  assertion:
+    kind: probe
+    ref: 'for f in contracts/platform-browser.v1.md contracts/platform-web-app.v1.md; do [ -f $f ] && echo PRESENT || echo ABSENT; done | paste -sd, - | sed ''s/^/CLAUSE-15-NAMED-PLATFORM-CONTRACTS: /'''
+    expect:
+      exit: 0
+      stdout_contains: "CLAUSE-15-NAMED-PLATFORM-CONTRACTS: ABSENT,ABSENT"
+  proves: >
+    That both platform contracts this clause names by name are absent from
+    `contracts/`. It proves the umbrella and the family disagree about the
+    family's membership; it does not decide which of them is wrong.
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. What exists instead is one `platform-web.v1`, covering the
+    browser and the installable web app together - its own clause 9 is the
+    install seam. Both readings are defensible and both were ratified in the
+    same pass, which is why this is filed rather than fixed: a ratified clause
+    changes by proposal. converge-d3n carries the decision.
+  work: converge-d3n
+
+# ────────────────────────────────────────────────────────────────────────────
+# experience-direction.v1 - 11 rows, one per Core clause. SEEDED 2026-09-03 by
+# converge-pq2, every disposition earned by a run of conformance/experience-
+# direction/run.py against the RUNNING app, not by reading the app's source.
+# Verdict that day: PASS 5 - FAIL 7 - SKIP 0. Five of the seven FAILs are one
+# shape: a control the contract requires is simply not there.
+# ────────────────────────────────────────────────────────────────────────────
+- id: CVG-120
+  title: "documents are organized per repository, with an All view"
+  contract:
+    file: contracts/experience-direction.v1.md
+    clause: "Core 1"
+    quote: |
+      **Documents are organized per repository, with an All view across them.**
+      *(REQUIRED)* One manager session may hold several repositories, and the
+      agreement is one body of work, not one reading per checkout.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 1)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 1 PASS: one repository, 15 documents, and an all-repos
+    view across them.
+- id: CVG-121
+  title: "documents render properly, and the source is one gesture away"
+  contract:
+    file: contracts/experience-direction.v1.md
+    clause: "Core 2"
+    quote: |
+      **Documents render properly, and the source is always one gesture away.**
+      *(REQUIRED)* Markdown, images, links between documents, tables, front
+      matter, Mermaid and DOT diagrams, and safely embedded HTML all render, and a
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rules 2a, 2b)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rules 2a and 2b PASS. 2b judges only what this target's
+    documents actually
+    contain - markdown and a table survive the render - and NAMES what it could
+    not judge (images, links between documents, front matter, Mermaid, DOT,
+    embedded HTML), because none of the project's documents carries one. A
+    reader
+    should treat this CONFORMS as bounded by that list.
+- id: CVG-122
+  title: "copy, download, zoom, and choose the width"
+  contract:
+    file: contracts/experience-direction.v1.md
+    clause: "Core 3"
+    quote: |
+      **A reader can copy, download, zoom, and choose the width.** *(IDIOM)* Copy
+      as rendered, copy as source, download the source, read at page width or full
+      screen. The controls follow the platform; the four abilities do not.
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 3)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 3 FAIL: the clause names five abilities and the body
+    offers three.
+    There is no zoom, and only one copy control exists where the clause names
+    two
+    (as rendered, and as source) - that one control is called `copyRendered` and
+    copies the SOURCE, which is why the rule counts copy controls rather than
+    matching them by name.
+  work: converge-jdm
+- id: CVG-123
+  title: "four views: Reading, Changes, Review, History"
+  contract:
+    file: contracts/experience-direction.v1.md
+    clause: "Core 4"
+    quote: |
+      **Every document carries four views: Reading · Changes · Review · History.**
+      *(REQUIRED)* Reading is the clean document. Changes is what moved since you
+      last read, sentence by sentence. Review is a proposal with its evidence and
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 4)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 4 PASS: exactly the four view controls, and Changes is
+    sentence by
+    sentence - every change entry a before/now pair on all three documents that
+    carry one.
+- id: CVG-124
+  title: "direct editing is offered exactly where it is legal"
+  contract:
+    file: contracts/experience-direction.v1.md
+    clause: "Core 5"
+    quote: |
+      **Direct editing is offered exactly where it is legal, and the guard is the
+      law.** *(REQUIRED)* A draft document may be edited in place, click to save.
+      A locked one may not, and the refusal comes from the guard that refuses —
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 5)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 5 FAIL: no edit control anywhere the app serves, and no
+    write route
+    that saves a document. Offered nowhere is not offered where legal.
+  work: converge-6cc
+- id: CVG-125
+  title: "restoring from history is a real action"
+  contract:
+    file: contracts/experience-direction.v1.md
+    clause: "Core 6"
+    quote: |
+      **Restoring from history is a real action, and it routes through a proposal
+      when the target is locked.** *(REQUIRED)* Restore a wording, a paragraph, a
+      section, or the whole document. On a locked document the same gesture
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 6)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 6 FAIL: the restore controls exist at every scope the
+    clause names,
+    and their handler reaches no write the app declares - it shows a message and
+    forgets. So a restore on a locked document cannot produce the proposal this
+    clause requires, because it cannot produce anything.
+  work: converge-wrx
+- id: CVG-126
+  title: "a proposal looks the same whoever proposed it"
+  contract:
+    file: contracts/experience-direction.v1.md
+    clause: "Core 7"
+    quote: |
+      **A proposal looks the same whoever proposed it.** *(REQUIRED)* Your manager
+      session's, a teammate's, a pull request's: what changes sentence by sentence
+      · why · the evidence · what does not change · the word to answer with. One
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 7)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 7 PASS: one review path lays out what changes, why, the
+    evidence, and
+    what does not change, with the evidence after the change rather than before
+    it, and offers all four answer words.
+- id: CVG-127
+  title: "granular choices construct ratified with edits"
+  contract:
+    file: contracts/experience-direction.v1.md
+    clause: "Core 8"
+    quote: |
+      **Accepting and reverting individual changes constructs "ratified with
+      edits."** *(REQUIRED)* A steward keeps six changes, drops one, fixes three
+      words, and answers once. The granular choices are not a new kind of
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 8)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 8 FAIL: the per-change controls exist and their handler
+    reaches no
+    write, so a steward's kept-and-dropped choices are shown and discarded.
+    This rule reported a fabricated PASS on its first run - the handler's
+    message
+    contains the word 'decision' - and the kit now blanks string literals before
+    reading a handler.
+  work: converge-wrx
+- id: CVG-128
+  title: "Ask is a scoped request whose output is always a proposal"
+  contract:
+    file: contracts/experience-direction.v1.md
+    clause: "Core 9"
+    quote: |
+      **Ask is a scoped request whose output is always a proposal.** *(REQUIRED)*
+      Point at a paragraph, a document, or every document, say what you want, and
+      what returns is a proposal to review — never a silent edit, never a chat.
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 9)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 9 FAIL: Ask is offered nowhere, and no write route
+    returns a proposal.
+  work: converge-6cc
+- id: CVG-129
+  title: "concurrent editing is met with courtesy presence and reconciliation"
+  contract:
+    file: contracts/experience-direction.v1.md
+    clause: "Core 10"
+    quote: |
+      **Concurrent editing is met with courtesy presence and reconciliation.**
+      *(IDIOM)* While a person is editing a section that is shown softly, and the
+      manager session backs off and queues rather than fights. If changes do
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 10)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 10 FAIL, derived: there is no editing surface at all
+    (see CVG-124), so
+    presence has nothing to attach to, and none of Use combined / Keep mine /
+    Review both appears. The row is separate from CVG-124 because the clause is,
+    and because the two close at different moments.
+  work: converge-6cc
+- id: CVG-130
+  title: "the lock control is gated on the four conditions, and they are shown"
+  contract:
+    file: contracts/experience-direction.v1.md
+    clause: "Core 11"
+    quote: |
+      **The lock control is gated on the four conditions, and they are shown.**
+      *(REQUIRED)* It says what it means · it carries a real example of right and
+      wrong · it can be checked against reality · the steward has read it and
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 11)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 11 FAIL: no lock control, and none of the four
+    conditions appears
+    anywhere the app serves - so a steward reading a DRAFT contract is never
+    shown why it is not yet lockable.
+  work: converge-jdm
+
+# ────────────────────────────────────────────────────────────────────────────
+# experience-operation.v1 - 13 rows, one per Core clause. SEEDED 2026-09-03 by
+# converge-pq2 against the RUNNING app. Verdict that day: PASS 7 - FAIL 8 -
+# SKIP 0 across 15 rules. The eight FAILs are not absent controls, as in
+# Direction; they are a surface that shows the RIGHT things with a PART of each
+# one missing - a plan with no reasons, a brief short two of five parts, a
+# timeline with nothing to open, four flow measures of five, four steering
+# limits of five.
+# ────────────────────────────────────────────────────────────────────────────
+- id: CVG-140
+  title: "the objective, the limits, and today's strategy stand at the top"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 1"
+    quote: |
+      **The objective, the limits, and today's strategy stand at the top, in the
+      manager session's own words.** *(REQUIRED)* A steward should learn what is
+      being pursued and why this way before seeing a single piece of work.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 1)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 1 PASS: all three are stated in the manager session's
+    own words and stand above the waves and the lanes.
+- id: CVG-141
+  title: "the plan is shown in waves, with the lanes inside them, each carrying its reason"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 2"
+    quote: |
+      **The plan is shown in waves, with the lanes inside them, and every grouping
+      carries its reason.** *(REQUIRED)* A wave says what a batch of work is for;
+      a lane is one piece being carried out inside it. When the plan is redrawn,
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rules 2a, 2b)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 2a PASS, rule 2b FAIL: all 11 waves carry no reason.
+    Every wave's title
+    is its own lane names joined by commas, which is a list of members and not a
+    statement of what the batch is for; and nothing shows why the plan was
+    redrawn.
+  work: converge-lwa
+- id: CVG-142
+  title: "the return brief is the first thing a returning steward reads"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 3"
+    quote: |
+      **The return brief is the first thing a returning steward reads.**
+      *(REQUIRED)* Time away · what finished · what is stuck · what needs your
+      word · what quietly changed. The story is told in sentences, never inferred
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 3)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 3 FAIL: the brief never says what finished and never
+    says what is
+    stuck. It is six narrative sentences where the clause fixes five parts.
+  work: converge-lwa
+- id: CVG-143
+  title: "each turn in the confidence timeline opens onto its evidence"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 4"
+    quote: |
+      **A confidence timeline gives the narrative of the operation, and each turn
+      in it opens onto its evidence.** *(REQUIRED)* It records the moments that
+      changed how sure the manager session is — and how sure it now is — not every
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 4)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 4 FAIL: all 8 timeline entries carry nothing to open.
+    They say
+    confidence moved and give a reader no way to inspect why, which is the half
+    that makes a timeline worth reading.
+  work: converge-lwa
+- id: CVG-144
+  title: "throughput is shown as flow, and never offered as outcome"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 5"
+    quote: |
+      **Throughput is shown as flow, and never offered as outcome.** *(REQUIRED)*
+      Work derived, resolved, verified, reopened, and stuck say whether things are
+      moving. Whether reality is moving toward the agreement is a separate reading,
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rules 5a, 5b)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 5b PASS - flow and the outcome reading are two separate
+    readings,
+    never summed. Rule 5a FAIL - the flow reading shows derived, resolved,
+    verified and reopened, and never says stuck. Four of the five measures the
+    clause names.
+  work: converge-q66
+- id: CVG-145
+  title: "lanes running against lanes intended, with the fill control"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 6"
+    quote: |
+      **Lanes running are shown against lanes intended, with the fill control
+      beside them.** *(REQUIRED)* Empty lanes are the most common quiet waste, so
+      the ratio is on the surface and filling them is one gesture.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 6)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 6 PASS: 4 running of 4 intended, the fill control
+    beside them, and filling reaches a write the app declares.
+- id: CVG-146
+  title: "work truly ready against work waiting on you"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 7"
+    quote: |
+      **Work truly ready is shown against work waiting on you.** *(REQUIRED)* The
+      second number is the steward's own backlog, and seeing it is what keeps the
+      operation from stalling politely behind a person.
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 7)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 7 FAIL: only waiting-on-you is shown. The missing
+    number is the one
+    that says whether the operation is stalled behind the steward or genuinely
+    out of ready work.
+  work: converge-q66
+- id: CVG-147
+  title: "each lane carries a plain state word and evidence you can open"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 8"
+    quote: |
+      **Each lane carries a plain state word and evidence you can open.**
+      *(REQUIRED)* Working · Quiet · Silent — may have died. Underneath sits what
+      the lane actually produced, so a claim can be inspected rather than believed.
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 8)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 8 FAIL: the surface shows each lane's raw `status`; 42
+    lanes read
+    'done' and 2 read 'stuck', outside this clause's three-word vocabulary.
+    Recorded here and at CVG-105, which is the umbrella's half of the same
+    finding.
+  work: converge-q66
+- id: CVG-148
+  title: "Watch session opens that worker session's live view"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 9"
+    quote: |
+      **Watch session opens that worker session's live view.** *(IDIOM)* The whole
+      ladder is walkable — direction, wave, lane, and finally the session itself —
+      for the rare moment a steward wants the bottom rung.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 9)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 9 PASS: the watch control opens the lane's own live
+    session, and all 48 lanes name one to reach.
+- id: CVG-149
+  title: "feedback can be dropped in seconds, in whatever form is to hand"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 10"
+    quote: |
+      **Feedback can be dropped in seconds, in whatever form is to hand.**
+      *(IDIOM)* Text, a screenshot, or voice. The manager session interprets it;
+      the steward is never made to write a work item.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 10)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 10 PASS: feedback is accepted in every form this body
+    claims (text, a
+    screenshot) and reaches the feedback write. Voice is not offered - which
+    this
+    clause permits, because it scopes to the forms a body claims, and which the
+    umbrella's clause 14 does NOT permit silently. That half is CVG-113.
+- id: CVG-150
+  title: "steering sets the limits and never assigns the work"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 11"
+    quote: |
+      **Steering sets the limits and never assigns the work.** *(REQUIRED)*
+      Objective, budget, lane count, fill the lanes, and have the manager session
+      review this. Planning stays with the manager session, which is what makes
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 11)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 11 FAIL: steering offers objective, budget, lane count
+    and fill the
+    lanes, and no way to say 'have the manager session review this'. Four of
+    five. Nothing assigns work, which is the half that matters most.
+  work: converge-q66
+- id: CVG-151
+  title: "stopping something is never a board button"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 12"
+    quote: |
+      **Stopping something is never a board button.** *(REQUIRED)* Work stops
+      because the objective changed or the steward said so in words — not because
+      a card was dragged into a column.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 12)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 12 PASS: every control's own label, title and aria-
+    label was read; none stops, kills, aborts, terminates or halts.
+- id: CVG-152
+  title: "every manager session listed, sorted by need, and you can tell them all at once"
+  contract:
+    file: contracts/experience-operation.v1.md
+    clause: "Core 13"
+    quote: |
+      **Every manager session you run is listed, sorted by which one needs you,
+      and you can tell them all at once.** *(REQUIRED)* Several projects run at
+      once, and one message to all of them beats visiting each in turn.
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-operation/run.py (rule 13)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 13 FAIL: listed and sorted, but there is no way to tell
+    them all at once.
+  work: converge-q66
+
+# ────────────────────────────────────────────────────────────────────────────
+# experience-console.v1 - 10 rows, one per Core clause. SEEDED 2026-09-03 by
+# converge-pq2 against the RUNNING app. Verdict that day: PASS 7 - FAIL 3 -
+# SKIP 0. The healthiest of the three: seven of the ten clauses are structural
+# promises about where the console SITS and what it must NOT do, and the app
+# keeps every one of them.
+# ────────────────────────────────────────────────────────────────────────────
+- id: CVG-160
+  title: "the console is a pane, not a place"
+  contract:
+    file: contracts/experience-console.v1.md
+    clause: "Core 1"
+    quote: |
+      **The console is a pane, not a place.** It opens beside Direction or
+      Operation, and switching between them does not close it, restart it, or lose
+      a line of what was said.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 1)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 1 PASS: the place switch offers exactly two places, the
+    console is not among them and is not nested inside either view, and the
+    place-switch renderer does not touch its state.
+- id: CVG-161
+  title: "V1 carries the manager session exactly as it already runs"
+  contract:
+    file: contracts/experience-console.v1.md
+    clause: "Core 2"
+    quote: |
+      **V1 carries the manager session exactly as it already runs.** The pane
+      embeds the live command-line session through the tmux connector — tmux being
+      the tool that lets a long-running terminal session be attached to from
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 2)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 2 PASS: the manager names a live session (hw:cvdemo),
+    the app answers the connector routes, and the console attaches to it.
+- id: CVG-162
+  title: "one console, one manager session, and it IS that session"
+  contract:
+    file: contracts/experience-console.v1.md
+    clause: "Core 3"
+    quote: |
+      **One console, one manager session, and it *is* that session.** What you type
+      there is what the manager session receives, not a summary the app relays — so
+      there is no second conversation to keep in step with the first.
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 3)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 3 FAIL: the input and the send control are both
+    disabled, and no route
+    carries a keystroke to the session. The pane shows the session but is not
+    it.
+    The app says 'read-only in this version' in its own footer, which is what
+    keeps CVG-168 green - a known limit, honestly stated, is still the clause
+    unmet.
+  work: converge-tfu
+- id: CVG-163
+  title: "a resizable pane when wide, a sliding tray when small"
+  contract:
+    file: contracts/experience-console.v1.md
+    clause: "Core 4"
+    quote: |
+      **Wide screen: a resizable pane. Small screen: a sliding tray.** This is
+      idiom, and the umbrella governs it — the shape follows the platform; the
+      behaviors (stays open, keeps its conversation, gets out of the way on demand)
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 4)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 4 FAIL: the tray half is kept - a small-width rule
+    makes the console a
+    sheet and a control dismisses it - and nothing makes the pane resizable when
+    wide. Read from the stylesheet's own rules; a rendered layout at two widths
+    is
+    not judged by this kit, and CVG-213 records that separately.
+  work: converge-tfu
+- id: CVG-164
+  title: "Watch session reuses this pane"
+  contract:
+    file: contracts/experience-console.v1.md
+    clause: "Core 5"
+    quote: |
+      **Watch session reuses this pane.** Watching a lane's live worker session
+      from Operation opens here rather than in a new place, and leaving it returns
+      the manager conversation where it stood.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 5)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 5 PASS: watching a lane opens in this pane rather than
+    changing place, and leaving it puts the manager conversation back where it
+    stood.
+- id: CVG-165
+  title: "the console is never the dashboard"
+  contract:
+    file: contracts/experience-console.v1.md
+    clause: "Core 6"
+    quote: |
+      **The console is never the dashboard.** Raw agent and tool activity is not
+      how the operation is understood; Operation is. Nothing there may require
+      reading the console to make sense.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 6)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 6 PASS: nothing sends the reader to the console to make
+    sense of Operation, and Operation carries its own reading - the plan, the
+    lanes, the brief, the flow, confidence.
+- id: CVG-166
+  title: "nothing that needs your word arrives only here"
+  contract:
+    file: contracts/experience-console.v1.md
+    clause: "Core 7"
+    quote: |
+      **Nothing that needs your word arrives only here.** Every decision reaches
+      you through the short list and its ratification sheet, so a steward who never
+      opens the console misses nothing and can answer everything.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 7)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 7 PASS: what needs your word arrives through the short
+    list and /api/needs, and no decision is offered inside the console.
+- id: CVG-167
+  title: "the console never ratifies"
+  contract:
+    file: contracts/experience-console.v1.md
+    clause: "Core 8"
+    quote: |
+      **The console never ratifies.** A word typed here is a message to the manager
+      session; any decision it produces comes back through the ordinary path and
+      lands in the dated ratification record.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 8)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 8 PASS: the console's submit reaches no ratification
+    write and the
+    console offers none of the four answer words. Today it reaches no write at
+    all (CVG-162), so this row will need re-reading the moment it does.
+- id: CVG-168
+  title: "it is not a native chat in V1, and the app says so"
+  contract:
+    file: contracts/experience-console.v1.md
+    clause: "Core 9"
+    quote: |
+      **It is not a native chat in V1,** and nothing may be built to depend on it
+      being one. A native conversation later replaces the connector underneath
+      without changing one behavior above.
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 9)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 9 PASS: the app says 'read-only in this version' in its
+    own words, and nothing outside the console depends on it being a
+    conversation.
+- id: CVG-169
+  title: "it shows one manager session's own work and reaches nothing else"
+  contract:
+    file: contracts/experience-console.v1.md
+    clause: "Core 10"
+    quote: |
+      **It shows one manager session's own work and reaches nothing else.** The
+      machine may hold other terminal sessions, checkouts, and queues; none of
+      them appear merely because they exist.
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 10)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2) against the app running at
+    127.0.0.1:8788. Rule 10 FAIL: the app answers /api/tmux/sessions, which
+    enumerates every
+    terminal session on a socket - against the live socket that is the watchdog,
+    other lanes, and other manager sessions' work. The console PANE shows only
+    this manager's own targets and the client never calls that route, so the
+    defect is the reach, not the display.
+  work: converge-tfu
+
+# ────────────────────────────────────────────────────────────────────────────
+# experience-collaboration.v1 - 10 rows. SEEDED 2026-09-03 by converge-pq2.
+# NO KIT, AND MOSTLY NO SUBJECT. This contract fixes a boundary between two
+# parties meeting through a repository host, and this machine has one party and
+# no host in the loop. Five clauses are therefore NOT-ASSERTABLE - 'can't check',
+# which is a different answer from 'not yet' and is recorded as one. The other
+# five ARE checkable here, because they are promises about what Converge must
+# NOT grow: a second channel, a second surface, a manager in the hot path. Each
+# of those is an `absence` assertion, so a future silent implementation flips the
+# row red instead of passing unnoticed (LEDGER-FORMAT section 2).
+# ────────────────────────────────────────────────────────────────────────────
+- id: CVG-180
+  title: "git is the protocol; Converge is the lens"
+  contract:
+    file: contracts/experience-collaboration.v1.md
+    clause: "Core 1"
+    quote: |
+      **Git is the protocol; Converge is the lens.** Collaboration between people
+      happens through the shared repository host — commits, pull requests, and
+      their comments. Converge renders that flow; it never replaces it.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    'Collaboration between people happens through the shared repository host.'
+    No collaboration has happened through a host on this machine - one steward,
+    one checkout, no pull request. Whether Converge RENDERS that flow rather
+    than replacing it cannot be read from a tree in which the flow never ran.
+    WHAT WOULD SETTLE IT: one pull request from a second person, rendered in the
+    app, with the host still the record of it.
+- id: CVG-181
+  title: "manager sessions never talk to each other directly"
+  contract:
+    file: contracts/experience-collaboration.v1.md
+    clause: "Core 2"
+    quote: |
+      **Manager sessions never talk to each other directly.** Two stewards both
+      running Converge still meet as Converge · host · Converge, and neither
+      manager session knows the other exists. That is what keeps a teammate on
+  disposition: CONFORMS
+  assertion:
+    kind: absence
+    ref: 'if grep -rnE "httpx|requests\.(get|post)|urlopen" app/*.py | grep -q .; then echo APP-MAKES-OUTBOUND-CALLS; else echo APP-MAKES-NO-OUTBOUND-CALL; fi'
+    expect:
+      exit: 0
+      stdout_contains: "APP-MAKES-NO-OUTBOUND-CALL"
+  proves: >
+    That the app makes no outbound HTTP call of any kind from its own code, so
+    there is no route by which this manager session reaches another. It does not
+    prove the manager SESSION - an Amplifier session, not this app - never does;
+    that is a claim about a running agent, and CVG-183's neighbours in the
+    operation.v1 section carry the same limit.
+  notes: >
+    Measured 2026-09-03 (converge-pq2). An `absence` assertion on purpose: the
+    day someone adds a client here, this row goes red rather than quiet.
+- id: CVG-182
+  title: "three origins, one review"
+  contract:
+    file: contracts/experience-collaboration.v1.md
+    clause: "Core 3"
+    quote: |
+      **Three origins, one review.** A proposal from your manager session, from a
+      teammate, or from a pull request is shown identically: what changes sentence
+      by sentence · the evidence · what does not change. Where it came from is a
+  disposition: CONFORMS
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 7)'
+  proves: >
+    Direction rule 7 asserts that ONE review path lays out all five parts and
+    that there is not a second renderer - which is the mechanism this clause
+    depends on. It does NOT prove three origins render identically, because only
+    one origin exists in this target: no teammate's proposal and no pull request
+    has ever reached this app.
+  notes: >
+    Measured 2026-09-03 (converge-pq2). Rule 7 PASS. Treat this CONFORMS as
+    bounded by the `proves` above; it is the strongest thing one origin can
+    support.
+- id: CVG-183
+  title: "pull-request comments are a two-way bridge"
+  contract:
+    file: contracts/experience-collaboration.v1.md
+    clause: "Core 4"
+    quote: |
+      **Pull-request comments are a two-way bridge.** A question asked in Converge
+      arrives as a comment; the reply arrives back inside the same review. The
+      teammate never leaves their tools, and the steward never copies a judgment
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    A question asked in Converge must arrive as a comment, and the reply must
+    arrive back inside the same review. Both halves need a host and a second
+    person. Neither exists here, and no amount of file reading substitutes.
+    WHAT WOULD SETTLE IT: one question asked in the app, found on the host, and
+    one reply written on the host, found back in the review.
+- id: CVG-184
+  title: "your answer returns where the proposal came from"
+  contract:
+    file: contracts/experience-collaboration.v1.md
+    clause: "Core 5"
+    quote: |
+      **Your answer returns where the proposal came from.** *ratified · ratified
+      with edits · declined · later* — written to the dated ratification record and
+      posted back to the origin, in the steward's own words.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    Half of this clause IS checkable and is checked next door - an answer is
+    written to the dated ratification record (CVG-104, CVG-188). The other half
+    - that it is posted back to the ORIGIN - needs an origin that is not this
+    machine. There is none.
+    WHAT WOULD SETTLE IT: one proposal that arrived from a host, answered here,
+    with the answer found on the host afterwards.
+- id: CVG-185
+  title: "inbound changes arrive without you asking for them"
+  contract:
+    file: contracts/experience-collaboration.v1.md
+    clause: "Core 6"
+    quote: |
+      **Inbound changes arrive without you asking for them.** Webhooks where the
+      host offers them, polling as the honest fallback. Freshness is never made the
+      steward's job, and the fallback is named rather than assumed.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    Webhooks where the host offers them, polling as the honest fallback. No host
+    is configured, so neither path has a subject. A grep proving the app has no
+    webhook receiver would say 'not yet', but that reading presumes the app is
+    the right place for it - the contract does not say whether the receiver
+    belongs to the app or the manager session, and choosing here would forge a
+    decision.
+    WHAT WOULD SETTLE IT: a configured host, and a change landing without the
+    steward acting - with the fallback named in plain words when webhooks are
+    unavailable, which is the half this clause is most insistent about.
+- id: CVG-186
+  title: "the manager session is not in the hot path"
+  contract:
+    file: contracts/experience-collaboration.v1.md
+    clause: "Core 7"
+    quote: |
+      **The manager session is not in the hot path.** A write made in the app goes
+      through the ordinary repository and proposal mechanism directly; the manager
+      session learns of it as an event and folds it into its next turn.
+  disposition: CONFORMS
+  assertion:
+    kind: absence
+    ref: 'if grep -nE "subprocess|tmux|send_keys|httpx|requests\." app/writes.py | grep -q .; then echo WRITES-GO-THROUGH-THE-MANAGER; else echo WRITES-GO-STRAIGHT-TO-THE-REPOSITORY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "WRITES-GO-STRAIGHT-TO-THE-REPOSITORY"
+  proves: >
+    That the app's write path reaches no manager session at all - app/writes.py
+    starts no subprocess, speaks no tmux, sends no keys and makes no outbound
+    call. It speaks only to the filesystem.
+    THE PROBE IS READ AGAINST CODE, NOT PROSE. Its first form matched the word
+    'manager' anywhere in the file and reported WRITES-GO-THROUGH-THE-MANAGER on
+    two sentences of documentation explaining that the manager session is what
+    ACTS on a steer. A write is a call. That is the whole of this clause's first
+    half. Its second half - 'the manager session learns of it as an event and
+    folds it into its next turn' - is a claim about a running agent, and nothing
+    here checks it.
+  notes: >
+    Measured 2026-09-03 (converge-pq2). A decision appends to
+    docs/workflow/owner-ratifications-<date>.md; feedback writes
+    .converge/feedback/<ts>.md; a steer rewrites .width. No round trip.
+- id: CVG-187
+  title: "one steward per manager session"
+  contract:
+    file: contracts/experience-collaboration.v1.md
+    clause: "Core 8"
+    quote: |
+      **One steward per manager session.** Whose word counts is settled when the
+      session is registered, not inferred from whoever is looking. Everyone else is
+      a teammate, whose proposals get the same reading and none of the authority.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    'Whose word counts is settled when the session is registered, not inferred
+    from whoever is looking.' The app's manager configuration carries no steward
+    field, and its sign-in proves a MACHINE ACCOUNT rather than a registered
+    steward. Whether the machine account standing in for a steward satisfies
+    this clause is a reading, and one person cannot produce the case that would
+    test it.
+    WHAT WOULD SETTLE IT: a second person signing in to the same manager
+    session, and the ratification record showing whose word was written.
+- id: CVG-188
+  title: "a ratification is a change to the repository, made the ordinary way"
+  contract:
+    file: contracts/experience-collaboration.v1.md
+    clause: "Core 9"
+    quote: |
+      **A ratification is a change to the repository, made the ordinary way.** The
+      word is recorded and the text it ratifies is committed, so what was agreed
+      has one record, and it is the one everybody already reads.
+  disposition: CONFORMS
+  assertion:
+    kind: probe
+    ref: 'grep -q ''owner-ratifications-'' app/writes.py && ls docs/workflow/owner-ratifications-*.md >/dev/null 2>&1 && echo RATIFICATION-IS-A-FILE-IN-THE-REPOSITORY || echo RATIFICATION-LANDS-SOMEWHERE-ELSE'
+    expect:
+      exit: 0
+      stdout_contains: "RATIFICATION-IS-A-FILE-IN-THE-REPOSITORY"
+  proves: >
+    That the app writes a ratification to a dated file in the project, the same
+    record everybody already reads, rather than to a store of its own. It does
+    not prove the ratified TEXT is committed in the same motion - the clause's
+    second half - which nothing here checks.
+  notes: >
+    Measured 2026-09-03 (converge-pq2). app/writes.py appends to
+    docs/workflow/owner-ratifications-<date>.md; two such files exist.
+- id: CVG-189
+  title: "Converge adds no second collaboration surface"
+  contract:
+    file: contracts/experience-collaboration.v1.md
+    clause: "Core 10"
+    quote: |
+      **Converge adds no second collaboration surface.** Not another issue
+      tracker, another document store, or a code-review tool. What a teammate
+      needs to see is visible on the host, in the host's own terms.
+  disposition: CONFORMS
+  assertion:
+    kind: absence
+    ref: 'if grep -nE "@app\.(get|post)\(\"[^\"]*(issue|ticket|comment|review|thread)" app/serve.py | grep -q .; then echo APP-GREW-A-SECOND-SURFACE; else echo NO-SECOND-COLLABORATION-SURFACE; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-SECOND-COLLABORATION-SURFACE"
+  proves: >
+    That the app's own ROUTE TABLE carries no issue, ticket, comment, review or
+    thread surface. It cannot prove the app never will; that is what makes this
+    an `absence` row rather than a one-time observation.
+    THE PROBE IS SCOPED TO ROUTES ON PURPOSE. Its first form read every `def` in
+    app/ for those words and reported APP-GREW-A-SECOND-SURFACE - on
+    `Sessions.issue()`, which issues a signed cookie. A second collaboration
+    surface would have to be REACHABLE, so the routes are where to look.
+  notes: >
+    Measured 2026-09-03 (converge-pq2). The app's own route table is five reads
+    and three writes, and none of them is a collaboration surface.
+
+# ────────────────────────────────────────────────────────────────────────────
+# platform-web.v1 - 14 rows. SEEDED 2026-09-03 by converge-pq2. THE ONE BODY
+# THAT EXISTS. Clauses 1 and 2 restate the umbrella, so their rows cite the
+# section kit rule that judges the restated promise most sharply rather than
+# re-asserting fourteen things twice. Clauses 4, 5, 7 and 8 are layout idioms
+# that need a RENDERED viewport, and no kit here launches a browser: they are
+# NOT-ASSERTABLE with the reason, and CVG-213 names what would settle them all
+# at once.
+# ────────────────────────────────────────────────────────────────────────────
+- id: CVG-200
+  title: "everything the umbrella requires is present here, in the browser's shape"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 1"
+    quote: |
+      **Everything the umbrella requires is present here, in the browser's shape.**
+      The anchor is a manager session; the home is the list of them sorted by which
+      needs you; Direction and Operation are the two places; the Manager Console is
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 9)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2). This clause lists what the browser body
+    must carry, and the sharpest thing
+    missing from that list is the fifth write. Direction rule 9 FAIL: Ask is
+    offered nowhere and no route returns a proposal, so 'all five writes work'
+    is
+    false. CVG-103 carries the umbrella's half of the same finding.
+  work: converge-6cc
+- id: CVG-201
+  title: "what the umbrella asks of every body, this body keeps"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 2"
+    quote: |
+      **What the umbrella asks of every body, this body keeps.** It holds no data
+      of its own; whatever you can do here, the manager session can do too; state
+      words stay plain; evidence is shown rather than claimed, with technical
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-direction/run.py (rule 11)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2). The clause's list ends with 'locking is
+    gated, and the app never locks on
+    its own'. Direction rule 11 FAIL: there is no lock control and none of the
+    four conditions is shown anywhere. The rest of the list is asserted by the
+    rows above and below rather than here.
+  work: converge-jdm
+- id: CVG-202
+  title: "idioms satisfy behaviors; they never subtract them"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 3"
+    quote: |
+      **Idioms satisfy behaviors; they never subtract them.** Everything below this
+      clause is shape. A difference is an idiom when you can do the same thing,
+      learn the same fact, and be refused for the same reason; it is a divergence
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    The clause names the three tests that separate an idiom from a divergence,
+    and every one is a judgment about a PAIR of bodies. One body exists.
+    Identical
+    in shape to CVG-110, and recorded twice on purpose: the umbrella says it of
+    the family, this contract says it of the browser.
+    WHAT WOULD SETTLE IT: a second body.
+- id: CVG-203
+  title: "one information architecture, two layouts"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 4"
+    quote: |
+      **One information architecture, two layouts — IDIOM.** The phone and the
+      laptop show the same places, the same list, and the same words, and differ
+      in arrangement only: one thing at a time, or two side by side.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    'The phone and the laptop show the same places, the same list, and the same
+    words, and differ in arrangement only.' Reading the stylesheet proves rules
+    exist at 980 and 520 pixels; it does not prove the same words survive both,
+    and
+    a rule that claimed otherwise would be inventing a verdict.
+    WHAT WOULD SETTLE IT: see CVG-213 - one browser, two widths, and a
+    comparison
+    of what each shows.
+- id: CVG-204
+  title: "the phone switches places from the bottom"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 5"
+    quote: |
+      **The phone switches places from the bottom — IDIOM.** Direction and
+      Operation sit within thumb reach, and the things needing your word are a
+      full-width stack of cards. On the laptop the switch is always visible and
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    A thumb-reach claim about a rendered layout. The stylesheet moves the place
+    switch to its own row at 980 pixels, which is suggestive and is not the
+    promise. WHAT WOULD SETTLE IT: see CVG-213.
+- id: CVG-205
+  title: "the Manager Console is a right pane on the laptop and a sheet that slides up on the phone"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 6"
+    quote: |
+      **The Manager Console is a right pane on the laptop and a sheet that slides
+      up on the phone — IDIOM.** It stays live while you move between Direction and
+      Operation. On the laptop you drag it wider; on the phone you pull it up when
+  disposition: GAP
+  assertion:
+    kind: indexed
+    ref: 'conformance/experience-console/run.py (rule 4)'
+  notes: >
+    Measured 2026-09-03 (converge-pq2). Console rule 4 FAIL, and it is the half
+    a stylesheet CAN settle: the sheet
+    exists (fixed position and a translate at 980 pixels, with a dismiss
+    control)
+    and nothing makes the pane resizable when wide.
+  work: converge-tfu
+- id: CVG-206
+  title: "a proposal opens full-screen on the phone and beside its evidence on the laptop"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 7"
+    quote: |
+      **A proposal opens full-screen on the phone and beside its evidence on the
+      laptop — IDIOM.** The phone gives the review the whole screen so the reading
+      is undivided; the laptop puts what changed next to the evidence for it.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    Two rendered layouts of one page. WHAT WOULD SETTLE IT: see CVG-213.
+- id: CVG-207
+  title: "evidence and technical detail arrive in a sheet"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 8"
+    quote: |
+      **Evidence and technical detail arrive in a sheet — IDIOM.** On the phone it
+      rises from the bottom over what you were reading; on the laptop it opens in
+      the inspector beside it. Either way the deciding sentence stays in view.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    A rendered behaviour - what rises, from where, over what. WHAT WOULD SETTLE
+    IT: see CVG-213.
+- id: CVG-208
+  title: "it installs, and installing changes only the frame"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 9"
+    quote: |
+      **It installs, and installing changes only the frame — IDIOM.** Added to a
+      home screen or a dock, it runs in its own window without browser furniture.
+      Nothing gains a behavior by being installed and nothing loses one; there is
+  disposition: CONFORMS
+  assertion:
+    kind: probe
+    ref: '[ -f app/static/manifest.webmanifest ] && [ -f app/static/sw.js ] && grep -q ''manifest.webmanifest'' app/templates/base.html && echo INSTALLABLE-FROM-ITS-OWN-ORIGIN || echo NOT-INSTALLABLE'
+    expect:
+      exit: 0
+      stdout_contains: "INSTALLABLE-FROM-ITS-OWN-ORIGIN"
+  notes: >
+    Measured 2026-09-03 (converge-pq2). The app ships a web manifest and a
+    service worker and links the manifest
+    from its own base template, so it installs to a home screen with no app
+    store. That installing changes ONLY the frame - the same app, without the
+    browser's chrome - is not proved here; nothing compares the two.
+- id: CVG-209
+  title: "offline it reads what it last synced, and says when that was"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 10"
+    quote: |
+      **Offline it reads what it last synced, and says when that was.** A small
+      helper the browser keeps beside the app serves the documents already
+      fetched, each marked with the moment it came from. Nothing that is not
+  disposition: GAP
+  assertion:
+    kind: probe
+    ref: 'grep -q ''is never written to the cache'' app/static/sw.js && echo API-NEVER-CACHED-SO-NOTHING-TO-READ-OFFLINE || echo SW-CACHING-CHANGED'
+    expect:
+      exit: 0
+      stdout_contains: "API-NEVER-CACHED-SO-NOTHING-TO-READ-OFFLINE"
+  notes: >
+    Measured 2026-09-03 (converge-pq2). Read from the service worker's own
+    stated rule: /api is network-first and
+    never written to the cache. Offline the shell loads and every payload behind
+    it is empty, so there is nothing that was 'last synced' to read and nothing
+    that says when. The probe asserts the cause, so it flips the moment the
+    caching policy changes in either direction.
+  work: converge-719
+- id: CVG-210
+  title: "offline it refuses the five writes in a plain sentence"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 11"
+    quote: |
+      **Offline it refuses the five writes in a plain sentence.** A browser cannot
+      promise to send something later — the helper may never be woken, and on some
+      browsers never is — so the app says the write is unavailable and names what
+  disposition: GAP
+  assertion:
+    kind: probe
+    ref: 'grep -q ''Could not'' app/static/js/actions.js && echo OFFLINE-WRITES-FAIL-AS-A-FETCH-ERROR || echo OFFLINE-REFUSAL-CHANGED'
+    expect:
+      exit: 0
+      stdout_contains: "OFFLINE-WRITES-FAIL-AS-A-FETCH-ERROR"
+  notes: >
+    Measured 2026-09-03 (converge-pq2). A failed write surfaces as 'Could not
+    record the decision: <message>' - a
+    fetch error relayed to the reader, not a plain sentence saying the app is
+    offline and the write will not happen. Two of the five writes do not exist
+    at
+    all (CVG-103), so this clause cannot be fully kept before that one is.
+  work: converge-719
+- id: CVG-211
+  title: "the Manager Console is live or plainly disconnected, never in between"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 12"
+    quote: |
+      **The Manager Console is live or plainly disconnected, never in between.**
+      It is a view of a running session; when the connection drops it says so on
+      its own face, and never leaves an old screen sitting there looking live.
+  disposition: CONFORMS
+  assertion:
+    kind: probe
+    ref: 'grep -q ''Connected'' app/static/js/render/console.js && grep -q ''Detached'' app/static/js/render/console.js && echo CONSOLE-STATE-IS-ONE-OF-TWO-WORDS || echo CONSOLE-STATE-CHANGED'
+    expect:
+      exit: 0
+      stdout_contains: "CONSOLE-STATE-IS-ONE-OF-TWO-WORDS"
+  notes: >
+    Measured 2026-09-03 (converge-pq2). The console renders exactly one of two
+    words - Connected or Detached - from
+    one condition (a target AND the viewer being loaded), so there is no third,
+    ambiguous state to be in. What a static read cannot prove is that the word
+    tracks the connection in real time.
+- id: CVG-212
+  title: "everything it needs comes from its own origin"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 13"
+    quote: |
+      **Everything it needs comes from its own origin.** No script, font, style,
+      or image is fetched from anywhere else, so it works on a restricted network
+      and on a laptop with no internet at all.
+  disposition: CONFORMS
+  assertion:
+    kind: absence
+    ref: 'if grep -rhoE ''(src|href)="https?://'' app/templates app/static/*.webmanifest 2>/dev/null | grep -q .; then echo LOADS-FROM-ANOTHER-ORIGIN; else echo EVERYTHING-FROM-ITS-OWN-ORIGIN; fi'
+    expect:
+      exit: 0
+      stdout_contains: "EVERYTHING-FROM-ITS-OWN-ORIGIN"
+  notes: >
+    Measured 2026-09-03 (converge-pq2). No script, font, stylesheet or image is
+    fetched from another origin - the
+    terminal viewer that would normally come from a CDN is vendored at
+    app/static/vendor/xterm/. An `absence` assertion, so the first off-origin
+    reference flips this row red.
+- id: CVG-213
+  title: "it renders at 390 and 1280 pixels with nothing cut off and no errors"
+  contract:
+    file: contracts/platform-web.v1.md
+    clause: "Core 14"
+    quote: |
+      **It renders at 390 and 1280 pixels with nothing cut off and no errors in
+      the browser's own log.** Those two widths are the phone and the laptop this
+      contract is written for; a body that fails either is not shipped.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: none
+  justification: >
+    No conformance kit in this repository launches a browser, so nothing here
+    can see a render, a cut-off element, or a console error. This is the row
+    that
+    CVG-202, CVG-203, CVG-205 and CVG-206 all point at: one browser at two
+    widths
+    would settle five clauses at once.
+    WHAT EXISTS SHORT OF IT, and why neither is this row: the app asserts the
+    same
+    promise STRUCTURALLY against its own stylesheet in
+    tests/test_renders_at_both_widths.py, and app/static/dev/verify.py drives a
+    real Chromium at both widths against a stub server. The second is the shape
+    this needs; it points at a stub rather than the running app, and it is not
+    run
+    by any kit.
+
+# ────────────────────────────────────────────────────────────────────────────
+# platform-ios / android / macos / windows - 9 rows each, 36 in all.
+# SEEDED 2026-09-03 by converge-pq2. NONE OF THESE BODIES EXISTS.
+# 
+# Every row is NOT-ASSERTABLE for the same reason and says so in the same words:
+# there is no subject. That is 'can't check', not 'not yet' - a GAP would file
+# work nobody owes, which operation.v1 Core 1 forbids ('work is derived, never
+# invented'), and a CONFORMS would claim a pass that never ran.
+# 
+# The rows are not decoration. Each carries an `absence` assertion that watches
+# for the body appearing, so the day someone starts one, nine rows go red at
+# once and the ledger asks to be re-derived rather than sitting quietly green.
+# That is LEDGER-FORMAT section 2's stated purpose for the kind: 'a future silent
+# implementation flips the row red'.
+# 
+# WHY NINE ROWS AND NOT ONE PER CONTRACT: the coverage tripwire
+# (LEDGER-FORMAT section 6.1) asks that every Core clause be cited by at least
+# one row, and it is right to. A single row saying 'this contract has no body'
+# would hide the day one clause becomes checkable while the rest do not - which
+# is exactly what happens first, because clause 9 of each ('what this platform
+# cannot do is said, not hidden') becomes checkable the moment a body says
+# anything at all.
+# ────────────────────────────────────────────────────────────────────────────
+- id: CVG-220
+  title: "Everything the umbrella requires is present here, in this platform's"
+  contract:
+    file: contracts/platform-ios.v1.md
+    clause: "Core 1"
+    quote: |
+      **Everything the umbrella requires is present here, in this platform's
+      shape.** The anchor is a manager session; the home is the list of them sorted
+      by which needs you; Direction and Operation are the two places; the Manager
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d ios/ apps/ios platform-ios 2>/dev/null | grep -q .; then echo IOS-BODY-APPEARED; else echo NO-IOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-IOS-BODY"
+  justification: >
+    NO IOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an iOS app bundle, so this clause has no subject and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a iOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a iOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-221
+  title: "What the umbrella asks of every body, this body keeps. It holds no data"
+  contract:
+    file: contracts/platform-ios.v1.md
+    clause: "Core 2"
+    quote: |
+      **What the umbrella asks of every body, this body keeps.** It holds no data
+      of its own; whatever you can do here the manager session can do too; state
+      words stay plain; evidence is shown, with technical detail folded; a proposal
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d ios/ apps/ios platform-ios 2>/dev/null | grep -q .; then echo IOS-BODY-APPEARED; else echo NO-IOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-IOS-BODY"
+  justification: >
+    NO IOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an iOS app bundle, so this clause has no subject and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a iOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a iOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-222
+  title: "Idioms satisfy behaviors; they never subtract them. Everything below is"
+  contract:
+    file: contracts/platform-ios.v1.md
+    clause: "Core 3"
+    quote: |
+      **Idioms satisfy behaviors; they never subtract them.** Everything below is
+      shape: a difference is an idiom when you can do the same thing, learn the
+      same fact, and be refused for the same reason — a divergence when you cannot.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d ios/ apps/ios platform-ios 2>/dev/null | grep -q .; then echo IOS-BODY-APPEARED; else echo NO-IOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-IOS-BODY"
+  justification: >
+    NO IOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an iOS app bundle, so this clause has no subject and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a iOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a iOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-223
+  title: "The two places live in a bottom tab bar — IDIOM. Direction and Operation"
+  contract:
+    file: contracts/platform-ios.v1.md
+    clause: "Core 4"
+    quote: |
+      **The two places live in a bottom tab bar — IDIOM.** Direction and Operation
+      sit within thumb reach, where this platform puts navigation, so answering
+      never asks for a second hand.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d ios/ apps/ios platform-ios 2>/dev/null | grep -q .; then echo IOS-BODY-APPEARED; else echo NO-IOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-IOS-BODY"
+  justification: >
+    NO IOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an iOS app bundle, so this clause has no subject and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a iOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a iOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-224
+  title: "Evidence and technical detail rise in a sheet — IDIOM. A sheet dragged up"
+  contract:
+    file: contracts/platform-ios.v1.md
+    clause: "Core 5"
+    quote: |
+      **Evidence and technical detail rise in a sheet — IDIOM.** A sheet dragged up
+      over the reading surface is how this platform shows detail; the deciding
+      sentence stays in view behind it, and a flick down returns you to it.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d ios/ apps/ios platform-ios 2>/dev/null | grep -q .; then echo IOS-BODY-APPEARED; else echo NO-IOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-IOS-BODY"
+  justification: >
+    NO IOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an iOS app bundle, so this clause has no subject and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a iOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a iOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-225
+  title: "The share sheet is how a screenshot or a voice note becomes feedback"
+  contract:
+    file: contracts/platform-ios.v1.md
+    clause: "Core 6"
+    quote: |
+      **The share sheet is how a screenshot or a voice note becomes feedback —
+      IDIOM.** Feedback is dropped from wherever the steward already is, through
+      the system's own way of handing something to an app.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d ios/ apps/ios platform-ios 2>/dev/null | grep -q .; then echo IOS-BODY-APPEARED; else echo NO-IOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-IOS-BODY"
+  justification: >
+    NO IOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an iOS app bundle, so this clause has no subject and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a iOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a iOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-226
+  title: "A home-screen widget is the quick-access surface — OPTIONAL. Where it"
+  contract:
+    file: contracts/platform-ios.v1.md
+    clause: "Core 7"
+    quote: |
+      **A home-screen widget is the quick-access surface — OPTIONAL.** Where it
+      exists it carries the needs-you count and the thing at the top of the list,
+      and opens straight into it; the body is complete without one, and the widget
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d ios/ apps/ios platform-ios 2>/dev/null | grep -q .; then echo IOS-BODY-APPEARED; else echo NO-IOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-IOS-BODY"
+  justification: >
+    NO IOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an iOS app bundle, so this clause has no subject and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a iOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a iOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-227
+  title: "A notification carries the one thing needing your word — IDIOM. It names"
+  contract:
+    file: contracts/platform-ios.v1.md
+    clause: "Core 8"
+    quote: |
+      **A notification carries the one thing needing your word — IDIOM.** It names
+      which manager session and what kind of call, and opens into that thing rather
+      than the home list. Nothing needing you is said aloud, as good news.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d ios/ apps/ios platform-ios 2>/dev/null | grep -q .; then echo IOS-BODY-APPEARED; else echo NO-IOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-IOS-BODY"
+  justification: >
+    NO IOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an iOS app bundle, so this clause has no subject and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a iOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a iOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-228
+  title: "What this platform cannot do is said, not hidden. Where a required"
+  contract:
+    file: contracts/platform-ios.v1.md
+    clause: "Core 9"
+    quote: |
+      **What this platform cannot do is said, not hidden.** Where a required
+      behavior is out of reach, the body says so and names what to do instead.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d ios/ apps/ios platform-ios 2>/dev/null | grep -q .; then echo IOS-BODY-APPEARED; else echo NO-IOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-IOS-BODY"
+  justification: >
+    NO IOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an iOS app bundle, so this clause has no subject and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a iOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a iOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-240
+  title: "Everything the umbrella requires is present here, in this platform's"
+  contract:
+    file: contracts/platform-android.v1.md
+    clause: "Core 1"
+    quote: |
+      **Everything the umbrella requires is present here, in this platform's
+      shape.** The anchor is a manager session; the home is the list of them sorted
+      by which needs you; Direction and Operation are the two places; the Manager
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d android/ apps/android platform-android 2>/dev/null | grep -q .; then echo ANDROID-BODY-APPEARED; else echo NO-ANDROID-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-ANDROID-BODY"
+  justification: >
+    NO ANDROID BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an Android application module, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Android body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Android body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-241
+  title: "What the umbrella asks of every body, this body keeps. It holds no data"
+  contract:
+    file: contracts/platform-android.v1.md
+    clause: "Core 2"
+    quote: |
+      **What the umbrella asks of every body, this body keeps.** It holds no data
+      of its own; whatever you can do here the manager session can do too; state
+      words stay plain; evidence is shown, with technical detail folded; a proposal
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d android/ apps/android platform-android 2>/dev/null | grep -q .; then echo ANDROID-BODY-APPEARED; else echo NO-ANDROID-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-ANDROID-BODY"
+  justification: >
+    NO ANDROID BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an Android application module, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Android body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Android body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-242
+  title: "Idioms satisfy behaviors; they never subtract them. Everything below is"
+  contract:
+    file: contracts/platform-android.v1.md
+    clause: "Core 3"
+    quote: |
+      **Idioms satisfy behaviors; they never subtract them.** Everything below is
+      shape: a difference is an idiom when you can do the same thing, learn the
+      same fact, and be refused for the same reason — a divergence when you cannot.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d android/ apps/android platform-android 2>/dev/null | grep -q .; then echo ANDROID-BODY-APPEARED; else echo NO-ANDROID-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-ANDROID-BODY"
+  justification: >
+    NO ANDROID BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an Android application module, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Android body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Android body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-243
+  title: "The two places live in a bottom navigation bar — IDIOM. Direction and"
+  contract:
+    file: contracts/platform-android.v1.md
+    clause: "Core 4"
+    quote: |
+      **The two places live in a bottom navigation bar — IDIOM.** Direction and
+      Operation sit within thumb reach, where this platform puts navigation, so
+      answering never asks for a second hand.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d android/ apps/android platform-android 2>/dev/null | grep -q .; then echo ANDROID-BODY-APPEARED; else echo NO-ANDROID-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-ANDROID-BODY"
+  justification: >
+    NO ANDROID BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an Android application module, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Android body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Android body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-244
+  title: "Each kind of call has its own notification channel — IDIOM. A steward can"
+  contract:
+    file: contracts/platform-android.v1.md
+    clause: "Core 5"
+    quote: |
+      **Each kind of call has its own notification channel — IDIOM.** A steward can
+      quiet one kind — say, everything but a decision waiting on them — using the
+      system's own controls, rather than a setting this app invents.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d android/ apps/android platform-android 2>/dev/null | grep -q .; then echo ANDROID-BODY-APPEARED; else echo NO-ANDROID-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-ANDROID-BODY"
+  justification: >
+    NO ANDROID BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an Android application module, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Android body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Android body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-245
+  title: "The system's own back gesture returns you where you were — IDIOM. Leaving"
+  contract:
+    file: contracts/platform-android.v1.md
+    clause: "Core 6"
+    quote: |
+      **The system's own back gesture returns you where you were — IDIOM.** Leaving
+      a sheet, a review, or an evidence drill-in never loses the place you were
+      reading, and never drops you at the home list instead.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d android/ apps/android platform-android 2>/dev/null | grep -q .; then echo ANDROID-BODY-APPEARED; else echo NO-ANDROID-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-ANDROID-BODY"
+  justification: >
+    NO ANDROID BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an Android application module, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Android body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Android body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-246
+  title: "The body is a share target for a screenshot or a voice note — IDIOM."
+  contract:
+    file: contracts/platform-android.v1.md
+    clause: "Core 7"
+    quote: |
+      **The body is a share target for a screenshot or a voice note — IDIOM.**
+      Feedback is dropped from wherever the steward already is, through the
+      system's own way of handing something to an app.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d android/ apps/android platform-android 2>/dev/null | grep -q .; then echo ANDROID-BODY-APPEARED; else echo NO-ANDROID-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-ANDROID-BODY"
+  justification: >
+    NO ANDROID BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an Android application module, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Android body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Android body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-247
+  title: "A home-screen widget or a quick-settings tile is the quick-access surface"
+  contract:
+    file: contracts/platform-android.v1.md
+    clause: "Core 8"
+    quote: |
+      **A home-screen widget or a quick-settings tile is the quick-access surface —
+      OPTIONAL.** Where one exists it carries the needs-you count and opens into
+      the thing at the top; the body is complete without it, and it is never a
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d android/ apps/android platform-android 2>/dev/null | grep -q .; then echo ANDROID-BODY-APPEARED; else echo NO-ANDROID-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-ANDROID-BODY"
+  justification: >
+    NO ANDROID BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an Android application module, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Android body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Android body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-248
+  title: "What this platform cannot do is said, not hidden. Where a required"
+  contract:
+    file: contracts/platform-android.v1.md
+    clause: "Core 9"
+    quote: |
+      **What this platform cannot do is said, not hidden.** Where a required
+      behavior is out of reach, the body says so and names what to do instead.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d android/ apps/android platform-android 2>/dev/null | grep -q .; then echo ANDROID-BODY-APPEARED; else echo NO-ANDROID-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-ANDROID-BODY"
+  justification: >
+    NO ANDROID BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is an Android application module, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Android body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Android body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-260
+  title: "Everything the umbrella requires is present here, in this platform's"
+  contract:
+    file: contracts/platform-macos.v1.md
+    clause: "Core 1"
+    quote: |
+      **Everything the umbrella requires is present here, in this platform's
+      shape.** The anchor is a manager session; the home is the list of them sorted
+      by which needs you; Direction and Operation are the two places; the Manager
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d macos/ apps/macos platform-macos 2>/dev/null | grep -q .; then echo MACOS-BODY-APPEARED; else echo NO-MACOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-MACOS-BODY"
+  justification: >
+    NO MACOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a macOS application target, so this clause has no subject and
+    any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a macOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a macOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-261
+  title: "What the umbrella asks of every body, this body keeps. It holds no data"
+  contract:
+    file: contracts/platform-macos.v1.md
+    clause: "Core 2"
+    quote: |
+      **What the umbrella asks of every body, this body keeps.** It holds no data
+      of its own; whatever you can do here the manager session can do too; state
+      words stay plain; evidence is shown, with technical detail folded; a proposal
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d macos/ apps/macos platform-macos 2>/dev/null | grep -q .; then echo MACOS-BODY-APPEARED; else echo NO-MACOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-MACOS-BODY"
+  justification: >
+    NO MACOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a macOS application target, so this clause has no subject and
+    any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a macOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a macOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-262
+  title: "Idioms satisfy behaviors; they never subtract them. Everything below is"
+  contract:
+    file: contracts/platform-macos.v1.md
+    clause: "Core 3"
+    quote: |
+      **Idioms satisfy behaviors; they never subtract them.** Everything below is
+      shape: a difference is an idiom when you can do the same thing, learn the
+      same fact, and be refused for the same reason — a divergence when you cannot.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d macos/ apps/macos platform-macos 2>/dev/null | grep -q .; then echo MACOS-BODY-APPEARED; else echo NO-MACOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-MACOS-BODY"
+  justification: >
+    NO MACOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a macOS application target, so this clause has no subject and
+    any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a macOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a macOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-263
+  title: "Manager sessions, repositories, and documents live in a sidebar — IDIOM."
+  contract:
+    file: contracts/platform-macos.v1.md
+    clause: "Core 4"
+    quote: |
+      **Manager sessions, repositories, and documents live in a sidebar — IDIOM.**
+      The home list and the way into every document sit where this platform puts
+      navigation, so moving between them costs no place-switch.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d macos/ apps/macos platform-macos 2>/dev/null | grep -q .; then echo MACOS-BODY-APPEARED; else echo NO-MACOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-MACOS-BODY"
+  justification: >
+    NO MACOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a macOS application target, so this clause has no subject and
+    any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a macOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a macOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-264
+  title: "The Manager Console is a pane you drag to the width you want — IDIOM. It"
+  contract:
+    file: contracts/platform-macos.v1.md
+    clause: "Core 5"
+    quote: |
+      **The Manager Console is a pane you drag to the width you want — IDIOM.** It
+      stays live and in place while you move between Direction and Operation, and
+      the width you chose is still there tomorrow.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d macos/ apps/macos platform-macos 2>/dev/null | grep -q .; then echo MACOS-BODY-APPEARED; else echo NO-MACOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-MACOS-BODY"
+  justification: >
+    NO MACOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a macOS application target, so this clause has no subject and
+    any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a macOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a macOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-265
+  title: "A proposal is reviewed beside its evidence — IDIOM. The desk has room for"
+  contract:
+    file: contracts/platform-macos.v1.md
+    clause: "Core 6"
+    quote: |
+      **A proposal is reviewed beside its evidence — IDIOM.** The desk has room for
+      what changed and the evidence for it at once; nothing that decides the answer
+      is hidden behind a step.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d macos/ apps/macos platform-macos 2>/dev/null | grep -q .; then echo MACOS-BODY-APPEARED; else echo NO-MACOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-MACOS-BODY"
+  justification: >
+    NO MACOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a macOS application target, so this clause has no subject and
+    any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a macOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a macOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-266
+  title: "A menu-bar extra is the quick-access surface — OPTIONAL. Where it exists"
+  contract:
+    file: contracts/platform-macos.v1.md
+    clause: "Core 7"
+    quote: |
+      **A menu-bar extra is the quick-access surface — OPTIONAL.** Where it exists
+      it carries the needs-you count and opens into the thing at the top; the body
+      is complete without one, and it is never a place of its own.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d macos/ apps/macos platform-macos 2>/dev/null | grep -q .; then echo MACOS-BODY-APPEARED; else echo NO-MACOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-MACOS-BODY"
+  justification: >
+    NO MACOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a macOS application target, so this clause has no subject and
+    any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a macOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a macOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-267
+  title: "Every write is reachable from the keyboard — IDIOM. A steward working at"
+  contract:
+    file: contracts/platform-macos.v1.md
+    clause: "Core 8"
+    quote: |
+      **Every write is reachable from the keyboard — IDIOM.** A steward working at
+      a desk answers with a word without moving to the mouse, and the notification
+      this platform posts opens into the thing it names.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d macos/ apps/macos platform-macos 2>/dev/null | grep -q .; then echo MACOS-BODY-APPEARED; else echo NO-MACOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-MACOS-BODY"
+  justification: >
+    NO MACOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a macOS application target, so this clause has no subject and
+    any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a macOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a macOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-268
+  title: "What this platform cannot do is said, not hidden. Where a required"
+  contract:
+    file: contracts/platform-macos.v1.md
+    clause: "Core 9"
+    quote: |
+      **What this platform cannot do is said, not hidden.** Where a required
+      behavior is out of reach, the body says so and names what to do instead.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d macos/ apps/macos platform-macos 2>/dev/null | grep -q .; then echo MACOS-BODY-APPEARED; else echo NO-MACOS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-MACOS-BODY"
+  justification: >
+    NO MACOS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a macOS application target, so this clause has no subject and
+    any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a macOS body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a macOS body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-280
+  title: "Everything the umbrella requires is present here, in this platform's"
+  contract:
+    file: contracts/platform-windows.v1.md
+    clause: "Core 1"
+    quote: |
+      **Everything the umbrella requires is present here, in this platform's
+      shape.** The anchor is a manager session; the home is the list of them sorted
+      by which needs you; Direction and Operation are the two places; the Manager
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d windows/ apps/windows platform-windows 2>/dev/null | grep -q .; then echo WINDOWS-BODY-APPEARED; else echo NO-WINDOWS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-WINDOWS-BODY"
+  justification: >
+    NO WINDOWS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a Windows application project, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Windows body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Windows body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-281
+  title: "What the umbrella asks of every body, this body keeps. It holds no data"
+  contract:
+    file: contracts/platform-windows.v1.md
+    clause: "Core 2"
+    quote: |
+      **What the umbrella asks of every body, this body keeps.** It holds no data
+      of its own; whatever you can do here the manager session can do too; state
+      words stay plain; evidence is shown, with technical detail folded; a proposal
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d windows/ apps/windows platform-windows 2>/dev/null | grep -q .; then echo WINDOWS-BODY-APPEARED; else echo NO-WINDOWS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-WINDOWS-BODY"
+  justification: >
+    NO WINDOWS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a Windows application project, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Windows body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Windows body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-282
+  title: "Idioms satisfy behaviors; they never subtract them. Everything below is"
+  contract:
+    file: contracts/platform-windows.v1.md
+    clause: "Core 3"
+    quote: |
+      **Idioms satisfy behaviors; they never subtract them.** Everything below is
+      shape: a difference is an idiom when you can do the same thing, learn the
+      same fact, and be refused for the same reason — a divergence when you cannot.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d windows/ apps/windows platform-windows 2>/dev/null | grep -q .; then echo WINDOWS-BODY-APPEARED; else echo NO-WINDOWS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-WINDOWS-BODY"
+  justification: >
+    NO WINDOWS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a Windows application project, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Windows body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Windows body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-283
+  title: "The window's own title bar carries the manager session and the needs-you"
+  contract:
+    file: contracts/platform-windows.v1.md
+    clause: "Core 4"
+    quote: |
+      **The window's own title bar carries the manager session and the needs-you
+      count — IDIOM.** Which session you are looking at, and whether it wants you,
+      is legible from the window itself without the app being in front.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d windows/ apps/windows platform-windows 2>/dev/null | grep -q .; then echo WINDOWS-BODY-APPEARED; else echo NO-WINDOWS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-WINDOWS-BODY"
+  justification: >
+    NO WINDOWS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a Windows application project, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Windows body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Windows body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-284
+  title: "A tray icon is the quick-access surface — OPTIONAL. Where it exists it"
+  contract:
+    file: contracts/platform-windows.v1.md
+    clause: "Core 5"
+    quote: |
+      **A tray icon is the quick-access surface — OPTIONAL.** Where it exists it
+      carries the needs-you count and opens into the thing at the top; the body is
+      complete without one, and it is never a place of its own.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d windows/ apps/windows platform-windows 2>/dev/null | grep -q .; then echo WINDOWS-BODY-APPEARED; else echo NO-WINDOWS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-WINDOWS-BODY"
+  justification: >
+    NO WINDOWS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a Windows application project, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Windows body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Windows body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-285
+  title: "Notifications go through the system's own centre and obey its quiet"
+  contract:
+    file: contracts/platform-windows.v1.md
+    clause: "Core 6"
+    quote: |
+      **Notifications go through the system's own centre and obey its quiet
+      hours — IDIOM.** A notification names which manager session and what kind of
+      call, and opens into that thing rather than the home list.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d windows/ apps/windows platform-windows 2>/dev/null | grep -q .; then echo WINDOWS-BODY-APPEARED; else echo NO-WINDOWS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-WINDOWS-BODY"
+  justification: >
+    NO WINDOWS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a Windows application project, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Windows body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Windows body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-286
+  title: "Manager sessions, repositories, and documents live in a side pane, and the"
+  contract:
+    file: contracts/platform-windows.v1.md
+    clause: "Core 7"
+    quote: |
+      **Manager sessions, repositories, and documents live in a side pane, and the
+      Manager Console is a pane you drag — IDIOM.** Both stay in place while you
+      move between Direction and Operation, at the widths you chose.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d windows/ apps/windows platform-windows 2>/dev/null | grep -q .; then echo WINDOWS-BODY-APPEARED; else echo NO-WINDOWS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-WINDOWS-BODY"
+  justification: >
+    NO WINDOWS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a Windows application project, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Windows body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Windows body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-287
+  title: "Every write is reachable from the keyboard — IDIOM. A steward working at"
+  contract:
+    file: contracts/platform-windows.v1.md
+    clause: "Core 8"
+    quote: |
+      **Every write is reachable from the keyboard — IDIOM.** A steward working at
+      a desk answers with a word without moving to the mouse.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d windows/ apps/windows platform-windows 2>/dev/null | grep -q .; then echo WINDOWS-BODY-APPEARED; else echo NO-WINDOWS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-WINDOWS-BODY"
+  justification: >
+    NO WINDOWS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a Windows application project, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Windows body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Windows body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
+- id: CVG-288
+  title: "What this platform cannot do is said, not hidden. Where a required"
+  contract:
+    file: contracts/platform-windows.v1.md
+    clause: "Core 9"
+    quote: |
+      **What this platform cannot do is said, not hidden.** Where a required
+      behavior is out of reach, the body says so and names what to do instead.
+  disposition: NOT-ASSERTABLE
+  assertion:
+    kind: absence
+    ref: 'if ls -d windows/ apps/windows platform-windows 2>/dev/null | grep -q .; then echo WINDOWS-BODY-APPEARED; else echo NO-WINDOWS-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-WINDOWS-BODY"
+  justification: >
+    NO WINDOWS BODY EXISTS. Measured 2026-09-03 (converge-pq2). Nothing in this
+    repository or
+    beside it is a Windows application project, so this clause has no subject
+    and any
+    verdict on it would be invented. 'Can't check' is the honest answer
+    and this is what it looks like.
+    THE ASSERTION IS NOT A FORMALITY: it watches for the body appearing.
+    The day a Windows body lands, this row and its eight neighbours go
+    red together and must be re-derived against something real.
+    WHAT WOULD SETTLE IT: a Windows body, and a kit that reads it -
+    neither of which anyone owes today. experience.v1 clause 15 says a
+    platform contract adds no behavior and removes none, so when the
+    body arrives its rows inherit the umbrella's verdicts, not a new
+    set of promises.
