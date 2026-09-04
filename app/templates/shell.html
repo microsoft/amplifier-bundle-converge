@@ -25,8 +25,11 @@
 
       <div class="top-actions">
         <button id="needsYouButton" class="attention-pill" type="button"><span class="attention-dot"></span><strong id="needsYouCount">0</strong> need your word</button>
-        <button id="feedbackButton" class="icon-label-button feedbackButton" type="button" title="Give feedback"><span>Feedback</span></button>
-        <button id="consoleToggle" class="icon-label-button active" type="button" aria-pressed="true"><span>Manager Console</span></button>
+        <!-- The label is carried on the element as well as in the span: below
+             1320px the span is not drawn and the word arrives from CSS, and a
+             word that lives only in a stylesheet is not an accessible name. -->
+        <button id="feedbackButton" class="icon-label-button feedbackButton" type="button" aria-label="Feedback" title="Give feedback"><span>Feedback</span></button>
+        <button id="consoleToggle" class="icon-label-button active" type="button" aria-label="Manager Console" aria-pressed="true"><span>Manager Console</span></button>
       </div>
     </header>
 
