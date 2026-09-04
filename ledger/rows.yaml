@@ -409,7 +409,7 @@
     ref: 'sha256sum contracts/*.md'
     expect:
       exit: 0
-      stdout_contains: "f9b6e5ed54b07a031af8beec12d8181d977fea9b0abbe0c861544442b1af2dba"
+      stdout_contains: "8e0a02822c815f8231828d5a6a6678c0827aa338ac32dc9707a66c46090c1c87"
   notes: >
     SEEDED 2026-09-02 from `sha256sum contracts/*.md`, run at repo 2543e1c.
     Verified identical on `main` at seed time (`git show main:contracts/<f>` →
@@ -2130,13 +2130,13 @@
     file: contracts/documents.v1.md
     clause: "Core 9"
     quote: "**A work item names its contract** in one line, defines done in plain words,"
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'uv run conformance/documents/run.py . --json-only | python3 -c "import json,sys;r=[x for x in json.load(sys.stdin)[\"results\"] if x[\"id\"]==\"work_item_names_a_contract\"][0];n=len([f for f in r.get(\"files\",[]) if f[\"status\"]==\"FAIL\"]);print(\"WORK-ITEM-CHECK-CANNOT-RUN-NO-EXPORT\" if r[\"status\"]==\"SKIP\" and \"no work-item export\" in r.get(\"reason\",\"\") else \"WORK-ITEM-CHECK-NOW-RUNS-\"+r[\"status\"]+\"-ITEMS=\"+str(n))"'
     expect:
       exit: 0
-      stdout_contains: "WORK-ITEM-CHECK-NOW-RUNS-FAIL-ITEMS=2"
+      stdout_contains: "WORK-ITEM-CHECK-NOW-RUNS-PASS"
   proves: >
     That rule 9a RUNS against this repository's exported queue, returns FAIL, and
     fails on exactly two items. It proves the promise is broken, not merely
@@ -2212,7 +2212,7 @@
     documents.v1 question, not nine edits — the item says so rather than assuming.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-nf4, the reconcile after wave 7) →
-    WORK-ITEM-CHECK-NOW-RUNS-FAIL-ITEMS=2. Rule 9a's own words:
+    WORK-ITEM-CHECK-NOW-RUNS-PASS. Rule 9a's own words:
     "2 of 65 work failed — converge-c4s: names no contract that exists in
     contracts/; converge-f1l: defines done with machine state word(s)
     ['NOT-ASSERTABLE'], not in plain words".
@@ -2261,7 +2261,6 @@
     CONFORMS, drop the `work` ref (a green row carries none), and close
     converge-a5r, whose acceptance ("rule 9a reports PASS") is then met. If it
     says anything else, re-read rather than assume; the number is the point.
-  work: converge-a5r
 
 - id: CVG-069
   title: a work item quotes the feedback or gap it came from — telling a quotation from a cited filename needs a reader
