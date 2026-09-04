@@ -82,10 +82,14 @@ export function renderedTextForDoc() {
     .map(([title, html]) => `<h2>${escapeHtml(title)}</h2>${html}`).join('');
   const out = [];
   textInto(holder, out);
-  // The document's own H1 is already the first section's heading (`sections_of`
-  // in app/data.py keeps it), so adding `doc.title` on top would hand the
-  // steward the title twice — measured, before this line said so.
-  return out.join('').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  const body = out.join('').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  // The screen shows the title above the sections, so the copy carries it too —
+  // but `sections_of` in app/data.py gives the first section the H1's own words
+  // whenever anything sits under it, and a document written that way would
+  // otherwise hand the steward its title twice. Measured on both shapes.
+  const first = ((doc.sections || [])[0] || [])[0] || '';
+  const title = String(doc.title || '').trim();
+  return title && first.trim() !== title ? `${title}\n\n${body}` : body;
 }
 
 //: Zoom is the reading column's own text size and nothing else's, so the
