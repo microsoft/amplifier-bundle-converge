@@ -199,15 +199,18 @@ export async function restoreChange(changeId) {
 //
 // Two things this deliberately does not pretend:
 //
-// - **The snapshot it restores to is the steward's own read point**, not any
-//   row in the History list. The sentences the server can still find are the
-//   ones in this reading, so that is the only earlier wording that is actually
-//   reachable. Restoring to an arbitrary commit needs a route the app does not
-//   answer; it is filed as converge-4pq and the panel says so on the screen.
+// - **The snapshot it restores to is the one the steward picked in History.**
+//   Any row in that list, not only their own read point: the app answers a
+//   read at any commit in a document's own history now (converge-4pq —
+//   `?since=<sha>` on the read, `since` in the write's body), and the sha
+//   travels with every write below. Which commits are reachable is the
+//   server's bound, not this file's: it refuses a commit that never touched
+//   this document, in its own words.
 // - **Every restore commits**, which moves HEAD and renumbers every hunk after
 //   it — so the change ids this loop starts with go stale as it runs. Each
 //   sentence is found again by what it SAYS in the reading as it stands, never
-//   by an id that was true one write ago.
+//   by an id that was true one write ago. With a snapshot open that reading is
+//   re-read at the same sha after each write, for the same reason.
 
 const SCOPE_WORD = {
   wording: 'this wording',
@@ -216,12 +219,100 @@ const SCOPE_WORD = {
   document: 'the whole document',
 };
 
+// --------------------------------------------------------------------------
+// the snapshot a restore reads from
+// --------------------------------------------------------------------------
+//
+// Kept BESIDE `data.doc` rather than replacing it. `data.doc` is the steward's
+// own reading — their read point, their kept marks, the changes they have not
+// answered — and opening a snapshot must not disturb any of it. The server
+// keeps the same rule at its end: a read with `?since=` never moves a read
+// point.
+//
+// The History list's `now` row is the steward's own reading and is not a
+// snapshot at all: there is nothing between HEAD and HEAD to put back, so that
+// row means "what has moved since you last read", which is what `data.doc`
+// already holds.
+
+const snapshot = { key: '', rowId: '', sha: '', label: '', loading: false, doc: null, error: '' };
+
+//: Which document a snapshot belongs to. A snapshot of the vision is not a
+//: snapshot of a contract, and moving between documents must not carry one
+//: across.
+function docKey() { return `${state.repoId}\u001f${state.docId}`; }
+
+function forgetSnapshot() {
+  snapshot.key = '';
+  snapshot.rowId = '';
+  snapshot.sha = '';
+  snapshot.label = '';
+  snapshot.loading = false;
+  snapshot.doc = null;
+  snapshot.error = '';
+}
+
+//: The open snapshot, or null when the steward is reading from their own
+//: point. It answers null for a snapshot that no longer matches what is
+//: selected — another document, or a return to the `now` row — so a stale
+//: reading can never be the one a restore is built from. `state.historyId`
+//: is reset to `now` whenever a document is opened (`main.js`), and that is
+//: exactly the case this catches.
+export function openSnapshot() {
+  if (snapshot.key !== docKey() || !snapshot.sha) return null;
+  return String(state.historyId) === String(snapshot.rowId) ? snapshot : null;
+}
+
+//: The reading a restore works from: which cards, and which sha its writes
+//: carry. With no snapshot open both are what they have always been — the
+//: steward's own reading, and no sha at all.
+export function restoreReading() {
+  const open = openSnapshot();
+  if (!open || !open.sha) return { doc: data.doc, since: '', cards: cardsNow() };
+  return { doc: open.doc, since: open.sha, cards: (open.doc && open.doc.changes) || [] };
+}
+
+//: Pick one History row to restore from. The `now` row is the steward's own
+//: reading rather than a snapshot — there is nothing between HEAD and HEAD to
+//: put back — so it closes any open snapshot instead of asking the server for
+//: one.
+export function selectSnapshot(row) {
+  if (!row || String(row.id) === 'now' || !row.sha) { forgetSnapshot(); return Promise.resolve(); }
+  return readSnapshot(String(row.sha), String(row.label || ''), String(row.id));
+}
+
+//: Read this document as it stood at one commit. The fields are set before
+//: the first await, so a caller can draw "reading…" straight after; the view
+//: is drawn again when the answer lands.
+async function readSnapshot(wanted, label, rowId = snapshot.rowId) {
+  snapshot.key = docKey();
+  snapshot.rowId = String(rowId || '');
+  snapshot.sha = wanted;
+  snapshot.label = String(label || '');
+  snapshot.loading = true;
+  snapshot.doc = null;
+  snapshot.error = '';
+  const mine = () => snapshot.key === docKey() && snapshot.sha === wanted;
+  try {
+    const read = await api.doc(state.managerId, state.repoId, state.docId, wanted);
+    if (!mine()) return;
+    snapshot.doc = read;
+  } catch (err) {
+    if (!mine()) return;
+    // The server's own sentence, whole. It is the one that says WHY — a
+    // commit outside this document's history is refused by name there, and
+    // repeating that here in different words would be this file inventing a
+    // cause it did not observe.
+    snapshot.error = err.message || 'that snapshot could not be read';
+  }
+  snapshot.loading = false;
+  hooks.renderDirection();
+}
+
 function signatureOf(card) {
   return [String(card.section || ''), String(card.before || ''), String(card.now || '')].join('\u001f');
 }
 
-export function cardsInScope(scope, key) {
-  const rows = cardsNow();
+export function cardsInScope(scope, key, rows = cardsNow()) {
   if (scope === 'wording') return rows.filter((c) => String(c.id) === String(key));
   if (scope === 'paragraph') return rows.filter((c) => String(c.section) === String(key));
   if (scope === 'section') return rows.filter((c) => headOf(c.section) === String(key));
@@ -229,14 +320,20 @@ export function cardsInScope(scope, key) {
 }
 
 export function restoreScope(scope, key) {
-  const wanted = cardsInScope(scope, key);
+  const reading = restoreReading();
+  const wanted = cardsInScope(scope, key, reading.cards);
   if (!wanted.length) {
     toast('Nothing in this reading moved at that scope, so there is no earlier wording to put back.');
     return;
   }
+  // The lock is read from the steward's own reading of the document, because
+  // that is what the document says NOW — a snapshot's copy would be this
+  // document's H1 as it stood then, and a lock added since would be missed.
+  // It changes nothing that matters either way: `app/writes.py` decides, and
+  // this is only what the confirmation says it will decide.
   const doc = data.doc || {};
   const lock = doc.locked || '';
-  const point = doc.reading || {};
+  const point = (reading.doc && reading.doc.reading) || {};
   const where = lock
     ? `${doc.path || 'This document'} is ${lock}, so it is not touched at all: each wording is written to a proposal beside it, for you to answer.`
     : 'Each wording goes back into the document and is committed in your name.';
@@ -246,11 +343,11 @@ export function restoreScope(scope, key) {
       ${wanted.length > 8 ? `<p class="muted">…and ${wanted.length - 8} more.</p>` : ''}
       <p class="muted">${escapeHtml(where)}</p>`, [
     { label: 'Cancel', kind: 'outline', action: closeDialog },
-    { label: `Restore ${plural(wanted.length, 'sentence')}`, kind: 'primary', action: () => runRestore(wanted) },
+    { label: `Restore ${plural(wanted.length, 'sentence')}`, kind: 'primary', action: () => runRestore(wanted, reading.since) },
   ]);
 }
 
-async function runRestore(targets) {
+async function runRestore(targets, since) {
   closeDialog();
   const wanted = targets.map(signatureOf);
   const landed = [];
@@ -261,13 +358,13 @@ async function runRestore(targets) {
   let proposal = '';
   let commits = 0;
   for (const signature of wanted) {
-    const card = cardsNow().find((c) => signatureOf(c) === signature);
+    const card = restoreReading().cards.find((c) => signatureOf(c) === signature);
     if (!card) {
       refused.push('one sentence had left this reading by the time its turn came');
       continue;
     }
     try {
-      const res = await api.restoreChange(state.managerId, state.repoId, state.docId, card.id);
+      const res = await api.restoreChange(state.managerId, state.repoId, state.docId, card.id, since);
       if (res && res.mode === 'candidate') proposal = res.file || proposal;
       if (res && res.mode === 'commit') commits += 1;
       landed.push(card.section || card.id);
@@ -275,6 +372,10 @@ async function runRestore(targets) {
       refused.push(`${card.section || card.id}: ${err.message}`);
     }
     await hooks.reloadDoc();
+    // Read the snapshot again at the same commit. A restore that committed
+    // moved HEAD, so the reading this loop works from is one write out of
+    // date — including the ids the next write needs.
+    if (since) await readSnapshot(since, snapshot.label);
   }
   let said = 'Nothing was put back.';
   if (proposal && commits) {

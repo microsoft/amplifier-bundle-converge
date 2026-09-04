@@ -15,7 +15,7 @@
 // that refuser's own words, and asserts no cause of its own.
 import { $, qsa, state, data, escapeHtml, currentRepo, currentDoc, readBookmark } from '../state.js';
 import { hooks } from '../refresh.js';
-import { handleDecision, keepChange, saveChangeEdit, restoreChange, restoreScope, markAllRead, editDoc, reconcile, openAsk, copyText, confirmLock } from '../actions.js';
+import { handleDecision, keepChange, saveChangeEdit, restoreChange, restoreScope, markAllRead, editDoc, reconcile, openAsk, copyText, confirmLock, openSnapshot, restoreReading, selectSnapshot } from '../actions.js';
 import { startPresence, holdSection, paintPresence, presenceLineHtml, presenceStanding } from '../presence.js';
 
 const DECISION_BUTTONS = [
@@ -570,33 +570,64 @@ export function renderReview() {
 // paragraph, a section, the whole document. Each control below is the app's own
 // restore write over the sentences that scope covers; none of them stages
 // anything or reports an outcome of its own. What the scopes are made of is
-// this reading's change cards: `section` is the heading path ("Principles › 8"),
+// one reading's change cards: `section` is the heading path ("Principles › 8"),
 // so its head is the section and the whole path is the paragraph.
 //
-// The panel names the one snapshot a restore can actually reach — the
-// steward's own read point — because that is the only earlier wording the
-// server can still find. Restoring to any other row in the list needs a route
-// the app does not answer; it is converge-4pq, and saying so is the honest
-// alternative to a control that would look like time travel and not be.
+// WHICH reading is the row the steward picked in the History list, and every
+// row is reachable (converge-4pq). The app answers a read at any commit in a
+// document's own history now — `?since=<sha>` on the document read, `since` in
+// each restore's body — so picking an older row reads the document back at
+// that commit, the four scopes are built against THAT reading, and each write
+// carries the commit so what goes back is the wording that stood there.
+//
+// The `now` row is not a snapshot: between HEAD and HEAD there is nothing to
+// put back, so it means the steward's own reading — what has moved since they
+// last read — which is what `data.doc` already holds. That is why the panel
+// looks exactly as it did before anyone touches the list.
+//
+// Nothing here decides what is reachable. `app/serve.py` refuses a commit that
+// never touched this document, in its own words, and those words are what the
+// panel shows when it does.
+
+//: Why every row in the list can now be restored from, one gesture away
+//: rather than shouted. This paragraph replaced the one that said an older
+//: snapshot was out of reach; that sentence was true until converge-4pq and
+//: false the moment the route landed.
+function reachSaid() {
+  return `<details><summary class="muted">Details</summary><p class="muted">Every snapshot in this list can be restored from. Picking a row reads the document back at that commit — the read carries <code>?since=&lt;commit&gt;</code> and so does each restore — so the wording that goes back is the wording that stood there, not the nearest one this browser happened to be holding. Your own read point does not move when you look: reading history is not reading. A commit that never touched this document is refused by the server in its own words, which is the whole of the bound.</p></details>`;
+}
+
 function restorePanel(doc) {
-  const cards = (doc && doc.changes) || [];
-  const point = (doc && doc.reading) || {};
+  const open = openSnapshot();
+  if (open && open.loading) {
+    return `<div class="history-actions"><p class="muted">Reading this document as it stood at <strong>${escapeHtml(open.sha)}</strong>…</p></div>`;
+  }
+  if (open && open.error) {
+    return `<div class="history-actions"><p class="muted">That snapshot was not read — ${escapeHtml(open.error)} Nothing has been written.</p>${reachSaid()}</div>`;
+  }
+  const reading = restoreReading();
+  const from = reading.doc || doc;
+  const cards = (from && from.changes) || [];
+  const point = (from && from.reading) || {};
   const lock = (doc && doc.locked) || '';
   const at = point.sinceShort ? `${escapeHtml(point.sinceShort)}` : 'your read point';
   if (!cards.length) {
-    return `<div class="history-actions"><p class="muted">Nothing has moved in this document since ${at}, so there is no earlier wording to put back. When something moves, restoring it at any of the four scopes appears here.</p></div>`;
+    return `<div class="history-actions"><p class="muted">Nothing moved between ${at} and this document as it stands now, so there is no earlier wording to put back from here. Pick another snapshot on the left.</p>${reachSaid()}</div>`;
   }
   const paragraphs = [...new Set(cards.map((c) => String(c.section || 'This document')))];
   const sections = [...new Set(cards.map(sectionHead))].filter(Boolean);
   const button = (scope, key, label) =>
     `<button class="outline-button" data-restore="${escapeHtml(scope)}" data-restore-key="${escapeHtml(key)}" type="button">${label}</button>`;
+  const whose = reading.since
+    ? `You are reading this document as it stood at that snapshot; your own read point is where you left it.`
+    : `That is where you last read.`;
   return `<div class="history-actions">
-      <p class="muted">Restore puts wording back as it stood at <strong>${at}</strong> — ${escapeHtml(point.sinceSource || 'the version you last read')}. ${lock ? `This document is ${escapeHtml(lock)}, so each restore writes a proposal beside it and the document itself is not touched.` : 'Each restore goes into the document and is committed in your name.'}</p>
+      <p class="muted">Restore puts wording back as it stood at <strong>${at}</strong> — ${escapeHtml(point.sinceSource || 'the version you last read')}. ${whose} ${lock ? `This document is ${escapeHtml(lock)}, so each restore writes a proposal beside it and the document itself is not touched.` : 'Each restore goes into the document and is committed in your name.'}</p>
       ${button('document', '', `Restore the whole document (${plural(cards.length, 'sentence')})`)}
       ${sections.map((s) => button('section', s, `Restore section “${escapeHtml(shorten(s, 28))}”`)).join('')}
       ${paragraphs.map((p) => button('paragraph', p, `Restore paragraph “${escapeHtml(shorten(p, 28))}”`)).join('')}
       ${cards.map((c) => button('wording', c.id, `Restore wording “${escapeHtml(shorten(c.before || c.now, 28))}”`)).join('')}
-      <details><summary class="muted">Details</summary><p class="muted">Restoring to a snapshot older than your read point is not offered, because the app answers no route that reads a document at an arbitrary commit — only the sentences in this reading can be put back. Filed as converge-4pq.</p></details>
+      ${reachSaid()}
     </div>`;
 }
 
@@ -605,7 +636,10 @@ export function renderHistory() {
   const historyRows = (doc && doc.history) || [];
   if (!historyRows.length) return '<p class="muted">No recorded history for this document yet.</p>';
   const snap = historyRows.find((h) => h.id === state.historyId) || historyRows[0];
-  return `<div class="history-layout"><div class="history-list">${historyRows.map((h) => `<button class="history-item ${h.id === snap.id ? 'active' : ''}" data-history="${escapeHtml(h.id)}" type="button"><strong>${escapeHtml(h.label)}</strong><br><span>${escapeHtml(h.date)}</span></button>`).join('')}</div>
+  // The sha and the label ride on the row itself, because the click handler
+  // needs to name that commit to the server and there is nowhere else the
+  // pair is true together.
+  return `<div class="history-layout"><div class="history-list">${historyRows.map((h) => `<button class="history-item ${h.id === snap.id ? 'active' : ''}" data-history="${escapeHtml(h.id)}" data-history-sha="${escapeHtml(h.sha || '')}" data-history-label="${escapeHtml(h.label || '')}" type="button"><strong>${escapeHtml(h.label)}</strong><br><span>${escapeHtml(h.date)}</span></button>`).join('')}</div>
       <div class="history-snapshot"><span class="eyebrow">${escapeHtml(snap.date)}</span><h3>${escapeHtml(snap.label)}</h3><p>${escapeHtml(snap.note)}</p>${snap.sha ? `<details><summary class="muted">Details</summary><p><code>${escapeHtml(snap.sha)}</code></p></details>` : ''}${restorePanel(doc)}</div></div>`;
 }
 
@@ -752,6 +786,15 @@ export function attachDocumentModeHandlers() {
     handleDecision(btn.dataset.decision, btn.dataset.decisionLabel)));
   qsa('[data-history]').forEach((btn) => btn.addEventListener('click', () => {
     state.historyId = btn.dataset.history;
+    // Ask for that snapshot, then draw at once. `selectSnapshot` sets what it
+    // is reading before it waits on the server, so the panel below says it is
+    // reading rather than showing the previous row's sentences as if they
+    // were this row's; it draws again when the answer lands.
+    selectSnapshot({
+      id: btn.dataset.history,
+      sha: btn.dataset.historySha,
+      label: btn.dataset.historyLabel,
+    });
     renderDirection();
   }));
 }
