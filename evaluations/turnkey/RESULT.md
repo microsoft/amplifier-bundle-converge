@@ -604,6 +604,26 @@ new steps. They are named here because a run that prints two reds and does not
 say what they are is a run nobody can check. Lanes `w8-return-brief` and
 `w8-brief-convention` hold the brief convention; `converge-791` is the queue's.
 
+## What has NOT been run: these two steps in a container
+
+The readings above are observed, on this host. **Steps (j) and (k) have never
+run in a driven container**, and nothing here claims they have. Two things
+follow, and both are stated rather than discovered later:
+
+- The default `--steps` runs everything, so the next `run.sh` will carry them
+  into a fixture wave. On a workspace where nothing is readable they all come
+  back SKIP — proven without a container by a test that stands the steps up
+  against an environment answering nothing, and asserts every clause is a SKIP
+  with a reason and the step itself a SKIP with one.
+- Where something IS readable and the promise is broken — a fixture manager
+  that writes lane briefs with no ownership split, say — (j) will report FAIL
+  and the run's exit code will follow it. That is a true reading of that wave
+  and the conformance list's own asserts ("lanes are filled only with disjoint
+  items", "no raw feedback becomes work without a quoted source", "a stall is
+  declared stuck … a hand-off exists"), not a new gate invented here. It has
+  simply never been exercised in a container, and the first driven run may
+  report a red the nine steps do not.
+
 ## For the reconciler: what these steps let a row re-derive
 
 `ledger/` is not this lane's to edit. What the rows would need is written out

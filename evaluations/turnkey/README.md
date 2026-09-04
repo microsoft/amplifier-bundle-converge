@@ -92,7 +92,9 @@ through a pull-request merge, so main's first-parent line is almost entirely PR
 merges and an integrator's own commit sits off it.
 
 What each reading actually read on a live run, and what the six SKIPs wait on,
-is in [`RESULT.md`](RESULT.md) under *Two more steps*.
+is in [`RESULT.md`](RESULT.md) under *Two more steps*. These two steps have run
+in observed mode only; a driven container has never carried them, and RESULT.md
+says so rather than leaving it to be found out.
 
 ## Three statuses, and a SKIP is never a soft pass
 

@@ -1063,3 +1063,84 @@ def test_a_history_longer_than_the_scan_is_reported_incomplete():
     env = _GitLog(merges, {})
     _, _, complete = run.lane_authored_commits(env, "/r", "main", limit=3)
     assert complete is False
+
+
+# --- the two steps, wired end to end against an environment that answers ---
+
+
+class _Workspace(run.Env):
+    """An environment that answers exactly what it is given, and nothing else.
+
+    Enough to run steps (j) and (k) without a container: git, tmux, the queue
+    and the filesystem all answer through `Env.run`, so a dict of canned
+    answers exercises the whole step including its wiring.
+    """
+
+    kind = "fake"
+    label = "fake"
+
+    def __init__(self, files=None, answers=None):
+        self.files, self.answers = files or {}, answers or {}
+
+    def run(self, argv, cwd=None, timeout=120.0, env=None):
+        if argv[:1] == ["cat"]:
+            body = self.files.get(argv[1])
+            return run.Ran(0 if body is not None else 1, body or "", "", argv=argv)
+        if argv[:1] == ["test"]:
+            return run.Ran(0 if argv[-1] in self.files else 1, "", "", argv=argv)
+        for key, answer in self.answers.items():
+            if key in " ".join(argv):
+                return run.Ran(0, answer, "", argv=argv)
+        return run.Ran(1, "", "no answer for " + " ".join(argv), argv=argv)
+
+
+def _context(env, **kw):
+    return run.Context(env=env, host=env, mode=run.OBSERVED, workspace="/w",
+                       repo="/w/repo", project="p", integration_branch="main",
+                       answer_key={}, **kw)
+
+
+def test_a_bare_workspace_produces_skips_with_reasons_and_never_a_pass():
+    """Nothing to read is not the same as nothing wrong.
+
+    A driven container starts empty. Every clause must come back SKIP with its
+    reason, and the step itself must be a SKIP carrying one — a fabricated PASS
+    on an empty workspace is the failure this harness exists to prevent.
+    """
+    result = run.step_clauses(_context(_Workspace()))
+    assert result.status == run.SKIP
+    assert result.reason
+    readings = result.evidence["clause_readings"]
+    assert {r["verdict"] for r in readings} == {run.SKIP}
+    assert all(r.get("awaits") for r in readings)
+
+
+def test_a_lane_brief_that_declares_nothing_fails_the_step_not_just_the_clause():
+    env = _Workspace(
+        files={
+            "/w/manifest.tsv": "lane\tworktree\tbranch\tbase_sha\ttmux\tgoal\n"
+                               "a\t/w/lanes/a\tlane/a\tbase\ttm-a\t/w/goals/a.md\n"
+                               "b\t/w/lanes/b\tlane/b\tbase\ttm-b\t/w/goals/b.md\n",
+            "/w/goals/a.md": "**File ownership — edit ONLY:** `app/one.py`.\n",
+            "/w/goals/b.md": "# Lane b\nJust do the thing.\n",
+        },
+        answers={"list-panes": "tm-a\t/w/lanes/a\ntm-b\t/w/lanes/b\n",
+                 "diff --name-only": "", "rev-list --count": "1"},
+    )
+    result = run.step_clauses(_context(env))
+    assert result.status == run.FAIL
+    clause2 = next(r for r in result.evidence["clause_readings"] if r["row"] == "CVG-012")
+    assert clause2["verdict"] == run.FAIL
+    assert "b" in clause2["why"]
+
+
+def test_step_k_names_the_step_that_measured_the_other_half():
+    """Clause 7 and 8 have halves other steps measure. (k) reports which."""
+    env = _Workspace()
+    ctx = _context(env)
+    ctx.results.append({"step": "f", "status": run.PASS})
+    reading = run.step_attribution(ctx)
+    seven = next(r for r in reading.evidence["clause_readings"] if r["row"] == "CVG-017")
+    assert "step (f) PASS" in seven["why"]
+    eight = next(r for r in reading.evidence["clause_readings"] if r["row"] == "CVG-018")
+    assert "step (g) did not run in this invocation" in eight["why"]
