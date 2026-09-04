@@ -613,30 +613,20 @@ def test_the_mark_is_wired_from_the_response_that_drew_the_screen():
     print("render/direction.js draws it as #docSyncedAt, beside the document's title")
 
 
-def test_the_history_panel_still_says_what_a_restore_cannot_reach():
-    """converge-4pq is NOT delivered, and the screen must keep saying so.
-
-    This asserts honesty, not the acceptance: restoring still reaches exactly
-    one snapshot — the steward's own read point. Making an arbitrary snapshot
-    reachable needs a route in `app/serve.py` and `app/writes.py`, which this
-    lane does not own. The panel says that plainly rather than offering a
-    control that would look like time travel and not be one.
-
-    This test fails the day someone adds such a control without the route
-    behind it — which is the failure it exists to catch.
+def test_the_history_panel_says_every_snapshot_is_restorable():
+    """converge-4pq landed (lane w8-direction-restore): restore reaches ANY
+    snapshot the History view shows. The earlier version of this test asserted
+    the panel's honest refusal while the route did not exist; that refusal is
+    now false and must not be shown. This test fails the day the panel starts
+    hedging again, or the day the sentence it now carries disappears.
     """
     render = DIRECTION_JS.read_text(encoding="utf-8")
     head, _, tail = render.partition("function restorePanel(")
     body = tail.split("\nexport function renderHistory")[0]
     assert body, "the restore panel is no longer in render/direction.js"
-    assert "older than your read point is not offered" in body, (
-        "the History panel stopped saying which snapshots a restore cannot reach"
+    assert "older than your read point is not offered" not in body, (
+        "the History panel still claims older snapshots cannot be restored — the route exists"
     )
-    assert "arbitrary commit" in body, (
-        "the panel no longer says why: there is no route that reads a document at "
-        "an arbitrary commit"
+    assert "Every snapshot in this list can be restored from" in body, (
+        "the panel no longer tells the steward that every shown snapshot is restorable"
     )
-    said = [line.strip() for line in body.splitlines() if "not offered" in line]
-    print("\nwhat the History panel tells a steward today:")
-    for line in said:
-        print(f"  {line[:160]}")
