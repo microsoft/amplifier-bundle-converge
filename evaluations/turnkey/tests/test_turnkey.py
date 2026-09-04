@@ -1144,3 +1144,269 @@ def test_step_k_names_the_step_that_measured_the_other_half():
     assert "step (f) PASS" in seven["why"]
     eight = next(r for r in reading.evidence["clause_readings"] if r["row"] == "CVG-018")
     assert "step (g) did not run in this invocation" in eight["why"]
+
+
+# --- clauses 3 and 11, the call stamp -------------------------------------
+#
+# Both clauses are read off the same artifact: what a manager session wrote in
+# its plan record at the moment it needed the steward. The convention is in
+# `context/manager/wave-record.md`; these prove the reading of it.
+
+
+def _parks(text, at="2026-09-04T09:35:48Z"):
+    return run.parse_park_events([{"at": at, "text": text}])
+
+
+def test_a_hostname_containing_park_is_not_a_park():
+    """`spark-1` is this workspace's own hostname, and it is not a park.
+
+    Measured before the word boundary went in: the plan record reported five
+    parks where four are real, and the fifth was a URL.
+    """
+    assert run.parse_park_events(
+        [{"at": "T0", "text": "app live at http://spark-1:8788"}]) == []
+
+
+def test_a_park_reads_the_call_and_what_continued_off_one_line():
+    park = _parks("cycle 2: CALL ratify - the clause 15 candidate needs your word. "
+                  "Parked: w8-clause15. Continued: console, direction-writes.")[0]
+    assert park["call"] == "ratify"
+    assert park["continued"] == 2
+    assert park["continued_names"] == ["console", "direction-writes"]
+    assert park["stamped"] is True
+
+
+def test_the_looser_form_a_cycle_entry_already_writes_is_read_too():
+    """`Parked: x` with `Live: a, b` records the same two facts.
+
+    A convention that only ever reads its own stamp cannot judge the waves that
+    ran before it existed, and this repository has eight months of those.
+    """
+    park = _parks("cycle 24: merged w6-kit-numbering. Live: guard-3, "
+                  "renumber-followup. Parked: protocol-terms (steward ratify "
+                  "card).")[0]
+    assert park["call"] == "ratify"
+    assert park["continued"] == 2
+    assert park["continued_source"] == "the entry's own `Live:` list"
+    assert park["stamped"] is False
+
+
+def test_a_live_count_is_read_as_well_as_a_live_list():
+    park = _parks("cycle 18: parked 71q on your word. Live 7.")[0]
+    assert park["continued"] == 7
+    assert park["continued_source"] == "the entry's own live count"
+
+
+def test_a_period_inside_a_word_does_not_cut_the_park_sentence():
+    """`PROTOCOL.md` keeps its dot; a sentence break needs a space after it."""
+    park = _parks("cycle 23: PROTOCOL.md is RATIFIED, so the wording change is "
+                  "parked as a ratify card. Live: kit-numbering.")[0]
+    assert park["parked"].startswith("cycle 23: PROTOCOL.md is RATIFIED")
+
+
+def test_a_park_with_work_beside_it_is_clause_3_kept():
+    reading = run.assert_parks_kept_the_wave_moving(
+        _parks("CALL ratify - your word. Parked: x. Continued: a, b."))
+    assert reading["verdict"] == run.PASS
+    assert "not that nothing more could have proceeded" in reading["why"]
+
+
+def test_a_park_with_nothing_continuing_and_no_reason_fails_clause_3():
+    reading = run.assert_parks_kept_the_wave_moving(
+        _parks("parked x on your word. Continued: none."))
+    assert reading["verdict"] == run.FAIL
+
+
+def test_a_park_with_nothing_continuing_that_says_why_is_not_a_failure():
+    """"Everything else waits on this same word" is not giving up.
+
+    A rule that could not tell the two apart would fabricate a red against a
+    manager session doing exactly the right thing.
+    """
+    reading = run.assert_parks_kept_the_wave_moving(
+        _parks("parked x on your word. Continued: none, because no ready item "
+               "fails to collide with it."))
+    assert reading["verdict"] != run.FAIL
+
+
+def test_a_park_that_never_says_what_continued_is_a_skip_naming_the_stamp():
+    reading = run.assert_parks_kept_the_wave_moving(_parks("Parked: x."))
+    assert reading["verdict"] == run.SKIP
+    assert "Continued:" in reading["awaits"]
+
+
+def test_a_call_stamped_as_none_of_the_four_fails_clause_11():
+    reading = run.assert_calls_are_one_of_the_four(
+        _parks("CALL design opinion - which blue? Parked: none. Continued: a."))
+    assert reading["verdict"] == run.FAIL
+    assert "design opinion" in reading["why"]
+
+
+def test_a_call_naming_no_kind_is_unread_and_never_a_pass():
+    reading = run.assert_calls_are_one_of_the_four(_parks("Parked: x. Live: a."))
+    assert reading["verdict"] == run.SKIP
+    assert reading["classified"] == 0
+
+
+def test_every_call_naming_one_of_the_four_is_clause_11_kept():
+    reading = run.assert_calls_are_one_of_the_four(
+        _parks("CALL priority - which first? Parked: none. Continued: a."))
+    assert reading["verdict"] == run.PASS
+    assert reading["tally"] == {"priority": 1}
+
+
+# --- clauses 7 and 8, against a real repository ---------------------------
+#
+# The attribution rests on git's own shape, so a fake git proves the parsing and
+# nothing about the question. These build a real repository with a real lane
+# merge and ask the step who wrote the check record.
+
+
+def _git(repo, *argv):
+    subprocess.run(["git", "-C", str(repo), *argv], check=True,
+                   capture_output=True, text=True)
+
+
+def _seed_repo(tmp_path, entry_written_by):
+    """A repository shaped like this one: a lane merge, then an integration.
+
+    `entry_written_by` decides who appends the check-record entry - the
+    integrator on main, or the lane on its own branch. Everything else about the
+    two repositories is identical, so the reading has exactly one thing to see.
+    """
+    repo = tmp_path / "repo"
+    (repo / "docs" / "workflow").mkdir(parents=True)
+    (repo / "ledger").mkdir()
+    _git(repo.parent, "init", "-q", "-b", "main", str(repo))
+    _git(repo, "config", "user.email", "t@example.invalid")
+    _git(repo, "config", "user.name", "turnkey test")
+    record = repo / "docs" / "workflow" / "CHECK-RECORD.md"
+    record.write_text("# Post-merge check record\n\nNewest last.\n", encoding="utf-8")
+    (repo / "ledger" / "rows.yaml").write_text("rows: []\n", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "base")
+
+    entry = ("\n## 2026-09-04 12:40 - wave 8, two lanes merged\n\n"
+             "Merged lane/one and lane/two, then re-ran the check myself:\n\n"
+             "    uv run --with pyyaml ledger/checks/verify.py -> all pass\n")
+
+    _git(repo, "checkout", "-q", "-b", "lane/one")
+    (repo / "ledger" / "rows.yaml").write_text("rows: [one]\n", encoding="utf-8")
+    if entry_written_by == "lane":
+        record.write_text(record.read_text(encoding="utf-8") + entry,
+                          encoding="utf-8")
+    _git(repo, "commit", "-qam", "ledger: a row the lane re-derived")
+    _git(repo, "checkout", "-q", "main")
+    _git(repo, "merge", "-q", "--no-ff", "-m", "merge lane/one: wave 8", "lane/one")
+
+    if entry_written_by == "integrator":
+        record.write_text(record.read_text(encoding="utf-8") + entry,
+                          encoding="utf-8")
+        _git(repo, "commit", "-qam", "check record: wave 8 re-checked after merge")
+    return repo
+
+
+class _RealGitEnv(run.LocalEnv):
+    """This host, except the work queue - which no test may reach for."""
+
+    def run(self, argv, cwd=None, timeout=120.0, env=None):
+        if argv[:1] == ["amplifier-work-tracker"]:
+            return run.Ran(1, "", "the queue is not consulted in this test",
+                           argv=argv)
+        return super().run(argv, cwd=cwd, timeout=timeout, env=env)
+
+
+def _attribution_context(repo):
+    env = _RealGitEnv()
+    ctx = run.Context(env=env, host=env, mode=run.OBSERVED, workspace=str(repo.parent),
+                      repo=str(repo), project="p", integration_branch="main",
+                      answer_key={})
+    for letter in "fgh":
+        ctx.results.append({"step": letter, "status": run.PASS})
+    return ctx
+
+
+def test_a_check_record_the_integrator_wrote_answers_clauses_7_and_8(tmp_path):
+    """The observation the SKIP was waiting for, taken on a repository.
+
+    Both clauses come back with a real verdict on WHO verified, and the reading
+    names the commit and says what it does not prove.
+    """
+    repo = _seed_repo(tmp_path, "integrator")
+    result = run.step_attribution(_attribution_context(repo))
+    readings = {r["row"]: r for r in result.evidence["clause_readings"]}
+    assert readings["CVG-017"]["verdict"] == run.PASS
+    assert readings["CVG-018"]["verdict"] == run.PASS
+    why = readings["CVG-017"]["why"]
+    assert "docs/workflow/CHECK-RECORD.md" in why
+    assert "neither side of any lane merge" in why
+    assert "does not prove" in why
+    assert "verify.py" in why
+
+
+def test_a_check_record_entry_that_arrived_through_a_lane_merge_fails(tmp_path):
+    """A worker session's own green wearing the manager session's clothes."""
+    repo = _seed_repo(tmp_path, "lane")
+    result = run.step_attribution(_attribution_context(repo))
+    readings = {r["row"]: r for r in result.evidence["clause_readings"]}
+    assert readings["CVG-017"]["verdict"] == run.FAIL
+    assert readings["CVG-018"]["verdict"] == run.FAIL
+    assert "never the worker session's" in readings["CVG-018"]["why"]
+    assert result.status == run.FAIL
+
+
+def test_a_repository_without_the_convention_reads_exactly_as_before(tmp_path):
+    """Adopting the convention is the answer, not a new way to be red.
+
+    A repository that has never heard of the check record gets the reading it
+    got before, plus a named way to answer it.
+    """
+    repo = _seed_repo(tmp_path, "integrator")
+    (repo / "docs" / "workflow" / "CHECK-RECORD.md").unlink()
+    _git(repo, "commit", "-qam", "remove the check record")
+    result = run.step_attribution(_attribution_context(repo))
+    seven = next(r for r in result.evidence["clause_readings"] if r["row"] == "CVG-017")
+    assert seven["verdict"] == run.SKIP
+    assert "is not in this repository yet" in seven["why"]
+    assert "CHECK-RECORD.md" in seven["attribution"]["awaits"]
+
+
+def test_an_entry_naming_no_command_is_a_claim_not_a_record(tmp_path):
+    repo = _seed_repo(tmp_path, "integrator")
+    record = repo / "docs" / "workflow" / "CHECK-RECORD.md"
+    record.write_text("# Post-merge check record\n\n"
+                      "## 2026-09-04 13:10 - wave 9\n\nEverything is fine.\n",
+                      encoding="utf-8")
+    _git(repo, "commit", "-qam", "check record: wave 9")
+    result = run.step_attribution(_attribution_context(repo))
+    seven = next(r for r in result.evidence["clause_readings"] if r["row"] == "CVG-017")
+    assert seven["verdict"] == run.SKIP
+    assert "names no check that was run" in seven["why"]
+    assert "naming the command it re-ran" in seven["attribution"]["awaits"]
+
+
+def test_a_typo_fix_three_entries_up_is_not_credited_with_the_newest_entry(tmp_path):
+    """`-S` finds who ADDED the line, not who touched the file last."""
+    repo = _seed_repo(tmp_path, "integrator")
+    record = repo / "docs" / "workflow" / "CHECK-RECORD.md"
+    record.write_text(record.read_text(encoding="utf-8").replace("Newest last.",
+                                                                "Newest last!"),
+                      encoding="utf-8")
+    _git(repo, "commit", "-qam", "check record: fix a typo in the header")
+    introduced = run.commit_that_introduced(
+        _RealGitEnv(), str(repo), "main", "docs/workflow/CHECK-RECORD.md",
+        "## 2026-09-04 12:40 - wave 8, two lanes merged")
+    assert introduced["subject"] == "check record: wave 8 re-checked after merge"
+
+
+def test_a_call_word_elsewhere_in_the_entry_does_not_classify_the_park():
+    """Measured on this workspace: a guard fix mentioning RATIFIED is not a call.
+
+    The entry merged a lane whose note said "RATIFIED = locked" and, separately,
+    parked something on the steward. Read from the whole entry, that came back as
+    a ratify call - a classification nobody wrote and nobody could defend.
+    """
+    park = _parks("cycle 25: merged w6-guard-3 (RATIFIED = locked). "
+                  "Live: renumber-followup. Parked: protocol-terms.")[0]
+    assert park["call"] is None
+    assert park["continued"] == 1
