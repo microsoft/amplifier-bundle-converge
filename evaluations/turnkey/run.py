@@ -683,11 +683,23 @@ def assert_lanes_are_distinct(lanes: list[Lane]) -> dict:
     return {"ok": not problems, "problems": problems}
 
 
+def _holder_seen_running(pid: int, observations: list[dict]) -> dict | None:
+    """Where this pid was sitting, read from /proc while the wave still ran."""
+    for sample in reversed(observations or []):
+        for holder in sample.get("holders", []):
+            if holder.get("pid") == pid and holder.get("cwd"):
+                return {"pid": pid, "cwd": holder["cwd"],
+                        "cmdline": holder.get("cmdline", ""),
+                        "observed_at": sample.get("at")}
+    return None
+
+
 def assert_no_subagent_held_work(
     items: list[dict],
     processes: dict[int, dict | None],
     lane_worktrees: list[str],
     lane_branches: list[str] | None = None,
+    observations: list[dict] | None = None,
 ) -> dict:
     """FAIL the run if a work item was executed by an in-session sub-agent.
 
@@ -715,6 +727,14 @@ def assert_no_subagent_held_work(
     launcher recorded" — never to upgrade it to a pass. Prose naming a branch
     is exactly the kind of self-report a session running work in-session could
     write, so it corroborates and does not prove.
+
+    `observations` are readings of the SAME question taken while the wave was
+    still running: pid -> the directory it was sitting in, read from /proc at
+    the time. A holder that has since exited but WAS read sitting inside a lane
+    worktree is a pass, because that reading is the identical fact this
+    assertion asks for, taken when it could still be taken. Without it, every
+    holder on a completed wave is unresolved — measured: 2 of 2 on run D — and
+    the strongest evidence against in-session execution only exists mid-flight.
     """
     verdicts, offenders, unresolved = [], [], []
     live_pids: dict[int, str] = {}
@@ -735,7 +755,7 @@ def assert_no_subagent_held_work(
             verdicts.append(record)
             continue
 
-        process = processes.get(pid)
+        process = processes.get(pid) or _holder_seen_running(pid, observations or [])
         if process is None:
             named = [b for b in branches if b and b in str(item.get("resolution") or "")]
             record.update(verdict=SKIP, pid=pid,
@@ -753,6 +773,8 @@ def assert_no_subagent_held_work(
 
         cwd = process.get("cwd", "")
         record.update(pid=pid, cwd=cwd)
+        if process.get("observed_at"):
+            record["read_at"] = process["observed_at"]
         lane = next((w for w in lane_worktrees if _within(cwd, w)), None)
         if lane is None:
             record.update(
@@ -772,6 +794,13 @@ def assert_no_subagent_held_work(
         else:
             live_pids[pid] = str(item.get("id"))
             record.update(verdict=PASS, lane_worktree=lane)
+            if process.get("observed_at"):
+                record["why"] = (
+                    f"pid {pid} was read sitting in {cwd!r} at "
+                    f"{process['observed_at']}, while the wave was running; it has "
+                    "since exited, but that reading is this assertion's own question "
+                    "answered at the only time it could be asked"
+                )
         verdicts.append(record)
 
     return {
@@ -1352,7 +1381,8 @@ def step_lanes(ctx: Context) -> Result:
     pids = {p for p in (holder_pid(i.get("holder")) for i in items) if p is not None}
     processes = {pid: read_process(ctx.env, pid) for pid in pids}
     subagents = assert_no_subagent_held_work(
-        items, processes, [ln.worktree for ln in lanes], [ln.branch for ln in lanes]
+        items, processes, [ln.worktree for ln in lanes],
+        [ln.branch for ln in lanes], samples,
     )
 
     progress = [
@@ -1759,12 +1789,30 @@ def objective_text(path: Path, fields: dict[str, str]) -> tuple[str, str | None]
 
 
 def sample_lanes(ctx: Context) -> dict:
-    """One reading of the two systems that can only answer in the present tense."""
+    """One reading of the three systems that can only answer in the present tense.
+
+    Terminal sessions, worktrees, and — the one that matters most for clause 5
+    — where each item's HOLDING PROCESS is sitting. A holder's working
+    directory is readable only while that process is alive, so a wave that has
+    finished can never be asked; this is that question, asked in time.
+    """
+    holders = []
+    items, error = read_tracker_items(ctx.env, ctx.project)
+    for item in items if not error else []:
+        pid = holder_pid(item.get("holder"))
+        if pid is None:
+            continue
+        process = read_process(ctx.env, pid)
+        if process:
+            holders.append({"item": item.get("id"), "pid": pid,
+                            "cwd": process.get("cwd", ""),
+                            "cmdline": process.get("cmdline", "")})
     return {
         "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "sessions": read_tmux_sessions(ctx.env, LANE_TMUX_SOCKET),
         "worktrees": [w for w in read_worktrees(ctx.env, ctx.wave_repo)
                       if str(w.get("branch", "")).startswith("lane/")],
+        "holders": holders,
     }
 
 
@@ -1928,6 +1976,19 @@ def self_check() -> dict:
     cases.append(("an exited holder is unresolved, never a pass",
                   gone["ok"] is True and len(gone["unresolved"]) == 1
                   and gone["verdicts"][0]["verdict"] == SKIP))
+    watched = assert_no_subagent_held_work(
+        items, {111: None}, ["/w/lanes/a/repo"], None,
+        [{"at": "T0", "holders": [{"item": "x-1", "pid": 111,
+                                   "cwd": "/w/lanes/a/repo"}]}],
+    )
+    cases.append(("an exited holder READ IN A LANE while it ran is a pass",
+                  watched["verdicts"][0]["verdict"] == PASS))
+    elsewhere = assert_no_subagent_held_work(
+        items, {111: None}, ["/w/lanes/a/repo"], None,
+        [{"at": "T0", "holders": [{"item": "x-1", "pid": 111, "cwd": "/w"}]}],
+    )
+    cases.append(("an exited holder read OUTSIDE every lane while it ran FAILS",
+                  elsewhere["ok"] is False))
     corroborated = assert_no_subagent_held_work(
         [{"id": "x-1", "status": "resolved", "holder": "agent-spark-1-111",
           "resolution": "landed on lane/a"}],

@@ -510,3 +510,51 @@ def test_an_iso_timestamp_counts_as_a_dated_entry(heading):
 def test_the_brief_check_actually_uses_that_pattern():
     import inspect
     assert r"(?![-\d])" in inspect.getsource(run.step_brief)
+
+
+# ---------------------------------------------------------------------------
+# the holder question, asked at the only time it can be answered
+# ---------------------------------------------------------------------------
+#
+# A holder's working directory is readable only while that process is alive.
+# Measured on run D: every holder on a finished wave was unresolved, so the
+# strongest evidence against in-session execution existed only mid-flight.
+
+
+HELD_ONE = [{"id": "x-1", "status": "resolved", "holder": "agent-spark-1-111"}]
+IN_LANE_AT_T0 = [{"at": "T0", "holders": [{"item": "x-1", "pid": 111,
+                                           "cwd": "/w/lanes/a/repo"}]}]
+
+
+def test_an_exited_holder_read_inside_a_lane_while_it_ran_passes():
+    verdict = run.assert_no_subagent_held_work(
+        HELD_ONE, {111: None}, ["/w/lanes/a/repo"], None, IN_LANE_AT_T0)
+    assert verdict["verdicts"][0]["verdict"] == run.PASS
+    assert verdict["verdicts"][0]["read_at"] == "T0"
+    assert verdict["unresolved"] == []
+
+
+def test_an_exited_holder_read_outside_every_lane_while_it_ran_still_fails():
+    """The observation is evidence, not amnesty."""
+    outside = [{"at": "T0", "holders": [{"item": "x-1", "pid": 111, "cwd": "/w"}]}]
+    verdict = run.assert_no_subagent_held_work(
+        HELD_ONE, {111: None}, ["/w/lanes/a/repo"], None, outside)
+    assert verdict["ok"] is False
+    assert verdict["offenders"]
+
+
+def test_an_observation_of_a_different_pid_does_not_place_this_holder():
+    other = [{"at": "T0", "holders": [{"item": "x-9", "pid": 999,
+                                       "cwd": "/w/lanes/a/repo"}]}]
+    verdict = run.assert_no_subagent_held_work(
+        HELD_ONE, {111: None}, ["/w/lanes/a/repo"], None, other)
+    assert verdict["verdicts"][0]["verdict"] == run.SKIP
+
+
+def test_a_live_reading_still_wins_over_an_observation():
+    """Present-tense evidence is preferred; the observation is the fallback."""
+    live = {111: {"pid": 111, "cwd": "/w/lanes/a/repo", "cmdline": "amplifier"}}
+    verdict = run.assert_no_subagent_held_work(
+        HELD_ONE, live, ["/w/lanes/a/repo"], None, IN_LANE_AT_T0)
+    assert verdict["verdicts"][0]["verdict"] == run.PASS
+    assert "read_at" not in verdict["verdicts"][0]
