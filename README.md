@@ -75,9 +75,24 @@ This composes the root `bundle.md`, which assembles on the lean **anchors** base
 and pulls in `amplifier-work-tracker` **and** the same behavior. Use this to run
 the `seed-reconcile` recipe end-to-end against a target repo.
 
-> **Host requirement.** A recipe resolves its helpers only from the session it
-> runs in, so running Converge's recipe needs either Converge's own
-> full-workspace setup or a host session already on the lean `anchors` base.
+> **Host requirement.** `composition.v1` Core 4 still reads that a step resolves
+> its helpers only from the session it runs in, so by the contract a recipe needs
+> either Converge's own full-workspace setup or a host session already on the
+> lean `anchors` base — but that clause is now behind the engine, and the one
+> recipe this project ships no longer works that way.
+>
+> `recipes/seed-reconcile.yaml` carries `schema_version: 2` and a dependency
+> manifest, so it declares its own helpers and resolves them from that closure
+> rather than from the calling session. In practice it runs on any host.
+> Measured on this tree, 2026-09-04: `recipe-runner plan` lists all twelve
+> agents — including `anchors:explorer`, the read-only intake step whose absence
+> used to fail the run outright — against the one declared dependency, and the
+> Amplifier recipes tool reports `execution_mode: runner-isolated`.
+>
+> **The clause has not yet been amended.** The proposal is
+> `contracts/composition.v1-candidate.md`; the decision is carried in the queue
+> as `converge-may`. Until the steward answers in one word, Core 4 as quoted
+> above is the law, and this note is the honest gap between it and the engine.
 
 ### What differs between the two paths (honestly)
 
@@ -85,13 +100,15 @@ the `seed-reconcile` recipe end-to-end against a target repo.
 |---|---|---|
 | 4 agents · 5 skills · guard hook · awareness | ✅ | ✅ |
 | Session base + everyday tools | supplied by whatever bundle is already active | ✅ the lean `anchors` base, pulled in by `bundle.md` |
-| `seed-reconcile` recipe runnable | only if the host is on the `anchors` base (the recipe's read-only intake step is `anchors:explorer`) | ✅ |
+| `seed-reconcile` recipe runnable | ✅ the recipe declares its own helpers (`schema_version: 2`) and resolves them from that closure, so this path no longer has to supply them | ✅ |
 | `work-tracker` present (reconciler's `work_*` filing) | ✅ the behavior includes the work-tracker **behavior**, so `reconciler` gets `work_*` filing on this path too | ✅ pulled in by `bundle.md` |
 | Agents' "no delegate / no skills / no shell" rules | behavioral — agent body instructions + explicit `tools:` blocks (per-role structural spawn policy is an upstream feature request) | behavioral (same) |
 
 Both paths give the four agents, five skills, guard hook, awareness context, and
-work-tracker filing. The root path additionally supplies the base — so for
-end-to-end recipe runs against a target repo, prefer `bundle use converge`. For
+work-tracker filing. The root path additionally supplies the base, which is why
+it is still the recommendation for everyday work — but that is now a matter of
+what your session has to hand, not of whether the recipe will run: since
+`schema_version: 2` the recipe brings its own helpers either way. For
 lightweight composition onto a session that already has its own base, the
 `--app` behavior is the quick path. Neither path imposes any session-wide
 `spawn:` policy: a live probe (2026-09-02) showed a composed `spawn.exclude_tools`

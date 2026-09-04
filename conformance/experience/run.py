@@ -219,11 +219,61 @@ SURFACE_CLASSES = ("full app", "quick-access", "notification")
 
 #: Core 14 — the forms feedback may be dropped in (`experience-operation.v1`
 #: clause 10), and how this body would show each.
+#:
+#: Every marker here is **offer-shaped**: a control, a MIME filter, or a
+#: recorder API — something that only appears because the body takes that form.
+#: A bare topic word is not one, and the third row used to be `\bvoice\b`.
+#: Measured on this tree, 2026-09-04 (converge-gl6): once the app added the
+#: Core 14 sentence "A voice note is not recorded here", the word `voice`
+#: appeared in what the app serves, this rule stopped counting voice absent at
+#: all, and rule 14's `cannot_do` went from
+#: `['raise or lower a priority (priority)', 'feedback as voice']` to
+#: `['raise or lower a priority (priority)']`. A sentence saying a form is NOT
+#: taken read as an offer of it, and nothing here would have noticed voice going
+#: missing. `app/tests/test_writes_named.py` holds the other side of this: it
+#: asserts the shell carries no `audio/*` and no `MediaRecorder`, so the day the
+#: app really does take voice, that assertion fires and this row starts matching
+#: on the same evidence.
 FEEDBACK_FORMS = (
     ("text", re.compile(r"feedbackText|<textarea")),
-    ("a screenshot", re.compile(r"feedbackImage|accept=\"image|image/\*")),
-    ("voice", re.compile(r"\bvoice\b|audio/\*|MediaRecorder")),
+    ("a screenshot", re.compile(r"feedbackImage|accept=[\"']?image|image/\*")),
+    ("voice", re.compile(r"feedbackVoice|accept=[\"']?audio|audio/\*|"
+                         r"MediaRecorder|getUserMedia")),
 )
+
+#: Core 14, second half — "and what to do instead". A limit is only said in full
+#: when the app also names somewhere the thing *can* be done. These are the
+#: shapes that naming takes in this family; a negation is deliberately not one
+#: of them, which is the entire point — a heading reading "… — not here" states
+#: the limit and then stops.
+REDIRECTION_MARKERS = (
+    ("the manager session", re.compile(r"\bmanager session\b", re.I)),
+    ("the Manager Console", re.compile(r"\bmanager console\b", re.I)),
+    ("an explicit \"instead\"", re.compile(r"\binstead\b", re.I)),
+    ("somewhere to put it", re.compile(r"\bdrop\b[^.;:!?]{0,120}\b(folder|file)\b",
+                                       re.I)),
+)
+
+#: Core 14 — where one statement ends and the next begins, in what a body
+#: serves. Sentence punctuation, the dashes this app writes its asides with
+#: (`&mdash;`, `—`, ` -- `), and every HTML tag boundary.
+#:
+#: The tag boundary earns its place twice. A `<strong>` heading and the
+#: `<span>` beneath it are two statements, not one run of prose — and a tag's
+#: own attributes are consumed as the delimiter rather than read as something
+#: the app *said*. Measured 2026-09-04 while fixing converge-gl6: reading a raw
+#: ±220-character window instead let `<aside aria-label="Manager Console">` —
+#: markup, about a different part of the page — stand in as "what to do
+#: instead" for a body that had said nothing of the kind.
+SEGMENT_SPLIT_RE = re.compile(
+    r"(?<=[.;:!?])\s+|\s*(?:&mdash;|&ndash;|—|–|--)\s*|</?[a-zA-Z][^>]*>")
+
+#: Core 14 — how far after the limit "what to do instead" may sit. The app says
+#: both halves in one breath ("… is not recorded here — say it in the Manager
+#: Console"), so the redirection is the same statement or very nearly the next.
+#: Wide enough for a clause of context; narrow enough that prose elsewhere on
+#: the page cannot be borrowed to finish a sentence the body never wrote.
+REDIRECT_WITHIN_STATEMENTS = 3
 
 
 # --------------------------------------------------------------------------- #
@@ -756,15 +806,48 @@ def check_unnamed_features_are_debt(snapshot, repo):
 # --------------------------------------------------------------------------- #
 # Core 14 — a limit is said, never left silent                                 #
 # --------------------------------------------------------------------------- #
-def says_so(snapshot, thing: str) -> bool:
-    """Does the app state this limit anywhere it serves?"""
-    hay = served_text(snapshot)
-    for match in re.finditer(re.escape(thing), hay, re.I):
-        window = hay[max(0, match.start() - 220): match.end() + 220]
-        if re.search(r"\bnot\b|\bno\b|cannot|can't|does not|isn't|unavailable|"
-                     r"not offered|not yet", window, re.I):
-            return True
-    return False
+NEGATION_RE = re.compile(r"\bnot\b|\bno\b|cannot|can't|does not|isn't|"
+                         r"unavailable|not offered|not yet", re.I)
+
+
+def statements(text: str) -> list:
+    """What a body serves, cut into the separate statements it makes.
+
+    Markup is a delimiter here, never content: what a clause about *saying* a
+    thing may read is the prose between the tags.
+    """
+    return [s.strip() for s in SEGMENT_SPLIT_RE.split(text) if s and s.strip()]
+
+
+def says_so(snapshot, thing: str) -> str:
+    """How fully does the app state this limit? — `""`, `"limit"`, or `"both"`.
+
+    Core 14 asks for two things, "what the limit is, and what to do instead",
+    so this reads for two things and reports which it found.
+
+    - **the limit** — one *statement* that names the thing and denies it: the
+      negation and the thing sit in the same statement, not merely within
+      shouting distance. Measured on this tree, 2026-09-04 (converge-gl6):
+      deleting the whole limit sentence from `app/templates/shell.html` left
+      only the heading "Raise or lower a priority — not here", and the old
+      ±220-character window still PASSed this rule on it, because `priority`
+      and `not` were near each other across a tag boundary. `<strong>` and the
+      `<span>` beneath it are two statements; the heading alone is half of one.
+    - **what to do instead** — a `REDIRECTION_MARKERS` phrase in that statement
+      or one of the next `REDIRECT_WITHIN_STATEMENTS`, naming somewhere the
+      thing *can* be done. This is the half the old rule never read at all.
+    """
+    said = ""
+    stmts = statements(served_text(snapshot))
+    thing_re = re.compile(re.escape(thing), re.I)
+    for i, stmt in enumerate(stmts):
+        if not (thing_re.search(stmt) and NEGATION_RE.search(stmt)):
+            continue
+        said = "limit"
+        nearby = [stmt, *stmts[i + 1: i + 1 + REDIRECT_WITHIN_STATEMENTS]]
+        if any(pattern.search(s) for s in nearby for _, pattern in REDIRECTION_MARKERS):
+            return "both"
+    return said
 
 
 def check_limits_are_said(snapshot):
@@ -779,16 +862,28 @@ def check_limits_are_said(snapshot):
     if not absent:
         return KIT.ok("14", "this body does everything the family names of it, so there "
                             "is no limit left to state")
-    silent = [thing for thing in absent
-              if not says_so(snapshot, re.sub(r"\s*\(`[^`]+`\)", "", thing).split()[-1])]
-    if silent:
+    said = {thing: says_so(snapshot, re.sub(r"\s*\(`[^`]+`\)", "", thing).split()[-1])
+            for thing in absent}
+    silent = [thing for thing, how in said.items() if how == ""]
+    half = [thing for thing, how in said.items() if how == "limit"]
+    if silent or half:
+        parts = []
+        if silent:
+            parts.append(f"says nothing anywhere about {silent} — not what the limit "
+                         "is, and not what to do instead")
+        if half:
+            parts.append(f"states the limit on {half} but never names what to do "
+                         "instead, which is the second half this clause asks for "
+                         f"(looked for {[name for name, _ in REDIRECTION_MARKERS]})")
         return KIT.bad(
             "14",
-            f"this body cannot do {absent}, and says nothing anywhere about "
-            f"{silent} — not what the limit is, and not what to do instead. Silence is "
-            "the only wrong answer this clause names.",
-            cannot_do=absent, said_nothing_about=silent)
-    return KIT.ok("14", f"this body cannot do {absent}, and says so in the app for each",
+            f"this body cannot do {absent}, and " + "; ".join(parts) +
+            ". Silence is the only wrong answer this clause names, and half a "
+            "sentence is most of the way to silence.",
+            cannot_do=absent, said_nothing_about=silent, limit_stated_no_redirect=half)
+    return KIT.ok("14",
+                  f"this body cannot do {absent}, and for each one says both halves in "
+                  "the app — what the limit is, and what to do instead",
                   cannot_do=absent)
 
 

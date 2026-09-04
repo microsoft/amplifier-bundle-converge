@@ -282,6 +282,112 @@ def test_a_payload_is_not_a_surface():
         f"6b judged an API payload: {sorted(exposed)}"
 
 
+def voice_snapshot(index_html: str):
+    """The smallest thing `says_so` and rule 14 read: a shell and no scripts."""
+    class Stub:
+        def text(self, route):
+            return index_html if route == "/" else ""
+
+        def script_text(self):
+            return ""
+    return Stub()
+
+
+def test_a_sentence_saying_a_form_is_absent_is_not_an_offer_of_it():
+    """Measured on this tree, 2026-09-04 (converge-gl6). Rule 14's third
+    feedback form was detected with `\\bvoice\\b`, so the moment the app added
+    its own Core 14 sentence — "A voice note is not recorded here" — the word
+    appeared in what the app serves and the rule stopped counting voice absent:
+    `cannot_do` went from `[priority, feedback as voice]` to `[priority]`. The
+    body was rewarded for SAYING it cannot do a thing by no longer being asked
+    about it, and nothing was left that would notice voice going missing.
+
+    Every marker is now offer-shaped — a control, a MIME filter, a recorder
+    API — so prose about the absence reads as prose."""
+    kit = kit_module()
+    voice = dict(kit.FEEDBACK_FORMS)["voice"]
+    prose = ("Feedback as a voice note &mdash; not here. A voice note is not "
+             "recorded here, say it in the Manager Console, or drop the audio "
+             "file into the project's .converge/feedback/ folder.")
+    assert not voice.search(prose), \
+        "prose about the absence of voice still reads as an offer of voice"
+    assert not voice.search("<!-- voice -->"), "a comment satisfies the detector"
+    for offer in ('<input type="file" accept="audio/*" />',
+                  "new MediaRecorder(stream)",
+                  '<input id="feedbackVoice" type="file" />'):
+        assert voice.search(offer), f"a real offer went undetected: {offer}"
+
+
+def test_a_heading_that_says_not_here_is_only_half_the_clause():
+    """Core 14 asks for two things — "what the limit is, and what to do
+    instead" — and the rule read only the first, loosely. Measured on this
+    tree, 2026-09-04 (converge-gl6): deleting the whole limit sentence from
+    `app/templates/shell.html` left just the heading "Raise or lower a priority
+    &mdash; not here", and rule 14 still PASSed on it. `<strong>` and the
+    `<span>` beneath it are two statements, and half of one is not the clause.
+    """
+    kit = kit_module()
+    heading_only = ('<p><strong>Raise or lower a priority &mdash; not here'
+                    '</strong></p>')
+    assert kit.says_so(voice_snapshot(heading_only), "priority") == "", \
+        "a heading with the thing and the negation in different statements passed"
+
+    limit_only = (heading_only + '<span>This app has no control that raises or '
+                  'lowers a priority, and answers no route that would write one.'
+                  '</span>')
+    assert kit.says_so(voice_snapshot(limit_only), "priority") == "limit", \
+        "the limit alone was read as the whole clause"
+
+    both = (limit_only + '<span>The manager session can: say "Put the priority '
+            'write at the top of the queue." Filed as converge-a5g.</span>')
+    assert kit.says_so(voice_snapshot(both), "priority") == "both", \
+        "the app's own two-part statement is not recognised as complete"
+
+
+def test_the_measured_regression_runs_through_the_whole_kit():
+    """The two halves above, end to end on a real snapshot rather than a stub.
+
+    Take the good fixture, withdraw its voice control, and say so in prose the
+    way the app does. Voice must come back into `cannot_do` — the offer is
+    gone — and the verdict must turn on whether the prose names somewhere else
+    to do it."""
+    kit_14 = lambda report: by_rule(report)["14"]  # noqa: E731
+
+    def snapshot_saying(sentence):
+        tmp = tempfile.mkdtemp()
+        target = Path(tmp) / "voice-withdrawn"
+        shutil.copytree(GOOD, target)
+        index = target / "index.html"
+        html = index.read_text(encoding="utf-8")
+        html = re.sub(r'<div class="dialog-field"><label for="feedbackVoice".*?</div>',
+                      f"<p>{sentence}</p>", html, flags=re.S)
+        assert 'accept="audio' not in html, "the offer survived the withdrawal"
+        index.write_text(html, encoding="utf-8")
+        return target
+
+    silent = snapshot_saying("Feedback is taken here as text and as a screenshot.")
+    row = kit_14(run_kit(silent)[1])
+    assert row["status"] == "FAIL" and "feedback as voice" in row["cannot_do"], \
+        f"withdrawing the control left voice unnoticed: {row}"
+    assert "feedback as voice" in row["said_nothing_about"], row
+
+    half = snapshot_saying("A voice note is not recorded here.")
+    row = kit_14(run_kit(half)[1])
+    assert row["status"] == "FAIL", \
+        f"saying only that voice is absent passed the whole clause: {row}"
+    assert "feedback as voice" in row["cannot_do"], \
+        "the sentence about the absence was read as an offer"
+    assert "feedback as voice" in row["limit_stated_no_redirect"], row
+
+    whole = snapshot_saying(
+        "A voice note is not recorded here &mdash; say it in the Manager "
+        "Console, or drop the audio file into the project's feedback folder.")
+    row = kit_14(run_kit(whole)[1])
+    assert row["status"] == "PASS", f"both halves said, and the rule still failed: {row}"
+    assert "feedback as voice" in row["cannot_do"], \
+        "a body that states its limit is excused from having one"
+
+
 def test_an_exempt_route_is_exempt_because_a_contract_says_what_it_is():
     """A route is exempt from the five-writes count because a contract names it,
     never because counting it would be inconvenient."""

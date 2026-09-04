@@ -92,8 +92,51 @@ clause. **Every one of the fifteen Core clauses has a row**, and
 | 11 | Core 11 | "Idioms satisfy behaviors; they never subtract them" | **SKIP.** See below. |
 | 12 | Core 12 | "A body may exceed in idiom, never in features" | Every write beyond the five must carry a **hand-written, re-read citation** to the clause that names it. A write with none is reported as debt — there is no third thing it can be. |
 | 13 | Core 13 | "Three surface classes … every behavior placed against all three" | Each section contract must name full app · quick-access · notification. The clause exists so "nobody thought about the widget" cannot pass as a decision. |
-| 14 | Core 14 | "Where a body genuinely cannot do a thing, it says so in the app" | The absences are computed — writes among the five with no route, and feedback forms the body does not offer — and for each, the app must state the limit somewhere it serves. Silence is the only wrong answer. |
+| 14 | Core 14 | "Where a body genuinely cannot do a thing, it says so in the app" | The absences are computed — writes among the five with no route, and feedback forms the body does not **offer** — and for each, the app must say **both halves** the clause asks for: what the limit is, in one statement naming the thing and denying it, and what to do instead, within three statements of it. Silence is the only wrong answer, and half a sentence is most of the way to silence. |
 | 15 | Core 15 | "This umbrella governs a family" | Every contract named in clause 15 must exist in `contracts/`. A family member named and unwritten is a promise nothing keeps. |
+
+## What rule 14 paid to learn (converge-gl6)
+
+Rule 14 was coarse in **both** directions, and each half was measured on this
+tree on 2026-09-04.
+
+**A sentence saying a form is not taken read as an offer of it.** The third
+feedback form was detected with `\bvoice\b` against everything the app serves.
+The moment the app added its own Core 14 sentence — *"A voice note is not
+recorded here"* — the word appeared, the form stopped being counted absent, and
+`cannot_do` went from `[priority, feedback as voice]` to `[priority]`. A body
+was rewarded for **saying** it cannot do a thing by no longer being asked about
+it, and nothing was left that would notice voice going missing. Every marker is
+now offer-shaped — a control, a MIME filter, a recorder API — so prose about an
+absence reads as prose.
+
+**Any negation near the word counted as saying the limit.** `says_so` passed on
+a negation within 220 characters of the thing. Deleting the whole limit sentence
+from `app/templates/shell.html` left only the heading *"Raise or lower a
+priority — not here"*, and the rule still PASSed on it. The clause asks for two
+things and the rule read one, loosely. Measured before and after, on the same
+captured snapshot with that sentence removed:
+
+```
+BEFORE  PASS  this body cannot do ['raise or lower a priority (`priority`)'],
+              and says so in the app for each
+AFTER   FAIL  this body cannot do ['raise or lower a priority (`priority`)',
+              'feedback as voice'], and says nothing anywhere about
+              ['raise or lower a priority (`priority`)'] — not what the limit
+              is, and not what to do instead.
+```
+
+Markup is now a delimiter, never content — a `<strong>` heading and the `<span>`
+beneath it are two statements, and a tag's own attributes are not something the
+app *said*. That second point was itself measured while fixing this: a raw
+character window let `<aside aria-label="Manager Console">` stand in as "what to
+do instead" for a body that had said nothing of the kind.
+
+Three tests hold this: `test_a_sentence_saying_a_form_is_absent_is_not_an_offer_of_it`,
+`test_a_heading_that_says_not_here_is_only_half_the_clause`, and
+`test_the_measured_regression_runs_through_the_whole_kit`, which withdraws the
+good fixture's voice control and walks silence → limit-only → both halves
+through the whole kit.
 
 ## The two rules that SKIP, and why
 
