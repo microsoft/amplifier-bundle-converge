@@ -3750,12 +3750,18 @@
       stdout_contains: "WORK-ITEM-CHECK-NOW-RUNS-PASS-ITEMS=0"
   proves: >
     That rule 9a RUNS against this repository's exported queue and finds
-    nothing to fault: all 177 exported items name a contract that exists in
+    nothing to fault: all 225 exported items name a contract that exists in
     contracts/, and define done without a machine state word. The promise is
     kept, and kept measurably -- not merely unchecked.
+    THE PINNED NUMBER IS THE ZERO, NOT THE TOTAL. The total moves with every
+    export refresh -- other lanes file while this one runs -- so pinning it in
+    the probe would make this row red on someone else's ordinary work. The
+    FAULT count is what the probe asserts, and it is the number that must not
+    move. The total is recorded here, with the date it was measured, so a
+    reader can see which export the sentence above is about.
     THE COUNT IS STILL PART OF THE PIN, AND NOW IT PINS A ZERO. The verdict
     word alone could not tell 2-of-42 from 12-of-151, and it equally cannot
-    tell 0-of-177 from a PASS on an export of three. Pinning the count both
+    tell 0-of-225 from a PASS on an export of three. Pinning the count both
     ways makes the row's own bump falsifiable -- a number changed without a
     run is caught by verify.py running the ref -- and makes the row red the
     day ONE badly-formed item is exported, which is the whole reason a green
@@ -3763,7 +3769,7 @@
     NOT that the live queue is clean, only the export committed in this tree
     at docs/work-items.json. Items are filed and corrected hourly; this row
     follows the export by design, and an export refresh that brings in a
-    faulty item flips it. And NOT that the 177 are well written -- rule 9a
+    faulty item flips it. And NOT that the 225 are well written -- rule 9a
     reads two mechanical things (does line one name a contract that exists,
     is done defined in plain words), never whether the item is worth doing.
     The other half of clause 9 -- whether an item quotes the feedback or gap
@@ -3930,6 +3936,37 @@
     WHAT WOULD MOVE THIS ROW BACK. One exported item whose first line names
     no contract in contracts/, or whose done is written in a machine state
     word. The count is the tripwire: 0 is pinned, so 1 is red.
+    ────────────────────────────────────────────────────────────────────────────
+    IT MOVED BACK, AND THIS PASS MOVED IT AGAIN — 2026-09-05 (converge-07k3),
+    after the wave-9 merges. The sentence above said one bad item makes this red;
+    seven did. RAN, before anything was touched, against the refreshed export →
+    WORK-ITEM-CHECK-NOW-RUNS-FAIL-ITEMS=7. Rule 9a read 221 items and faulted
+    seven: converge-dtz1, -j0u5, -mv1w and -myu8 named no contract that exists in
+    contracts/; converge-823, -mx0f and -vtnm defined done with the machine word
+    GAP. Wave 9 filed them; the refresh is what made them visible, which is the
+    tripwire doing exactly what it was pinned for.
+    ALL SEVEN WERE CORRECTED IN THE QUEUE, NOT EXCUSED, and none had its ask
+    changed. The four contract-less items were given a first line naming the
+    contract they already served (experience.v1 §7, operation.v1 §8,
+    experience-direction.v1 §9, operation.v1 §12). Of the three carrying GAP:
+    converge-823 and converge-mx0f were each citing the real filename
+    `docs/workflow/GAP-ANALYSIS-2026-09-04.md`, which the rule reads as a state
+    word because a hyphen is a non-word character — both were wrapped in inline
+    code, the form `strip_inline_code` already honours and the one converge-mx0f's
+    own text names as the narrow fix. converge-vtnm was the genuine article, using
+    GAP and VIOLATION as states in its definition of done; it now reads "no row
+    that reads Not yet or Broken". The rule kept its teeth: converge-mx0f stays
+    open for the real repair, which is narrowing the token match so the next
+    citation of that filename does not fail the same way.
+    ONE ITEM ALSO CARRIED ITS OWN TOOL-CALL MARKUP. converge-myu8's description
+    ended with a literal `</description>` tag and its acceptance text trailing
+    after it, so the item had no acceptance field at all. The text was moved into
+    the field it belongs in, word for word. That intake defect is already filed as
+    converge-7feh; this was the instance, not the cause.
+    RAN AFTER → WORK-ITEM-CHECK-NOW-RUNS-PASS-ITEMS=0, "all 225 work item(s) name
+    a contract and define done", kit verdict PASS (pass=18 fail=0 skip=9). The
+    total moved 221 → 225 within the same pass because other lanes file while this
+    one runs; that is why the total is prose and the zero is the pin.
 - id: CVG-069
   title: a work item quotes the feedback or gap it came from — telling a quotation from a cited filename needs a reader
   contract:
@@ -4749,8 +4786,9 @@
     Rules 4a and 4b assert BOTH halves of this clause, read from the app's own
     /openapi.json: 4a that each of the five writes the clause names exists, 4b
     that nothing else writes. Together they are the clause; either one red keeps
-    the row red.
-    NOT that the four writes that do exist behave correctly once called — a route
+    the row red — and as of 2026-09-05 exactly one of them is, which is the whole
+    reason both are cited rather than whichever one happens to be failing.
+    NOT that the five writes that now exist behave correctly once called — a route
     table settles which writes are declared, never what they do.
   notes: >
     Measured 2026-09-03 (converge-pq2) against the app running at
@@ -4786,7 +4824,28 @@
     WHAT IS NOT WRONG HERE: the app says the limit out loud. Umbrella rule 14
     PASSes — "this body cannot do ['raise or lower a priority (`priority`)'], and
     says so in the app". Saying a limit is Core 14 kept; it is not Core 4 kept.
-  work: converge-a5g
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-05 (converge-07k3), after the wave-9 merges, against the
+    app at 127.0.0.1:8788. STILL Not yet — AND THE CITE IT CARRIED HAD GONE
+    CLOSED, which is why the row is re-read rather than left alone. RAN
+    `uv run conformance/experience/run.py http://127.0.0.1:8788` →
+    "4a PASS all five writes the umbrella names exist as routes the app declares:
+    answer with a word → /api/managers/{mid}/decision, raise or lower a priority →
+    /api/managers/{mid}/priority, drop feedback → /api/managers/{mid}/feedback,
+    steer → /api/managers/{mid}/steer, ask for a proposal → /api/managers/{mid}/ask"
+    and "4b FAIL 10 route(s) beyond the five write something". Kit verdict FAIL
+    (pass=11 fail=5 skip=2).
+    HALF THE CLAUSE MOVED AND HALF DID NOT. converge-a5g landed the `priority`
+    write, so 4a — the half that item was cited for — is now kept and the item is
+    closed. 4b is untouched: the same ten surplus routes the 2026-09-04 reading
+    found. A row citing a closed item is a ledger that says finished work will fix
+    a promise it cannot fix, so the cite moves to the half still open.
+    `work` IS NOW converge-ism, which is exactly the 4b half and was filed for it;
+    its own definition of done names re-deriving this row against the run that
+    settles it. THIS ROW STAYS Not yet BECAUSE 4b IS RED, not because a write is
+    missing — the reason changed even though the word did not, and a reader who
+    skipped this paragraph would carry the old reason forward.
+  work: converge-ism
 - id: CVG-104
   title: "at most five things ask for your word at once, and every answer lands in a dated record"
   contract:
@@ -7304,12 +7363,13 @@
     failure, an ending per write path naming what to do instead), api.js carries
     that sentence out with the thrown error rather than replacing it with a status
     code, and actions.js relays it instead of inventing a cause. And that FOUR of
-    the five writes this clause covers have such a sentence, while the fifth does
-    not exist to refuse — which is why a chain that works leaves the row red.
+    the five writes this clause covers have an ending of their own, while the
+    fifth — raise or lower a priority — falls through to the generic fallback
+    ending, which is why a chain that works leaves the row red.
     THE COUNT IS WHY THIS ROW IS GAP WITH A PASSING PROBE. The probe passes because
     it found what it looked for; what it found is 4-OF-5. A row that flipped green
     on the chain alone would record a clause about five writes as kept while one of
-    them cannot be refused at all.
+    them is refused only in words that do not name what to do instead.
     NOT that a browser with the network pulled shows the sentence. That is a live
     round trip, driven in app/tests/ with a real service worker. A static read
     settles that the sentence exists, names what to do, and is relayed whole —
@@ -7351,7 +7411,31 @@
     is why the cite moves to that item rather than to the resolved
     converge-719. The count is the pin, so this row moves the moment the
     write lands and needs its own ending.
-  work: converge-a5g
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-05 (converge-07k3), after the wave-9 merges. STILL Not yet
+    — SAME COUNT, DIFFERENT REASON, AND THE CITE HAD GONE CLOSED. RAN
+    `python3 ledger/checks/offline_refusal.py` →
+    "OFFLINE-REFUSAL=PLAIN-SENTENCE-RELAYED WRITES-NAMED=4-OF-5 MISSING=priority"
+    (exit 0). The probe's expect is met unchanged, so nothing was bumped: the
+    number is re-derived from the run, not carried over.
+    THE PARAGRAPH ABOVE PREDICTED THIS AND WAS HALF RIGHT. It said the row moves
+    "the moment the write lands and needs its own ending". The write landed —
+    `curl /openapi.json` lists /api/managers/{mid}/priority, and the umbrella kit's
+    rule 4a now PASSes naming it. The ending did not follow it: `app/static/sw.js`
+    lines 150-159 carry ENDINGS keyed on /decision$/, /feedback$/, /steer$/,
+    /ask$/, /read$/, /keep$/, /edit$/, /restore$/ — no /priority$/. So a priority
+    write refused offline falls to FALLBACK_ENDING, "so nothing was sent —
+    reconnect and try again, or tell the manager session directly", which does not
+    name what to do instead of raising a priority. The count stayed 4-OF-5 for a
+    reason that inverted underneath it: the fifth used to be unrefusable because
+    it did not exist, and is now refusable only in generic words.
+    `work` IS NOW converge-rpae: converge-a5g is resolved, and a row that reads
+    Not yet may not cite finished work. converge-rpae holds the refusal half of
+    this clause, names CVG-210 in its own text, and its definition of done covers
+    ANY of the five writes — priority included. The missing ending is filed
+    separately as converge-xj87 so the specific fact is not left inside a wider
+    one's prose.
+  work: converge-rpae
 - id: CVG-211
   title: "the Manager Console is live or plainly disconnected, never in between"
   contract:

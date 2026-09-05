@@ -34,10 +34,22 @@ made in one and shown by another and no single file settles the clause:
 
 THE COUNT IS THE PIN. `WRITES-NAMED` counts how many of the five writes
 `experience.v1` Core 4 names have an ENDING of their own in the service worker.
-Four do. The fifth -- raise or lower a priority -- has no route to refuse
-(converge-a5g), so the clause cannot be fully kept before that one is. Pinning
-the count means this row moves when EITHER fact moves: a lost sentence drops the
-count, and the missing write's arrival raises it.
+Four do. The fifth -- raise or lower a priority -- does not, so the clause cannot
+be fully kept before it does. Pinning the count means this row moves when EITHER
+fact moves: a lost sentence drops the count, and the missing ending's arrival
+raises it.
+
+WHY THE FIFTH IS MISSING CHANGED UNDERNEATH THIS COUNT, and the count did not
+notice -- which is worth writing down, because it is the same species of drift
+this probe was built to catch. Until 2026-09-04 the reason was that `priority`
+had NO ROUTE to refuse at all (converge-a5g). That item is now resolved: measured
+2026-09-05, `/openapi.json` declares `/api/managers/{mid}/priority` and the
+umbrella kit's rule 4a PASSes naming it. The route exists; its ENDING does not,
+so `refusal()` falls through to FALLBACK_ENDING and answers in words that never
+name what to do instead of raising a priority. WRITES-NAMED=4-OF-5 reads
+identically across that change while meaning something else entirely, so a reader
+who trusts the number without this paragraph carries the old reason forward.
+The successor is converge-xj87.
 
 WHAT IT DOES NOT PROVE: that a browser with the network pulled shows the
 sentence. That is a live round trip, and it is what `app/tests/` drives with a
