@@ -141,10 +141,14 @@ Resolve it once, before your first launch, and paste what it printed:
 Pass that `BATCH_DIR` to **every** highway or goal-batch launch, and put nothing
 of the operation anywhere else.
 
-The reason is `contracts/composition.v1.md` clause 2 read plainly - nothing an
-operation stands up may land outside the project it serves - and clause 1 of this
-contract, which starts the steward in their own project rather than in a
-directory only the manager session knows about. Measured on this host on
+The reason is clause 5 itself, carried through: a lane is a worker session's own
+working copy, and this says where those copies live. Behind it sits
+`contracts/composition.v1.md`'s purpose - Converge must "sit lightly on a host …
+and never a side effect on work that isn't its own" - and a directory of
+worktrees, logs and live infrastructure left in someone's home directory is
+exactly such a side effect. Be honest about the standing: **no numbered clause
+names the location today**; that gap is filed as work, and until it is answered
+this is the mode's rule rather than a contract's. Measured on this host on
 2026-09-05: thirteen batch directories sat under `~/dev/hw-*`, outside every
 workspace root, because the `ten-lane-highway` practice's own example reads
 

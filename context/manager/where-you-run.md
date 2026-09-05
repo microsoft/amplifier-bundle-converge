@@ -38,10 +38,17 @@ get it wrong.
 
 ## Why it is written down rather than assumed
 
-`contracts/composition.v1.md` clause 2, read plainly: nothing an operation stands
-up may land outside the project it serves. `contracts/operation.v1.md` clause 1
-starts the steward in their own project, not in a directory only the manager
-session knows the name of.
+`contracts/operation.v1.md` clause 5 says a lane is a worker session's own
+working copy, branch, and terminal session. It does not say where those copies
+live, and neither does any other numbered clause: `contracts/composition.v1.md`
+carries the nearest law in its **purpose** rather than its teeth - Converge must
+"sit lightly on a host … and never a side effect on work that isn't its own" -
+and a directory of worktrees, logs and live infrastructure left in somebody's
+home directory is exactly such a side effect.
+
+So be honest about what this is: **a convention the mode sets, not a clause it
+quotes.** The gap is filed as work. Until it is answered, follow this file and do
+not claim a contract says it.
 
 Measured on this host on 2026-09-05: **thirteen** batch directories sat under
 `~/dev/hw-*`, outside every workspace root. None of them was a mistake anybody
