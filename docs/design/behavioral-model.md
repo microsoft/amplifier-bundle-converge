@@ -346,6 +346,7 @@ All three recipes are **PLANNED**.
 
 | # | Step | Agent | Consumes | Produces |
 |---|---|---|---|---|
+| 0 | `preflight-tracker` | *(none — `type: bash`)* | `tracker_project`, target ledger | pass, or a loud refusal before any agent spawn |
 | 1 | `load-contracts` | `foundation:explorer` | target repo | contract inventory + tree evidence |
 | 2 | `derive-rows` | `converge:reconciler` | contract inventory | ledger rows with dispositions |
 | 3 | `run-conformance` | `converge:reconciler` | ledger rows | check results (**invokes repo kit**) |
@@ -426,6 +427,7 @@ Five scenarios, built only from mechanisms in the extraction. Each names its tri
 
 **Mechanism chain:** `seed-reconcile` (flat, no gates) runs:
 
+0. `preflight-tracker` → a shell step, no agent. The named `tracker_project` must be non-empty, must exist, and must be the project the target ledger's `work:` refs already cite. Any of those failing stops the run **before a single agent is spawned** — *the recipe refuses, it never redirects.* (Measured 2026-09-04: handed a project that did not exist, a run filed its items into a live project instead.)
 1. `load-contracts` → `foundation:explorer` produces contract inventory + tree evidence.
 2. `derive-rows` → `reconciler` derives one row **per checkable clause** — never a row no clause backs. Dispositions from the fixed vocabulary.
 3. `run-conformance` → `reconciler` shells out (`bash`) to **the target repo's own kit** (`pytest -q` or equivalent). It does not reimplement the checks.

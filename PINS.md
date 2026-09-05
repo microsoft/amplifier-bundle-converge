@@ -99,24 +99,28 @@ the guard; the contract is the law and the guard is the thing that must move.
 
 ## The recipe declares its own helpers
 
-`recipes/seed-reconcile.yaml` (v1.4.1) carries `schema_version: 2` and a
+`recipes/seed-reconcile.yaml` (v1.6.0) carries `schema_version: 2` and a
 `dependencies:` block, so its two `agent:` references resolve from the declared
-closure and **not** from the calling session's agent map. Measured 2026-09-04:
+closure and **not** from the calling session's agent map. Measured 2026-09-05:
 
 ```
 $ recipe-runner validate recipes/seed-reconcile.yaml
-ok: true   schema_version: 2
+status: ok   schema_version: 2
 
 $ recipe-runner plan recipes/seed-reconcile.yaml
 dependencies (2):
   - git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundles/anchors/bundle.md [bundle]
-      -> 52cbf74f99cc16ae88a2043840b253576269c704      supplies anchors:explorer
+      -> 7ca50a8adb7e1d7b60318b97259e860625a6aded      supplies anchors:explorer
   - git+https://github.com/microsoft/amplifier-bundle-converge@v0.1.0#subdirectory=behaviors/converge.yaml [behavior]
       -> 4507e462d1e801a2b0080c58417ec9647b313880      supplies converge:reconciler
-agents (12) · no collision · steps: load-contracts, derive-rows, run-conformance, file-drift
+agents (12) · no collision
+steps: preflight-tracker, load-contracts, derive-rows, run-conformance, file-drift
 ```
 
-Five facts about it that are **not** what you would assume:
+(The anchors SHA moves because that entry is still pinned to a branch — fact 4
+below. The converge behavior partial is pinned to a tag and does not move.)
+
+Six facts about it that are **not** what you would assume:
 
 1. **The converge entry is the BEHAVIOR PARTIAL at a TAG, not the root bundle at
    `@main`.** The root bundle composes the lean base, so declaring the lean base
@@ -137,6 +141,14 @@ Five facts about it that are **not** what you would assume:
    `execution_mode: v2-closed-world-legacy-engine` on `execute` (measured on a
    same-shape v2 probe run in a non-anchors session). Either way the helpers come
    from the manifest, never from the caller.
+6. **The first step is not an agent, and it can stop the whole run.**
+   `preflight-tracker` is a `type: bash` step (v1.6.0). It refuses the run —
+   before any agent is spawned, so at no token cost — when `tracker_project` is
+   empty, names a project that does not exist, or names a project the target
+   ledger's own `work:` refs disagree with. **It never redirects.** Measured
+   2026-09-04 (converge-myu8): told a project that did not exist, an earlier
+   version reached step 4 with items to file and filed them into the live
+   `converge` project instead.
 
 **`README.md` now agrees with all five.** This section carried a closing
 paragraph saying README's Host requirement sentence and its "`seed-reconcile`
@@ -152,6 +164,13 @@ place, because a fact that has stopped being a fact is not one (converge-x40).
 
 - Work-tracker project: `converge`.
 - Every work item names the contract it serves.
+- **The ledger cites ONE project.** Every `work:` ref in `ledger/rows.yaml` is a
+  `converge-*` id, `scripts/export-work-items.py` exports `--project converge`,
+  and `ledger/checks/verify.py` resolves refs against that export. Anything that
+  runs `seed-reconcile` against this repo — including an e2e harness — passes
+  `tracker_project: converge`. A different project is refused at preflight, not
+  silently redirected; and an isolated queue would require the export script, the
+  app config and the ledger's existing refs to move together.
 
 ## Standing gaps
 

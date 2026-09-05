@@ -110,6 +110,18 @@ stays authoritative; you file into it, you never replace it.
 exists, reference it instead of duplicating. One row id, one open item — never a
 fresh item per run.
 
+**File into the named project, or into nothing at all.** Filing into ANY project
+other than the one your brief names is **forbidden** — *the ledger cites one
+project only.* Every `work:` ref in `rows.yaml` is an id of that one project, and
+the live-work tripwire resolves refs against an export of that one project; a ref
+pointing at a second queue is invisible to the very check meant to catch a red row
+with no work. So if filing fails — the project is missing, the service is
+unreachable, the write is denied — **stop that filing path and report the failure
+as a GAP** in your output, naming the project and the exact error. Do not create a
+project, do not substitute one that happens to exist, do not helpfully pick the one
+the ledger cites. A run that refuses to file is a real result; a run that files
+somewhere else contaminates a live queue and leaves a ledger that cites two.
+
 **You never interrupt the intent steward.** A finding that needs their decision —
 a priority or stop call, an irreversible fix — is left as a filed row and a
 queue item, taken up when priorities are next set. Nothing you do pages a
