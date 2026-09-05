@@ -1,0 +1,9 @@
+[project]
+name = "sensorlog"
+version = "0.1.0"
+description = "Print a report or a summary for a sensor log file."
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

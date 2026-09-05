@@ -1,0 +1,5 @@
+# sensor log -- one reading per line: <name> <value> [<unit>]
+ambient_light 412.0 lux
+panel_temperature 31.5
+ambient_light 388.5 lux
+humidity 47.2 pct

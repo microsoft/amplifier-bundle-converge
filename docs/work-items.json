@@ -1,5 +1,14 @@
 [
   {
+    "id": "converge-07k3",
+    "title": "Post-merge reconcile + 9a after wave 9",
+    "status": "held",
+    "description": "Contract: operation.v1 §8 (after each change lands, every contract is re-checked) and documents.v1 §9–10. After the wave-9 merges and the export refresh, verify.py's closed-cite tripwire names CVG-103 and CVG-210 (cite converge-a5g, resolved) and 7 red rows in all; documents rule 9a fails on 4 items (converge-823 uses GAP; converge-dtz1, -j0u5, -mv1w name no contract). Re-derive the rows from live runs with RAN 2026-09-05 lines; edit the four items through the tracker (contract line, plain words; never change the ask); refresh the export.",
+    "acceptance": "GIVEN verify.py THEN all self-checks pass; GIVEN the documents kit with --work-items THEN 9a PASS; GIVEN git diff --stat THEN only ledger/ and docs/work-items.json changed.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-0gb",
     "title": "Fifteen ledger rows cite a RESOLVED tracker item as their fix — each needs re-deriving from a live run",
     "status": "resolved",
@@ -171,6 +180,15 @@
     "contract_named_on_line_one": true
   },
   {
+    "id": "converge-36vm",
+    "title": "Where a manager session starts: workspace root, and <workspace>/.converge/<manager-id>/ for its record and lanes",
+    "status": "held",
+    "description": "Contract: operation.v1 §1 (a steward starts a manager session from the CLI in their project) and composition.v1 §2 (nothing lands outside the project). Cause, measured 2026-09-05: modes/converge-manager.md says nothing about WHERE a manager session runs or where its plan record and lane worktrees live; it points at the ten-lane-highway practice, whose SKILL.md (line 116) says 'create one per highway, e.g. ~/dev/hw-<name>' — so thirteen batch directories now sit under ~/dev, outside every workspace root, and a manager session starts wherever the steward happened to type amplifier. Fix in this repository: the mode states that a manager session runs from the WORKSPACE ROOT (the nearest ancestor holding WORKSPACE-MANIFEST.json, else the project repository's root) and that its plan record, lane worktrees, logs and infra ledger live at <workspace>/.converge/<manager-id>/ — never under the home directory — passing that path as BATCH_DIR to every highway/goal-batch launch; context/manager gains the same rule where the launch is taught; README gains a 'Start your first manager session' section (cd to the workspace root; the one command; what appears where); the .converge/ directory carries a README explaining itself and is git-ignored by the template. The skill's example text is upstream — record the upstream note in the item's resolution, do not edit the CLI.",
+    "acceptance": "GIVEN modes/converge-manager.md THEN one clause names the workspace root as where a manager session runs and <workspace>/.converge/<manager-id>/ as where its record and lanes live, with the reason; GIVEN README.md THEN a reader who has never heard of Converge can start a manager session in three steps from the workspace root; GIVEN the documents kit THEN PASS; GIVEN a dry read of the mode by the manager session THEN the next highway launch on this host uses <workspace>/.converge/converge/ as BATCH_DIR.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
     "id": "converge-36z",
     "title": "platform-windows: no Windows body exists, so nine clauses cannot be checked",
     "status": "deferred",
@@ -245,7 +263,7 @@
   {
     "id": "converge-4jva",
     "title": "Early-adopter readiness: audit the kickoff path (new + existing project) and build the adopter acceptance harness",
-    "status": "resolved",
+    "status": "held",
     "description": "Contract: operation.v1 §1–3 (a steward starts a manager session from the CLI and the manager session derives work from the gap) and composition.v1 §1–2 (one install; nothing else to know). The steward's definition of ready for early adopters: (a) one install command; (b) one documented way to start a manager session from inside the Amplifier CLI in a project directory; (c) it works on a NEW project (blank repo → investigate → vision → contracts → seed → queue) and on an EXISTING project (adopt: pause the work in flight, investigate, propose vision/contracts, wait for the steward's word, seed the ledger, file the items that bring the repo into alignment) — the second path is what the steward already drove by hand in cortex-core and drumbeat; (d) an adopter needs to know nothing about how it works. Audit README.md, AGENTS.md, PINS.md, modes/converge-manager.md, context/manager/**, recipes/**, skills/** against (a)–(d) as a naive reader; write docs/workflow/ONBOARDING-AUDIT-2026-09-04.md (what a reader finds, what is missing, in plain words) and file one right-sized item per gap (Contract: line one; plain-word done). Then build evaluations/adopter/: a fresh-DTU harness with TWO scenarios — new project and existing project (a small real repo with code and no vision) — driven by an AI user who reads ONLY README.md (amplifier-evaluation's AIUser), judged by artifacts: a running manager session, a vision draft, at least one contract draft, a seeded ledger, a queue with items naming contracts; PASS/FAIL/SKIP per step with evidence; DTUs ledgered and torn down.",
     "acceptance": "GIVEN the audit document THEN every one of (a)–(d) has a finding with the file and line a reader meets, and every gap has an item; GIVEN evaluations/adopter/run.sh THEN it stands up a fresh DTU, installs from README only, runs both scenarios with an AI user, and writes RESULT.md with a step table and verdict — red is fine on the first run if every step names what was missing; GIVEN git diff --stat THEN only docs/workflow/ONBOARDING-AUDIT-2026-09-04.md, evaluations/adopter/** and docs/work-items.json changed.",
     "design": null,
@@ -671,6 +689,15 @@
     "status": "resolved",
     "description": "Contract: operation.v1 — Core 3, 7, 8, 11. Ledger rows CVG-017, CVG-018, CVG-021.\n\nconverge-blg and converge-5vz wrote down two conventions and taught them in `modes/converge-manager.md` (clauses 3, 8, 11) and `context/manager/wave-record.md`. Nothing on this host has followed them yet, because a lane cannot: both are the manager session's own to write.\n\n1. **The check record.** After integrating a wave and re-running the check, append an entry to `docs/workflow/CHECK-RECORD.md` — the merges it covers, the command run, what it printed — and commit it on the integration branch in the manager session's own commit. Step (k) then reads the commit that introduced that entry and answers who verified. Today it says: \"the record the manager session writes itself (docs/workflow/CHECK-RECORD.md) is not in this repository yet\".\n\n2. **The call stamp.** `- <ISO> CALL <ratify | irreversible | human check | priority> - <what is asked>. Parked: <items>. Continued: <what kept moving>.` in the plan record, at the moment of the call. Two of the four calls currently in HIGHWAY.md name which kind they are; the other two name none, which is why Core 11 is SKIP rather than a verdict.\n\nNeither is new work in substance — clause 8 already says the verification is the manager session's own, and clause 11 already says exactly four calls reach the steward. What was missing was any trace afterwards, for somebody who was not in the session.\n\nVerify with: `uv run evaluations/turnkey/run.py --env local --steps j,k --workspace ~/dev/hw-converge --repo <the integration checkout> --project converge`",
     "acceptance": "GIVEN a wave integrated on this host after the conventions landed WHEN turnkey steps (j) and (k) are re-run against this workspace THEN Core 7 and Core 8 carry a verdict on who re-ran the check, naming the commit that added the newest CHECK-RECORD entry; AND Core 11 either passes or names exactly how many recorded calls still say nothing about which of the four they are; AND `uv run --with pyyaml ledger/checks/verify.py` exits 0.",
+    "design": null,
+    "contract_named_on_line_one": true
+  },
+  {
+    "id": "converge-ab9t",
+    "title": "A lane merge reported carrying files it did not carry, and the lane branch was reset over the evidence",
+    "status": "open",
+    "description": "Contract: operation.v1 §8 (integrate, verify, re-check — the manager session's own verification), with §7 (done requires commits beyond base and evidence on disk).\n\nOn 2026-09-04 lane w9-adopter committed 19 files for converge-4jva (commit 823ff7e, parent be59331): the onboarding audit, evaluations/adopter/** — harness, profile, scenarios, fixtures, RESULT.md — and the work-items export. Integration commit 09c83ef is titled \"merge lane/w9-adopter: onboarding audit + adopter harness (converge-4jva); work-item export regenerated\" and carries exactly one file: docs/work-items.json. The other 18 were dropped. lane/w9-adopter was then reset to 09c83ef, so the lane commit became unreachable from every live ref and only `git fsck` could still find it. The item was resolved describing artifacts that were, from that moment, in no branch.\n\nNothing caught it. The merge message asserted the contents; no step compared the message against the diff, and no step compared the merged tree against the acceptance clause naming the paths (\"GIVEN git diff --stat THEN only docs/workflow/ONBOARDING-AUDIT-2026-09-04.md, evaluations/adopter/** and docs/work-items.json changed\"). A resolution was accepted while `git diff --stat main..HEAD` was empty — the §7 \"marker on an unchanged branch is stuck\" condition, met and unnoticed.\n\nThis is the second recorded instance of a lane losing its deliverable in two days; the first is why the lane brief now carries the COMMIT RULE. That rule guards the worker's side (commit your files). It does not guard the integrator's side, which is where this one was lost. The window is narrow: after a reset, the only copy is a dangling object subject to gc.\n\nRecovered by this session from 823ff7e and landed on lane/w9-adopter; the work itself was never at fault.\n\nDone looks like: an integration step that refuses to accept a lane as merged when the merged diff does not contain the paths the lane's acceptance names, and refuses to accept a resolution when the branch holds no commits beyond base — both failing loud, naming the missing paths, before any branch is reset.",
+    "acceptance": "GIVEN a lane whose acceptance names file paths, WHEN its branch is merged and the merged diff does not contain those paths, THEN integration stops and says which paths are missing, instead of reporting the merge as carrying them. GIVEN a lane branch with no commits beyond its base, WHEN a resolution is offered for its item, THEN it is refused as stuck. GIVEN a lane branch about to be reset or deleted, WHEN it holds commits not reachable from the integration branch, THEN the reset is refused until those commits are merged or explicitly abandoned by name.",
     "design": null,
     "contract_named_on_line_one": true
   },

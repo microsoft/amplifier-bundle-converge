@@ -1,0 +1,160 @@
+# =============================================================================
+# adopter.yaml -- DTU profile for the early-adopter harness
+# =============================================================================
+#
+# One container that stands in for an early adopter's machine on the day they
+# first hear about Converge: the Amplifier CLI is there, a provider is
+# configured, git and a multiplexer are there -- and Converge is NOT.
+#
+# ---- WHAT THIS PROFILE DELIBERATELY DOES **NOT** PRE-INSTALL, AND WHY -------
+# Read this before reading any red step in ../RESULT.md, so an induced failure
+# is never mistaken for a real one.
+#
+#   the converge bundle       THE SYSTEM UNDER TEST. Its sibling
+#                             ../../turnkey/profiles/turnkey.yaml installs it in
+#                             `setup_cmds` (turnkey.yaml:157) because turnkey
+#                             measures what a manager session does AFTER the
+#                             install. This harness measures the install itself
+#                             and everything before it, so pre-installing it
+#                             here would delete the first thing under test.
+#
+#   amplifier-work-tracker    NOT pre-installed, deliberately. README.md:64 and
+#   (the CLI)                 :90 both promise the `--app` behavior pulls the
+#                             work-tracker behavior in, and operation.v1's
+#                             "Declared dependencies (checked at install)" says
+#                             one install "verifies each and names what is
+#                             missing". Pre-installing it would make that
+#                             promise untestable. If the queue never appears,
+#                             the step says so and names what was absent.
+#
+#   the queue's SERVICE       NOT started. Same reason: whether anything the
+#                             adopter reads tells them a service is needed is
+#                             part of what "ready for early adopters" means.
+#
+# What IS pre-provided, and why it is not cheating: the `bd` and `dolt`
+# binaries (below). They have no in-container install path at all -- turnkey
+# pushes the same two host binaries (turnkey.yaml:100-106). Putting the binaries
+# on disk gives the install under test a fair chance to use them; nothing here
+# installs, configures, or starts the queue itself.
+#
+# ---- OUT-OF-BAND STATE THIS PROFILE REQUIRES (it is NOT self-contained) -----
+#   1. Network egress to github.com for uv and the Amplifier CLI.
+#   2. ANTHROPIC_API_KEY (optionally ANTHROPIC_BASE_URL) in the launch
+#      environment, forwarded by `passthrough`.
+#   3. Host-built `bd` and `dolt` at the paths in `provision.files`.
+#   4. GITEA_URL / GITEA_TOKEN passed as `--var` at launch. `url_rewrites`
+#      redirects the converge bundle's github URL to a Gitea mirror whose HEAD
+#      run.sh proves equal to origin/main BEFORE launch -- so the run installs
+#      one known commit rather than whatever github serves mid-run. The install
+#      COMMAND the AI user types stays byte-identical to README.md's.
+#
+# ---- LAUNCH ----------------------------------------------------------------
+#   ./evaluations/adopter/run.sh
+#
+# The harness launches this itself, registers the instance in the machine-wide
+# infra ledger BEFORE the container exists, and destroys it in a `finally`
+# block. It refuses to launch at all if the ledger is unreachable.
+# =============================================================================
+
+name: adopter
+description: >
+  DTU for the Converge early-adopter harness: an Amplifier CLI, a provider, git
+  and tmux, a work queue's binaries -- and no Converge. An AI user reading only
+  README.md has to get from here to a running manager session.
+
+base:
+  image: ubuntu:24.04
+
+url_rewrites:
+  auth:
+    username: admin
+    token_var: GITEA_TOKEN
+  allow_uv_github_fast_path: false
+  default_match_mode: boundary
+  rules:
+    - match: github.com/microsoft/amplifier-bundle-converge
+      target: ${GITEA_URL}/admin/amplifier-bundle-converge
+
+passthrough:
+  allow_external: true
+  services:
+    - name: anthropic-key
+      key_env: ANTHROPIC_API_KEY
+    - name: anthropic-base-url
+      key_env: ANTHROPIC_BASE_URL
+
+provision:
+  files:
+    # Binaries only. See the "does NOT pre-install" block above: these have no
+    # in-container install path, and putting them on disk installs, configures,
+    # and starts nothing.
+    - src: /home/bkrabach/.local/bin/bd
+      dest: /usr/local/bin/bd
+      mode: "0755"
+    - src: /home/bkrabach/.local/bin/dolt
+      dest: /usr/local/bin/dolt
+      mode: "0755"
+
+  setup_cmds:
+    - apt-get update && apt-get install -y git tmux curl ca-certificates rsync python3 python3-pip
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+
+    # The Amplifier CLI. An adopter who is being told to run
+    # `amplifier bundle add ...` already has this; the harness is not measuring
+    # whether the Amplifier CLI installs.
+    - uv tool install git+https://github.com/microsoft/amplifier
+
+    # A provider, so a session started in here is a real agent session.
+    - |
+      mkdir -p /root/.amplifier
+      cat > /root/.amplifier/settings.yaml << EOF
+      config:
+        providers:
+          - module: provider-anthropic
+            source: git+https://github.com/microsoft/amplifier-module-provider-anthropic@main
+            config:
+              api_key: ${ANTHROPIC_API_KEY}
+              base_url: ${ANTHROPIC_BASE_URL}
+              default_model: claude-sonnet-5
+      EOF
+
+    # A git identity, so anything the manager session commits is possible.
+    - git config --global user.email adopter@converge.invalid
+    - git config --global user.name  "Converge adopter"
+    - git config --global init.defaultBranch main
+
+    - mkdir -p /workspace
+    - amplifier --version
+
+readiness:
+  - name: amplifier-installed
+    command: amplifier --version
+  - name: converge-absent
+    # The gate that makes this profile mean what it says. If a converge bundle
+    # is ALREADY registered here, the install step measures nothing and every
+    # step after it is contaminated -- so refuse the launch instead.
+    command: >
+      ! (amplifier bundle list 2>/dev/null | grep -qi converge)
+  - name: queue-cli-absent
+    # Same, for the work queue: if `amplifier-work-tracker` is already on PATH,
+    # the "does one install bring the queue" question is already answered wrong.
+    command: '! command -v amplifier-work-tracker'
+  - name: queue-binaries-present
+    # The two binaries that have no in-container install path. Present, but
+    # unconfigured and unstarted -- see the header block.
+    command: bd --version && dolt version
+  - name: worktrees-work
+    command: >
+      rm -rf /tmp/wt-probe && mkdir -p /tmp/wt-probe/repo && cd /tmp/wt-probe/repo &&
+      git init -q -b main && git config user.email p@p.invalid && git config user.name p &&
+      git commit -q --allow-empty -m base &&
+      git worktree add -q -b probe /tmp/wt-probe/copy &&
+      git worktree list | grep -q /tmp/wt-probe/copy
+  - name: terminal-sessions-work
+    command: >
+      tmux -L hw kill-session -t probe 2>/dev/null;
+      tmux -L hw new-session -d -s probe -c /tmp 'sleep 30' &&
+      tmux -L hw list-sessions | grep -q probe &&
+      tmux -L hw kill-session -t probe
+  - name: provider-smoke
+    command: 'amplifier run "Say exactly: adopter-ready"'
