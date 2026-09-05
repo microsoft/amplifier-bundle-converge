@@ -2,7 +2,7 @@
   {
     "id": "converge-07k3",
     "title": "Post-merge reconcile + 9a after wave 9",
-    "status": "held",
+    "status": "resolved",
     "description": "Contract: operation.v1 §8 (after each change lands, every contract is re-checked) and documents.v1 §9–10. After the wave-9 merges and the export refresh, verify.py's closed-cite tripwire names CVG-103 and CVG-210 (cite converge-a5g, resolved) and 7 red rows in all; documents rule 9a fails on 4 items (converge-823 uses GAP; converge-dtz1, -j0u5, -mv1w name no contract). Re-derive the rows from live runs with RAN 2026-09-05 lines; edit the four items through the tracker (contract line, plain words; never change the ask); refresh the export.",
     "acceptance": "GIVEN verify.py THEN all self-checks pass; GIVEN the documents kit with --work-items THEN 9a PASS; GIVEN git diff --stat THEN only ledger/ and docs/work-items.json changed.",
     "design": null,
