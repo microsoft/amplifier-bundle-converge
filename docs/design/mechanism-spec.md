@@ -473,6 +473,13 @@ kept as the design record of the phases they describe, not as work to build.
     (LEDGER-FORMAT §1).
   - `tracker_project` (required) — the work-tracker project GAP/VIOLATION items
     are filed into.
+  - `load_contracts_timeout` (default `600`), `derive_rows_timeout` (default
+    `900`), `run_conformance_timeout` (default `1200`), `file_drift_timeout`
+    (default `900`) — each step's budget in seconds, one key per step. The
+    defaults are the fixed numbers the recipe carried through v1.4.1, so a run
+    that names none of them behaves as before. **Large repos (≥4 contracts /
+    big ledgers): set file-drift (and derive-rows) to 2700** — measured
+    2026-09-04, file-drift was cancelled at 900 on a 4-contract target.
 - **outputs:**
   - updated ledger rows file(s) in `{{ledger_dir}}/rows.yaml` (dispositions +
     required fields);

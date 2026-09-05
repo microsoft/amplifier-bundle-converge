@@ -65,10 +65,69 @@
 #   - target_repo     (optional) default "./target-repo" — a subdirectory of cwd
 #   - contracts_glob  (optional) default "contracts/*.md"
 #   - ledger_dir      (optional) default "ledger/"
+#   - load_contracts_timeout  (optional) default 600  — seconds, step 1
+#   - derive_rows_timeout     (optional) default 900  — seconds, step 2
+#   - run_conformance_timeout (optional) default 1200 — seconds, step 3
+#   - file_drift_timeout      (optional) default 900  — seconds, step 4
+#     SIZE GUIDANCE: large repos (≥4 contracts / big ledgers): set file-drift
+#     (and derive-rows) to 2700. The defaults are sized for a small target and
+#     are what a run gets if it says nothing.
 # =============================================================================
 #
 # CHANGELOG
 # -----------------------------------------------------------------------------
+# v1.5.0 (2026-09-04):
+#   - BUGFIX: The four step timeouts were fixed numbers sized for a small
+#     target. They are now context keys, one per step, and every default is the
+#     number that was already there — a run that says nothing about timeouts
+#     behaves exactly as v1.4.1 did.
+#     * DRIVER: measured 2026-09-04. A full end-to-end run against a clone of
+#       this repo itself (target a5c6c02 — the four method contracts plus the
+#       experience family, 15 files under `contracts/*.md`, and a 175-row
+#       ledger) completed load-contracts, derive-rows and run-conformance, then
+#       the 4th step file-drift hit its fixed `timeout: 900` and was cancelled
+#       after one provider ReadError retry:
+#         Step 'file-drift': agent 'converge:reconciler' timed out after 900s
+#       Nothing else was wrong: 151 spawns all on anthropic/claude-opus-5, zero
+#       "not found in configuration", zero legacy-caller-bound notice, zero
+#       65536 errors — the v2 closure resolution and provider pinning worked.
+#       The recipe's own fixed step budget was the only thing that did not fit.
+#       Evidence: dtu-artifacts/e2e-converge/run-attempt2-filedrift-timeout.log
+#       (line 7837).
+#     * CHANGE: `load_contracts_timeout` (600), `derive_rows_timeout` (900),
+#       `run_conformance_timeout` (1200) and `file_drift_timeout` (900) join
+#       `context:`; each step's `timeout:` is now the matching `{{template}}`.
+#       Templated step timeouts are an engine feature (bundle-recipes PR #89,
+#       RECIPE_SCHEMA.md "Templated timeouts"): the template resolves once,
+#       immediately before the timeout is applied, on BOTH the agent-spawn and
+#       bash paths, and an unresolvable or non-positive value fails loudly
+#       BEFORE the agent is spawned — so a bad override never burns an
+#       invocation. Steps, prompts, agents, dependencies and outputs are
+#       otherwise byte-identical; `schema_version: 2` is unchanged.
+#     * SIZE GUIDANCE (now in the header and in `context:`): large repos
+#       (≥4 contracts / big ledgers) should set file-drift — and derive-rows,
+#       which grows with the same input — to 2700.
+#     * VERIFIED: `recipe-runner validate` → ok, schema_version 2; legacy
+#       Recipe.from_yaml + validate_recipe → same 0 errors / 0 warnings as
+#       v1.4.1, and the legacy validator accepts a templated timeout (it does
+#       not warn); repo test suite 151 passed and both repo-root conformance
+#       kits PASS (composition 13/13, documents 18 pass / 9 skip), all unchanged.
+#     * VERIFIED LIVE (the same target commit that failed above, a5c6c02, so
+#       only the budget differs): run-id run-e8bacac8f6a6, 2026-09-04, ~42 min,
+#       with `file_drift_timeout: 2700` and `derive_rows_timeout: 2700` —
+#         'status': 'completed'
+#         'completed_steps': ['load-contracts', 'derive-rows',
+#                             'run-conformance', 'file-drift']
+#         'execution_mode': 'v2-closed-world-legacy-engine', schema_version 2
+#         summary echoed load_contracts_timeout 600 · derive_rows_timeout 2700 ·
+#         run_conformance_timeout 1200 · file_drift_timeout 2700 — the two
+#         overrides landed and the two untouched keys kept their defaults.
+#       110 spawns, all on anthropic/claude-opus-5; zero "not found in
+#       configuration", zero legacy-caller-bound notice, zero 65536 errors,
+#       zero "timed out after". Ledger rewritten (340,921 → 398,664 bytes) and
+#       reconcile-report.md written.
+#       Evidence: dtu-artifacts/e2e-converge-full/run.log (lines 7189–7233).
+#
 # v1.4.1 (2026-09-04):
 #   - CHANGE: The self-referential dependency moves from `@main` (a branch) to
 #     tag `v0.1.0` — the follow-up v1.4.0 named ("move it to a tag the moment
@@ -257,7 +316,7 @@ description: >
   conformance kit, files work-tracker items for every GAP/VIOLATION, records
   bidirectional drift, and emits a reconcile report. Flat, gate-free, and
   schedulable — it never prompts the steward.
-version: "1.4.1"
+version: "1.5.0"
 author: "converge bundle"
 tags: ["converge", "ratchet", "conformance", "ledger", "reconcile", "drift"]
 
@@ -269,6 +328,17 @@ context:
   # --- optional (defaults per mechanism-spec §4.2) ---
   contracts_glob: "contracts/*.md"   # where the seam contracts live
   ledger_dir: "ledger/"              # where rows.yaml and checks/ live (LEDGER-FORMAT §1)
+  # --- step budgets, seconds (overridable; defaults are v1.4.1's fixed values) ---
+  # A run that says nothing about these behaves exactly as v1.4.1 did. Raise
+  # them for a bigger target: LARGE REPOS (≥4 contracts / big ledgers) should
+  # set file-drift — and derive-rows, which grows with the same input — to 2700.
+  # Measured 2026-09-04: file-drift was cancelled at 900 on a 4-contract target
+  # (v1.5.0 changelog). A value that will not resolve, or is not a positive
+  # number of seconds, fails before the agent is spawned — never mid-run.
+  load_contracts_timeout: 600        # step 1  load-contracts  (read-only intake)
+  derive_rows_timeout: 900           # step 2  derive-rows     (raise with contract count)
+  run_conformance_timeout: 1200      # step 3  run-conformance (raise with kit size)
+  file_drift_timeout: 900            # step 4  file-drift      (raise with ledger size)
 
 steps:
   # ---------------------------------------------------------------------------
@@ -276,7 +346,7 @@ steps:
   # ---------------------------------------------------------------------------
   - id: "load-contracts"
     agent: "anchors:explorer"
-    timeout: 600
+    timeout: "{{load_contracts_timeout}}"
     output: "contract_inventory"
     prompt: |
       Read-only intake for a conformance reconcile of the repo at:
@@ -313,7 +383,7 @@ steps:
   # ---------------------------------------------------------------------------
   - id: "derive-rows"
     agent: "converge:reconciler"
-    timeout: 900
+    timeout: "{{derive_rows_timeout}}"
     output: "derived_rows"
     prompt: |
       SCHEDULED, UNATTENDED reconcile run — you never prompt a human. Any
@@ -378,7 +448,7 @@ steps:
   # ---------------------------------------------------------------------------
   - id: "run-conformance"
     agent: "converge:reconciler"
-    timeout: 1200
+    timeout: "{{run_conformance_timeout}}"
     output: "conformance_results"
     prompt: |
       SCHEDULED, UNATTENDED reconcile run — no human prompts.
@@ -419,7 +489,7 @@ steps:
   # ---------------------------------------------------------------------------
   - id: "file-drift"
     agent: "converge:reconciler"
-    timeout: 900
+    timeout: "{{file_drift_timeout}}"
     output: "final_output"
     prompt: |
       FINAL step of a scheduled, unattended reconcile — no human prompts, ever.
