@@ -441,8 +441,20 @@ def check_one_steward(snapshot):
         return KIT.bad("8a", "the app lists no manager session, so no steward is "
                              "registered against one")
     manager = snapshot.manager() or {}
-    named = [m.get("id") for m in managers if any(STEWARD_FIELD.search(k) for k in m)]
-    if STEWARD_FIELD.search(" ".join(manager)):
+    # A KEY is not a name. `app/data.py`'s `manager_payload` always carries a
+    # `steward` key -- a name when the `[[managers]]` block registered one, and
+    # an EMPTY STRING when it did not, which is the honest payload shape. So a
+    # registration naming nobody used to satisfy this rule: the search below ran
+    # over the card's key names and never looked at what the key said. Measured
+    # 2026-09-04 against a real app whose block carries no `steward` line --
+    # `/api/boot` answered `manager[0].steward=''` and 8a reported PASS. What
+    # settles the clause is a steward NAMED at registration, so the value is
+    # what is read, and a blank one is nobody. Filed and fixed as converge-isf.
+    def names_a_steward(card):
+        return any(STEWARD_FIELD.search(k) and str(card[k]).strip() for k in card)
+
+    named = [m.get("id") for m in managers if names_a_steward(m)]
+    if names_a_steward(manager):
         named.append(manager.get("id"))
     if not named:
         signed_in = boot.get("user")
