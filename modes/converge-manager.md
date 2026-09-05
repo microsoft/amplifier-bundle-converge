@@ -22,6 +22,7 @@ mode:
       - "@converge:context/manager/feedback-intake.md"
       - "@converge:context/manager/return-brief.md"
       - "@converge:context/manager/wave-record.md"
+      - "@converge:context/manager/where-you-run.md"
 ---
 
 CONVERGE MANAGER MODE - you are a **manager session**.
@@ -38,6 +39,10 @@ file disagree, the clause wins.
 
 Vocabulary: intent steward - manager session - worker sessions - lanes -
 contracts (**locked**, not frozen) - proposals named `<contract>.vN-candidate.md`.
+
+**Run from the workspace root.** Where you run, and where everything you stand
+up lands, is clause 5's rule below. Read it before your first command - it is
+the one thing you cannot fix afterwards.
 
 ## Clause 1 - Work is derived, never invented
 
@@ -114,6 +119,52 @@ A lane is a worker session with its **own working copy, own branch, and own
 terminal session**, started through the parallel-lane tooling. For continuous
 width use the `ten-lane-highway` practice; for a single wave that launches once
 and drains, use `goal-batch` or a single `goal` lane.
+
+### Where you run, and where the work lands
+
+A manager session runs from the **workspace root**: the nearest ancestor
+directory holding `WORKSPACE-MANIFEST.json`, or, when there is none, the project
+repository's own root. Its plan record, lane worktrees, goal files, logs, and
+infra ledger live at **`<workspace>/.converge/<manager-id>/`** and nowhere else -
+never under the home directory. `<manager-id>` is the project's own name, the one
+its work queue carries, so a second operation on a second project in the same
+workspace gets its own directory and the two never share state.
+
+Resolve it once, before your first launch, and paste what it printed:
+
+    W=$(d=$PWD; while [ "$d" != / ] && [ ! -f "$d/WORKSPACE-MANIFEST.json" ]; \
+          do d=$(dirname "$d"); done; \
+        if [ -f "$d/WORKSPACE-MANIFEST.json" ]; then echo "$d"; \
+        else git rev-parse --show-toplevel; fi)
+    BATCH_DIR="$W/.converge/<manager-id>"
+
+Pass that `BATCH_DIR` to **every** highway or goal-batch launch, and put nothing
+of the operation anywhere else.
+
+The reason is `contracts/composition.v1.md` clause 2 read plainly - nothing an
+operation stands up may land outside the project it serves - and clause 1 of this
+contract, which starts the steward in their own project rather than in a
+directory only the manager session knows about. Measured on this host on
+2026-09-05: thirteen batch directories sat under `~/dev/hw-*`, outside every
+workspace root, because the `ten-lane-highway` practice's own example reads
+
+> State lives in `BATCH_DIR` (create one per highway, e.g. `~/dev/hw-<name>`)
+
+and a manager session that starts wherever the steward happened to type
+`amplifier` inherits that example without noticing. The cost is paid later: the
+worktrees, the plan record, and the infra ledger of a finished run outlive the
+workspace they belonged to, and nothing in the home directory says which project
+any of them served. That example lives in the Amplifier CLI's shipped skill and
+is not ours to edit; this rule overrides it for a manager session, which is all
+that is needed.
+
+The directory carries a `README.md` explaining itself, and the workspace
+git-ignores it: a running operation's scratch space is not the project's content.
+The template for both is `docs/workspace-template/converge-dir-README.md.template`
+and `docs/workspace-template/gitignore-addendum.txt`.
+
+The rule's full reading, and what it can and cannot prove, is in the where-you-run
+convention loaded with this mode.
 
 If no launcher is reachable, **fail loud and say so**. Never quietly fall back to
 running the work inside this session.

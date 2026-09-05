@@ -1,0 +1,12 @@
+# Append to the workspace root's .gitignore when a manager session first runs here.
+#
+# .converge/ is a running operation's state - worktrees, logs, a plan record
+# rewritten every cycle, and a ledger of live infrastructure. It is not the
+# project's content, and committing it makes every cycle a diff nobody reads.
+#
+# The directory's own README.md is ignored along with everything else, on
+# purpose: it is copied in from
+# docs/workspace-template/converge-dir-README.md.template at creation, and the
+# tracked copy of that explanation is the template, not the instance.
+
+.converge/
