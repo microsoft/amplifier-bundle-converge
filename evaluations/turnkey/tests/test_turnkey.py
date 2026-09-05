@@ -18,6 +18,7 @@ import importlib.util
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -909,6 +910,46 @@ def test_a_lane_still_running_on_an_unchanged_branch_is_not_a_stall():
     assert run.assert_stalls_are_declared([], [])["verdict"] == run.SKIP
 
 
+def test_the_clause_9_skip_says_how_many_lanes_it_could_actually_read():
+    """"Found nothing" must not be able to mean "could not look".
+
+    `commits_beyond` answers None for a lane whose worktree is gone and whose
+    branch no reachable checkout still holds -- the normal end state of a
+    merged lane. Such a lane is correctly not a stall, but it used to be
+    dropped in silence, so the SKIP's "the reading ran and found nothing" read
+    as a claim about the whole manifest when it was a claim about the readable
+    lanes only. Measured on this host 2026-09-04: 107 lanes in the manifest,
+    ONE the reading could ask about.
+    """
+    reading = run.assert_stalls_are_declared(
+        [], [], {"lanes": 107, "read": 1,
+                 "unreadable": [f"w{n}-gone" for n in range(103)]})
+    assert reading["verdict"] == run.SKIP
+    assert reading["lanes_read"] == 1
+    assert reading["lanes_in_manifest"] == 107
+    assert reading["lanes_unreadable"] == 103
+    assert "read 1 of 107" in reading["why"]
+    assert "could not be read" in reading["why"]
+    # Named, not just counted: a reader can go and check one.
+    assert "w0-gone" in reading["why"]
+
+
+def test_the_clause_9_skip_with_full_coverage_claims_nothing_extra():
+    """A wave whose lanes are all readable says so, and adds no caveat."""
+    reading = run.assert_stalls_are_declared(
+        [], [], {"lanes": 3, "read": 3, "unreadable": []})
+    assert reading["verdict"] == run.SKIP
+    assert "read 3 of 3" in reading["why"]
+    assert "could not be read" not in reading["why"]
+
+
+def test_the_clause_9_reading_still_answers_without_coverage():
+    """Coverage is an addition, not a new requirement: no caller is broken."""
+    reading = run.assert_stalls_are_declared([], [])
+    assert reading["verdict"] == run.SKIP
+    assert "found nothing" in reading["why"]
+
+
 def test_a_stall_no_record_names_fails_clause_9():
     reading = run.assert_stalls_are_declared([{"lane": "w6-x"}],
                                              [{"text": "cycle 3: merged y"}])
@@ -1520,6 +1561,28 @@ def test_the_lane_that_committed_is_never_counted_as_a_stall(declared_wave):
     assert [s["lane"] for s in result.evidence["stalled_lanes"]] == ["lumen-index"]
 
 
+def _seed_invariant(wave: dict, name: str) -> str:
+    """One seeded file, with the two things that differ per SEED taken out.
+
+    The comparison below is about the two VARIANTS, and two things in a seeded
+    wave differ between any two seeds regardless of variant:
+
+    * the root directory, which pytest gives each fixture its own copy of; and
+    * the base SHA, because the seeder makes a real commit and a git commit id
+      is a hash OVER ITS TIMESTAMP -- so two seeds either side of a second
+      boundary get different ids.
+
+    Measured 2026-09-04: seeding twice 1.1s apart, `manifest.tsv` column 3
+    (`base_sha`) read 10948a5bbf0c6976 and afbfda00264d9ac6. That is why this
+    test failed once in a run and passed on the next three -- a real
+    time-dependent flake, not a variant difference. Both are normalised here,
+    the root path exactly as it always was; the plan record, which IS the
+    experiment, is compared untouched above.
+    """
+    text = Path(wave["root"], name).read_text(encoding="utf-8")
+    return text.replace(wave["root"], "").replace(wave["base"], "<base>")
+
+
 def test_the_two_variants_differ_by_exactly_one_plan_entry(declared_wave,
                                                            hidden_wave):
     """One thing to see, so the difference in verdict has one cause."""
@@ -1531,10 +1594,31 @@ def test_the_two_variants_differ_by_exactly_one_plan_entry(declared_wave,
     assert "is stuck" in only_declared[0]
     assert "lumen-index" not in only_hidden[0]
     for name in ("manifest.tsv", "goals/lumen-index.md", "goals/lumen-units.md"):
-        assert (Path(declared_wave["root"], name).read_text(encoding="utf-8")
-                .replace(declared_wave["root"], "")
-                == Path(hidden_wave["root"], name).read_text(encoding="utf-8")
-                .replace(hidden_wave["root"], ""))
+        assert (_seed_invariant(declared_wave, name)
+                == _seed_invariant(hidden_wave, name))
+
+
+def test_two_seeds_across_a_second_boundary_still_compare_equal(tmp_path):
+    """The flake itself, reproduced deterministically rather than retried away.
+
+    A git commit id hashes its own timestamp, so seeding twice either side of a
+    second boundary gives two different base SHAs. Before `_seed_invariant`
+    normalised it, that made `manifest.tsv` differ between the two variants and
+    the comparison above failed -- once in four runs on this host, 2026-09-04,
+    which is exactly the shape of a flake that gets retried instead of read.
+
+    The sleep is the point: it makes the failing condition certain rather than
+    likely, so this test fails if the normalisation is ever removed.
+    """
+    first = stall_wave.seed(tmp_path / "first", declared=True)
+    time.sleep(1.1)
+    second = stall_wave.seed(tmp_path / "second", declared=False)
+
+    assert first["base"] != second["base"], (
+        "the two seeds produced the same base SHA, so this test is no longer "
+        "exercising the condition it exists for")
+    assert (_seed_invariant(first, "manifest.tsv")
+            == _seed_invariant(second, "manifest.tsv"))
 
 
 def test_the_seeder_refuses_to_seed_over_existing_work(tmp_path):
