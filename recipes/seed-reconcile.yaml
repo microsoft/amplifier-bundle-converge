@@ -61,10 +61,14 @@
 #   - final_output                        the same reconcile report, in-session
 #
 # Context variables:
-#   - tracker_project (required) work-tracker project for GAP/VIOLATION items
+#   - tracker_project (required) work-tracker project for GAP/VIOLATION items.
+#     CHECKED UP FRONT by step 0 `preflight-tracker`, which REFUSES rather than
+#     redirects: empty, non-existent, or disagreeing with the target ledger's
+#     own `work:` refs all stop the run before any agent is spawned.
 #   - target_repo     (optional) default "./target-repo" — a subdirectory of cwd
 #   - contracts_glob  (optional) default "contracts/*.md"
 #   - ledger_dir      (optional) default "ledger/"
+#   - preflight_timeout       (optional) default 60   — seconds, step 0
 #   - load_contracts_timeout  (optional) default 600  — seconds, step 1
 #   - derive_rows_timeout     (optional) default 900  — seconds, step 2
 #   - run_conformance_timeout (optional) default 1200 — seconds, step 3
@@ -76,6 +80,71 @@
 #
 # CHANGELOG
 # -----------------------------------------------------------------------------
+# v1.6.0 (2026-09-05):
+#   - BUGFIX: `tracker_project` was required but UNUSED until step 4 (file-drift),
+#     roughly 40 minutes of agent work downstream. When the named project did not
+#     exist, the failure surfaced at the one moment the run had nothing left to do
+#     but improvise — and it improvised. The recipe now REFUSES UP FRONT and never
+#     redirects.
+#     * DRIVER: measured 2026-09-04 (converge-myu8). A scheduled run was told
+#       `Tracker project: e2e-converge`. There is no such database:
+#         work_stats(project="e2e-converge")
+#         ERROR: could not read items of database 'e2e-converge' over SQL:
+#         Error 1049 (HY000): database not found: e2e-converge
+#       Reaching file-drift with items to file and no project to file them into,
+#       the reconciler filed them into the LIVE `converge` project instead. Two
+#       queues, one ledger: the harness contaminated the real queue, and the
+#       ledger's `work:` refs still all pointed at `converge`.
+#       WHY IT COULD NOT BE CAUGHT DOWNSTREAM: filing into a freshly-created
+#       `e2e-converge` would have produced refs `ledger/checks/verify.py` cannot
+#       resolve — and it reports an unresolvable ref as `[INFO]`, never a failure
+#       (converge-j0u5). Every newly filed item would have been invisible to the
+#       very tripwire that exists to catch a red row with no live work. THE LEDGER
+#       CITES ONE PROJECT ONLY; there is no safe redirect, only a refusal.
+#     * CHANGE: new FIRST step `preflight-tracker` (`type: bash`, no agent, one
+#       cheap shell command) runs before load-contracts and asserts, in order:
+#         1. `tracker_project` is non-empty;
+#         2. it names a project that EXISTS — checked with the work-tracker CLI
+#            the reconciler's own toolchain rides on,
+#            `amplifier-work-tracker list --project <p> --limit 1` (exit 0 live /
+#            exit 1 + "project '<p>' not found ..." missing, measured 2026-09-05;
+#            there is no `stats` subcommand);
+#         3. the target repo's ledger AGREES — if
+#            `{{target_repo}}/{{ledger_dir}}/rows.yaml` carries `work:` refs, every
+#            ref's prefix (the text before its last `-`) must equal
+#            `{{tracker_project}}`, else "ledger cites project X, recipe was told Y".
+#       Each failure names the project, states that the ledger cites one project
+#       only, and gives the two remedies (name the existing project / create-and-
+#       move first). A first-population SEED run (no rows.yaml) and a ledger with
+#       no refs both pass, saying so.
+#       POSIX shell + python3 STDLIB ONLY (no pyyaml): the refusal has to work in a
+#       workspace where the target repo's dependencies are not installed.
+#     * CHANGE: `preflight_timeout` (60) joins `context:`, matching v1.5.0's
+#       one-templated-timeout-key-per-step convention.
+#     * CHANGE (belt and braces): file-drift's prompt and `agents/reconciler.md`'s
+#       filing guidance now say it outright — filing into ANY project other than
+#       the named one is FORBIDDEN; if filing fails, STOP and report the failure
+#       as a GAP in the reconcile report, never redirect. The preflight is the
+#       structural guard; this is the behavioural one, for the case where the
+#       project disappears mid-run.
+#     * NOT CHANGED: the four existing steps, their prompts (beyond the sentence
+#       above), agents, dependencies, outputs, and `schema_version: 2`.
+#     * VERIFIED: `amplifier_recipe_runner validate` → ok, schema_version 2;
+#       legacy `Recipe.from_yaml` + `validate_recipe` → 0 errors / 0 warnings
+#       (the legacy engine loads a bash step with a templated timeout); repo test
+#       suite 151 passed; composition kit 13/13 PASS, documents kit 18 pass /
+#       9 skip PASS. Preflight logic exercised over six cases before any live run
+#       (empty project · missing project · matching ledger · disagreeing ledger ·
+#       no rows.yaml · rows.yaml with no refs) — see the PR body.
+#     * VERIFIED LIVE (two runs, 2026-09-05 — see the PR body for full logs):
+#       (a) NEGATIVE — `tracker_project: does-not-exist-zz` against a fresh clone
+#           of this repo. FAILED at preflight-tracker, ZERO agent spawns, nothing
+#           filed anywhere; the live `converge` open-item count was identical
+#           before and after.
+#       (b) POSITIVE — `tracker_project: converge` (the project the target
+#           ledger's refs cite) against the same clone. Preflight passed and the
+#           run completed all four downstream steps.
+#
 # v1.5.0 (2026-09-04):
 #   - BUGFIX: The four step timeouts were fixed numbers sized for a small
 #     target. They are now context keys, one per step, and every default is the
@@ -316,7 +385,7 @@ description: >
   conformance kit, files work-tracker items for every GAP/VIOLATION, records
   bidirectional drift, and emits a reconcile report. Flat, gate-free, and
   schedulable — it never prompts the steward.
-version: "1.5.0"
+version: "1.6.0"
 author: "converge bundle"
 tags: ["converge", "ratchet", "conformance", "ledger", "reconcile", "drift"]
 
@@ -335,12 +404,185 @@ context:
   # Measured 2026-09-04: file-drift was cancelled at 900 on a 4-contract target
   # (v1.5.0 changelog). A value that will not resolve, or is not a positive
   # number of seconds, fails before the agent is spawned — never mid-run.
+  preflight_timeout: 60              # step 0  preflight-tracker (cheap; no agent)
   load_contracts_timeout: 600        # step 1  load-contracts  (read-only intake)
   derive_rows_timeout: 900           # step 2  derive-rows     (raise with contract count)
   run_conformance_timeout: 1200      # step 3  run-conformance (raise with kit size)
   file_drift_timeout: 900            # step 4  file-drift      (raise with ledger size)
 
 steps:
+  # ---------------------------------------------------------------------------
+  # 0. preflight-tracker — REFUSE UP FRONT, never redirect (no agent, no spend)
+  # ---------------------------------------------------------------------------
+  # `tracker_project` is required but was only USED by step 4 (file-drift), ~40
+  # minutes of agent work downstream. Measured 2026-09-04: a scheduled run was
+  # handed `e2e-converge`, a project that does not exist. The reconciler could
+  # not file there, so it improvised and filed the run's items into the LIVE
+  # `converge` project instead — two queues, one ledger, the real queue
+  # contaminated by a harness run (converge-myu8). The ruling is that the recipe
+  # REFUSES; it never redirects. This step is that refusal, and it costs one
+  # cheap shell command before a single agent is spawned.
+  #
+  # It asserts two things, in order:
+  #   1. `tracker_project` is non-empty AND names a project that exists —
+  #      checked with the work-tracker CLI the reconciler's own toolchain rides
+  #      on. `amplifier-work-tracker list --project <p> --limit 1` exits 0 for a
+  #      live project and 1 with "project '<p>' not found ..." for a missing one
+  #      (measured 2026-09-05; there is no `stats` subcommand — the verbs are
+  #      doctor/new/.../status/list/claim/...).
+  #   2. The target repo's ledger AGREES with that name. THE LEDGER CITES ONE
+  #      PROJECT ONLY: every `work:` ref in {{ledger_dir}}/rows.yaml is an id of
+  #      the form `<project>-<suffix>`, and `ledger/checks/verify.py` resolves
+  #      those refs against an export of that one project. A run told to file
+  #      into a DIFFERENT project would write refs no tripwire can resolve — and
+  #      an unresolvable ref is reported `[INFO]`, never a failure (converge-j0u5),
+  #      so the contamination would be invisible to the gate meant to catch it.
+  #
+  # POSIX shell + python3 stdlib only (no pyyaml): the refusal must work in any
+  # workspace, including one where the target repo's deps are not installed.
+  - id: "preflight-tracker"
+    type: "bash"
+    timeout: "{{preflight_timeout}}"
+    output: "tracker_preflight"
+    command: |
+      set -u
+
+      TRACKER_PROJECT="{{tracker_project}}"
+      TARGET_REPO="{{target_repo}}"
+      LEDGER_DIR="{{ledger_dir}}"
+      ROWS="${TARGET_REPO%/}/${LEDGER_DIR%/}/rows.yaml"
+
+      echo "preflight-tracker: tracker_project=\"${TRACKER_PROJECT}\"  ledger=${ROWS}"
+
+      # --- 1. the project must be NAMED ---------------------------------------
+      if [ -z "${TRACKER_PROJECT}" ]; then
+        echo "PREFLIGHT FAILED: tracker_project is empty." >&2
+        echo "" >&2
+        echo "seed-reconcile files a work-tracker item for every GAP/VIOLATION row and" >&2
+        echo "records the returned ref on the row. It cannot start without knowing which" >&2
+        echo "project those refs belong to, and it will NOT pick one for you." >&2
+        echo "" >&2
+        echo "Remedy: pass tracker_project naming the project this repo's ledger already" >&2
+        echo "cites (see the work: refs in ${ROWS})." >&2
+        exit 1
+      fi
+
+      # --- 2. the project must EXIST ------------------------------------------
+      if ! command -v amplifier-work-tracker >/dev/null 2>&1; then
+        echo "PREFLIGHT FAILED: cannot verify work-tracker project \"${TRACKER_PROJECT}\"" >&2
+        echo "-- the amplifier-work-tracker CLI is not on PATH in this workspace." >&2
+        echo "" >&2
+        echo "This check refuses rather than guesses: seed-reconcile requires a reachable" >&2
+        echo "work-tracker service and the named project, and a check that cannot run is" >&2
+        echo "never a pass. Install/expose the CLI, then re-run." >&2
+        exit 1
+      fi
+
+      if ! TRACKER_OUT="$(amplifier-work-tracker list --project "${TRACKER_PROJECT}" --limit 1 2>&1)"; then
+        echo "PREFLIGHT FAILED: work-tracker project \"${TRACKER_PROJECT}\" does not exist" >&2
+        echo "(or is unreachable). The tracker said:" >&2
+        echo "" >&2
+        echo "${TRACKER_OUT}" >&2
+        echo "" >&2
+        echo "REFUSING BEFORE ANY AGENT IS SPAWNED. This recipe does not redirect. A run" >&2
+        echo "that discovers the missing project 40 minutes in has, historically, filed" >&2
+        echo "its items into whatever project DID exist -- which contaminates a live queue" >&2
+        echo "and produces a ledger whose work: refs no longer name one project." >&2
+        echo "" >&2
+        echo "THE LEDGER CITES ONE PROJECT ONLY: every work: ref in ${ROWS} is an id of" >&2
+        echo "the form <project>-<suffix>, and the ledger's live-work tripwire resolves" >&2
+        echo "those refs against an export of that one project. Two projects cannot share" >&2
+        echo "one ledger." >&2
+        echo "" >&2
+        echo "Two remedies, and only these two:" >&2
+        echo "  1. NAME THE EXISTING PROJECT -- pass the project the ledger already cites" >&2
+        echo "     (the prefix on its work: refs)." >&2
+        echo "  2. CREATE IT FIRST -- amplifier-work-tracker new ${TRACKER_PROJECT}" >&2
+        echo "     and move the export script, the app config and the ledger's existing" >&2
+        echo "     refs to it together, so the ledger still cites exactly one project." >&2
+        exit 1
+      fi
+      echo "  ok: project \"${TRACKER_PROJECT}\" exists."
+
+      # --- 3. the LEDGER must agree with that name ----------------------------
+      if [ ! -f "${ROWS}" ]; then
+        echo "  ok: ${ROWS} does not exist -- first-population SEED run, nothing to cross-check."
+        exit 0
+      fi
+
+      ROWS_PATH="${ROWS}" WANT_PROJECT="${TRACKER_PROJECT}" python3 - <<'PYEOF'
+      import os
+      import re
+      import sys
+
+      path = os.environ["ROWS_PATH"]
+      want = os.environ["WANT_PROJECT"]
+
+      # A ledger row's work ref is a top-level-ish mapping key. Comment lines and
+      # prose inside block scalars are skipped: the key must start the line (at
+      # most 6 columns of indent) and the value must look like a bare item id.
+      key_re = re.compile(r"^ {0,6}work:[ \t]*(.+?)[ \t]*$")
+      id_re = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.]*(?:-[A-Za-z0-9_.]+)+$")
+      empties = ("null", "Null", "NULL", "~", "none", "None", "[]", "''", '""')
+
+      refs = []
+      with open(path, encoding="utf-8", errors="replace") as fh:
+          for lineno, raw in enumerate(fh, 1):
+              line = raw.rstrip("\n")
+              if line.lstrip().startswith("#"):
+                  continue
+              m = key_re.match(line)
+              if not m:
+                  continue
+              value = m.group(1).strip().strip('"').strip("'")
+              if not value or value in empties:
+                  continue
+              if not id_re.match(value):
+                  continue
+              refs.append((lineno, value))
+
+      if not refs:
+          print("  ok: %s carries no work: refs -- nothing to cross-check." % path)
+          sys.exit(0)
+
+      bad = dict()
+      for lineno, value in refs:
+          prefix = value.rsplit("-", 1)[0]
+          if prefix != want:
+              bad.setdefault(prefix, []).append((lineno, value))
+
+      if not bad:
+          print('  ok: %s -- %d work: refs, every one citing project "%s".'
+                % (path, len(refs), want))
+          sys.exit(0)
+
+      w = sys.stderr.write
+      w("PREFLIGHT FAILED: the ledger and the recipe disagree about the project.\n")
+      w("\n")
+      for prefix in sorted(bad):
+          hits = bad[prefix]
+          w('ledger cites project "%s", recipe was told "%s" -- %d ref(s), e.g.\n'
+            % (prefix, want, len(hits)))
+          for lineno, value in hits[:5]:
+              w("    %s:%d  work: %s\n" % (path, lineno, value))
+      w("\n")
+      w("REFUSING BEFORE ANY AGENT IS SPAWNED. This recipe does not redirect.\n")
+      w("THE LEDGER CITES ONE PROJECT ONLY: the ledger's live-work tripwire resolves\n")
+      w("every work: ref against an export of a single project, so filing this run's\n")
+      w("items anywhere else writes refs the tripwire cannot resolve -- and it reports\n")
+      w("an unresolvable ref as [INFO], never a failure. The contamination would be\n")
+      w("invisible to the gate that exists to catch it.\n")
+      w("\n")
+      w("Two remedies, and only these two:\n")
+      w('  1. NAME THE PROJECT THE LEDGER CITES -- re-run with tracker_project: "%s"\n'
+        % sorted(bad)[0])
+      w('  2. MOVE THE LEDGER TO "%s" FIRST -- if an isolated queue really is\n' % want)
+      w("     wanted, the export script, the app config and the ledger's existing\n")
+      w("     refs move TOGETHER, before this recipe runs, so the ledger still\n")
+      w("     cites exactly one project.\n")
+      sys.exit(1)
+      PYEOF
+
   # ---------------------------------------------------------------------------
   # 1. load-contracts — read-only intake (no mutation)
   # ---------------------------------------------------------------------------
@@ -558,6 +800,16 @@ steps:
          row and note it in the report. Only a newly-red row with no open item
          gets a fresh `work_add`. Every filed item's description must carry the
          row id as a back-reference.
+         NEVER REDIRECT. Filing into ANY project other than "{{tracker_project}}"
+         is FORBIDDEN — the ledger cites one project only, and a ref pointing at a
+         second queue is invisible to the live-work tripwire that is supposed to
+         catch a red row with no work. If filing fails for any reason (the project
+         is gone, the service is unreachable, a write is denied), STOP that filing
+         path and report the failure in the reconcile report as a GAP naming the
+         project and the exact error. Do not create a project, do not substitute a
+         project that happens to exist, do not "helpfully" pick the one the ledger
+         cites. A run that refuses to file is a real result; a run that files
+         somewhere else contaminates a live queue.
 
       4. PRODUCE THE RECONCILE REPORT containing:
          - rows tallied by disposition (CONFORMS / GAP / VIOLATION / OPEN-PINNED

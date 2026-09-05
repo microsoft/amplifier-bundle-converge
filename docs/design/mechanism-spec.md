@@ -472,7 +472,15 @@ kept as the design record of the phases they describe, not as work to build.
   - `ledger_dir` (default `ledger/`) — where `rows.yaml` and `checks/` live
     (LEDGER-FORMAT §1).
   - `tracker_project` (required) — the work-tracker project GAP/VIOLATION items
-    are filed into.
+    are filed into. **Checked up front by `preflight-tracker`, and the recipe
+    REFUSES rather than redirects**: an empty value, a project that does not
+    exist, or a target ledger whose `work:` refs cite a *different* project all
+    stop the run before a single agent is spawned. *The ledger cites one project
+    only* — a run that filed elsewhere would write refs the live-work tripwire
+    cannot resolve, and an unresolvable ref is reported `[INFO]`, never a
+    failure. Measured 2026-09-04 (converge-myu8): told `e2e-converge`, which did
+    not exist, a run improvised and filed into the live `converge` project.
+  - `preflight_timeout` (default `60`) — the preflight step's budget in seconds.
   - `load_contracts_timeout` (default `600`), `derive_rows_timeout` (default
     `900`), `run_conformance_timeout` (default `1200`), `file_drift_timeout`
     (default `900`) — each step's budget in seconds, one key per step. The
@@ -490,6 +498,7 @@ kept as the design record of the phases they describe, not as work to build.
 - **steps:**
   | id | agent | consumes | produces |
   |---|---|---|---|
+  | preflight-tracker | *(none — `type: bash`)* | `tracker_project`, `target_repo`, `ledger_dir` | pass, or a loud refusal before any agent spawn |
   | load-contracts | anchors:explorer | `target_repo`, `contracts_glob` | contract inventory + tree evidence |
   | derive-rows | converge:reconciler | contract inventory, existing `ledger_dir` | ledger rows with dispositions (SYNC row incl.) |
   | run-conformance | converge:reconciler | ledger rows, target repo kit | check results (invokes repo kit via `bash`) |
