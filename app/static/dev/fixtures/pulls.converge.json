@@ -1,0 +1,72 @@
+{
+  "ok": true,
+  "limit": 20,
+  "unreadable": [],
+  "steward": "bkrabach",
+  "proposals": [
+    {
+      "id": "pull-41",
+      "title": "Say what a lane may edit before it starts, not after it collides",
+      "source": "Pull request #41 - rhodes",
+      "origin": {
+        "kind": "pull request",
+        "number": 41,
+        "url": "https://github.com/microsoft/amplifier-bundle-converge/pull/41",
+        "author": "rhodes",
+        "branch": "lane/brief-ownership",
+        "repoId": "converge",
+        "updated": "2026-09-04T11:20:00Z"
+      },
+      "why": "Two lanes edited the same file in one cycle and the second one's work was lost at merge. The brief named the work but never named the files, so neither lane could have known.",
+      "changes": [
+        "A lane brief names the files that lane may edit, and the ones it may not.",
+        "A lane that needs a file it does not own writes that down for its owner instead of editing it."
+      ],
+      "evidence": [
+        "Cycle 3, 2026-09-02: lanes app-frontend and app-overflow both rewrote app/static/css/shell.css; the merge kept one and silently dropped the other.",
+        "Measured cost: one full lane's work, re-run the next cycle."
+      ],
+      "unchanged": "Nothing about how a lane is launched, verified, or merged. This adds one section to the brief and changes no other document.",
+      "recommendation": "",
+      "tradeoffs": [],
+      "file": "lane/brief-ownership",
+      "comments": []
+    },
+    {
+      "id": "pull-38",
+      "title": "A check that cannot run says so rather than passing",
+      "source": "Pull request #38 - imani",
+      "origin": {
+        "kind": "pull request",
+        "number": 38,
+        "url": "https://github.com/microsoft/amplifier-bundle-converge/pull/38",
+        "author": "imani",
+        "branch": "lane/kit-cant-check",
+        "repoId": "converge",
+        "updated": "2026-09-04T09:05:00Z"
+      },
+      "why": "A rule that reports PASS for the half it can reach reads, to anyone scanning the report, as a promise about the whole clause.",
+      "changes": [
+        "A kit rule that can only judge part of its clause splits into the part it proves and the part it reports Can't check.",
+        "conformance/README.md says this is the expected shape, not an exception."
+      ],
+      "evidence": [
+        "The direction kit's restore rule read PASS on both sides of converge-4pq, a period in which restore could reach exactly one snapshot."
+      ],
+      "unchanged": "No verdict already reported as FAIL becomes a SKIP. This only splits rules that were passing on partial evidence.",
+      "recommendation": "",
+      "tradeoffs": [],
+      "file": "lane/kit-cant-check",
+      "comments": []
+    }
+  ],
+  "freshness": {
+    "ok": true,
+    "mechanism": "polling",
+    "seconds": 60,
+    "words": "Polling - checked every 60 seconds. No webhook call has arrived from the host, so this app asks rather than waiting to be told. Either way you are not the one keeping this fresh.",
+    "lastArrival": "",
+    "webhookPath": "/api/collab/webhook",
+    "recent": []
+  }
+}

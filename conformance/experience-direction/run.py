@@ -65,8 +65,10 @@ KIT = Kit(
          "four views — Reading · Changes · Review · History — and Changes is sentence by sentence"),
         ("5", 5, "editing_offered_where_it_is_legal",
          "direct editing is offered exactly where it is legal"),
-        ("6", 6, "restore_is_a_real_action",
+        ("6a", 6, "restore_is_a_real_action",
          "restoring from history reaches a write, and routes through a proposal when locked"),
+        ("6b", 6, "restore_can_name_a_snapshot",
+         "that write can name WHICH snapshot to restore from, not only the reader's own position"),
         ("7", 7, "a_proposal_looks_the_same_whoever_proposed",
          "a proposal shows what changes · why · the evidence · what does not change · the word"),
         ("8", 8, "granular_choices_build_one_answer",
@@ -190,6 +192,142 @@ def reaches_a_write(body: str, tokens) -> bool:
         return True
     code = strip_string_literals(body)
     return any(re.search(rf"\w*{re.escape(t)}\w*\s*\(", code, re.I) for t in tokens)
+
+
+# --------------------------------------------------------------------------- #
+# Core 6 — restoring FROM a point in history                                    #
+# --------------------------------------------------------------------------- #
+
+#: What a client or a route table calls "which snapshot". Listed rather than
+#: guessed at: the rule reports what it looked for when it finds none, so a
+#: build that names the idea some other way fails LOUDLY and readably instead
+#: of being quietly judged by a regex nobody can see.
+SNAPSHOT_WORDS_LIST = ("since", "snapshot", "commit", "sha", "revision")
+SNAPSHOT_WORD_RE = re.compile(r"\b(" + "|".join(SNAPSHOT_WORDS_LIST) + r")\b", re.I)
+
+#: A route that puts wording back. The app's own word for this write.
+RESTORE_PATH_RE = re.compile(r"/restore\b", re.I)
+
+
+def blank_string_literals(code: str) -> str:
+    """`strip_string_literals`, but LENGTH-PRESERVING, so indices still line up.
+
+    Needed because this rule finds an anchor in the RAW text (a URL lives
+    inside a string) and then walks brackets around it. `strip_string_literals`
+    rewrites the text to a different length, so an index taken before it means
+    nothing after it. Interiors become spaces; the quotes stay where they were.
+    """
+    out = list(code)
+    i, n = 0, len(code)
+    while i < n:
+        ch = code[i]
+        if ch in "'\"`":
+            j = i + 1
+            while j < n:
+                if code[j] == "\\":
+                    j += 2
+                    continue
+                if code[j] == ch:
+                    break
+                if code[j] == "\n" and ch != "`":
+                    break
+                j += 1
+            for k in range(i + 1, min(j, n)):
+                if out[k] != "\n":
+                    out[k] = " "
+            i = j + 1
+            continue
+        i += 1
+    return "".join(out)
+
+
+def enclosing_call(code: str, at: int, limit: int = 4000):
+    """The `( … )` of the call whose arguments contain index *at*.
+
+    Walked over string-blanked text so a bracket inside a message or a URL
+    cannot open or close a call. Returns `(start, end)` over the ORIGINAL
+    text's indices, or None.
+    """
+    blank = blank_string_literals(code)
+    depth, i, floor = 0, at, max(0, at - limit)
+    while i > floor:
+        ch = blank[i]
+        if ch == ")":
+            depth += 1
+        elif ch == "(":
+            if depth == 0:
+                break
+            depth -= 1
+        i -= 1
+    else:
+        return None
+    start, depth, j, ceil = i, 0, i, min(len(code), at + limit)
+    while j < ceil:
+        if blank[j] == "(":
+            depth += 1
+        elif blank[j] == ")":
+            depth -= 1
+            if depth == 0:
+                return (start, j + 1)
+        j += 1
+    return None
+
+
+def client_restore_names_a_snapshot(script: str):
+    """Does the client's own restore write carry a snapshot identifier?
+
+    Anchored on the restore URL and bounded to the call expression around it,
+    which is what keeps this honest: `render/direction.js` explains `?since=`
+    to the reader in prose, and a looser search would read that sentence as
+    proof of a capability. Only CODE inside the restore call counts — the same
+    lesson `strip_string_literals` was written for.
+    """
+    for m in RESTORE_PATH_RE.finditer(script):
+        span = enclosing_call(script, m.start())
+        if not span:
+            continue
+        start, end = span
+        code = blank_string_literals(script[start:end])
+        found = SNAPSHOT_WORD_RE.search(code)
+        if found:
+            return found.group(1), script[start:end]
+    return None
+
+
+def route_table_names_a_snapshot(snapshot):
+    """Does the app's OWN route table declare which snapshot a restore reaches?
+
+    The stronger of the two answers when it is available: a parameter or a body
+    property the app documents itself. Returns `(path, what)` or None.
+    """
+    doc = snapshot.json("/openapi.json") or {}
+    schemas = ((doc.get("components") or {}).get("schemas") or {})
+
+    def properties_of(schema, seen=()):
+        ref = schema.get("$ref") or ""
+        if ref.startswith("#/components/schemas/"):
+            name = ref.rsplit("/", 1)[-1]
+            if name in seen:
+                return []
+            return properties_of(schemas.get(name) or {}, seen + (name,))
+        return list((schema.get("properties") or {}).keys())
+
+    for path, ops in (doc.get("paths") or {}).items():
+        if not RESTORE_PATH_RE.search(path) or not isinstance(ops, dict):
+            continue
+        for op in ops.values():
+            if not isinstance(op, dict):
+                continue
+            for param in op.get("parameters") or []:
+                name = str((param or {}).get("name") or "")
+                if SNAPSHOT_WORD_RE.search(name):
+                    return path, f"a `{name}` parameter"
+            content = ((op.get("requestBody") or {}).get("content") or {})
+            for media in content.values():
+                for prop in properties_of((media or {}).get("schema") or {}):
+                    if SNAPSHOT_WORD_RE.search(prop):
+                        return path, f"a `{prop}` property in its body"
+    return None
 
 
 def shell_text(snapshot) -> str:
@@ -384,20 +522,91 @@ def check_restore_is_real(snapshot):
     tokens = write_tokens(snapshot)
     has_control = control_present(snapshot, r"data-restore\b", r"restoreDoc|>\s*Restore")
     if not has_control:
-        return KIT.bad("6", "nothing offers a restore from history at any scope "
-                            "(a wording, a paragraph, a section, the whole document)")
+        return KIT.bad("6a", "nothing offers a restore from history at any scope "
+                             "(a wording, a paragraph, a section, the whole document)")
     body = handler_body(script, "[data-restore]")
     if not reaches_a_write(body, tokens):
         return KIT.bad(
-            "6",
+            "6a",
             "the restore control is offered but its handler reaches no write the app "
             "declares — it shows a message and forgets, so restoring is not a real "
             "action and cannot produce the proposal a locked document requires",
             handler_excerpt=re.sub(r"\s+", " ", body)[:220],
             write_routes=snapshot.write_routes())
-    return KIT.ok("6", "restore reaches a write the app declares; on a locked document that "
-                       "write is the proposal path",
+    return KIT.ok("6a", "restore reaches a write the app declares; on a locked document that "
+                        "write is the proposal path",
                   handler_excerpt=re.sub(r"\s+", " ", body)[:160])
+
+
+def check_restore_can_name_a_snapshot(snapshot):
+    """Core 6's other half: restoring FROM somewhere.
+
+    Rule 6a proves the restore control reaches a write. It says nothing about
+    WHICH wording that write can put back, and for the whole life of
+    converge-4pq that silence was expensive: the app could reach exactly one
+    snapshot out of however many the History view listed, said so on screen in
+    its own words, and this kit read PASS on both sides of the fix. A rule that
+    reads the same before and after the work it is meant to judge is not
+    measuring its clause.
+
+    "Restore a wording, a paragraph, a section, or the whole document" is a
+    restore FROM a point in history, so the question this rule asks is whether
+    the restore write can be told which point. Two places can answer it from a
+    static read, and either is enough:
+
+    * the app's own route table, when the restore write declares a parameter or
+      a body property naming a snapshot; and
+    * the client the app ships, when the call that posts to the restore write
+      carries a snapshot identifier with it.
+
+    A live FastAPI route that reads its body straight off the request declares
+    no body schema, so the route table alone cannot answer for this app today
+    -- which is why the client is read too, and why the detail always says
+    which of the two answered.
+
+    What it still does not prove, said here rather than implied: that the
+    server honours the snapshot it is handed, or that a commit which never
+    touched this document is refused. Both need a request, and no browser is
+    launched. This rule proves the app can be ASKED for a particular snapshot;
+    `app/tests/test_direction_restore.py` is where the answer is driven.
+    """
+    script = snapshot.script_text()
+    if not script and not snapshot.api_routes():
+        return KIT.skip(
+            "6b",
+            "the app served neither a client nor a route table, so there is nothing "
+            "to read for which snapshot a restore can reach — a static read cannot "
+            "answer this, and says so rather than passing")
+
+    from_routes = route_table_names_a_snapshot(snapshot)
+    if from_routes:
+        path, where = from_routes
+        return KIT.ok("6b",
+                      f"the app's own route table declares a snapshot on the restore write: "
+                      f"{path} takes {where} — so a restore can name a point in the "
+                      "document's history, not only the reader's own position",
+                      evidence_from="route table")
+
+    from_client = client_restore_names_a_snapshot(script)
+    if from_client:
+        word, span = from_client
+        return KIT.ok("6b",
+                      f"the client's restore write carries `{word}`, so the app can be asked "
+                      "for a wording from a snapshot other than the reader's own read point; "
+                      "the route table reads its body off the request and declares no schema, "
+                      "so this was read from the client the app ships",
+                      evidence_from="client",
+                      restore_call=re.sub(r"\s+", " ", span)[:200])
+
+    restore_writes = [p for p in snapshot.write_routes() if RESTORE_PATH_RE.search(p)]
+    return KIT.bad(
+        "6b",
+        "nothing lets a restore name WHICH snapshot to put back: neither the route table "
+        "nor the client the app ships carries a snapshot identifier on the restore write, "
+        "so restore can only reach the reader's own read point — one snapshot, however "
+        "many the History view lists",
+        restore_write_routes=restore_writes,
+        looked_for=sorted(SNAPSHOT_WORDS_LIST))
 
 
 def check_proposal_shape(snapshot):
@@ -543,7 +752,8 @@ def run_conformance(snapshot):
         check_copy_download_zoom_width(snapshot),              # 3
         check_four_views(snapshot),                            # 4
         check_editing_offered_where_legal(snapshot),           # 5
-        check_restore_is_real(snapshot),                       # 6
+        check_restore_is_real(snapshot),                       # 6a
+        check_restore_can_name_a_snapshot(snapshot),           # 6b
         check_proposal_shape(snapshot),                        # 7
         check_granular_choices(snapshot),                      # 8
         check_ask(snapshot),                                   # 9

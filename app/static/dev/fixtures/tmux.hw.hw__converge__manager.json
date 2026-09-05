@@ -1,0 +1,14 @@
+{
+  "state": "ok",
+  "text": "$ amplifier --bundle converge\n\u001b[32m\u2713\u001b[0m converge bundle loaded \u2014 14 contracts, ledger 175 rows\n\nmanager \u00b7 hw__converge__manager\n\n  cycle 4: three lanes live at width 3\n    w9-queue-and-kits   working   docs/work-items.json, conformance/experience-direction\n    w9-old-truths       working   docs/PINS.md\n    w9-reconcile-4      working   ledger/rows.yaml\n\n  waiting on: nothing \u2014 no lane has asked for a decision this cycle\n\n> ",
+  "geometry": {
+    "width": 120,
+    "height": 32,
+    "history_size": 412,
+    "history_limit": 2000,
+    "alternate_on": false,
+    "cursor_x": 2,
+    "cursor_y": 12
+  },
+  "detail": ""
+}

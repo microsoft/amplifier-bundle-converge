@@ -71,7 +71,9 @@ clause. **Every one of the eleven Core clauses has a row**, and
 | 3 | Core 3 | "A reader can copy, download, zoom, and choose the width" *(IDIOM)* | A control for each ability. The clause names **two** copy abilities — as rendered and as source — so the copy controls are counted, not matched by name: a single control called `copyRendered` cannot stand for both. |
 | 4 | Core 4 | "Every document carries four views: Reading · Changes · Review · History" | Exactly the four view controls, no more; and Changes must be sentence by sentence — every change entry a before/now pair. |
 | 5 | Core 5 | "Direct editing is offered exactly where it is legal" | An edit control **and** a write route that saves a document, with the control reaching that write. Offered nowhere is not "offered exactly where it is legal". |
-| 6 | Core 6 | "Restoring from history is a real action, and it routes through a proposal when the target is locked" | The restore control's own handler must reach a write the app declares. A control that shows a message and forgets is reported as such, with the handler quoted. |
+| 6 | Core 6 | *(split — see 6a and 6b below)* | Rule 6 was one row until 2026-09-04 and is now two, because the single row read PASS on both sides of converge-4pq. It is listed here so an existing reference to "rule 6" resolves to the truth rather than dangling; **new references should name `rules 6a, 6b`**. |
+| 6a | Core 6 | "Restoring from history is a real action, and it routes through a proposal when the target is locked" | The restore control's own handler must reach a write the app declares. A control that shows a message and forgets is reported as such, with the handler quoted. |
+| 6b | Core 6 | the same clause's other half — restoring **from** a point in history | Restoring FROM somewhere is the whole point of restoring from *history*, so the kit asks whether the restore write can be told WHICH snapshot. Answered from the app's own route table when the restore write declares a snapshot parameter or body property, and otherwise from the client the app ships — the live route reads its body off the request and declares no schema, so the detail always says which of the two answered. A build whose restore can reach only the reader's own read point fails. What it still does not prove: that the server honours the snapshot it is handed, or refuses a commit that never touched the document. |
 | 7 | Core 7 | "A proposal looks the same whoever proposed it" | One review path lays out what changes · why · the evidence · what does not change · the word to answer with, and offers all four answer words. Evidence before what-changes fails: it asks a reader to judge a case before they know what it is. Two review renderers fail — an origin cannot be *a fact about* a proposal if each origin has its own code. |
 | 8 | Core 8 | "Accepting and reverting individual changes constructs *ratified with edits*" | The per-change controls must exist and their handler must reach a write. Whether that write folds them into the one answer is beyond a static read, and the detail says so. |
 | 9 | Core 9 | "Ask is a scoped request whose output is always a proposal" | An Ask control at all three scopes **and** a write route that returns a proposal. |
@@ -107,7 +109,7 @@ Two more reads are narrowed for the same reason, each with its own test:
 
 ## Fixtures (the kit's own proof)
 
-Both fixtures are **captured app snapshots** — a `manifest.json` naming the
+All three fixtures are **captured app snapshots** — a `manifest.json` naming the
 route each file came from, plus the files — the same shape `--capture` writes.
 So a fixture is judged through exactly the code path a live app is.
 
@@ -125,10 +127,27 @@ So a fixture is judged through exactly the code path a live app is.
   its evidence first and no *what does not change*, no Ask, no presence, no lock.
   **FAIL on all twelve.**
 
-Both are rewritten in place by
+- `fixtures/sample-one-snapshot/` — `sample-good` with **one** thing taken away:
+  the restore write cannot be told which snapshot to put back. It is the shape
+  `app/static/js/api.js` actually had at `f10c278`, before converge-4pq. Rule 6a
+  still passes here and **6b fails** — that single difference is the whole point
+  of the fixture, and `test_the_restore_rule_tells_the_two_builds_apart` asserts
+  the two reports differ on it. Without it, rule 6 was a rule nobody could make
+  fail on the clause's second half, which is how it read PASS on both sides of
+  the work it was meant to be judging.
+
+`sample-good` and `sample-bad` are rewritten in place by
 [`../experience-fixtures/make_fixtures.py`](../experience-fixtures/make_fixtures.py),
 which is how they are kept in step when a rule is added — not a build step
-anyone has to run first.
+anyone has to run first. `sample-one-snapshot` is not one of the two it writes.
+
+> **Before you regenerate:** `sample-good`'s restore wiring here carries a
+> snapshot (`restoreScope(scope, snapshot)` posting `{ since }`), and the
+> generator's shared template does not yet. Re-running it as it stands reverts
+> that and turns rule 6b red on `sample-good` — a loud failure in
+> `test_sample_good_passes`, not a silent one. Teaching the generator the
+> snapshot is filed as work against `conformance/experience-fixtures/`, which
+> this kit does not own.
 
 ## Self-test
 

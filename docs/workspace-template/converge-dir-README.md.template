@@ -1,0 +1,57 @@
+# What this directory is
+
+`.converge/` is where a **manager session** keeps the state of a running
+operation on this workspace. Copy this file to `<workspace>/.converge/README.md`
+when you create the directory.
+
+Nothing in here is the project's content. It is a running operation's scratch
+space: delete a finished operation's directory and the project is untouched.
+
+## The shape
+
+```
+<workspace>/.converge/
+  README.md              <- this file
+  <manager-id>/          <- one directory per project the workspace runs
+    HIGHWAY.md           the plan record - the operating picture, rewritten each cycle
+    manifest.tsv         which lane is on which branch, written by the tooling
+    goals/               one pre-composed brief per queued item
+    lanes/               one git worktree per lane, each on its own branch
+    infra.tsv            the infra ledger - anything stood up, with its teardown command
+    infra.owners.tsv     which lane claimed which infra row
+    .width               the lane count the steward set
+    watchdog.log         the loop that re-wakes the manager session
+```
+
+`<manager-id>` is the project's own name - the one its work queue carries. Two
+projects run from the same workspace get two directories and share nothing.
+
+## Why here and not under your home directory
+
+A manager session runs from the **workspace root**: the nearest ancestor
+directory holding `WORKSPACE-MANIFEST.json`, or the project repository's own root
+when there is none. Everything it stands up lives under `.converge/` beneath that
+root, so an operation never lands outside the project it serves.
+
+The alternative was measured and it is worse. Batch directories created under
+`~/dev/hw-<name>` outlive the workspace they belonged to, and nothing in the home
+directory says which project any of them served - so nobody can tell a live
+operation from an abandoned one, and nobody can safely sweep either.
+
+## Git
+
+This whole directory is git-ignored, this file included. Add the line from
+`docs/workspace-template/gitignore-addendum.txt` to the workspace's `.gitignore`
+when you create it.
+
+Ignoring it is deliberate: worktrees, logs, and a ledger of live infrastructure
+are state, not content, and committing them makes every cycle a diff nobody
+reads. The tracked copy of this explanation is the template it came from, not
+this instance of it.
+
+## Closing an operation
+
+Sweep the infra ledger first - it is the only record of anything the run stood up
+outside this directory - and only then delete `<manager-id>/`. A directory
+removed before its ledger is swept leaves live infrastructure with no teardown
+command anywhere.

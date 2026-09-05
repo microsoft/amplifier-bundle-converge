@@ -30,6 +30,8 @@ CONTRACT = REPO / "contracts" / "experience-direction.v1.md"
 README = KIT / "README.md"
 GOOD = KIT / "fixtures" / "sample-good"
 BAD = KIT / "fixtures" / "sample-bad"
+#: `sample-good` with one thing taken away: restore cannot name a snapshot.
+ONE_SNAPSHOT = KIT / "fixtures" / "sample-one-snapshot"
 
 #: Rows this kit declares un-judgeable from a served snapshot. Pinned here so a
 #: rule cannot be moved into SKIP to dodge a failure without this test going red.
@@ -101,6 +103,41 @@ def test_every_rule_has_a_negative_fixture():
     unprovable = [rid for rid, r in by_rule(bad).items()
                   if r["status"] != "FAIL" and rid not in EXPECTED_SKIPS]
     assert not unprovable, f"rules nobody can make fail: {unprovable}"
+
+
+def test_the_restore_rule_tells_the_two_builds_apart():
+    """The reading converge-899y was filed for: rule 6 could not.
+
+    Measured on lane w8-direction-restore, 2026-09-04, running this kit against
+    two live servers built from two trees -- one before converge-4pq and one
+    after -- and both reports read ``VERDICT: PASS (pass=12 fail=0 skip=0)``,
+    identical rule for rule, including rule 6's sentence. A conformance kit that
+    reads the same on both sides of the work it is meant to be judging is not
+    measuring that clause.
+
+    ``sample-one-snapshot`` is that "before" build, reduced to the one thing
+    that differs: its restore write cannot be told which snapshot to put back.
+    So the two fixtures must differ on the restore rule and NOWHERE ELSE -- the
+    second half of this test is what stops the fixture drifting into a general
+    bad-build and quietly proving nothing about Core 6.
+    """
+    _, good = run_kit(GOOD)
+    _, one = run_kit(ONE_SNAPSHOT)
+    a, b = by_rule(good), by_rule(one)
+
+    assert a["6a"]["status"] == "PASS", a["6a"]
+    assert b["6a"]["status"] == "PASS", (
+        "6a must still pass on the one-snapshot build: restoring IS a real "
+        "action there, which is exactly why the old single rule 6 passed it")
+    assert a["6b"]["status"] == "PASS", a["6b"]
+    assert b["6b"]["status"] == "FAIL", (
+        "6b must fail where restore can reach only the reader's own read "
+        "point; a rule nobody can make fail proves nothing: " + json.dumps(b["6b"]))
+
+    differ = [rid for rid in a if a[rid]["status"] != b[rid]["status"]]
+    assert differ == ["6b"], (
+        f"the two builds must differ on the restore rule and nothing else, "
+        f"or the fixture is proving something other than Core 6: {differ}")
 
 
 def test_every_skip_says_why():

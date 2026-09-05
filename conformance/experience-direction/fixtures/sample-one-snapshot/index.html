@@ -1,0 +1,104 @@
+<!doctype html><html><head><title>Converge</title>
+<link rel="stylesheet" href="/static/css/shell.css"></head><body>
+<div id="app" class="app-shell">
+<header class="topbar">
+
+  <div id="workspaceSwitch" class="workspace-switch" role="tablist">
+    <button class="workspace-tab" id="directionTab" role="tab" type="button">Direction</button>
+    <button class="workspace-tab" id="operationTab" role="tab" type="button">Operation</button>
+  </div>
+  <button id="needsYouButton" type="button"><strong id="needsYouCount">2</strong> need your word</button>
+  <button id="tellAllButton" type="button">Tell all manager sessions</button>
+  <button id="feedbackButton" type="button">Feedback</button>
+  <button id="consoleToggle" type="button">Manager Console</button>
+</header>
+<div class="body-grid"><main class="workspace">
+
+  <section id="directionView" class="view direction-view" aria-label="Direction">
+    <select id="repoFilter" aria-label="Repository filter">
+      <option value="all">All repos</option><option value="r1">Repo one</option></select>
+    <div id="repoTree"></div>
+    <div class="doc-tools">
+      <button id="rawToggle" type="button">Raw</button>
+      <button id="copyRendered" type="button">Copy rendered</button>
+      <button id="copySource" type="button">Copy source</button>
+      <button id="downloadDoc" type="button">Download</button>
+      <button id="zoomIn" type="button">Zoom</button>
+      <button id="wideToggle" type="button">Wide</button>
+    </div>
+    <div class="mode-tabs">
+      <button data-doc-mode="read" type="button">Read</button>
+      <button data-doc-mode="changes" type="button">Changes</button>
+      <button data-doc-mode="review" type="button">Review</button>
+      <button data-doc-mode="history" type="button">History</button>
+    </div>
+    <div class="editing">
+      <button data-edit="document" type="button">Edit this draft</button>
+      <p class="presence">Someone is editing this section right now.</p>
+      <div class="collision">
+        <button type="button">Use combined</button>
+        <button type="button">Keep mine</button>
+        <button type="button">Review both</button>
+      </div>
+    </div>
+    <div class="change-card">
+      <button data-change-action="keep" type="button">Keep this change</button>
+      <button data-change-action="revert" type="button">Revert this change</button>
+    </div>
+    <div class="history-actions">
+      <button data-restore="paragraph" type="button">Restore a paragraph</button>
+      <button data-restore="document" type="button">Restore this document</button>
+    </div>
+    <div class="ask">
+      <button data-ask scope="paragraph" type="button">Ask about this paragraph</button>
+      <button data-ask scope="document" type="button">Ask about this document</button>
+      <button data-ask scope="all" type="button">Ask across every document</button>
+    </div>
+    <div class="lock-gate">
+      <p>It says what it means &mdash; Green</p>
+      <p>It carries a real example of right and wrong &mdash; Green</p>
+      <p>It can be checked against reality &mdash; Not yet</p>
+      <p>The steward has read it and agreed &mdash; Not yet</p>
+      <button id="lockButton" type="button" disabled>Lock this contract</button>
+    </div>
+  </section>
+
+  <section id="operationView" class="view operation-view" aria-label="Operation">
+    <strong id="opObjectiveText">Keep the promises.</strong>
+    <h2 id="strategyHeadline">3 waves</h2>
+    <div class="strategy-facts"><span>Hard limit</span><strong id="strategyDeadline">Friday</strong>
+      <span>Lane budget</span><strong id="strategyLaneBudget">4 max</strong></div>
+    <section class="return-card"><h2 id="awayDuration">20m</h2>
+      <div id="returnBrief" class="brief-list"></div></section>
+    <section class="throughput-card"><h2>Flow today</h2>
+      <div><span>Derived</span><strong id="throughputDerived">8</strong></div>
+      <div><span>Resolved</span><strong id="throughputResolved">6</strong></div>
+      <div><span>Verified</span><strong id="throughputVerified">5</strong></div>
+      <div><span>Reopened</span><strong id="throughputReopened">1</strong></div>
+      <div><span>Stuck</span><strong id="throughputStuck">1</strong></div></section>
+    <section class="confidence-card"><h2>Reality vs direction</h2>
+      <div><span>Kept</span><strong id="confidenceKept">6</strong></div></section>
+    <div class="queue"><span>Truly ready</span><strong id="trulyReadyCount">3</strong>
+      <span>Waiting on you</span><strong id="waitingOnYouCount">2</strong></div>
+    <section class="waves-card"><div id="wavesGrid" class="waves-grid"></div></section>
+    <section class="lanes-card">
+      <h2><span id="activeLaneCount">3</span> of <span id="laneBudgetCount">4</span> working</h2>
+      <button id="fillLanesButton" type="button">Fill lanes</button>
+      <div id="lanesGrid" class="lanes-grid"></div></section>
+    <section class="timeline-card"><div id="timelineList"></div></section>
+    <button id="steerButton" type="button">Steer</button>
+    <p class="muted">A redrawn plan says why it was redrawn.</p>
+  </section>
+</main>
+  <aside class="manager-console" id="managerConsole" aria-label="Manager Console">
+    <div class="console-header"><strong id="consoleContextTitle">manager-m1</strong>
+      <button id="consoleClose" type="button" title="Close console">&times;</button></div>
+    <div id="consoleBody" class="console-body"></div>
+    <form id="consoleForm" class="console-form">
+      <input id="consoleInput" autocomplete="off" placeholder="Message the manager" />
+      <button type="submit">Send</button>
+    </form>
+    <div class="console-footer"><span>This pane is the manager session itself,
+      not a chat built into the app.</span></div>
+  </aside>
+</div></div><script src="/static/js/main.js"></script></body></html>

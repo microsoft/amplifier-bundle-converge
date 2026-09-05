@@ -1,5 +1,40 @@
-"""Rendered-browser check: every write NAMES its manager-session operation, and
-the two things this body cannot do SAY SO.
+"""Rendered-browser check: every write NAMES its manager-session operation --
+including the two the app could not make when this file was written.
+
+**What changed on 2026-09-04, and why this file's own title moved.** This file
+was called "the two things this body cannot do SAY SO", and it fenced two
+sentences in the shell rail: no priority write here, no voice note here. Both
+have since landed --
+
+* `converge-a5g` -- `POST /api/managers/{mid}/priority` answers, and the
+  control is on Operation;
+* `converge-rj1` -- the feedback dialog offers `accept="audio/*"`, records
+  where the browser can, and the recording is written into
+  `.converge/feedback/` beside the text.
+
+Two of the assertions below were written as tripwires for exactly this moment
+and one of them fired. Measured on `lane/w9-old-truths`, 2026-09-04, before
+this rewrite:
+
+    FAILED app/tests/test_writes_named.py::
+        test_the_two_things_this_body_cannot_do_say_so_and_say_what_to_do_instead
+    AssertionError: the app now answers a priority route - this assertion has
+    fired: replace it with one about the write working, and delete the limit
+    sentence from shell.html (converge-a5g)
+    assert 'priority' not in {'ask', 'decision', 'feedback', 'priority', 'steer'}
+
+The voice tripwire (`"audio/*" not in shell`) did NOT fire, and that is worth
+recording: it reads only the HTML served at `/`, while the voice offer is built
+in `app/static/js/feedback_voice.js` beside the image offer it is parallel to
+(`accept="image/*"` is not in `/` either). It could never have seen the offer
+arrive where the offer naturally goes. So the voice half is now fenced against
+the CLIENT MODULE that builds the field, not against the shell document
+(converge-f9ac, converge-6pbg).
+
+Core 14 is not thereby untested: it says a body must say what it genuinely
+cannot do, and this body now has no such limit in this rail, so what is fenced
+here is that it states none -- a limit sentence for a write the app makes is
+the same defect as a silence about one, and a steward reads it and does not try.
 
 The two defects this file fences, both measured against the running app on
 127.0.0.1:8843 on 2026-09-04, before the fix, by
@@ -26,9 +61,10 @@ The two defects this file fences, both measured against the running app on
 So this drives a real Chromium against the real app, at 1280 and at 390, and
 
 * opens the shell's own fold and reads, for every write the app's own
-  `/openapi.json` says it offers, the operation named beside it;
-* reads the two limits - no priority write here, no voice note here - each with
-  what to do instead and the item that would change it;
+  `/openapi.json` says it offers, the operation named beside it - all five now,
+  the priority write included;
+* checks the rail states no limit that is not one: neither of the two "- not
+  here" rows survives a route that answers;
 * checks the machine's route words sit INSIDE a `<details>` element, because
   Core 6 keeps the machine's words behind a fold and this is where they are;
 * checks the folds beside the controls they are about, on Operation and on
@@ -38,13 +74,11 @@ So this drives a real Chromium against the real app, at 1280 and at 390, and
 
 **Why one of these assertions cannot be delegated to the kit.** The kit decides
 which feedback forms a body offers with `\\bvoice\\b|audio/\\*|MediaRecorder`
-against everything the app serves, so the very sentence stating that voice is
-NOT taken makes the kit read this body as offering voice - rule 14 then passes
-without ever looking at the sentence. Measured on this tree today: before the
-fix rule 14 reported `cannot_do: [priority, feedback as voice]`; after it
-reports `cannot_do: [priority]`. Filed as converge-gl6. The voice sentence is
-therefore fenced HERE, by reading the rendered page, and does not depend on
-that detector.
+against everything the app serves, so a sentence stating that voice is NOT taken
+made the kit read this body as offering voice - rule 14 then passed without ever
+looking at the sentence. Filed as converge-gl6. That is why the voice half is
+fenced HERE rather than left to the detector; and now that the write is real,
+what is fenced is the offer itself, in the module that builds it.
 
 If Playwright or its Chromium build is unavailable the browser tests skip with
 the reason printed, and MANUAL_PROCEDURE below is the documented manual check
@@ -104,29 +138,29 @@ Check - every write names the manager-session operation that does the same
   b. In the left rail, below the manager sessions, SEE a fold reading
      "Say it to the manager session instead". Click it open.
   c. SEE one entry for each of: Answer with a word, Drop feedback, Steer,
-     Ask for a proposal - each with a sentence you could type into the Manager
-     Console, in quotation marks, and a line saying what the manager session
-     does with it.
+     Ask for a proposal, Raise or lower a priority - each with a sentence you
+     could type into the Manager Console, in quotation marks, and a line saying
+     what the manager session does with it.
   d. Repeat at 390 x 844. SEE the same fold, the same entries, the same words.
   FAILS IF: the fold is absent at either width, or any write the app offers has
      no sentence beside it.
 
-Check - the two things this body cannot do say so (experience.v1 Core 14)
-  e. In the same fold, SEE "Raise or lower a priority - not here", saying this
-     app answers no route that would write one, what to say in the console
-     instead, and the item filed for it (converge-a5g).
-  f. SEE "Feedback as a voice note - not here", saying feedback is taken as
-     text and as a screenshot, that a voice note is not recorded here, and what
-     to do instead - say it in the console, or drop the audio file into the
-     project's .converge/feedback/ folder (converge-rj1).
-  FAILS IF: either limit is missing, or states the limit without saying what to
-     do instead.
+Check - the rail states no limit the app does not have (experience.v1 Core 14)
+  e. In the same fold, SEE NO row reading "- not here". Both of the two that
+     used to be there name writes the app now makes: the priority write
+     (converge-a5g, the control on Operation) and the voice note
+     (converge-rj1, the Feedback dialog's "Or a voice note" field).
+  f. Open the Feedback control in the top bar. SEE a field labelled "Or a voice
+     note" - a Record button where this browser can record, otherwise a file
+     picker that takes an audio file.
+  FAILS IF: the rail still says either thing is not offered here, or the voice
+     field is absent from the dialog.
 
 Check - the same naming stands beside the controls it is about
   g. Open Operation. Under "Manager strategy", open Details: SEE the steer
      sentence for the Manager Console.
-  h. Under "Drop feedback", open Details: SEE the feedback sentence and the
-     voice limit.
+  h. Under "Drop feedback", open Details: SEE the feedback sentence, and the
+     voice note named as one of the three forms taken - not as a limit.
   i. Click the Converge logo for Home. Beside "Tell all manager sessions", open
      Details: SEE the tell-them-all sentence.
   FAILS IF: any of those three folds is missing.
@@ -352,39 +386,80 @@ def test_every_write_this_app_offers_names_a_manager_session_operation(server, p
     )
 
 
-def test_the_two_things_this_body_cannot_do_say_so_and_say_what_to_do_instead(
+def test_the_two_writes_that_were_once_limits_both_work_and_the_rail_says_so(
     server, project
 ) -> None:
-    """Core 14, read off the surface - independent of the kit's own detector."""
-    shell = _fetch(server, project, "/")
+    """Core 14, read off the surface - independent of the kit's own detector.
 
-    # The priority write: absent from the route table, and said out loud.
+    This replaces `test_the_two_things_this_body_cannot_do_say_so_and_say_what_
+    to_do_instead`, whose priority tripwire fired the day converge-a5g landed
+    and whose voice tripwire could not fire at all (it read only `/`, and the
+    voice offer is built in a client module). Both writes exist now, so what is
+    fenced is that they exist AND that the rail no longer denies them.
+
+    WHAT WOULD FALSIFY THIS: a limit sentence left in the rail for a route the
+    app answers - which is what this pair of items (converge-f9ac,
+    converge-6pbg) was filed for, and reads to a steward as "do not try".
+    """
+    shell = _fetch(server, project, "/")
+    #: The rail's own rows, not the whole document. An HTML comment recording
+    #: that two refusal rows USED to be here names both item ids on purpose, and
+    #: a check that read the whole page would read that history as the defect.
+    rail = re.search(r'<ul class="parity-list">.*?</ul>', shell, re.S)
+    assert rail, "the shell no longer carries the parity rail this file is about"
+    rail = rail.group(0)
+
+    # 1. The priority write answers, and the rail names it as a write.
     offered = {token for _, token in _offered_writes(server, project)}
-    assert "priority" not in offered, (
-        "the app now answers a priority route - this assertion has fired: replace it with one "
-        "about the write working, and delete the limit sentence from shell.html (converge-a5g)"
+    assert "priority" in offered, (
+        f"the app no longer answers a priority route: {sorted(offered)} - converge-a5g was "
+        "delivered, so its disappearance is a regression, not a limit to restate"
     )
-    for phrase in (
-        "Raise or lower a priority",
+    assert 'data-write="priority"' in rail, (
+        "the rail does not name the priority write, so a steward cannot see that the manager "
+        "session does the same thing (Core 8)"
+    )
+    for gone in (
         "no control that raises or lowers a priority",
+        "answers no route that would write one",
         "converge-a5g",
     ):
-        assert phrase in shell, f"the app never says {phrase!r} - the priority limit is silent"
+        assert gone not in rail, (
+            f"the rail still says {gone!r} while POST .../priority answers - a limit the app "
+            "does not have is the same defect as a silence about one (converge-f9ac)"
+        )
 
-    # Voice feedback: not taken here, and said out loud. Checked here rather
-    # than left to the kit, whose detector reads this very sentence as an offer.
-    assert "audio/*" not in shell and "MediaRecorder" not in shell, (
-        "the app now takes audio - this assertion has fired: replace it with one about the "
-        "voice write working, and delete the limit sentences (converge-rj1)"
+    # 2. The voice write: the OFFER lives in the client module that builds the
+    #    field, exactly where the image offer beside it lives, so that is what
+    #    is read. The old assertion read only `/` and so could never see it.
+    voice = _fetch(server, project, "/static/js/feedback_voice.js")
+    assert 'accept="audio/*"' in voice, (
+        "the feedback dialog no longer offers a voice note; converge-rj1 was delivered"
     )
-    for phrase in (
+    assert "MediaRecorder" in voice, "nothing records where the browser can record"
+    assert "feedback/${" in voice or "/feedback/" in voice, (
+        "the voice note is not sent to the per-form feedback route"
+    )
+    for gone in (
         "voice note is not recorded here",
-        ".converge/feedback/",
         "converge-rj1",
     ):
-        assert phrase in shell, f"the app never says {phrase!r} - the voice limit is silent"
+        assert gone not in rail, (
+            f"the rail still says {gone!r} while the dialog takes audio (converge-6pbg)"
+        )
 
-    print("\nboth limits are stated on the served surface, each with what to do instead")
+    # 3. And no row in the rail is a refusal any more. Read structurally rather
+    #    than by the words "not here": the markup's own class is what a row
+    #    being a refusal actually IS, and an HTML comment recording that two of
+    #    them used to be there is not one of them.
+    assert 'class="parity-cannot"' not in rail, (
+        "a refusal row survives in the rail; both of the two it carried name writes the app "
+        "now makes (converge-f9ac, converge-6pbg)"
+    )
+
+    print("\nthe five writes the app offers:", sorted(offered))
+    print("the rail names the priority write and denies neither it nor the voice note")
+    print("the voice offer is served from /static/js/feedback_voice.js (accept=\"audio/*\")")
 
 
 def test_the_machine_route_words_sit_behind_a_fold(server, project) -> None:
@@ -544,9 +619,20 @@ def test_the_shell_fold_names_an_operation_for_every_write_offered(
 
 @needs_browser
 @pytest.mark.parametrize("width,height", [(1280, 800), (390, 844)])
-def test_the_two_limits_are_readable_on_the_page(
+def test_the_rail_states_no_limit_the_app_does_not_have(
     server, project, browser, width, height
 ) -> None:
+    """Core 14 read the way a steward reads it: on the rendered page.
+
+    This was `test_the_two_limits_are_readable_on_the_page`, and it asserted
+    both limit rows word for word. Both writes have since landed (converge-a5g,
+    converge-rj1), so the same assertions would now hold a false sentence in
+    place - which is what converge-f9ac and converge-6pbg were filed for.
+
+    WHAT WOULD FALSIFY THIS: the rail reading "- not here" about anything the
+    app answers a route for, at either width; or the priority write vanishing
+    from the rail, which would put Core 8 back where it started.
+    """
     errors: list[str] = []
     ctx, page = _open(browser, server, project, width, height, errors)
     _push_the_console_sheet_down(page, width)
@@ -555,24 +641,25 @@ def test_the_two_limits_are_readable_on_the_page(
     said = page.eval_on_selector("#managerParity", "el => el.innerText.replace(/\\s+/g, ' ')")
     print(f"\n[{width}] the fold reads: {said}")
 
-    # Three things per limit, because any two of them without the third is
-    # still a silence: that the thing is named, that the limit is SAID in so
-    # many words, and what to do instead. Plus the item that would change it,
-    # which is how `render/direction.js` already writes its own two limits.
-    for limit, says_the_limit, instead, item in (
-        ("Raise or lower a priority",
-         "no control that raises or lowers a priority", "manager session can", "converge-a5g"),
-        ("voice note",
-         "voice note is not recorded here", "manager console", "converge-rj1"),
-    ):
-        assert limit.lower() in said.lower(), f"[{width}] the fold never mentions {limit!r}"
-        assert says_the_limit.lower() in said.lower(), (
-            f"[{width}] the fold mentions {limit!r} without saying it is not offered here"
+    # The priority write is a WRITE in this rail now, and carries the same two
+    # things every other write carries: a sentence a steward could say in the
+    # console, and what the manager session does with it.
+    assert "raise or lower a priority" in said.lower(), (
+        f"[{width}] the fold never mentions the priority write"
+    )
+    assert "top of the queue" in said.lower(), (
+        f"[{width}] the priority row carries no sentence a steward could say in the console"
+    )
+    assert "weave-in log" in said.lower(), (
+        f"[{width}] the priority row never says what the write lands in"
+    )
+
+    # And no row denies a write the app makes.
+    for gone in ("not here", "no control that raises or lowers a priority",
+                 "voice note is not recorded here", "converge-a5g", "converge-rj1"):
+        assert gone.lower() not in said.lower(), (
+            f"[{width}] the rail still says {gone!r}, which the app stopped being true of"
         )
-        assert instead.lower() in said.lower(), (
-            f"[{width}] {limit!r} states a limit and never says what to do instead"
-        )
-        assert item in said, f"[{width}] {limit!r} names no item that would change it"
 
     assert not errors, f"the browser logged: {errors}"
     ctx.close()
@@ -597,7 +684,10 @@ def test_the_controls_this_surface_owns_carry_the_naming_beside_them(
 
     for selector, must_say in (
         (".strategy-card .op-parity", "Steer"),
-        ("#feedback .op-parity", "voice note is not recorded here"),
+        # converge-6pbg: this fold said "a voice note is not recorded here"
+        # until the day converge-rj1 landed. What it must say now is that the
+        # voice note is one of the three forms taken, not a limit.
+        ("#feedback .op-parity", "a voice note are all taken"),
         ("#managers .op-parity", "every manager session"),
     ):
         _unfold(page, selector)

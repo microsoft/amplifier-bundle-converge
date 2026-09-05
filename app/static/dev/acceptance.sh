@@ -51,9 +51,27 @@ grep -q "url.pathname === '/login'" app/static/sw.js && pass "sw.js: /login is r
 grep -q 'if (isApi(url))' app/static/sw.js && pass "sw.js: /api is network-first and never written to the cache" || bad "sw.js does not handle /api network-first"
 
 echo
-echo "=== 7. console is read-only and the terminal tab is delegated ==="
-grep -q '<input id="consoleInput".*disabled' app/templates/console.html && pass "console input carries the disabled attribute" || bad "console input is not disabled"
-grep -q 'read-only in this version' app/templates/console.html && pass "visible note: read-only in this version" || bad "read-only note missing"
+# Section 7 asserted the read-only era until 2026-09-04 (converge-dvfr). Two of
+# its checks had become false of the served markup and reported FAIL against a
+# correct page:
+#
+#   grep -q '<input id="consoleInput".*disabled'   -- the served input carries
+#       no disabled attribute, and app/tests/test_console_input.py::
+#       test_the_served_send_control_is_not_disabled asserts that on purpose;
+#   grep -q '<the read-only sentence>'             -- converge-55b replaced that
+#       wording in both places it was produced, because the app has taken
+#       keystrokes since converge-tfu. The sentence itself is deliberately
+#       not quoted here: converge-hw5's own falsification test is a grep for
+#       it under app/static/dev/ returning nothing, and a comment quoting it
+#       is a hit like any other.
+#
+# Same fix shape as converge-hw5: assert the CLAIM the pane makes -- the words
+# rule 9 of the experience-console kit looks for -- rather than one exact
+# sentence, so tuning the wording again does not turn this red.
+echo "=== 7. the console pane says what it is, and the terminal tab is delegated ==="
+grep -q '<input id="consoleInput"' app/templates/console.html && pass "console input is served, and carries no disabled attribute" || bad "console input is missing"
+grep -q '<input id="consoleInput"[^>]*disabled' app/templates/console.html && bad "console input is disabled, but the app has taken keystrokes since converge-tfu" || pass "console input is not disabled"
+grep -q 'not a chat' app/templates/console.html && pass "visible note: the pane says what it is (\"not a chat\")" || bad "the pane does not say what it is"
 grep -q 'window.ConvergeTmux?.attach(' app/static/js/render/console.js && pass "terminal tab calls window.ConvergeTmux?.attach(el, socket, session)" || bad "no ConvergeTmux attach call"
 grep -q "terminal viewer not loaded" app/static/js/render/console.js && pass "falls back to 'terminal viewer not loaded' when the viewer is absent" || bad "no soft fallback"
 

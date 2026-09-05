@@ -99,6 +99,64 @@ lightweight composition onto a session that already has its own base, the
 strips tools from **every** spawned sub-agent in every session — unacceptable
 collateral for a composable bundle, so it is deliberately absent everywhere.
 
+Installed is not started. **Where** you start a manager session decides where
+everything it stands up lives, so start it as below rather than wherever your
+terminal happens to be.
+
+## Start your first manager session
+
+Three steps. You need the bundle installed (above) and a project you want moved
+toward something.
+
+**1. Go to the workspace root.**
+
+That is the directory holding `WORKSPACE-MANIFEST.json` — the folder your
+repositories sit inside. If your project has no workspace around it, the
+workspace root is the project repository's own root. There is no third case.
+
+```
+cd ~/dev/my-workspace     # or: cd ~/dev/my-project
+```
+
+This is the step people skip, and it is the one that cannot be fixed afterwards:
+the manager session builds a whole operation — one working copy per parallel
+worker session, its plan, its logs, its record of anything it started — under
+wherever you were standing when you typed the next command.
+
+**2. Start a session and put it in manager mode.**
+
+```
+amplifier
+/mode converge-manager
+```
+
+**3. Say what you want to be true, and where the work comes from.**
+
+In sentences, in your own words — the outcome, how wide to run (how many worker
+sessions at once), and whether work comes from a queue, a list, or from the gap
+between your contracts and the code. The manager session plans the order, briefs
+and launches the worker sessions, checks their results by re-running the check
+itself, and writes you a brief every time you come back.
+
+### What appears where
+
+| Where | What |
+|---|---|
+| `<workspace>/.converge/<project>/` | Everything the operation stands up. One directory per project; nothing lands outside it, and nothing lands in your home directory. |
+| `<workspace>/.converge/<project>/lanes/` | One working copy per worker session, each on its own branch. |
+| `<workspace>/.converge/<project>/HIGHWAY.md` | The plan, rewritten every cycle: what is running, what waits on you, what was declined and why. |
+| `<workspace>/.converge/<project>/infra.tsv` | Anything the run started that outlives a command, each line carrying its own teardown. |
+| Your project repository | The work itself — commits, on branches, merged by the manager session after its own check. |
+
+`.converge/` is a running operation's state, not your project's content, so the
+workspace git-ignores it. Templates for the directory's own README and the
+`.gitignore` line are in
+[`docs/workspace-template/`](docs/workspace-template/).
+
+To close an operation: sweep its infra ledger first — it is the only record of
+anything the run started outside that directory — then delete the project's
+`.converge/<project>/` folder. The project is untouched.
+
 ## What ships
 
 - `agents/protocol-authority.md` — the carrier of the ratified rules. Ask it any

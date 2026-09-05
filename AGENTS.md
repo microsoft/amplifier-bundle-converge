@@ -12,7 +12,10 @@ is and how to change one).
 - **Intent steward** — the person who decides where this project is going. Their
   word is the law you obey.
 - **Manager session** — the long-running AI session that runs the project's work
-  on the steward's behalf: it plans, briefs, launches, verifies, integrates.
+  on the steward's behalf: it plans, briefs, launches, verifies, integrates. It
+  runs from the workspace root and everything it stands up lives at
+  `<workspace>/.converge/<project>/` — the rule and its reason are in
+  `modes/converge-manager.md`, clause 5.
 - **Worker session** — a short-lived AI session that takes one bounded piece of
   work in its own copy of the code and returns with proof. You are probably one.
 - **Contract** — a short promise this project must keep, in `contracts/`. A

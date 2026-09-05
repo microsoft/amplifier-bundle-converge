@@ -322,6 +322,8 @@ CONSOLE_SHAPE = """
     rect: [r.left, r.top, r.right, r.bottom].map(Math.round),
     gridClosed: grid.classList.contains('console-closed'),
     togglePressed: document.getElementById('consoleToggle').getAttribute('aria-pressed'),
+    toggleElsewhere: document.getElementById('consoleToggle').classList.contains('console-elsewhere'),
+    toggleTitle: document.getElementById('consoleToggle').getAttribute('title') || '',
     screenHome: document.getElementById('app').classList.contains('screen-home'),
   };
 }
@@ -447,7 +449,7 @@ def test_the_console_pane_is_untouched_on_the_two_places_it_belongs_to(
     on_home = page.evaluate(CONSOLE_SHAPE)
     print(f"[{width}] the same console, on Home: {on_home}")
     assert on_home["screenHome"] is True, "the shell does not know it is on Home"
-    assert on_home["gridClosed"] is False and on_home["togglePressed"] == "true", (
+    assert on_home["gridClosed"] is False, (
         "Home closed the console rather than stowing the sheet — the pane would not be "
         f"as the steward left it when they open a manager session: {on_home}"
     )
@@ -455,11 +457,89 @@ def test_the_console_pane_is_untouched_on_the_two_places_it_belongs_to(
         assert on_home["pointerEvents"] == "none", (
             f"the sheet still takes clicks over Home at {width}px: {on_home}"
         )
+        # converge-30aw. The STATE is untouched (gridClosed is False above), and
+        # the CONTROL tells the truth about the screen it is on. This assertion
+        # read `togglePressed == "true"` until 2026-09-04, which pinned exactly
+        # the defect that item was filed for: measured then at 390x844 on Home,
+        # `{pointerEvents: 'none', gridClosed: false, togglePressed: 'true'}`.
+        assert on_home["togglePressed"] == "false", (
+            "the Manager Console control reads 'on' over a screen with no pane drawn on it "
+            f"at {width}px: {on_home}"
+        )
+        assert on_home["toggleElsewhere"], (
+            f"the control is not marked as being about a pane that is elsewhere: {on_home}"
+        )
+        assert "beside Direction and Operation" in on_home["toggleTitle"], (
+            f"the control does not say where the pane actually is: {on_home['toggleTitle']!r}"
+        )
     else:
         assert on_home["pointerEvents"] != "none", (
             f"the console stopped being a pane beside Home at {width}px, where it covers "
             f"nothing and costs nothing: {on_home}"
         )
+        # Where the pane IS drawn beside Home, nothing changed at all.
+        assert on_home["togglePressed"] == "true", (
+            f"the console is no longer open beside Home at {width}px: {on_home}"
+        )
+        assert not on_home["toggleElsewhere"], (
+            f"the pane is right there at {width}px, so the control must not say otherwise: {on_home}"
+        )
+
+    assert not errors, f"the browser logged: {errors}"
+    ctx.close()
+
+
+@needs_browser
+@pytest.mark.parametrize("width,height", [(390, 844)])
+def test_tapping_the_console_control_on_home_changes_something_the_steward_sees(
+    server, project, browser, width, height
+) -> None:
+    """converge-30aw: a control that appears dead is worse than one that is.
+
+    On Home below the overlay width the pane is stowed, so the tap has nothing
+    on THIS screen to redraw -- it turns the pane off for Direction and
+    Operation, which is real but invisible from where the steward is standing.
+    Measured 2026-09-04 before the fix: the tap changed nothing a steward could
+    see, and the control read 'on' throughout.
+
+    WHAT WOULD FALSIFY THIS: the tap producing no visible change at all, or the
+    console's own open state being changed by merely standing on Home -- the
+    pane must still be exactly as the steward left it when they open a manager
+    session (converge-nxf).
+    """
+    errors: list[str] = []
+    ctx, page = _open(browser, server, project, width, height, errors)
+    _home(page)
+
+    before = page.evaluate(CONSOLE_SHAPE)
+    print(f"\n[{width}] on Home before the tap: {before}")
+    assert before["pointerEvents"] == "none", "the sheet is not stowed, so this proves nothing"
+
+    page.click("#consoleToggle", timeout=5000)
+    page.wait_for_function(
+        "() => /Manager Console/.test(document.getElementById('toast').textContent || '')",
+        timeout=5000,
+    )
+    said = page.evaluate("() => document.getElementById('toast').textContent")
+    after = page.evaluate(CONSOLE_SHAPE)
+    print(f"[{width}] the app said: {said}")
+    print(f"[{width}] on Home after the tap:  {after}")
+
+    assert "beside Direction and Operation" in said, (
+        f"the tap said nothing about where the pane actually is: {said!r}"
+    )
+    assert "closed there" in said or "open there" in said, (
+        f"the tap did not say what it just did to the pane: {said!r}"
+    )
+    # The gesture still works: the state flipped, for the two screens the pane
+    # belongs to.
+    assert after["gridClosed"] != before["gridClosed"], (
+        f"the tap did not change the console's own open state: {before} -> {after}"
+    )
+    # And the control still does not claim to be on over an empty screen.
+    assert after["togglePressed"] == "false", (
+        f"the control reads 'on' on Home after the tap: {after}"
+    )
 
     assert not errors, f"the browser logged: {errors}"
     ctx.close()
