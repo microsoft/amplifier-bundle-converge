@@ -24,14 +24,18 @@ What is proved here, and why it needs a real browser:
 
 What is NOT covered here, honestly:
 
-- **converge-4pq is not delivered.** Restoring from History still reaches
-  exactly one snapshot — the steward's own read point — because the app answers
-  no route that reads a document at an arbitrary commit. Adding one means
-  `app/serve.py` and `app/writes.py`, which this lane does not own, so it is
-  written down for their owner rather than made. The History panel says so on
-  the screen; `test_the_history_panel_still_says_what_a_restore_cannot_reach`
-  below asserts that the panel keeps telling that truth, which is a test of
-  honesty and *not* a test of the acceptance. The acceptance stays open.
+- **converge-4pq WAS not delivered when this file was written, and now is.**
+  Restoring from History reached exactly one snapshot — the steward's own read
+  point — because the app answered no route that read a document at an
+  arbitrary commit. `test_the_history_panel_still_says_what_a_restore_cannot_
+  reach` asserted that the panel kept telling that truth, and said in its own
+  docstring that it "fails the day someone adds such a control without the
+  route behind it". The route landed (commit eee7434, lane
+  w8-direction-restore: `app/serve.py`'s `snapshot_or_refusal`), so the control
+  is honest and the assertion was the thing that had gone wrong. It is now
+  `test_the_history_panel_says_every_snapshot_is_restorable` below, which
+  asserts the opposite sentence AND the one bound that is genuinely left — a
+  commit that never touched this document is refused (converge-nn1p).
 
 If Playwright or its Chromium build is unavailable every browser test skips
 with the reason printed, and MANUAL_PROCEDURE below is the check that stands in
@@ -95,12 +99,17 @@ Check — Ask reports its real cause (converge-3al)
   i. SEE the toast carry the server's own words ("no document … to ask about")
      and say nothing about a missing route.
 
-Check — History still says what a restore cannot reach (converge-4pq)
+Check — History says every snapshot is reachable, and names the one bound
   j. Open History → Details under the restore panel.
-  k. SEE it say that a snapshot older than your read point is not offered, and
-     name the work item for the route that would make it reachable.
-  FAILS IF: a control offers to restore an arbitrary snapshot (there is no
-     route behind it), or the panel stops saying what it cannot do.
+  k. SEE it say every snapshot in the list can be restored from, that picking a
+     row reads the document back at that commit, and that your own read point
+     does not move when you look.
+  l. SEE it also name the one thing a restore cannot reach: a commit that never
+     touched this document, refused by the server in its own words.
+  FAILS IF: the panel says an older snapshot is out of reach (it is not, since
+     converge-4pq), or names converge-4pq as an open gap, or stops naming the
+     bound that is left — a panel claiming no limit at all would be as wrong as
+     one claiming the old limit.
 """
 
 
@@ -626,7 +635,32 @@ def test_the_history_panel_says_every_snapshot_is_restorable():
     assert "older than your read point is not offered" not in render, (
         "the History panel still claims older snapshots cannot be restored — the route exists"
     )
+    # `converge-4pq` still appears in this module's own COMMENTS, recording why
+    # the sentence changed, and that is history rather than a claim. That the
+    # panel's own words no longer name it as an open gap is asserted where the
+    # panel's words are read alone:
+    # `test_direction_restore.py::test_the_history_panel_no_longer_says_an_older
+    # _snapshot_is_out_of_reach`.
+    #
     # The new truth is stated where the History list is rendered.
     assert "Every snapshot in this list can be restored from" in render, (
         "the panel no longer tells the steward that every shown snapshot is restorable"
     )
+
+    # converge-nn1p: honesty cuts both ways. The old sentence had to go, but a
+    # panel that now claims NO limit would be the same defect pointing the other
+    # way -- there IS one bound left, and it is the panel's job to say it. So
+    # the bound is asserted here rather than left unwatched.
+    for said in (
+        "never touched this document",
+        "refused by the server in its own words",
+        "read point does not move",
+    ):
+        assert said in render, (
+            f"the History panel no longer says {said!r} -- the one bound a restore still has "
+            "is unstated, which is the silence Core 14 names (converge-nn1p)"
+        )
+    print("\nthe bound the panel still states:")
+    for line in render.splitlines():
+        if "never touched this document" in line:
+            print(f"  {line.strip()[:400]}")

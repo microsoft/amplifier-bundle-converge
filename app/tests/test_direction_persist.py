@@ -16,12 +16,18 @@ real app, a real git repository, and the file on disk asserted afterwards.
 
 What is NOT covered here, honestly:
 
-- **Restoring to an arbitrary earlier snapshot.** The only sentences the server
-  can still find are the ones in the current reading, so the snapshot a restore
-  reaches is the steward's own read point and no other. The screen says this
-  rather than implying time travel; the route that would close it is filed as
-  converge-4pq, and `test_the_panel_says_what_it_cannot_reach` pins the honesty
-  so that when the route lands this test fails and must be rewritten.
+- **Restoring to an arbitrary earlier snapshot USED to be uncovered here.**
+  While converge-4pq was open the server could only find the sentences in the
+  current reading, so a restore reached the steward's own read point and no
+  other; `test_the_panel_says_what_it_cannot_reach` pinned the screen's honest
+  refusal and said in its own docstring that "when converge-4pq lands and an
+  arbitrary snapshot IS restorable, this test fails and must be rewritten. A
+  test that tolerated both would be worth nothing." The route landed, so that
+  is exactly what happened: it is now
+  `test_picking_an_older_row_redraws_the_panel_against_that_commit`, the same
+  walk asserting the opposite outcome (converge-zdn8). The acceptance itself --
+  that the wording of that snapshot comes back on disk -- is driven end to end
+  in `app/tests/test_direction_restore.py`.
 - **Whether the ratification record is later read back by anything.** These
   tests assert the file the decision write appends to, which is what §8's
   "written to the dated ratification record" names.
@@ -444,26 +450,56 @@ def test_history_offers_restore_at_all_four_scopes(server, project, browser):
 
 
 @needs_browser
-def test_the_panel_says_what_it_cannot_reach(server, project, browser):
-    """The honesty this lane owes: restore reaches the read point and no other
-    snapshot, and the screen says so instead of implying time travel.
+def test_picking_an_older_row_redraws_the_panel_against_that_commit(server, project, browser):
+    """The same walk this test always did, asserting what is true now.
 
-    When converge-4pq lands and an arbitrary snapshot IS restorable, this test
-    fails and must be rewritten. A test that tolerated both would be worth
-    nothing.
+    It was `test_the_panel_says_what_it_cannot_reach`, and it asserted that an
+    older snapshot was out of reach and that the panel named converge-4pq as
+    the gap. Its own docstring said it must be rewritten the day the route
+    landed, "a test that tolerated both would be worth nothing" -- so this is
+    that rewrite (converge-zdn8): pick an older row the way a steward would,
+    and assert the panel is redrawn against THAT commit.
+
+    WHAT WOULD FALSIFY THIS: the panel naming the read point after an older row
+    is picked -- the wording that went back would then be the nearest one this
+    browser happened to be holding, which is the defect converge-4pq closed.
     """
     ctx, page, errors = _boot(browser, server, project)
     _open_doc(page, "Vision")
     _mode(page, "history")
-    # The limit is one gesture away rather than shouted: open it the way a
+
+    rows = page.eval_on_selector_all(
+        "[data-history]",
+        "els => els.map(e => ({id: e.dataset.history, sha: e.dataset.historySha}))",
+    )
+    print(f"\nhistory rows offered: {[r['id'] for r in rows]}")
+    older = [r for r in rows if r["sha"]]
+    assert older, f"the fixture produced no restorable snapshot to pick: {rows}"
+
+    # The panel is one gesture away rather than shouted: open it the way a
     # steward would, then read what they would read.
     page.click(".history-actions details summary")
     page.wait_for_timeout(200)
+    before = page.eval_on_selector(".history-snapshot .history-actions", "el => el.innerText || ''")
+    print(f"\nwith the first row selected the panel says:\n{before.strip()[:400]}")
+
+    page.click(f'[data-history="{older[-1]["id"]}"]')
+    page.wait_for_timeout(900)
     said = page.eval_on_selector(".history-snapshot .history-actions", "el => el.innerText || ''")
-    print(f"\nthe panel says:\n{said.strip()[:600]}")
-    assert "converge-4pq" in said, "the panel does not name the work that would close the gap"
-    assert "not offered" in said.lower() or "cannot" in said.lower(), (
-        "the panel does not say plainly that an older snapshot is out of reach"
+    print(f"\nwith the oldest row selected it says:\n{said.strip()[:600]}")
+
+    assert older[-1]["sha"][:7] in said, (
+        "picking an older row did not redraw the panel against that commit: it still names "
+        f"something else. sha={older[-1]['sha'][:7]}, panel={said.strip()[:200]!r}"
+    )
+    # And the sentence that had to go, is gone.
+    assert "converge-4pq" not in said, "the panel still names converge-4pq as an open gap"
+    assert "not offered" not in said.lower(), (
+        "the panel still says an older snapshot is not offered; this one just was"
+    )
+    # Looking is not reading: the panel says so where a steward would assume it.
+    assert "read point is where you left it" in said, (
+        "the panel does not say that reading a snapshot leaves the read point alone"
     )
     ctx.close()
 

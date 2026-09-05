@@ -135,13 +135,45 @@ one of them is the same per-card `changes/{change_id}/restore` write, applied
 one sentence at a time — no scope has a write of its own, and none of them
 stages anything.
 
-**Which snapshot a restore reaches, and which it cannot.** It reaches exactly
-one: the wording as it stood at **your own read point**, because that is the
-only earlier wording the server can still find. Restoring to any other row in
-the history list is **not offered**. The app answers no route that reads a
-document at an arbitrary commit, so a control for it would look like time
-travel and not be one; the panel says so in its own Details, and the gap is
-filed as `converge-4pq`. Only the sentences in this reading can be put back.
+**Which snapshot a restore reaches, and the one bound left.** It reaches **any
+snapshot in this document's own history** — every row the History list shows.
+Picking a row reads the document back at that commit: the read carries
+`?since=<commit>` and so does each restore, so the wording that goes back is
+the wording that stood there, not the nearest one this browser happened to be
+holding.
+
+Three things about that are easy to assume wrongly:
+
+- **The `now` row is the steward's own reading, not a snapshot.** Between HEAD
+  and HEAD there is nothing to put back, so the panel on first open is
+  unchanged.
+- **Reading a snapshot never moves the read point.** Looking at history is not
+  reading, and the panel says so where a steward would otherwise assume it.
+- **The bound reads deeper than the eight rows the view shows.** A
+  whole-document restore commits once per sentence, and a shallower bound would
+  push its own snapshot out of range partway through its own run.
+
+The one thing a restore cannot reach is a commit that never touched this
+document, and the server refuses it in plain words rather than by a code:
+`<sha> is not a commit in this document's history. The snapshots this document
+offers are: …`. That refusal is the whole of the bound, and the panel's own
+Details says so.
+
+Measured against this repository's own `docs/VISION.md` on a live server,
+2026-09-04:
+
+```
+read at afd83c8b -> 200,  1 sentence(s) restorable
+read at c2420ce3 -> 200, 17 sentence(s) restorable
+read at e1747ba5 -> 200, 40 sentence(s) restorable
+read at deadbeefcafe -> 400, "…is not a commit in this document's history…"
+read point afterwards: afd83c8 (was afd83c8) — UNMOVED
+```
+
+This paragraph said the opposite until 2026-09-04 — that a restore reaches your
+read point and nothing else, and that the gap was filed as `converge-4pq`. That
+work landed; the screen's words moved with it and this file was the half that
+could not, because it was outside that lane's ownership (`converge-gkx9`).
 
 Before anything is written, the confirmation names the sentences (the first
 eight, then *…and N more*) and which of the two paths this document takes.

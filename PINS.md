@@ -32,6 +32,14 @@ VERDICT: PASS  (pass=18 fail=0 skip=9)
 - A proposal to change a contract is `<contract>.vN-candidate.md`, in the same
   folder as the contract it changes — for example
   `contracts/documents.v2-candidate.md`.
+  **That example does not match what this repository actually does, and the
+  disagreement is an open decision, not a typo to fix in passing.** All seven
+  candidates in `contracts/` today read `<contract>.v1-candidate.md` — `vN` is
+  the version being *amended*, not the version being *proposed*. Both readings
+  satisfy `.githooks/pre-push`, so nothing catches the difference; settling it
+  takes one sentence in `documents.v1` clause 8, which is a contract and not a
+  file to edit in passing. Filed as `converge-t18`. Until it is answered, follow
+  the folder (`<contract>.v1-candidate.md`), not this example.
 - A locked contract carries `(FROZEN <date>)` in its first heading line; a draft
   carries `(DRAFT)`. Status appears nowhere else in the file.
 - Every contract in `contracts/` is `(DRAFT)` today. None is locked.
@@ -130,13 +138,31 @@ Five facts about it that are **not** what you would assume:
    same-shape v2 probe run in a non-anchors session). Either way the helpers come
    from the manifest, never from the caller.
 
+**`README.md` now agrees with all five.** This section carried a closing
+paragraph saying README's Host requirement sentence and its "`seed-reconcile`
+recipe runnable" table row were "still stated in the old terms, and therefore
+wrong until their owner fixes them". They were restated on 2026-09-04 under
+converge-yj3: the Host requirement now says the recipe needs no particular host,
+not even the lean `anchors` base, and the table row no longer makes the `--app`
+path conditional on one. `uv run conformance/composition/run.py .` reports rule 4
+PASS on the new sentence. The paragraph was removed rather than corrected in
+place, because a fact that has stopped being a fact is not one (converge-x40).
+
 ## Work tracking
 
 - Work-tracker project: `converge`.
 - Every work item names the contract it serves.
 
-## Handoffs to other lanes
+## Standing gaps
 
-- **Composition lane (owns `README.md`)** — README needs one line under setup:
-  "Enable the locked-contract guard once per clone: `git config core.hooksPath
-  .githooks`." This lane may not edit `README.md`.
+Facts about this repository that are true until someone closes them. They are
+not addressed to any one lane — a line here that names "this lane" has outlived
+whichever lane it was written for, and is a defect in this file (converge-x40).
+
+- **`README.md` does not tell a reader to enable the pre-push guard.** The line
+  it needs, under setup: "Enable the locked-contract guard once per clone:
+  `git config core.hooksPath .githooks`." Measured 2026-09-04:
+  `grep -n hooksPath README.md` returns nothing, while
+  `docs/CONTRACTS-README.md:156` carries it. Until then a fresh clone pushes
+  with no guard and the first person to learn that is whoever edits a locked
+  contract.

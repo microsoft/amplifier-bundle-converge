@@ -104,7 +104,7 @@ def run_view(browser, view, width, height):
     # These four checks were written in the read-only era and every one of them
     # was false by the time converge-hw5 was filed: the console has taken
     # keystrokes since converge-tfu, the terminal viewer loads, and the footer
-    # no longer says "read-only in this version" in either of its two live
+    # no longer carries the read-only sentence in either of its two live
     # states.  They assert the CLAIM the app makes now, not one exact sentence,
     # so tuning the wording again does not turn this red.
     closed = page.evaluate("() => document.querySelector('.body-grid').classList.contains('console-closed')")

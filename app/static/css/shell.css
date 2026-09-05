@@ -63,6 +63,16 @@
 .attention-dot { width:8px; height:8px; border-radius:50%; background:#f15c69; }
 .icon-label-button.active { border-color:rgba(134,105,255,.5); background:#17213b; color:#fff; }
 
+/* The Manager Console control while the pane is not on this screen at all
+   (converge-30aw). On Home below 980px `console.css` stows the sheet, so the
+   pane is drawn nowhere the steward can see or touch; `main.js` clears the
+   pressed look and sets a title naming where the pane is. This says the same
+   thing in the one language a glance reads: dimmed, so the control does not
+   look lit over an empty screen. It is never `display:none` -- the gesture
+   still works and still says what it did, and a control that vanished on one
+   screen would be a worse lie than one that looked on. */
+.icon-label-button.console-elsewhere { opacity:.55; }
+
 .body-grid {
   min-height: calc(100vh - 66px);
   display:grid;

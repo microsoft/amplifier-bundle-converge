@@ -74,6 +74,7 @@ const PRECACHE = [
   '/static/js/api.js',
   '/static/js/refresh.js',
   '/static/js/actions.js',
+  '/static/js/feedback_voice.js',
   '/static/js/offline.js',
   '/static/js/presence.js',
   '/static/js/tmux.js',
