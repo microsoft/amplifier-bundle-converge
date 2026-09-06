@@ -404,3 +404,45 @@ def _main():
 
 if __name__ == "__main__":
     raise SystemExit(_main())
+
+
+def test_the_live_child_loads_through_a_private_home_not_the_users_registry(tmp_path):
+    """Measured 2026-09-06: loading ``file://<root>/bundle.md`` through the CLI's
+    default registry persisted ``converge`` with a ``file://`` URI into the
+    user's ~/.amplifier/registry.json, which blocked the git root from ever
+    registering and made ``amplifier update`` print the app bundle as its full
+    URI (two rows labelled ``converge``). The child now loads through a
+    private home whose cache is the real one and whose registry.json is a
+    throw-away copy.
+
+    WHAT WOULD FALSIFY THIS: the child's discovery registry resolving to the
+    real Amplifier home, or the private home lacking the shared cache link.
+    Runs on the installed CLI's own interpreter, exactly as live.py does; skips
+    by name when there is none.
+    """
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    import live  # noqa: PLC0415
+
+    interpreter, missing = live.find_interpreter()
+    if interpreter is None:
+        import pytest  # noqa: PLC0415
+
+        pytest.skip(live.MISSING[missing])
+    child = Path(__file__).resolve().parents[1] / "_live_child.py"
+    code = (
+        "import importlib.util, json, sys\n"
+        f"spec = importlib.util.spec_from_file_location('child', {str(child)!r})\n"
+        "m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)\n"
+        "from amplifier_foundation.paths.resolution import get_amplifier_home\n"
+        "d = m._discovery()\n"
+        "home = d.registry._home\n"
+        "print(json.dumps({'private': str(home), 'real': str(get_amplifier_home()),"
+        " 'cache_is_shared': (home / 'cache').resolve() == (get_amplifier_home() / 'cache').resolve()}))\n"
+    )
+    out = subprocess.run([interpreter, "-c", code], capture_output=True, text=True, timeout=120)
+    assert out.returncode == 0, out.stderr[-800:]
+    got = json.loads(out.stdout.strip().splitlines()[-1])
+    assert got["private"] != got["real"], got
+    assert got["cache_is_shared"], got

@@ -60,6 +60,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+import tempfile
+import shutil
+import atexit
 import sys
 from pathlib import Path
 
@@ -79,11 +82,52 @@ def _tool_modules(plan: dict) -> list:
     return [t.get("module") for t in (plan.get("tools") or []) if isinstance(t, dict)]
 
 
+_PRIVATE_HOME: Path | None = None
+
+
+def _private_home() -> Path:
+    """A private Amplifier home for everything this child loads.
+
+    Measured 2026-09-06: loading ``file://<root>/bundle.md`` through the CLI's
+    default registry REGISTERS the target under its frontmatter name -- here
+    ``converge`` -- with a ``file://`` URI, and persists that into the user's
+    ``~/.amplifier/registry.json``. Two things then go wrong for the person
+    whose machine the kit ran on: the git-root URI can never register under
+    that name (the loader only registers a root when the name is free), and
+    ``amplifier update`` shows a row named ``converge`` that knows no SHA next
+    to the app bundle printed as its full URI, because the two labels collide.
+    A conformance kit must leave no trace on the host it measures.
+
+    The private home shares the real ``cache/`` (a symlink -- clones are
+    read-mostly and re-cloning every bundle per run would be the wrong cost)
+    and starts from a COPY of the real registry.json, so name resolution of
+    already-known bundles works; every registration this child causes lands in
+    the copy and is thrown away with the directory at exit.
+    """
+    global _PRIVATE_HOME  # noqa: PLW0603
+    if _PRIVATE_HOME is None:
+        from amplifier_foundation.paths.resolution import get_amplifier_home  # noqa: PLC0415
+
+        real = get_amplifier_home()
+        home = Path(tempfile.mkdtemp(prefix="converge-composition-kit-home-"))
+        (home / "cache").symlink_to(real / "cache", target_is_directory=True)
+        registry_json = real / "registry.json"
+        if registry_json.is_file():
+            shutil.copy2(registry_json, home / "registry.json")
+        atexit.register(shutil.rmtree, home, True)
+        _PRIVATE_HOME = home
+    return _PRIVATE_HOME
+
+
 def _discovery():
     from amplifier_app_cli.lib.bundle_loader import AppBundleDiscovery  # noqa: PLC0415
     from amplifier_app_cli.paths import get_bundle_search_paths  # noqa: PLC0415
+    from amplifier_foundation import BundleRegistry  # noqa: PLC0415
 
-    return AppBundleDiscovery(search_paths=get_bundle_search_paths())
+    return AppBundleDiscovery(
+        search_paths=get_bundle_search_paths(),
+        registry=BundleRegistry(home=_private_home()),
+    )
 
 
 async def _prepare(uri: str, compose: list | None):
