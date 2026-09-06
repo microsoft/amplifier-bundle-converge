@@ -18,14 +18,33 @@ line here is wrong, sessions act on it anyway — fix it the moment it drifts.
 | Conformance kits | `conformance/<contract>/run.py` — `conformance/README.md` names each one and how to run it |
 | Integration branch | `main` |
 
-Measured on this tree, 2026-09-05:
+Measured on this tree, 2026-09-06:
 
 ```
-$ uv run --with pyyaml ledger/checks/verify.py
-ALL LEDGER SELF-CHECKS PASS                    (175 rows, 14 contracts, exit 0)
 $ uv run conformance/documents/run.py .
 VERDICT: PASS  (pass=18 fail=0 skip=9)
+$ uv run --with pyyaml ledger/checks/verify.py; echo "exit=$?"
+FAILURES:
+  - SYNC contracts/documents.v1.md     723f8923…    (179 rows, 14 contracts)
+  - SYNC contracts/operation.v1.md     7615b5c1…
+  - SYNC contracts/platform-web.v1.md  306c88fb…
+  - CVG-020 expect NOT met
+exit=1
 ```
+
+**The ledger self-check exits 1 today, and every failure in it is filed rather
+than unknown.** Do not read a non-zero exit here as a fresh failure without
+reading the failure text first.
+
+- The three `SYNC` rows are the three documents whose H1 gained
+  `held loosely 2026-09-06` (`converge-w3m4`). Nothing but the H1 moved — the
+  same run reports `178/178 quotes verify byte-for-byte` — so what is owed is
+  the re-pin **and** the re-review `docs/LEDGER-FORMAT.md` §4 requires with it,
+  never a silent hash bump.
+- `CVG-020` reads `docs/workflow/OWNER-RETURN-LOG.md` and finds today's round-3
+  return entry carrying no time away (`converge-9koj`).
+
+Every other self-check in that run passes.
 
 ## Naming
 
@@ -33,16 +52,26 @@ VERDICT: PASS  (pass=18 fail=0 skip=9)
   folder as the contract it changes — for example
   `contracts/documents.v2-candidate.md`.
   **That example does not match what this repository actually does, and the
-  disagreement is an open decision, not a typo to fix in passing.** All seven
-  candidates in `contracts/` today read `<contract>.v1-candidate.md` — `vN` is
-  the version being *amended*, not the version being *proposed*. Both readings
+  disagreement is an open decision, not a typo to fix in passing.** Every
+  candidate written in `contracts/` so far reads `<contract>.v1-candidate.md` —
+  `vN` is the version being *amended*, not the version being *proposed*. (One
+  is left in the folder today, `documents.v1-candidate.md`, and it is a
+  ratified proposal that was already applied and archived, not an open one —
+  `converge-h22l`.) Both readings
   satisfy `.githooks/pre-push`, so nothing catches the difference; settling it
   takes one sentence in `documents.v1` clause 8, which is a contract and not a
   file to edit in passing. Filed as `converge-t18`. Until it is answered, follow
   the folder (`<contract>.v1-candidate.md`), not this example.
 - A locked contract carries `(FROZEN <date>)` in its first heading line; a draft
   carries `(DRAFT)`. Status appears nowhere else in the file.
-- Every contract in `contracts/` is `(DRAFT)` today. None is locked.
+- Five contracts are locked, all on 2026-09-06: `composition.v1`,
+  `experience-direction.v1`, `experience-operation.v1`, `experience-console.v1`,
+  `experience-collaboration.v1`. `docs/VISION.md` is locked the same day. Never
+  edit one of those six in place — write a proposal beside it.
+- The other nine contracts are `(DRAFT)`. Three of them are *held loosely*: they
+  meet the four conditions and the steward chose to leave them open while the
+  family matures. Each says so in its own first heading —
+  `documents.v1`, `operation.v1`, `platform-web.v1`.
 
 ## The pre-push guard
 
@@ -158,11 +187,10 @@ used to sit beside that sentence — and whose "`seed-reconcile` recipe runnable
 row this note used to track — is gone as of 2026-09-05: the install section now
 names one command as the adopter's path and marks the full-workspace install
 advanced, under composition.v1 Core 5 as ratified 2026-09-06
-(`docs/workflow/owner-ratifications-2026-09-06.md`; converge-xk2u). The clause's
-new text reaches `contracts/composition.v1.md` from the apply lane — until it
-does, the contract file on this tree still carries the pre-ratification Core 5.
+(`docs/workflow/owner-ratifications-2026-09-06.md`; converge-xk2u).
 Both statements this note used to carry were removed rather than corrected in
-place, because a fact that has stopped being a fact is not one (converge-x40).
+place, because a fact that has stopped being a fact is not one (converge-x40,
+converge-ao32).
 
 ## Work tracking
 

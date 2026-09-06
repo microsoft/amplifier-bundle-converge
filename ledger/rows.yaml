@@ -3401,9 +3401,27 @@
     showing the change" was false while the check said done. It surfaced only
     because the person watching ran the check themselves. That is Core 7's
     business, not this clause's.
-    THE ADOPT HALF OF Core 14 IS CVG-302, and it is red. converge-njaj stays
-    open on that half. This row carries no `work` ref because a green row may
-    not carry one.
+    THE ADOPT HALF OF Core 14 IS CVG-302, AND IT IS NOW Kept. CLOSING NOTE
+    RE-DERIVED 2026-09-06 (converge-j696, lane w19-tidy): this paragraph read
+    "it is red. converge-njaj stays open on that half", and both halves stopped
+    being true earlier the same day. CVG-302 was re-derived to CONFORMS on the
+    run recorded in evaluations/adopter/RESULT.md — 2026-09-06T08:57:06Z, its
+    own container adopter-20260906085706-s2, GREEN, 12 pass 0 fail — and
+    converge-njaj was resolved on that same evidence.
+    WHAT THAT RUN CHANGES FOR THIS ROW, AND IT IS ONE THING. This row's `proves`
+    says "chain complete and measured, sequence attested and unmeasured". The
+    sequence is now measured on the ADOPT path: two harness rows added for it,
+    S2.7 (the work in flight paused first, said in the plan record) and S2.8
+    (the investigation answers are dated before the drafts), both PASS, dating
+    those records against the drafts rather than trusting the AI user's account.
+    THE BLANK PATH STILL HAS NO ORDER ROWS, AND DELIBERATELY SO — a blank
+    repository has no work in flight to pause and nothing to read first, so
+    there is no order there to measure. This row's own reading is unchanged by
+    the adopt run; nothing above needed re-reading.
+    RAN 2026-09-06 → BLANK-WAKE-SESSION-VISION-CONTRACT-LEDGER-QUEUE-ALL-SEEN
+    (re-observed by `uv run --with pyyaml ledger/checks/verify.py` on this
+    tree; the probe reads the same RESULT.md scenario-1 rows as before).
+    This row carries no `work` ref because a green row may not carry one.
 
 - id: CVG-302
   title: the first wake on an EXISTING repository — adopt, and the work in flight pauses first
@@ -5338,13 +5356,27 @@
     kind: indexed
     ref: conformance/documents/run.py (rules 12a, 12b)
   proves: >
-    That the four participant-kit files and five workspace-template files EXIST.
-    Not that any of them contains what the clause requires of it — that is CVG-064.
+    That the four participant-kit files EXIST, and that every file in
+    docs/workspace-template/ is accounted for — the eight kit files the rule
+    lists, plus that directory's own README.md, which is named as its index and
+    copied nowhere. Not that any of them contains what the clause requires of it
+    — that is CVG-064.
   notes: >
-    RAN 2026-09-03 (re-run by converge-12o)
-    → rule 12a PASS ("all 4 participant-kit file(s) present" —
+    RE-DERIVED 2026-09-06 (converge-h2gk, lane w19-tidy). Rule 12b was widened
+    on 2026-09-05 under converge-mvq5: it now measures all eight kit files under
+    docs/workspace-template/ and also fails on a file in that directory that
+    neither the kit list nor the named not-copied set accounts for. This row's
+    evidence still quoted the pre-widening detail string, which no run emits any
+    more, and its `proves` undercounted the kit by three. Both re-read against a
+    run rather than edited to taste.
+    RAN 2026-09-06 → rule 12a PASS ("all 4 participant-kit file(s) present" —
     docs/CONTRACTS-README.md, AGENTS.md, PINS.md, .githooks/pre-push) and rule
-    12b PASS ("all 5 workspace-template file(s) present").
+    12b PASS ("all 9 workspace-template file(s) accounted for"), in a run
+    reporting VERDICT: PASS (pass=18 fail=0 skip=9). Nine is eight plus the
+    directory's own README.md; `ls docs/workspace-template/ | wc -l` prints 9.
+    PRIOR READING, KEPT SO THE CORRECTION IS LEGIBLE: RAN 2026-09-03 (re-run by
+    converge-12o) → rule 12a PASS and rule 12b PASS ("all 5 workspace-template
+    file(s) present"). The disposition did not move; only the evidence caught up.
     RULE NUMBERS CORRECTED 2026-09-03 by converge-12o: the ref read
     `(rules 5a, 5b)`, which after wave 4's renumber name two Core 5 rules about
     bold leads and clause numbering — a different clause entirely. Re-run at

@@ -4,3 +4,9 @@ __pycache__/
 .venv/
 uv.lock
 !modules/hooks-candidate-guard/uv.lock
+
+# A running operation's state, not this project's content. A project with no
+# workspace around it has its repository root AS the workspace root, so this
+# directory can appear here. Same line this repository ships to adopters in
+# docs/workspace-template/gitignore-addendum.txt (documents.v1 §13, converge-i8wb).
+.converge/
