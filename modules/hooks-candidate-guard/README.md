@@ -11,6 +11,37 @@ Full design: `docs/design/hooks-candidate-guard-spec.md`.
 
 ## Changelog
 
+### 2026-09-06 — the repo below the cwd was not guarded at all
+
+**`converge-qfi9` — three direct edits to a FROZEN contract went through.**
+With the session cwd at a multi-repo workspace root and the governed repo one
+level below it, `edit_file` on `amplifier-work-tracker/contracts/
+operator-surface.v1.md` (line 3, `**Status:** FROZEN`) succeeded **three
+times across three sessions** — with this module mounted and evaluating
+throughout (53 guard events in the session log). Nothing failed; the guard
+simply had no opinion.
+
+Cause, confirmed against the pure evaluator: a target was relativized against
+the **session cwd**, so it read as `amplifier-work-tracker/contracts/…` and
+matched no shipped glob — `contracts/*.md` is anchored at the path start. The
+identical call with `cwd=<the repo>` denied.
+
+A `guarded_glob` is a statement about a **repository's** layout, not about
+whichever directory a session happened to start in. So a target is now
+resolved in its own repository's frame — see
+["Which repository a path belongs to"](#which-repository-a-path-belongs-to).
+
+The smaller alternative — shipping `**/`-prefixed globs — was measured and
+rejected: it fixes the deny and *silently welds the remedy shut*. On the same
+fixture, a ratified `contracts/operator-surface.v2-candidate.md` sitting
+beside the contract no longer opens the escape hatch, because the proposal's
+`target:` line normalizes against cwd while the guarded path does not. A deny
+with no reachable remedy is worse than the bug.
+
+Tests: W6 in `tests/test_guard.py` — ten of the fourteen fail against the
+pre-fix `guard.py`; the other four are the controls (cwd-is-the-repo,
+outside-cwd, the non-repo limit, and writing the proposal itself).
+
 ### 2026-09-06 — the half-freeze: a lock whose record could not land
 
 **`converge-p17d` — locking a vision left it half-frozen.** A document is
@@ -250,7 +281,9 @@ Registers on `tool:pre` (priority 5) and, for each write-shaped tool call:
    locked contract's own text (status line included), so a proposal file will
    often read as frozen itself.
 3. A path is **guarded** iff it matches `guarded_globs` (default
-   `contracts/*.md`, `contracts/**/*.md`, `docs/VISION.md`, `VISION.md`)
+   `contracts/*.md`, `contracts/**/*.md`, `docs/VISION.md`, `VISION.md`,
+   `docs/PROTOCOL.md`, `PROTOCOL.md`) — matched in the target's **own
+   repository's** frame, see below —
    **and** its *current* on-disk content carries the FROZEN/RATIFIED marker
    (`require_frozen_marker: true`, the default). A DRAFT contract being
    written during ENCODE is therefore **not** guarded yet.
@@ -266,6 +299,37 @@ Deny is fail-loud on both channels: `reason` (shown to the agent) names the
 file, cites `PROTOCOL.md §5` and `composition.v1` clause 7, names the exact
 proposal filename to write instead, and spells out the three-part shape;
 `user_message` (`level=error`) surfaces to the human with the same remedy.
+
+## Which repository a path belongs to
+
+`guarded_globs` describes a **repository's** layout — `contracts/*.md` means
+*that repo's* `contracts/`. So every guarded-path decision is made in the
+target's own repository frame, not the session's:
+
+1. The target must resolve **inside the session cwd**. Unchanged, and still
+   the outer boundary (spec §2.3 / Test Plan U9): a path outside cwd is out
+   of this hook's scope, full stop.
+2. Its **governing root** is the nearest ancestor directory carrying a `.git`
+   entry, searched from the file's own directory upward and **stopping at
+   cwd**. `.git` is tested for existence, not for being a directory, because
+   in a git worktree — every Converge lane is one — `.git` is a file.
+3. `guarded_globs`, `always_allow_globs`, the on-disk marker read, the
+   proposal search *and* the proposal's `target:` line, and the break-glass
+   token and its `file:` line are **all** resolved against that same root.
+   One frame for the whole decision, so the remedy always reaches wherever
+   the deny did.
+
+Human-facing text stays in the **cwd** frame: the deny message and the
+`converge:guard_*` events name a path the reader can actually use from where
+they are (`amplifier-work-tracker/contracts/operator-surface.v1.md`), and the
+suggested proposal filename is built from it. When cwd *is* the repository
+root — the ordinary single-repo session — the two frames are identical and
+nothing changes.
+
+**Honest limit, tested:** a directory below cwd that is not a git repository
+has no repository frame. It falls back to cwd and is matched exactly as
+before, so a FROZEN `notes/contracts/x.v1.md` under a plain (non-repo)
+`notes/` directory is *not* guarded.
 
 ## T2 confirmation — tool_name / field names (read live, not assumed)
 
@@ -424,7 +488,7 @@ Every key below is overridable via the hook's `config:` block in
 | Key | Default | Purpose |
 |---|---|---|
 | `enabled` | `true` | Master on/off switch. |
-| `guarded_globs` | `["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md", "docs/PROTOCOL.md", "PROTOCOL.md"]` | Candidate files for guarding. Byte-identical to the shipped `behaviors/converge.yaml` value; a test asserts they cannot diverge. |
+| `guarded_globs` | `["contracts/*.md", "contracts/**/*.md", "docs/VISION.md", "VISION.md", "docs/PROTOCOL.md", "PROTOCOL.md"]` | Candidate files for guarding. Matched against the target's path **inside its own repository** (see "Which repository a path belongs to") — so write these the way a repo's layout reads, not `**/`-prefixed. Byte-identical to the shipped `behaviors/converge.yaml` value; a test asserts they cannot diverge. |
 | `require_frozen_marker` | `true` | Also require the FROZEN/RATIFIED marker in current content. |
 | `frozen_marker_regex` | `(?im)^\*\*Status:\*\*\s*(?:RATIFIED\|FROZEN)\|^status:\s*FROZEN\|^#.*\((?:FROZEN\|RATIFIED)\b` | How "locked" is detected — **both** ratified H1 words plus all the legacy body markers. Byte-identical to the shipped `behaviors/converge.yaml` value; a test asserts they cannot diverge. |
 | `always_allow_globs` | `["**/*.v[0-9]*-candidate.md", "**/CANDIDATE-*.md"]` | Both proposal names — always allowed, checked before guarding. |
@@ -437,11 +501,11 @@ Every key below is overridable via the hook's `config:` block in
 | `bash_tool_name` | `"bash"` | Tool name treated as the shell. |
 | `bash_write_patterns` | (six regexes) | Redirect/tee/dd/truncate/cp·mv/sed -i detection. |
 | `escape_mode` | `"ratified_candidate"` | `ratified_candidate` \| `token` \| `both`. |
-| `candidate_glob` | `["**/*.v[0-9]*-candidate.md", "**/CANDIDATE-*.md"]` | Where to look for a ratified proposal (both names). |
+| `candidate_glob` | `["**/*.v[0-9]*-candidate.md", "**/CANDIDATE-*.md"]` | Where to look for a ratified proposal (both names) — searched under the guarded document's own repository root, and its `target:` line is read in that same frame. |
 | `ratified_stamp_regex` | `(?im)^ratified(?:\s+as\s+edited)?\b.*\bby\s+owner\b` | The owner's literal ratification stamp. |
 | `candidate_target_field` | `"target"` | Front-matter/line field naming the guarded path. Required under both proposal names. |
 | `allow_emergency_unlock` | `false` | Enable the break-glass token fallback. |
-| `emergency_unlock_token` | `".converge/UNLOCK"` | Path to the token file (only read when enabled above). |
+| `emergency_unlock_token` | `".converge/UNLOCK"` | Path to the token file, relative to the guarded document's own repository root (only read when enabled above). |
 | `fail_closed_on_error` | `true` | Deny (don't continue) if evaluating a guarded-glob-matching path raises. |
 | `wrap_tool_execute` | `true` | Also guard direct tool dispatch by wrapping each mounted tool's `execute` — the `amplifier tool invoke` path, which emits no `tool:pre`. |
 | `enforce_encode_before_impl` | `false` | Opt-in rule (b), see "Known gaps". |
@@ -488,6 +552,15 @@ than a behaviour:
 - `test_w4c_this_repos_own_protocol_reads_as_locked` asserts against the live
   `docs/PROTOCOL.md`, not a fixture — it fails the day either half of that
   document's coverage (glob membership, marker detection) drifts.
+- W6 (`converge-qfi9`) pins the repository frame: the below-cwd deny, the
+  below-cwd escape hatch, the worktree `.git`-as-a-file case, the deepest-repo
+  rule, and the half-freeze check reaching below cwd. Its four controls are
+  the removal controls — `test_w6_cwd_as_the_repo_root_is_unchanged` (the
+  ordinary single-repo session must be untouched),
+  `test_w6_a_repository_outside_cwd_is_still_out_of_scope` (U9's boundary is
+  not widened), and
+  `test_w6_a_non_repository_directory_below_cwd_is_the_documented_limit`
+  (the limit is asserted, not discovered later).
 
 ### Live evidence (2026-09-02)
 

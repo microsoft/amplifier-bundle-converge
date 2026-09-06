@@ -72,6 +72,23 @@ hooks:
   #     it the live instance — docs/PROTOCOL.md, whose H1 reads
   #     `... Protocol v3 (RATIFIED 2026-09-03)` — was not guarded at all.
   #
+  # WHAT THE PATHS BELOW ARE RELATIVE TO (converge-qfi9, 2026-09-06). Every
+  # glob here — guarded_globs, always_allow_globs, candidate_glob — is matched
+  # against the target's path inside ITS OWN REPOSITORY: the nearest ancestor
+  # carrying a `.git` entry, searched upward from the file and bounded at the
+  # session cwd. NOT against the session cwd itself. The distinction is not
+  # academic: with cwd at a multi-repo workspace root, a FROZEN
+  # `amplifier-work-tracker/contracts/operator-surface.v1.md` read as
+  # `amplifier-work-tracker/contracts/...`, matched no glob below, and three
+  # direct edits to a locked contract went through unblocked across three
+  # sessions — with the module mounted and evaluating the whole time. So keep
+  # these globs written the way a repo's own layout reads (`contracts/*.md`),
+  # NOT `**/`-prefixed: prefixing them fixes the deny but leaves a ratified
+  # proposal beside the contract unable to open the escape hatch (measured),
+  # which is a deny with no reachable remedy. A path OUTSIDE cwd remains out
+  # of scope either way. See modules/hooks-candidate-guard/README.md,
+  # "Which repository a path belongs to".
+  #
   # Module source is RELATIVE TO THIS FILE'S DIRECTORY (behaviors/), verified
   # against foundation's FileSource + the work-tracker behavior's own comment:
   # `../modules/...` is correct (-> repo-root/modules); `./modules/...` silently
