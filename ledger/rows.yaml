@@ -1891,13 +1891,13 @@
       **Feedback is signal, not a ticket.** Before filing: read and quote the
       evidence; confirm which version was seen; merge reports sharing a cause and
       split one hiding several
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 4 - " modes/converge-manager.md && [ -f context/manager/feedback-intake.md ] && python3 ledger/checks/turnkey_clause.py CVG-014 FAIL "carry no enrichment" | grep -q "ASSERTS-THIS"; then echo CLAUSE-4-LIVE-READING-SAYS-AN-ITEM-FILED-FROM-FEEDBACK-QUOTES-NOTHING; else echo CLAUSE-4-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 4 - " modes/converge-manager.md && [ -f context/manager/feedback-intake.md ] && python3 ledger/checks/turnkey_clause.py CVG-014 PASS "2 item(s) filed from feedback quote" | grep -q "ASSERTS-THIS"; then echo CLAUSE-4-LIVE-READING-SAYS-AN-ITEM-FILED-FROM-FEEDBACK-QUOTES-ITS-REPORT; else echo CLAUSE-4-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-4-LIVE-READING-SAYS-AN-ITEM-FILED-FROM-FEEDBACK-QUOTES-NOTHING"
+      stdout_contains: "CLAUSE-4-LIVE-READING-SAYS-AN-ITEM-FILED-FROM-FEEDBACK-QUOTES-ITS-REPORT"
   proves: >
     That the mode plus context/manager/feedback-intake.md still encode the eight
     intake rules, AND — this is a RED row, so the probe pins the failure — that
@@ -1955,7 +1955,7 @@
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-06 (converge-1nb4) AND MOVED CONFORMS → GAP.
     RAN 2026-09-06 →
-    CLAUSE-4-LIVE-READING-SAYS-AN-ITEM-FILED-FROM-FEEDBACK-QUOTES-NOTHING.
+    CLAUSE-4-LIVE-READING-SAYS-AN-ITEM-FILED-FROM-FEEDBACK-QUOTES-ITS-REPORT.
     THIS ROW WAS GREEN ON A PASTE, AND THE READER SAYS THE OPPOSITE. Everything
     above rests on `ledger/checks/turnkey_step.py`, which reads the step block
     pasted into `evaluations/turnkey/RESULT.md`. That file is written by
@@ -1983,7 +1983,6 @@
     WHAT WOULD MAKE IT GREEN AGAIN: the quote restored to converge-3rzz's
     record, or an intake convention that will not let a filing without one land
     — then the reading re-taken. converge-58pa carries it.
-  work: converge-58pa
 
 - id: CVG-015
   title: lanes are real sessions
