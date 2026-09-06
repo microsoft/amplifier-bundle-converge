@@ -89,3 +89,12 @@ Merged w14-reconcile-7 (CVG-013/019/020/021 re-derived live) and w14-registratio
     uv run conformance/documents/run.py . --work-items docs/work-items.json -> PASS
     uv run conformance/composition/run.py .                                  -> PASS
 Correction to the 08:42 brief: it said four ledger rows read "state changed, re-read"; the reconcile lane measured three of the four asserting cleanly and only CVG-020 red (the then-unbriefed return). The sentence was written from a verify.py run whose plan record moved sixteen seconds later; recorded here rather than edited away.
+
+## 2026-09-06 09:32 - wave 14: the adopt scenario re-run (step 3's last proof)
+Merged w14-adopt-rerun into main at 0896483, then re-read the artifacts myself:
+    evaluations/adopter/RESULT.md                  -> GREEN 12 pass / 0 fail / 0 can't tell (run 2026-09-06T08:57:06Z, existing-project scenario; the 03:50Z RED run kept in full under '# Earlier runs')
+    ledger CVG-301 (blank repo) / CVG-302 (adopt)  -> both CONFORMS
+    uv run --with pyyaml ledger/checks/verify.py   -> ALL LEDGER SELF-CHECKS PASS
+    uv run conformance/documents/run.py . --work-items docs/work-items.json -> PASS
+    amplifier-digital-twin list                    -> no adopter-* container
+Both first-wake paths of operation.v1 Core 14 are Kept on measurement: new project 9/9 (03:50Z run), existing project 12/12 (08:57Z run), each in a fresh container with an AI user reading only README.md.
