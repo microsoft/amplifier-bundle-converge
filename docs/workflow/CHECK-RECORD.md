@@ -113,3 +113,10 @@ Merged w15-lock-sheet (converge-1pah: docs/workflow/LOCK-SHEET-2026-09-06.md) an
     uv run conformance/documents/run.py . --work-items docs/work-items.json -> PASS
     uv run conformance/composition/run.py .                                  -> PASS
     uv run --with pyyaml ledger/checks/verify.py                             -> one row red: CVG-019 (Core 9 stall reading) drifts each time the manifest grows; re-derives at the next reconcile.
+
+## 2026-09-06 12:04 - offline-tests merged; VISION.md and composition.v1 locked
+Merged w15-offline-tests (converge-9a56) into main, then locked docs/VISION.md and contracts/composition.v1.md on the steward's word — one write each: the H1 stamped FROZEN 2026-09-06 and the changelog row in the same commit (d4e2831). Re-ran the check myself:
+    ./.githooks/pre-push main                                                -> pre-push-scan: clean — no locked contract edited
+    uv run conformance/documents/run.py .                                    -> PASS (after moving the status word out of the changelog row, before the lock commit was pushed — one write, not two)
+    uv run conformance/composition/run.py .                                  -> PASS
+    uv run --with pyyaml ledger/checks/verify.py                             -> SYNC re-pinned for composition.v1; CVG-020 red only until this turn's brief lands.

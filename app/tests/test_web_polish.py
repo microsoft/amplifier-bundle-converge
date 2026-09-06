@@ -44,6 +44,16 @@ evict `presence.js` from that same cache, reload offline, and watch the whole
 Direction surface fail to come up. Without the control, "the Direction surface
 renders" would not be evidence that precaching `presence.js` is what made it.
 
+Both halves turn on one thing that is easy to assume and was wrong twice, so
+both now assert it rather than assume it (converge-9a56): with the network
+gone, the worker's cache must be the ONLY place `presence.js` can come from.
+Two things break that quietly — Chromium's own HTTP cache, which emulated
+offline does not invalidate, and a browser build on which `set_offline` never
+reaches the service worker at all. The first is emptied and then proved empty
+by asking for the module; the second is proved by asking for a URL nothing has
+ever fetched, and where it answers, these two tests report that they cannot be
+run rather than pass on a network that was never taken away.
+
 What would falsify each item is written on each test.
 
 If Playwright or its Chromium build is unavailable the browser tests skip with
@@ -111,6 +121,9 @@ Check — Home is usable on a phone on arrival (converge-nxf)
 Check — the precache list carries every module (converge-9ke)
   g. In devtools > Application > Service Workers, click Unregister.
   h. In devtools > Application > Cache Storage, delete `converge-static-v4`.
+     Then, in Application > Clear storage, tick ONLY "Cached images and files"
+     and clear that too. It is a different cache and it is the browser's own;
+     leaving it full is how step l passes without the worker doing anything.
   i. Reload once, then in the devtools console run:
        (await (await caches.open('converge-static-v4')).keys())
          .map(r => new URL(r.url).pathname).sort().join('\\n')
@@ -608,14 +621,75 @@ def _forget_the_http_cache(page) -> None:
     from the worker's STATIC cache and the network emulated off, the app came up
     anyway — Chromium answered the worker's `fetch()` out of its own HTTP cache,
     where the module had been left by the online visit a moment earlier.
-    Emulated offline does not invalidate that cache.
+    Emulated offline does not invalidate that cache. Re-measured 2026-09-06 on
+    Chromium 151 with this call skipped: the same false green came straight
+    back, `{'managerName': 'Manager alpha', 'sections': 11}` (converge-9a56).
+
+    `Network.enable` first, because `clearBrowserCache` is a Network-domain
+    command and a domain that was never enabled is not obliged to act on one.
 
     A browser that installed the worker and went offline before ever fetching
     the module has neither copy, so neither may this test.
     """
     session = page.context.new_cdp_session(page)
+    session.send("Network.enable")
     session.send("Network.clearBrowserCache")
     session.detach()
+
+
+#: Is the network gone from the SERVICE WORKER's point of view? A URL nothing
+#: has ever asked for cannot be in any cache, so a 200 for it can only be the
+#: worker talking to the live server.
+STILL_ON_THE_NETWORK = """
+async () => {
+  try {
+    const res = await fetch('/api/boot?worker-offline-probe=' + Math.random());
+    return {answered: !!(res && res.ok), status: res ? res.status : 0};
+  } catch (err) { return {answered: false, status: 0, refused: String(err)}; }
+}
+"""
+
+#: Can the page still get this module from anywhere? Offline and cold, `sw.js`
+#: looks in the caches, misses, tries the network and has nothing to answer
+#: with — so a 200 here means the browser kept a copy the eviction did not
+#: reach, and the eviction did not model a cold browser.
+STILL_REACHABLE = """
+async (path) => {
+  try {
+    const res = await fetch(path);
+    return {reachable: !!(res && res.ok), status: res ? res.status : 0};
+  } catch (err) { return {reachable: false, status: 0, refused: String(err)}; }
+}
+"""
+
+
+def _cannot_take_the_network_away(page) -> str:
+    """Why this browser cannot be taken offline, or "" if it can.
+
+    Measured 2026-09-06 (converge-9a56): on Chromium 131 (playwright 1.49.0)
+    `ctx.set_offline(True)` did not reach the service worker at all — a
+    never-seen `/api/boot?<nonce>` came back 200 with live JSON while the page
+    reported `navigator.onLine === false`. The negative control below then
+    failed (the module came off the live server, so the surface came up) and,
+    worse, the positive test beside it PASSED for the wrong reason: the app came
+    up offline because it was not offline.
+
+    A check that cannot run reports that it cannot run. It does not pass on the
+    strength of a network that was never taken away.
+    """
+    probe = page.evaluate(STILL_ON_THE_NETWORK)
+    if not probe["answered"]:
+        return ""
+    try:
+        version = page.context.browser.version
+    except Exception:  # pragma: no cover - version is a courtesy, not the point
+        version = "unknown"
+    return (
+        f"this browser does not take the network away from the service worker: a URL "
+        f"nothing has ever fetched still answered {probe['status']} with the network "
+        f"emulated off (chromium {version}). The cold case §10 is about cannot be "
+        f"staged here; MANUAL_PROCEDURE in this file is the check that stands in for it"
+    )
 
 
 def _go_offline(ctx, page) -> None:
@@ -672,9 +746,23 @@ def test_a_fresh_install_precaches_every_module_and_the_app_opens_offline(
     _forget_the_http_cache(page)
     _go_offline(ctx, page)
     online = page.evaluate("() => navigator.onLine")
+    assert online is False, "the harness failed to take the network away"
+    blocked = _cannot_take_the_network_away(page)
+    if blocked:
+        pytest.skip(blocked)
+
+    # What the acceptance turns on, asserted rather than assumed: the module is
+    # obtainable with the network gone, and the only place it can be coming
+    # from is the cache `install` filled. Without this the test would pass on a
+    # browser that was never really offline.
+    served = page.evaluate(STILL_REACHABLE, "/static/js/presence.js")
     rendered = page.evaluate(RENDERED)
     print(f"offline (navigator.onLine={online}): {rendered}")
-    assert online is False, "the harness failed to take the network away"
+    print(f"offline, presence.js still answers from the worker's cache: {served}")
+    assert served["reachable"], (
+        "with the network gone the worker could not produce presence.js, so whatever the "
+        f"app just rendered did not come from the precache this test is about: {served}"
+    )
     assert rendered["managerName"], (
         "with the network gone the app did not come up at all — nothing rendered into the "
         f"top bar: {rendered}"
@@ -714,9 +802,27 @@ def test_without_presence_js_in_the_cache_the_direction_surface_dies_offline(
 
     _forget_the_http_cache(page)
     _go_offline(ctx, page)
+    blocked = _cannot_take_the_network_away(page)
+    if blocked:
+        pytest.skip(blocked)
+
+    # The premise, checked before the conclusion is drawn from it. Evicting the
+    # module from the worker's cache only stages the cold case if the browser
+    # has no copy of its own left; when it has, the app comes up and the
+    # assertion below reads as a statement about precaching when it is really a
+    # statement about the harness. That is exactly how this check spent two days
+    # calling the app wrong (converge-9a56).
+    leftover = page.evaluate(STILL_REACHABLE, "/static/js/presence.js")
     rendered = page.evaluate(RENDERED)
+    print(f"offline, presence.js is still obtainable: {leftover}")
     print(f"offline with presence.js missing: {rendered}")
     print(f"the browser logged: {errors[:4] or 'nothing'}")
+    assert not leftover["reachable"], (
+        f"with presence.js evicted and the network gone the browser produced it anyway "
+        f"({leftover}), so this control did not stage the cold browser it is about — one "
+        "that installed the worker and went offline before ever fetching the module. That "
+        "is a fact about the harness's caches, not about what precaching is worth"
+    )
     assert not rendered["managerName"], (
         "the app came up offline without presence.js in the cache, so precaching it is not "
         f"what the acceptance turns on and the test above proves less than it claims: {rendered}"
