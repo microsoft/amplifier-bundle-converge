@@ -26,6 +26,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -405,6 +406,207 @@ def check_candidate_guard(ctx: Context) -> Result:
     )
 
 
+PACKAGE = "amplifier_converge"
+DISTRIBUTION = "amplifier-converge"
+CONSOLE_SCRIPT = "amplifier-converge"
+
+# Asked of the interpreter the installed command actually runs under, never of
+# this script's own interpreter: `install-check.py` runs under `uv run --script`
+# in an environment of its own, which by design cannot see what the machine has
+# installed. Everything it prints is a fact about the install, not an opinion.
+INSTALLED_PROBE = """
+import json
+
+info = {"origin": None, "paths": [], "version": None,
+        "editable_source": None, "import_error": None, "dist_error": None}
+try:
+    import importlib.util
+    spec = importlib.util.find_spec("amplifier_converge")
+except Exception as exc:
+    spec = None
+    info["import_error"] = repr(exc)
+else:
+    if spec is None:
+        info["import_error"] = "no module named amplifier_converge"
+    else:
+        info["origin"] = spec.origin
+        info["paths"] = list(spec.submodule_search_locations or [])
+try:
+    import importlib.metadata as md
+    dist = md.distribution("amplifier-converge")
+    info["version"] = dist.version
+    raw = dist.read_text("direct_url.json")
+    if raw:
+        from urllib.parse import urlparse
+        from urllib.request import url2pathname
+        direct = json.loads(raw)
+        url = str(direct.get("url", ""))
+        if direct.get("dir_info", {}).get("editable") and url.startswith("file://"):
+            info["editable_source"] = url2pathname(urlparse(url).path)
+except Exception as exc:
+    info["dist_error"] = repr(exc)
+print(json.dumps(info))
+"""
+
+
+def interpreter_of(script: Path) -> tuple[str | None, str]:
+    """The interpreter a console script runs under, read from its own shebang."""
+    try:
+        with script.open("rb") as handle:
+            first = handle.readline(500).decode("utf-8", "replace").strip()
+    except OSError as exc:
+        return None, f"{script} could not be read: {exc}"
+    if not first.startswith("#!"):
+        return None, f"{script} does not begin with an interpreter line"
+    try:
+        parts = shlex.split(first[2:])
+    except ValueError as exc:
+        return None, f"{script}'s interpreter line could not be read: {exc}"
+    if not parts:
+        return None, f"{script}'s interpreter line is empty"
+    if Path(parts[0]).name.startswith("env"):
+        named = [p for p in parts[1:] if not p.startswith("-")]
+        if not named:
+            return None, f"{script}'s interpreter line names no interpreter"
+        found = shutil.which(named[0])
+        if found is None:
+            return None, f"{script} runs under {named[0]}, which is not on PATH"
+        return found, f"{named[0]} on PATH, named by {script}'s interpreter line"
+    return parts[0], f"{script}'s own interpreter line"
+
+
+def _package_dir(probe: dict) -> Path | None:
+    origin = probe.get("origin")
+    if origin:
+        return Path(origin).parent
+    paths = probe.get("paths") or []
+    return Path(paths[0]) if paths else None
+
+
+def _under(path: Path, root: Path) -> bool:
+    try:
+        resolved, base = path.resolve(), root.resolve()
+    except OSError:  # pragma: no cover - defensive
+        return False
+    return resolved == base or base in resolved.parents
+
+
+def judge_installed_tree(repo_root: Path, probe: dict) -> Result:
+    """Does the installed package resolve to THIS tree, or somewhere else?
+
+    Three answers, and only one of them is a pass:
+
+    - it resolves inside the repository under test - OK, the check about to be
+      re-run is about to measure the code that is actually here;
+    - it resolves to a path that no longer exists - MISSING, and the path is
+      named, because that is a stale editable binding to a working copy
+      somebody removed;
+    - it resolves to a real path somewhere else - MISSING, and both paths are
+      named, because a check run against it measures code from another tree.
+    """
+    command = probe.get("command") or CONSOLE_SCRIPT
+    source = probe.get("editable_source")
+    package_dir = _package_dir(probe)
+    facts = {"repository": str(repo_root), "package_dir": str(package_dir)
+             if package_dir else None, "editable_source": source,
+             "version": probe.get("version"),
+             "interpreter": probe.get("interpreter")}
+
+    if package_dir is None:
+        if source and not Path(source).exists():
+            return Result(
+                MISSING,
+                f"{command} is an editable install bound to {source}, which does "
+                "not exist. That is a stale binding to a working copy somebody "
+                "removed: nothing can be imported through it, and a check re-run "
+                "here would be measuring a tree that is gone.",
+                facts,
+            )
+        if source:
+            return Result(
+                MISSING,
+                f"{command} is an editable install bound to {source}, which "
+                f"exists, but its interpreter cannot import {PACKAGE} from it "
+                f"({probe.get('import_error')}).",
+                facts,
+            )
+        return Result(
+            MISSING,
+            f"{command} is on PATH but its interpreter can neither import "
+            f"{PACKAGE} ({probe.get('import_error')}) nor read a distribution "
+            f"for {DISTRIBUTION} ({probe.get('dist_error')}).",
+            facts,
+        )
+
+    if not package_dir.exists():
+        return Result(
+            MISSING,
+            f"The installed {PACKAGE} resolves to {package_dir}, which does not "
+            "exist. That is a stale editable binding to a working copy somebody "
+            "removed, and a check re-run through it measures a tree that is gone.",
+            facts,
+        )
+    if _under(package_dir, repo_root):
+        return Result(
+            OK,
+            f"The installed {PACKAGE} resolves to {package_dir}, inside the "
+            f"repository under test ({repo_root}), so a check re-run here "
+            "measures this tree.",
+            facts,
+        )
+    return Result(
+        MISSING,
+        f"The installed {PACKAGE} resolves to {package_dir}, which is NOT inside "
+        f"the repository under test ({repo_root}). A check re-run here would pass "
+        "or fail on code from another tree; reinstall from this repository before "
+        "believing it.",
+        facts,
+    )
+
+
+def check_installed_tree(ctx: Context) -> Result:
+    """The installed package - is it this repository, or a leftover elsewhere?"""
+    found = shutil.which(CONSOLE_SCRIPT)
+    if found is None:
+        return Result(
+            SKIP,
+            f"{CONSOLE_SCRIPT} is not on PATH, so there is no installed copy of "
+            f"{PACKAGE} for this to resolve.",
+        )
+    interpreter, how = interpreter_of(Path(found))
+    if interpreter is None:
+        return Result(SKIP, f"Could not tell which interpreter runs {found}: {how}.")
+    if not Path(interpreter).exists():
+        return Result(
+            MISSING,
+            f"{found} runs under {interpreter}, which does not exist. The "
+            "environment the command was installed into has been removed.",
+            {"command": found, "interpreter": interpreter},
+        )
+    ran = run_command(ctx, [interpreter, "-c", INSTALLED_PROBE])
+    if ran.failure:
+        return Result(SKIP, f"Could not ask {interpreter} where {PACKAGE} is: "
+                            f"{ran.failure}.")
+    probe = None
+    for line in reversed(ran.out.splitlines()):
+        if line.strip().startswith("{"):
+            try:
+                probe = json.loads(line)
+            except json.JSONDecodeError:
+                probe = None
+            break
+    if probe is None:
+        return Result(
+            SKIP,
+            f"{interpreter} did not answer with a readable report "
+            f"(exit {ran.code}): {first_line(ran.text) or 'no output'}.",
+        )
+    probe["command"] = found
+    probe["interpreter"] = interpreter
+    probe["interpreter_source"] = how
+    return judge_installed_tree(ctx.repo_root, probe)
+
+
 def check_session_history(ctx: Context) -> Result:
     """Optional: the session-history service, which records provenance."""
     cache = ctx.amplifier_home / "cache"
@@ -474,6 +676,14 @@ CHECKS: list[Check] = [
         degradation="Without the guard a locked contract can be edited in place, and the ratchet loses its teeth.",
         probe="the module under modules/hooks-candidate-guard and its wiring in behaviors/converge.yaml",
         run=check_candidate_guard,
+    ),
+    Check(
+        ident="installed-tree",
+        name="Installed package is this tree",
+        requirement=REQUIRED,
+        degradation="Without the installed package resolving to this repository, a check re-run after merging measures code from somewhere else and can certify a tree nobody tested.",
+        probe=f"the {CONSOLE_SCRIPT} command's own interpreter, asked where it imports {PACKAGE} from and what source an editable install records",
+        run=check_installed_tree,
     ),
     Check(
         ident="session-history",

@@ -22,6 +22,7 @@ mode:
       - "@converge:context/manager/feedback-intake.md"
       - "@converge:context/manager/first-wake.md"
       - "@converge:context/manager/return-brief.md"
+      - "@converge:context/manager/stalls.md"
       - "@converge:context/manager/wave-record.md"
       - "@converge:context/manager/where-you-run.md"
 ---
@@ -251,9 +252,42 @@ No progress across iterations means stuck, with the cause named, routed either
 to the plan or to the steward. Do not retry the same move hoping for a different
 result.
 
+**The number of iterations is three, and you count them.** An iteration is one
+attempt at the same target - one tool call at the file that refused you, one
+relaunch of the lane that died, one poll of the lane you are waiting on.
+Progress is a new fact: a file changed, a branch moved, a command that had been
+failing succeeded, an error message different from the last one. Time passing is
+not progress, and neither is a poll that returns what the last poll returned. On
+the **third** iteration against one target with no progress, you stop attempting
+and declare - trying a different way around the same refusal is attempt two, not
+a fresh start.
+
+**Stamp the declaration in the plan record**, the same one line clauses 3 and 11
+ask for:
+
+    - 2026-09-06T04:12:07Z STUCK w4-changelog - the locked-document guard
+      refuses the changelog edit and there is no candidate file to write instead.
+      Iterations without progress: 3. Routed: plan.
+
+Routed `plan` means the next move is work - file it, requeue it, brief a lane for
+it. Routed `steward` means it is one of clause 11's four calls, stamped as one
+beside it. A stall routed nowhere has not been declared; the route is what turns
+the stop into a decision somebody else can act on.
+
+Measured on 2026-09-06, adopter harness run 03:50Z, scenario 2: after its own
+locked-document guard refused an edit, a manager session recognised the problem,
+tried to get around it by grepping and delegating, then **polled for more than
+twenty minutes without declaring anything**. The person watching got no cause, no
+route, no call, and the scenario's remaining steps were never reached. The rule
+already said stalls are decisions; what it did not carry was a number, so no
+iteration was ever the last one.
+
 An honest refusal is a designed exit and a real result. A lane that stops and
 says why has done better than a lane that reports green and cannot show the
 artifact behind it.
+
+The stamp's exact shape, what counts as an iteration, and what the count can and
+cannot prove are in the stalls convention loaded with this mode.
 
 ## Clause 10 - A brief on every return
 

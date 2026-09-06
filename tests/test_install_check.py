@@ -448,6 +448,198 @@ def test_candidate_guard_missing_when_not_wired_in(ctx):
 
 
 # --------------------------------------------------------------------------
+# the installed package is THIS tree
+#
+# Measured on 2026-09-06, adopter harness run 03:50Z, scenario 1: a worker lane
+# ran `pip install -e` inside its own worktree, which binds the installed
+# package to that worktree's path. The manager session merged to main, re-ran
+# the check itself as Core 7 requires, and it passed -- through the stale
+# binding, against the lane's tree rather than the merged one. The worktree was
+# then removed and main was left with a broken install and a failing check.
+# Every test below is that shape, in one direction or the other.
+# --------------------------------------------------------------------------
+
+
+def probe(**overrides) -> dict:
+    """A reading from the installed command's own interpreter."""
+    base = {
+        "origin": None,
+        "paths": [],
+        "version": "0.1.0",
+        "editable_source": None,
+        "import_error": None,
+        "dist_error": None,
+        "command": "/usr/local/bin/amplifier-converge",
+        "interpreter": "/usr/local/bin/python3",
+    }
+    base.update(overrides)
+    return base
+
+
+def in_tree(repo_root: Path) -> Path:
+    """The package directory as an editable install of this repo resolves it."""
+    package = repo_root / "src" / "amplifier_converge"
+    package.mkdir(parents=True, exist_ok=True)
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    return package
+
+
+def test_installed_tree_ok_when_it_resolves_inside_this_repository(ctx):
+    package = in_tree(ctx.repo_root)
+    result = ic.judge_installed_tree(
+        ctx.repo_root,
+        probe(origin=str(package / "__init__.py"), editable_source=str(ctx.repo_root)),
+    )
+    assert result.status == ic.OK
+    assert str(package) in result.detail
+
+
+def test_installed_tree_missing_when_the_editable_source_was_removed(ctx, tmp_path):
+    """The measured defect: a binding to a lane worktree that no longer exists."""
+    gone = tmp_path / "lanes" / "w3-units" / "repo"
+    result = ic.judge_installed_tree(
+        ctx.repo_root,
+        probe(editable_source=str(gone), import_error="no module named amplifier_converge"),
+    )
+    assert result.status == ic.MISSING
+    assert str(gone) in result.detail
+    assert "does not exist" in result.detail
+
+
+def test_installed_tree_missing_when_the_package_directory_is_gone(ctx, tmp_path):
+    """The same stale binding, seen through the import system instead."""
+    gone = tmp_path / "lanes" / "w3-units" / "repo" / "src" / "amplifier_converge"
+    result = ic.judge_installed_tree(
+        ctx.repo_root, probe(origin=str(gone / "__init__.py"))
+    )
+    assert result.status == ic.MISSING
+    assert str(gone) in result.detail
+    assert "does not exist" in result.detail
+
+
+def test_installed_tree_missing_when_it_resolves_to_another_working_copy(ctx, tmp_path):
+    """A REAL path, and the wrong one: the quiet half of the measured defect.
+
+    This is the reading that had to change. A check re-run through this binding
+    runs the right command in the right repository and still measures another
+    tree's code, which is exactly how a merge got certified against a lane.
+    """
+    ctx.repo_root.mkdir(parents=True, exist_ok=True)
+    other = tmp_path / "lanes" / "w3-units" / "repo" / "src" / "amplifier_converge"
+    other.mkdir(parents=True)
+    (other / "__init__.py").write_text("", encoding="utf-8")
+    result = ic.judge_installed_tree(
+        ctx.repo_root, probe(origin=str(other / "__init__.py"))
+    )
+    assert result.status == ic.MISSING
+    assert str(other) in result.detail
+    assert str(ctx.repo_root) in result.detail
+
+
+def test_installed_tree_missing_when_nothing_resolves_at_all(ctx):
+    result = ic.judge_installed_tree(
+        ctx.repo_root,
+        probe(import_error="no module named amplifier_converge",
+              dist_error="PackageNotFoundError('amplifier-converge')"),
+    )
+    assert result.status == ic.MISSING
+    assert "neither import" in result.detail
+
+
+def test_installed_tree_missing_when_the_source_is_there_but_will_not_import(ctx, tmp_path):
+    source = tmp_path / "half-installed"
+    source.mkdir()
+    result = ic.judge_installed_tree(
+        ctx.repo_root,
+        probe(editable_source=str(source), import_error="ImportError('boom')"),
+    )
+    assert result.status == ic.MISSING
+    assert "cannot import" in result.detail
+
+
+def test_a_stale_binding_makes_the_whole_check_exit_one():
+    """The recurrence guard: this cannot be a green run any more."""
+    rows = [_row(ic.MISSING, ic.REQUIRED, ident="installed-tree")]
+    assert ic.exit_code(rows) == 1
+
+
+def test_the_checks_include_the_installed_tree():
+    assert "installed-tree" in [check.ident for check in ic.CHECKS]
+
+
+# --- the same thing end to end, through a fake command and interpreter ------
+
+
+def fake_install(bin_dir: Path, report: dict) -> Path:
+    """A console script whose shebang names an interpreter that answers `report`.
+
+    Nothing here imports anything: the check reads the shebang of the installed
+    command and asks THAT interpreter where the package is, which is the only
+    way to ask about an install this script's own environment cannot see.
+    """
+    interpreter = fake_command(bin_dir, "fake-python", always(json.dumps(report)))
+    script = bin_dir / "amplifier-converge"
+    script.write_text(f"#!{interpreter}\n# console script\n", encoding="utf-8")
+    script.chmod(script.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+    return script
+
+
+def test_installed_tree_end_to_end_ok(ctx, empty_path):
+    package = in_tree(ctx.repo_root)
+    fake_install(empty_path, {"origin": str(package / "__init__.py"), "paths": [],
+                              "version": "0.1.0", "editable_source": None,
+                              "import_error": None, "dist_error": None})
+    result = ic.check_installed_tree(ctx)
+    assert result.status == ic.OK
+    assert result.extra["interpreter"].endswith("fake-python")
+
+
+def test_installed_tree_end_to_end_catches_the_removed_worktree(ctx, empty_path, tmp_path):
+    gone = tmp_path / "lanes" / "w3-units" / "repo"
+    fake_install(empty_path, {"origin": None, "paths": [], "version": "0.1.0",
+                              "editable_source": str(gone),
+                              "import_error": "no module named amplifier_converge",
+                              "dist_error": None})
+    result = ic.check_installed_tree(ctx)
+    assert result.status == ic.MISSING
+    assert str(gone) in result.detail
+
+
+def test_installed_tree_skips_when_nothing_is_installed(ctx, empty_path):
+    """No installed command is not a failing install; it is nothing to resolve."""
+    result = ic.check_installed_tree(ctx)
+    assert result.status == ic.SKIP
+    assert "not on PATH" in result.detail
+
+
+def test_installed_tree_missing_when_the_commands_interpreter_is_gone(ctx, empty_path, tmp_path):
+    script = empty_path / "amplifier-converge"
+    script.write_text(f"#!{tmp_path / 'removed-venv' / 'bin' / 'python'}\n", encoding="utf-8")
+    script.chmod(script.stat().st_mode | stat.S_IEXEC)
+    result = ic.check_installed_tree(ctx)
+    assert result.status == ic.MISSING
+    assert "does not exist" in result.detail
+
+
+def test_installed_tree_skips_when_the_interpreter_cannot_be_read(ctx, empty_path):
+    script = empty_path / "amplifier-converge"
+    script.write_text("no shebang here\n", encoding="utf-8")
+    script.chmod(script.stat().st_mode | stat.S_IEXEC)
+    result = ic.check_installed_tree(ctx)
+    assert result.status == ic.SKIP
+    assert "interpreter" in result.detail
+
+
+def test_interpreter_of_reads_an_env_shebang(empty_path):
+    fake_command(empty_path, "python3", always())
+    script = empty_path / "amplifier-converge"
+    script.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    found, how = ic.interpreter_of(script)
+    assert found == str(empty_path / "python3")
+    assert "PATH" in how
+
+
+# --------------------------------------------------------------------------
 # session history (optional)
 # --------------------------------------------------------------------------
 
