@@ -120,3 +120,12 @@ Merged w15-offline-tests (converge-9a56) into main, then locked docs/VISION.md a
     uv run conformance/documents/run.py .                                    -> PASS (after moving the status word out of the changelog row, before the lock commit was pushed — one write, not two)
     uv run conformance/composition/run.py .                                  -> PASS
     uv run --with pyyaml ledger/checks/verify.py                             -> SYNC re-pinned for composition.v1; CVG-020 red only until this turn's brief lands.
+
+## 2026-09-06 12:46 - wave 16: the six ratified UX proposals applied; the earlier web page retired
+Merged w16-apply-ux (converge-r4e5, -nn6, -71q) and w16-retire-web (converge-5i8k) into main at fb02a6b, then re-ran the check myself:
+    uv run --extra app --with pytest --with httpx pytest -q app/tests        -> 319 passed, 149 skipped
+    uv run --extra web --with pytest --with httpx pytest -q tests/           -> 139 passed (48 page-only cases retired with the page)
+    uv run conformance/documents/run.py . --work-items docs/work-items.json -> PASS
+    uv run conformance/composition/run.py .                                  -> PASS
+    ./.githooks/pre-push main                                                -> clean — no locked contract edited
+    uv run --with pyyaml ledger/checks/verify.py                             -> red on the surface rows (CVG-038/039/057/066) whose page was retired — a reconcile lane re-derives them; CVG-017/018 read this entry.
