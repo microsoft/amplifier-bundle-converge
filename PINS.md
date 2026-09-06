@@ -18,7 +18,7 @@ line here is wrong, sessions act on it anyway — fix it the moment it drifts.
 | Conformance kits | `conformance/<contract>/run.py` — `conformance/README.md` names each one and how to run it |
 | Integration branch | `main` |
 
-Measured on this tree, 2026-09-04:
+Measured on this tree, 2026-09-05:
 
 ```
 $ uv run --with pyyaml ledger/checks/verify.py
@@ -150,14 +150,18 @@ Six facts about it that are **not** what you would assume:
    version reached step 4 with items to file and filed them into the live
    `converge` project instead.
 
-**`README.md` now agrees with all five.** This section carried a closing
-paragraph saying README's Host requirement sentence and its "`seed-reconcile`
-recipe runnable" table row were "still stated in the old terms, and therefore
-wrong until their owner fixes them". They were restated on 2026-09-04 under
-converge-yj3: the Host requirement now says the recipe needs no particular host,
-not even the lean `anchors` base, and the table row no longer makes the `--app`
-path conditional on one. `uv run conformance/composition/run.py .` reports rule 4
-PASS on the new sentence. The paragraph was removed rather than corrected in
+**`README.md` agrees with all six.** Its Host requirement sentence says the
+recipe needs no particular host, not even the lean `anchors` base; measured on
+this tree, `uv run conformance/composition/run.py .` reports rule 4 PASS on it
+(`VERDICT: PASS  (pass=13 fail=0 skip=0)`). The two-path comparison table that
+used to sit beside that sentence — and whose "`seed-reconcile` recipe runnable"
+row this note used to track — is gone as of 2026-09-05: the install section now
+names one command as the adopter's path and marks the full-workspace install
+advanced, under composition.v1 Core 5 as ratified 2026-09-06
+(`docs/workflow/owner-ratifications-2026-09-06.md`; converge-xk2u). The clause's
+new text reaches `contracts/composition.v1.md` from the apply lane — until it
+does, the contract file on this tree still carries the pre-ratification Core 5.
+Both statements this note used to carry were removed rather than corrected in
 place, because a fact that has stopped being a fact is not one (converge-x40).
 
 ## Work tracking
@@ -180,10 +184,15 @@ Facts about this repository that are true until someone closes them. They are
 not addressed to any one lane — a line here that names "this lane" has outlived
 whichever lane it was written for, and is a defect in this file (converge-x40).
 
-- **`README.md` does not tell a reader to enable the pre-push guard.** The line
-  it needs, under setup: "Enable the locked-contract guard once per clone:
-  `git config core.hooksPath .githooks`." Measured 2026-09-04:
-  `grep -n hooksPath README.md` returns nothing, while
-  `docs/CONTRACTS-README.md:156` carries it. Until then a fresh clone pushes
-  with no guard and the first person to learn that is whoever edits a locked
-  contract.
+**None open today.** The one this section carried — that `README.md` did not
+tell a reader to enable the pre-push guard — was closed on 2026-09-05. Measured
+on this tree:
+
+```
+$ grep -n hooksPath README.md
+123:git config core.hooksPath .githooks
+```
+
+A gap that has been closed is removed rather than left standing, for the same
+reason a line that has outlived its lane is: the next reader acts on it and
+adds a line that is already there (converge-b48d).

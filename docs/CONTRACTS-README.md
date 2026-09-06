@@ -150,7 +150,38 @@ manager session's proposal are reviewed identically.
 
 ## Taking this to your own project
 
-`docs/workspace-template/` holds the participant kit: a vision template, a
-contract template, an `AGENTS.md` addendum, a pins template, and the pre-push
-scan that refuses edits to locked contracts. Copy the five files, fill in the
-placeholders, and enable the hook with `git config core.hooksPath .githooks`.
+`docs/workspace-template/` holds the participant kit — **eight files**, each one
+listed with its destination in
+[that directory's own README](workspace-template/README.md). Five you need on
+day one: `VISION.md.template` → `docs/VISION.md`; `CONTRACT.md.template` →
+`contracts/<name>.v1.md`, once per promise; `AGENTS-addendum.md.template` →
+appended to `AGENTS.md`; `PINS.md.template` → `PINS.md` at the repository root;
+and `pre-push-scan.sh` → the guard, below. Three you do not:
+`converge-dir-README.md.template` and `gitignore-addendum.txt` are for the
+operation's own `.converge/` directory and the workspace `.gitignore`, wanted
+the day that directory first appears; `GOAL-FILE.md.template` records the shape
+of a worker session's brief, which the manager session writes for you. Fill in
+the placeholders in each copy and delete the HTML comment it opens with.
+
+**The pre-push scan is the one that is not a straight copy.** Git runs a
+pre-push hook at `.githooks/pre-push` and nowhere else, so copying it under its
+own name leaves you with a guard that silently never runs. Four commands, once
+per repository:
+
+```
+mkdir -p .githooks
+cp docs/workspace-template/pre-push-scan.sh .githooks/pre-push
+chmod +x .githooks/pre-push
+git config core.hooksPath .githooks
+```
+
+`chmod +x` is not optional — a hook that is not executable is a hook git
+ignores, and it says nothing when it does. Prove it is really installed by
+running the scan by hand (`./.githooks/pre-push origin/main` — it leaves 0 on a
+clean push and 1 when it refuses, naming each locked file), or with
+`uv run scripts/adopt-check.py`, which reports the hook, its executable bit, and
+whether `core.hooksPath` actually points at it.
+
+[`docs/ADOPTING.md`](ADOPTING.md) walks the whole first day around this:
+installing Converge, checking that the install took, and starting a manager
+session on your own project.

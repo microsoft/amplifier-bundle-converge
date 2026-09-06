@@ -93,7 +93,8 @@ RULES = [
     ("12a", 12, 5, "participant_kit_present",
      "a converged repository carries the participant kit"),
     ("12b", 12, 5, "workspace_template_complete",
-     "the shipped workspace template carries every participant-kit file"),
+     "every file in the shipped workspace template is accounted for — a kit "
+     "file, or named as not copied"),
     ("12c", 12, 5, "participant_kit_carries_its_content",
      "each participant-kit file carries the content clause 12 names for it"),
     ("13a", 13, 6, "shipped_templates_carry_the_anatomy",
@@ -255,13 +256,28 @@ PARTICIPANT_KIT = [
     ("docs/CONTRACTS-README.md", "anatomy, index, freeze bar, how to propose"),
     (".githooks/pre-push", "the scan that refuses edits to a locked contract"),
 ]
+WORKSPACE_TEMPLATE_DIR = "docs/workspace-template"
+# The participant kit an adopting repository copies. Explicit rather than a
+# directory read, so a DELETION is named rather than silently shrinking the
+# kit -- and paired with WORKSPACE_TEMPLATE_NOT_KIT below so an ADDITION nobody
+# documented is visible too (converge-mvq5).
 WORKSPACE_TEMPLATE = [
     "docs/workspace-template/AGENTS-addendum.md.template",
     "docs/workspace-template/CONTRACT.md.template",
+    "docs/workspace-template/GOAL-FILE.md.template",
     "docs/workspace-template/PINS.md.template",
     "docs/workspace-template/VISION.md.template",
+    "docs/workspace-template/converge-dir-README.md.template",
+    "docs/workspace-template/gitignore-addendum.txt",
     "docs/workspace-template/pre-push-scan.sh",
 ]
+# Files that live in the directory without being kit files -- each one named,
+# with why it is not copied anywhere. Anything in the directory that is in
+# neither list is an undocumented addition and fails the rule.
+WORKSPACE_TEMPLATE_NOT_KIT = {
+    "docs/workspace-template/README.md":
+        "the index of the kit -- read where it sits, copied nowhere",
+}
 
 PROPOSAL_GLOB_RE = re.compile(r".*\.v\d+[^/]*-candidate\.md$")
 # documents.v1 Core 8 — the three parts, in order.
@@ -793,13 +809,40 @@ def check_participant_kit(root: Path):
 
 
 def check_workspace_template(root: Path):
+    """Both directions: a kit file that went missing, and one nobody documented.
+
+    A fixed list catches deletions only -- a file added to the directory with no
+    entry anywhere would ride along unmentioned, and the prose that names the
+    kit would drift out of step with it unnoticed (converge-mvq5). So every
+    file in the directory must carry a documented destination: either the kit
+    list, or the named not-copied set.
+    """
     rows = []
     for rel in WORKSPACE_TEMPLATE:
         p = root / rel
         ok = p.is_file()
         rows.append({"file": rel, "status": "PASS" if ok else "FAIL",
-                     "detail": "present" if ok else "missing"})
-    return _roll("12b", rows, "workspace-template file(s) present")
+                     "detail": "present" if ok else "missing from the kit directory"})
+
+    d = root / WORKSPACE_TEMPLATE_DIR
+    if d.is_dir():
+        known = set(WORKSPACE_TEMPLATE) | set(WORKSPACE_TEMPLATE_NOT_KIT)
+        for p in sorted(d.rglob("*")):
+            if not p.is_file():
+                continue
+            rel = _rel(root, p)
+            if rel in WORKSPACE_TEMPLATE:
+                continue
+            why = WORKSPACE_TEMPLATE_NOT_KIT.get(rel)
+            if why:
+                rows.append({"file": rel, "status": "PASS",
+                             "detail": f"not a kit file — {why}"})
+            elif rel not in known:
+                rows.append({"file": rel, "status": "FAIL",
+                             "detail": "in the kit directory with no documented "
+                                       "destination — add it to the kit list, or "
+                                       "name why it is not copied"})
+    return _roll("12b", rows, "workspace-template file(s) accounted for")
 
 
 # --------------------------------------------------------------------------- #
