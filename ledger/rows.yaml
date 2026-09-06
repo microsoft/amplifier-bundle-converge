@@ -595,7 +595,7 @@
     - file: contracts/composition.v1.md
       sha256: 077451fba18a2baa8f4162bc4af6dd164976d304adad8f193871b120b4203d39
     - file: contracts/documents.v1.md
-      sha256: 856026df5e3e56bf5f92080b3a81371462ffffb6d75be171d576cf62778234ea
+      sha256: c51768297460b27f064096feb6f22e999e24695bba688d0d152074068a84bea9
     - file: contracts/operation.v1.md
       sha256: 823a71330fcfe69b016231773a861c221059f6f15f6d26ed6a90e9737cb1deed
     - file: contracts/surface.v1.md
@@ -604,13 +604,13 @@
     - file: contracts/experience.v1.md
       sha256: 81873dfd0fa98e8c855874723018e2b5a8f12548c32919bc89e2c9c7edb99560
     - file: contracts/experience-direction.v1.md
-      sha256: 9fcfc554a31cea83e50b3ead9d839c7fe3c153c577662de5cf40df88d3884b33
+      sha256: d968a062c5c5d8681c5f9cd1dd29be376e8716cb18ba161e878eefa144b65436
     - file: contracts/experience-operation.v1.md
-      sha256: d34ca2a3a0cf368e177a703c07cb87ae67b85ca912c5b9aaf659203eb0ff19f8
+      sha256: 3b2c69e98c7fb4c71bab934717dc09c2154e8366b9345cab4007e8467e071725
     - file: contracts/experience-console.v1.md
-      sha256: e169b023c652110170c2c50d3aa1f9ed548d998c428fcd3b4cbd22f553be5590
+      sha256: 8dad9eb71ace76874bbfad8e040e34564b7ba1378a459a2fdd64dfbb164e28fb
     - file: contracts/experience-collaboration.v1.md
-      sha256: 976cd6eed1c26aace388526808dcb9bcdd664eb75e391f20882678cfd911b431
+      sha256: d76c8e6c61edb1e81d07b10c99c85906fab405d40532e01bb40fa30884e23bbf
     - file: contracts/platform-web.v1.md
       sha256: a7afe69a5c976ceebee50ed015f673448c5eece19a9986d69c0b5209c73a5e67
     - file: contracts/platform-ios.v1.md
@@ -628,6 +628,7 @@
       exit: 0
       stdout_contains: "077451fba18a2baa8f4162bc4af6dd164976d304adad8f193871b120b4203d39"
   notes: |
+    RAN 2026-09-06 13:35 → re-pinned after round 3: documents.v1 Core 4 applied (H1 amended), four section contracts locked (H1 FROZEN; console also a changelog row). Diff per file: line 1 (+ one changelog row on console); no Core clause text moved except documents.v1 Core 4's ratified line.
     SEEDED 2026-09-02 from `sha256sum contracts/*.md`, run at repo 2543e1c.
     Verified identical on `main` at seed time (`git show main:contracts/<f>` →
     same four hashes), so these pins do not go stale the moment this lane
@@ -4446,7 +4447,7 @@
     quote: |
       Purpose → Core (the teeth) → What v1 deliberately does NOT freeze (with
       promotion triggers) → Conformance kit asserts → Reserved / open questions →
-      Changelog only if amended.
+      Changelog only if amended and it fits; otherwise the archived proposal is the record, H1 `amended <date>`.
   disposition: CONFORMS
   assertion:
     kind: indexed
