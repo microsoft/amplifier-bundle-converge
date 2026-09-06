@@ -5,9 +5,14 @@
 # machine-wide infra ledger before it exists and destroying it in a `finally`.
 #
 #   ./evaluations/adopter/run.sh                              # both scenarios
-#   ./evaluations/adopter/run.sh --scenarios new-project      # just one
+#   ./evaluations/adopter/run.sh --scenarios new-project      # just the blank one
+#   ./evaluations/adopter/run.sh --scenarios existing-project # just the adopt one
 #   ./evaluations/adopter/run.sh --sync-mirror                # re-sync first
 #   ./evaluations/adopter/run.sh --keep                       # leave the DTUs up
+#
+# A scenario costs about an hour of wall time and a long provider session, so
+# --scenarios is how you re-run only the half that moved. RESULT.md then says
+# which scenarios the run covered, and keeps every earlier run below it.
 #
 # Every flag harness.py accepts passes straight through (`harness.py --help`).
 #
