@@ -5,7 +5,9 @@ human, Amplifier, or another tool's coding agent — and they are the same rules
 the people here follow. Nothing on this page needs the Amplifier bundle.
 
 Read next: `PINS.md` (hard facts), `docs/CONTRACTS-README.md` (what a contract
-is and how to change one).
+is and how to change one). New to this method, or taking it to another
+repository? `docs/ADOPTING.md` is the first day start to finish — install, check
+that it took, start a manager session, and copy the participant kit correctly.
 
 ## Vocabulary
 
