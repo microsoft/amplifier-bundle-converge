@@ -70,3 +70,8 @@ The one sentence operation.v1 opens with — fresh environment, one install, der
 **Anything quietly broken.** Two tests went red when this host's own manager session registered itself (discovery found the live registration during the suite); repaired in place and recorded; and one ledger row that reads the stall record (CVG-019) drifts every time the plan record grows — it re-derives at the next integration.
 
 ## 2026-09-06 12:00 - they came back and said the whole sheet looks good
+**Time away.** About an hour and a half since the mode came on, two waves in it.
+**Finished.** Your word on the sheet is applied where it was one write: the vision and the composition contract are locked (each H1 stamped, each changelog row in the same commit, the guard's scan clean), which I re-checked with the pre-push scan and both kits; and the last offline-tests lane is merged with the app suite green.
+**Stuck.** Nothing is stuck; the six proposals, the two answered questions and the retirement are in two lanes now, because applying six fenced changes across five contracts and deleting a web page with its tests are not one-write repairs.
+**Needs you.** Nothing new — when the six proposals land, the four section contracts lose their only blocker and locking them becomes the next word, which I will bring as one card.
+**Anything quietly broken.** The first lock commit carried the word FROZEN in the changelog row as well as the H1, which the documents kit refuses (status lives in the H1 and nowhere else); I caught it before pushing and rewrote the unpushed commit so the lock still landed as one write rather than a refused second edit.
