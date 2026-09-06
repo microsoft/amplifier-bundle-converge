@@ -65,20 +65,5 @@ def test_the_list_is_read_back_from_the_project_not_remembered(project: Path):
     assert target.key in {d.key for d in _decisions(project)}
 
 
-def test_answering_through_the_page_shortens_the_page(client, project):
-    before = _decisions(project)
-    target = before[0]
-
-    client.post(
-        "/do/answer-with-a-word",
-        data={"subject": target.what, "word": "ratified", "back": "/"},
-        follow_redirects=False,
-    )
-
-    html = client.get("/").text
-    assert target.what not in html
-    assert len(_decisions(project)) == len(before) - 1
-
-
 def test_the_list_still_never_exceeds_five(project: Path):
     assert len(_decisions(project)) <= 5

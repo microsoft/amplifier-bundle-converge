@@ -15,6 +15,11 @@ Three things are proved here, in order:
    a term nobody has translated;
 3. that Direction actually renders the word — the whole point, and the thing a
    green unit test would otherwise let us claim without.
+
+Section 3 proved the third against the earlier server-rendered page. That page
+was retired on 2026-09-06 on the steward's word, so those seven assertions went
+with it. Direction is now `app/`, and the app's own suite is where its rendering
+is proved; the fold onto one word, below, is what this file still holds.
 """
 
 from __future__ import annotations
@@ -36,7 +41,6 @@ from amplifier_converge.reading.kept import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-FIXTURE = REPO_ROOT / "conformance" / "_superseded" / "surface" / "fixtures" / "app"
 
 
 # --------------------------------------------------------------------------
@@ -302,94 +306,3 @@ def test_this_projects_own_record_reads(recorded):
     for name, standing in reading.value.items():
         assert standing.word in words.CONTRACT_STATES, f"{name}: {standing.word}"
         assert standing.clauses > 0, name
-
-
-# --------------------------------------------------------------------------
-# 3. the page says it
-# --------------------------------------------------------------------------
-
-
-def _client(project: Path):
-    from fastapi.testclient import TestClient
-
-    from amplifier_converge.web.app import create_app
-
-    return TestClient(create_app(project, "kettle", include_remote_proposals=False))
-
-
-@pytest.fixture
-def direction_with_a_record(tmp_path, app_home):
-    """The example project, plus a record covering both of its promises."""
-    import shutil
-
-    project = tmp_path / "with-a-record"
-    shutil.copytree(FIXTURE, project)
-    (project / RELPATH.parent).mkdir(parents=True)
-    (project / RELPATH).write_text(
-        RECORD.replace("contracts/kept.v1.md", "contracts/gate.v1.md").replace(
-            "contracts/broken.v1.md", "contracts/half.v1.md"
-        ),
-        encoding="utf-8",
-    )
-    return _client(project)
-
-
-def _chips(html: str) -> list[str]:
-    import re
-
-    return [
-        match.group(1).strip()
-        for match in re.finditer(r'<span class="chip[^"]*">([^<]+)</span>', html)
-    ]
-
-
-def test_direction_says_whether_each_promise_is_kept(direction_with_a_record):
-    html = direction_with_a_record.get("/direction").text
-    shown = _chips(html)
-    assert "Kept" in shown, shown
-    assert "Broken" in shown, shown
-
-
-def test_direction_never_offers_draft_as_the_answer(direction_with_a_record):
-    """The failure this closes: every promise chipped `Draft` and nothing else.
-
-    `Draft` still appears — it is the document's own status and stays — but it
-    is no longer the only word beside a promise.
-    """
-    shown = set(_chips(direction_with_a_record.get("/direction").text))
-    assert shown - set(words.DOCUMENT_STATES), (
-        f"the only state beside a promise is still {sorted(shown)}"
-    )
-    assert shown & set(words.CONTRACT_STATES) - set(words.DOCUMENT_STATES), sorted(shown)
-
-
-def test_both_signals_stay_on_the_row(direction_with_a_record):
-    """Lock state and kept state are two separate questions, both answered."""
-    shown = _chips(direction_with_a_record.get("/direction").text)
-    assert "Draft" in shown, "the document's own status was dropped"
-    assert "Kept" in shown, "whether the promise is kept was dropped"
-
-
-def test_a_promise_page_says_it_too(direction_with_a_record):
-    html = direction_with_a_record.get("/direction/gate.v1").text
-    assert "Kept" in _chips(html)
-
-
-def test_the_vision_is_never_given_a_word_nothing_measured(direction_with_a_record):
-    """Nothing checks the vision clause by clause, so nothing claims about it."""
-    html = direction_with_a_record.get("/direction/VISION").text
-    assert _chips(html) == ["Draft"], _chips(html)
-
-
-def test_a_project_with_no_record_says_it_cannot_check(project):
-    """The example project keeps no record, and the page admits it in the
-    contract's own word rather than showing a pass or saying nothing."""
-    shown = _chips(_client(project).get("/direction").text)
-    assert "Can't check" in shown, shown
-    assert "Kept" not in shown, shown
-
-
-def test_every_chip_on_direction_is_one_of_the_plain_words(direction_with_a_record):
-    for page in ("/direction", "/direction/gate.v1", "/direction/half.v1", "/direction/VISION"):
-        for shown in _chips(direction_with_a_record.get(page).text):
-            assert words.is_surface_word(shown), f"{page} shows “{shown}”"

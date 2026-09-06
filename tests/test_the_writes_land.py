@@ -50,26 +50,6 @@ def test_answering_appends_and_never_overwrites(project: Path):
     assert "First thing" in text and "Second thing" in text
 
 
-def test_an_answer_through_the_page_shortens_the_list(client, project):
-    """Answering marks the record, and the page reads its own record back."""
-    from amplifier_converge.reading.documents import lock_is_available, read_direction
-
-    doc = next(d for d in read_direction(project).value if d.slug == "half.v1")
-    assert not lock_is_available(doc, project)
-
-    response = client.post(
-        "/do/answer-with-a-word",
-        data={"subject": doc.title, "word": "ratified", "back": "/direction/half.v1"},
-        follow_redirects=False,
-    )
-    assert response.status_code == 303
-    text = record_path(project).read_text(encoding="utf-8")
-    assert doc.title in text
-
-
-# ---- signal priority ------------------------------------------------------
-
-
 def test_a_priority_signal_is_either_sooner_or_later(project: Path):
     result = signal_priority(project, "kettle", "kettle-1", "urgent")
     assert not result.ok
@@ -136,10 +116,3 @@ def test_filling_the_lanes_is_recorded_as_a_standing_request(project: Path):
     assert result.ok
     text = (project / ".converge" / "constraints.yaml").read_text(encoding="utf-8")
     assert "Fill the lanes" in text
-
-
-def test_the_page_never_offers_to_stop_anything(client):
-    html = client.get("/operation").text
-    for forbidden in ("Kill", "kill lane", "Stop lane", "Terminate"):
-        assert forbidden not in html
-    assert "never a button here" in html
