@@ -121,26 +121,58 @@ From there the manager session plans the order, briefs and launches the worker
 sessions, checks their results by re-running the check itself rather than
 trusting an account of it, and writes you a brief every time you come back.
 
-**On a project that already has code**, say so in your first message and tell it
-to read the code before proposing anything. It will come back with a draft
-vision and draft contracts for your word. Nothing about your repository changes
-until you answer.
+### The first wake, on either kind of project
 
-**On a blank project**, say what you want the thing to be. The same conversation
-happens with nothing to read first.
+A project with no contracts has nothing to derive work from, so the first thing
+that happens is not work — it is reading and drafting. Which of the two shapes
+you get depends on whether there is already code.
 
-> Honest boundary: what a manager session does on a project that has no
-> contracts yet is not written into its rules yet — the clause that would cover
-> a project's first wake is an open decision for the steward (`converge-jyg0`),
-> and a written path keyed to nothing is what this method refuses to ship. So
-> today the first conversation is a conversation, and the parts after it — plan,
-> lanes, checks, briefs — are the written, running ones.
+**A repository that already has code — adopting.** Say so in your first message,
+and say what the project is for. In this order:
+
+1. **The work in flight pauses.** Nothing new is launched against a repository
+   whose direction is not written down yet.
+2. **It reads what is there** — the code, the history, whatever documents exist
+   — before proposing anything.
+3. **It proposes a vision and first contracts, as drafts,** and stops. This is
+   the moment it comes back to you. Nothing in your repository is law until you
+   answer, in one word: *ratified* · *ratified with edits* · *declined* ·
+   *later*.
+4. **On your word, the ledger is seeded** — one row per checkable promise, each
+   saying whether that promise is kept today.
+5. **The queue is derived from the gap** between what you just agreed to and
+   what the code actually does. Every item names the contract it serves.
+
+Until step 3 has your answer, no worker session is launched. That is the design,
+not a delay: lanes against an unagreed direction are work you will throw away.
+
+**A blank repository — starting.** The same five steps with nothing to read
+first. It begins at the vision: what this will be when it is right, written as
+though already true. Everything after that is identical.
+
+> **What is settled here and what is not.** The five steps above are quoted from
+> a **proposed** clause — `contracts/operation.v1-candidate.md`, Core 14, "The
+> first wake is investigate, then propose" — which is waiting for the steward's
+> word and is **not ratified**. Until it is, this page describes the path the
+> proposal names; it is not yet law, and the manager session's own rules carry
+> no first-wake section, because a section keyed to an unratified clause is
+> exactly what this method refuses to ship. Two things follow for you. The
+> conversation in this step is a conversation — hold it deliberately rather than
+> assuming the session will run it for you. And if you want to know where it
+> stands, the item to read is `converge-njaj`, with `converge-jyg0` behind it.
 
 ## 6. Take the participant kit into your repository
 
 Converge's promise has to hold for a colleague who never installs the bundle and
 for a coding agent that is not an Amplifier session. That is what
-[`docs/workspace-template/`](workspace-template/) is for. The kit is **eight**
+[`docs/workspace-template/`](workspace-template/) is for.
+
+The vision and contracts step 5 proposes are written from these same templates,
+so on that path you are reading drafts rather than filling in blanks. Copy them
+by hand when you would rather start something yourself, or when you want a file
+step 5 does not produce — the guard, chiefly, which is yours to install.
+
+The kit is **eight**
 files — the directory also holds an index of them, which is not copied
 anywhere — and here is every one, including the ones you do not need.
 
