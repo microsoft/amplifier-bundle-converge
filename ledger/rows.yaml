@@ -552,7 +552,7 @@
   kind: sync
   pins:
     - file: contracts/composition.v1.md
-      sha256: c2f464bfd1a56a3ba9a43f89398369011682dda787f2e123f4dd8920ae82e928
+      sha256: 077451fba18a2baa8f4162bc4af6dd164976d304adad8f193871b120b4203d39
     - file: contracts/documents.v1.md
       sha256: 856026df5e3e56bf5f92080b3a81371462ffffb6d75be171d576cf62778234ea
     - file: contracts/operation.v1.md
@@ -585,7 +585,7 @@
     ref: 'sha256sum contracts/*.md'
     expect:
       exit: 0
-      stdout_contains: "c2f464bfd1a56a3ba9a43f89398369011682dda787f2e123f4dd8920ae82e928"
+      stdout_contains: "077451fba18a2baa8f4162bc4af6dd164976d304adad8f193871b120b4203d39"
   notes: >
     SEEDED 2026-09-02 from `sha256sum contracts/*.md`, run at repo 2543e1c.
     Verified identical on `main` at seed time (`git show main:contracts/<f>` →
@@ -696,6 +696,7 @@
 # or a command that fails when the fact stops being true.
 # ─────────────────────────────────────────────────────────────────────────────
   notes: |
+    RAN 2026-09-06 12:05 → composition.v1 re-pinned after its lock (H1 now FROZEN 2026-09-06 + one changelog row; no Core clause changed — diff is line 1 and the changelog).
     RAN 2026-09-04 → operation.v1 re-pinned after the line-77 markdown repair (548e899: closes a bold marker; no clause text changed).
     RAN 2026-09-04 → operation.v1 re-pinned after the ratified turnkey sentence (Conformance-kit-asserts section + changelog row; `git diff` shows no Core clause changed).
     RAN 2026-09-04 → re-pinned after commit 19a3d7b, whose diff against every contract is line 1 only (the H1 status parenthetical recording the steward's given words); no clause text moved, so no row's disposition can have changed. Re-review satisfied by `git diff 19a3d7b~1 19a3d7b -- contracts/` (14 files, 14 insertions, 14 deletions).
