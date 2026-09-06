@@ -328,6 +328,15 @@ CAPTURE_SCRIPT = (
 )
 
 MODE_MARKER = "[converge-manager]"
+_MODE_PROMPT = re.compile(r"\[converge-manager\]\s*>")
+"""The mode as the PROMPT shows it, which is the thing being asked about.
+
+The bare string is weaker evidence than it looks: an adopter reading
+`modes/converge-manager.md` on screen, or a document describing the prompt,
+puts those same characters in the pane without the mode being active. A
+capture that has the string but never the prompt is reported as could-not-tell,
+not as a pass and not as absence.
+"""
 _SESSION_LINE = re.compile(r"^\S+:\s+\d+\s+window", re.M)
 
 
@@ -347,8 +356,13 @@ class PaneWatch:
     session_samples: int = 0
     pane_samples: int = 0
     marker_samples: int = 0
+    """Captures whose pane showed the mode as a PROMPT."""
+    mention_samples: int = 0
+    """Captures where the string appeared at all -- weaker, reported apart."""
     first_marker_at: str = ""
     first_marker_capture: str = ""
+    first_mention_at: str = ""
+    first_mention_capture: str = ""
     last_capture: str = ""
     last_at: str = ""
     started_at: str = ""
@@ -369,19 +383,26 @@ class PaneWatch:
         pane = _section(out, "PANE")
         has_session = bool(_SESSION_LINE.search(sessions))
         pane_bytes = len(pane.strip())
-        has_marker = MODE_MARKER in pane
+        has_prompt = bool(_MODE_PROMPT.search(pane))
+        has_mention = MODE_MARKER in pane
         if has_session:
             self.session_samples += 1
         if pane_bytes:
             self.pane_samples += 1
-        if has_marker:
+        if has_prompt:
             self.marker_samples += 1
             if not self.first_marker_at:
                 self.first_marker_at = stamp
                 self.first_marker_capture = out
+        if has_mention:
+            self.mention_samples += 1
+            if not self.first_mention_at:
+                self.first_mention_at = stamp
+                self.first_mention_capture = out
+        mode = "PROMPT" if has_prompt else ("mentioned" if has_mention else "no")
         self.timeline.append(
             f"{stamp}  session={'yes' if has_session else 'no ':3}  "
-            f"pane={pane_bytes:>5}B  mode={'YES' if has_marker else 'no'}"
+            f"pane={pane_bytes:>5}B  mode={mode}"
         )
 
     def summary(self) -> str:
@@ -391,16 +412,25 @@ class PaneWatch:
             f"{self.samples} captures, {self.ok_samples} that ran, "
             f"{self.session_samples} with a live agent session, "
             f"{self.pane_samples} with pane content, "
-            f"{self.marker_samples} showing `{MODE_MARKER}`"
+            f"{self.marker_samples} showing `{MODE_MARKER}>` as the prompt"
             + (f" (first at {self.first_marker_at})" if self.first_marker_at else "")
+            + f", {self.mention_samples} with the string anywhere on screen"
+            + (f" (first at {self.first_mention_at})" if self.first_mention_at else "")
         )
 
     def evidence(self) -> str:
         parts = [self.summary(), ""]
         if self.first_marker_capture:
             parts += [
-                f"--- first capture showing the mode, {self.first_marker_at} ---",
+                f"--- first capture showing the mode as the prompt, {self.first_marker_at} ---",
                 self.first_marker_capture.strip(),
+                "",
+            ]
+        elif self.first_mention_capture:
+            parts += [
+                f"--- first capture with the string on screen (NOT as a prompt), "
+                f"{self.first_mention_at} ---",
+                self.first_mention_capture.strip(),
                 "",
             ]
         else:
@@ -474,6 +504,19 @@ def judge_manager_session(sid: str, watch: PaneWatch) -> Step:
                 f"empty pane is not evidence that the prompt never showed `{MODE_MARKER}`"
             ),
         )
+    if watch.mention_samples:
+        return Step(
+            f"{sid}.2",
+            what,
+            UNPROVEN,
+            watch.evidence(),
+            missing=(
+                f"could not tell -- `{MODE_MARKER}` was on screen in "
+                f"{watch.mention_samples} of {watch.ok_samples} captures but never as "
+                "the prompt, and an adopter reading the mode's own documentation puts "
+                "exactly those characters on screen without the mode being active"
+            ),
+        )
     return Step(
         f"{sid}.2",
         what,
@@ -481,8 +524,8 @@ def judge_manager_session(sid: str, watch: PaneWatch) -> Step:
         watch.evidence(),
         missing=(
             f"{watch.pane_samples} of {watch.ok_samples} captures through the scenario "
-            f"showed pane content and none showed `{MODE_MARKER}` -- an ordinary "
-            "session is not a manager session"
+            f"showed pane content and not one carried `{MODE_MARKER}`, as a prompt or "
+            "otherwise -- an ordinary session is not a manager session"
         ),
     )
 
@@ -644,8 +687,15 @@ read_errors = 0
 examples = []
 
 def read_store(path):
-    """(rows, note). Tries `bd` in the store itself first -- no CLI needed."""
-    attempts = [(["bd", "list", "--json"], str(path))]
+    """(rows, note). Tries `bd` in the store itself first -- no CLI needed.
+
+    `--all` and `--limit 0` matter as much as the store path does. `bd list`
+    alone shows OPEN issues, fifty at most, so an adopter who filed one item
+    and then finished it reads back as a queue holding nothing -- measured
+    exactly that way on 2026-09-06, scenario 1. The question is whether work
+    was filed that names its contract, not whether it is still open.
+    """
+    attempts = [(["bd", "list", "--all", "--limit", "0", "--json"], str(path))]
     if cli:
         # A fallback only. The CLI is never the reason a row is red; it is
         # here because when it IS present it manages the queue's service, so
@@ -693,8 +743,17 @@ for s in stores:
         continue
     if not isinstance(rows, list):
         rows = []
-    print("%d item(s)" % len(rows))
+    by_status = {}
     for row in rows:
+        if isinstance(row, dict):
+            by_status[str(row.get("status") or "?")] = (
+                by_status.get(str(row.get("status") or "?"), 0) + 1
+            )
+    shape = ", ".join("%s=%d" % kv for kv in sorted(by_status.items()))
+    print("%d item(s)%s" % (len(rows), (" (%s)" % shape) if shape else ""))
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
         items_total += 1
         text = " ".join(
             str(row.get(k) or "")

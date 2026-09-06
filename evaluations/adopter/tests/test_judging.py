@@ -147,6 +147,18 @@ def test_a_probe_that_reported_nothing_is_cant_tell():
     assert "could not tell" in step.missing
 
 
+def test_the_probe_reads_closed_items_too_and_is_not_capped_at_fifty():
+    """Measured on 2026-09-06, scenario 1: the adopter filed one item, resolved
+    it, and `bd list` — which shows OPEN issues, fifty at most — read the queue
+    back as empty. The row then said the queue "holds no items at all" about a
+    queue that had been used exactly as intended.
+
+    Asserted against the probe's own source because the flags are the whole
+    fix; a run that drops them looks green until someone finishes an item.
+    """
+    assert '["bd", "list", "--all", "--limit", "0", "--json"]' in H.QUEUE_PROBE_PY
+
+
 def test_the_probe_finds_a_store_by_its_database_and_skips_a_scratch_dir(tmp_path):
     """Discovery, run for real against a filesystem.
 
@@ -194,6 +206,24 @@ def test_the_mode_seen_mid_scenario_survives_a_restart_before_the_end():
     assert step.verdict == H.PASS
     assert "[converge-manager]" in step.evidence
     assert "12:00:30Z" in step.evidence  # when it was first seen
+
+
+def test_the_string_on_screen_but_never_as_a_prompt_is_cant_tell():
+    """An adopter reading `modes/converge-manager.md` puts those exact
+    characters in the pane. That is not the mode being active, and it is not
+    evidence the mode never was — so it settles nothing either way.
+    """
+    watch = H.PaneWatch(interval_s=30)
+    for i in range(3):
+        watch.note(
+            _ts(i * 30),
+            0,
+            _capture(LIVE, "  2   name: converge-manager\n  3   [converge-manager]"),
+        )
+    step = H.judge_manager_session("S2", watch)
+    assert step.verdict == H.UNPROVEN
+    assert "never as the prompt" in step.missing
+    assert "NOT as a prompt" in step.evidence
 
 
 def test_every_capture_empty_is_cant_tell_not_absence():

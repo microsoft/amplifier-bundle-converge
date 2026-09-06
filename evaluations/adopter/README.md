@@ -80,19 +80,25 @@ Judged per scenario, from that container's own state — three setup rows
    quotes the same container *before* the AI user ran, so it is visibly a
    measurement of this scenario's own install.
 2. A manager session is running against the project — a live session whose
-   prompt actually shows `[converge-manager]`. **Sampled every 30 seconds
+   prompt actually shows `[converge-manager]>`. **Sampled every 30 seconds
    throughout the scenario**, not once at the end: a session restarted seconds
    before a single final capture yields a blank pane, and a blank pane is not
-   evidence the mode never showed.
+   evidence the mode never showed. The **prompt** is the pass; the bare string
+   somewhere on screen is `CAN'T TELL`, because an adopter reading
+   `modes/converge-manager.md` puts exactly those characters in the pane
+   without the mode being active.
 3. A vision is written down.
 4. At least one contract is written down.
 5. The project's contract check is seeded.
 6. A queue holds work that names the contracts it serves — read **where a
    session writes it**: `$AMPLIFIER_WORK_TRACKER_ROOT` (default
    `~/.amplifier-work-tracker`), plus any `.beads` store under `/workspace` or
-   `$HOME`, read with `bd`. An agent files work through its session's `work_*`
-   tools; whether the `amplifier-work-tracker` CLI is on `PATH` is a separate
-   fact, reported as one, and never the reason this row is red.
+   `$HOME`, read with `bd list --all --limit 0`. An agent files work through
+   its session's `work_*` tools; whether the `amplifier-work-tracker` CLI is on
+   `PATH` is a separate fact, reported as one, and never the reason this row is
+   red. `--all` is not decoration: `bd list` alone shows open issues, fifty at
+   most, so an adopter who filed one item and then finished it reads back as a
+   queue holding nothing.
 
 ### Four verdicts, because three of them lie
 
