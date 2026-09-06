@@ -3,7 +3,16 @@
 **Who builds against this:** teammates who send and receive proposals, whether
 or not they run Converge; the intent steward, who answers them; the manager
 session, which reads and writes the shared repository host; and whoever builds
-the review experience in Direction and the intake that feeds it.
+the review experience in Direction and the intake that feeds it. This contract
+is one section of the `experience.v1` umbrella (`contracts/experience.v1.md`)
+and inherits its platform mechanism: every clause below carries one of its four
+words — `REQUIRED` (present and behaving as written), `IDIOM` (required; its
+shape follows the platform), or `EXCLUDED` (a body must not carry it, and its
+presence is the defect) — and is placed against its three surface classes. The
+tag is the
+clause's **full app** placement; **quick-access** is `EXCLUDED` throughout, and
+**notification** may carry clause 6 (`OPTIONAL`), an inbound proposal arriving,
+and is `EXCLUDED` for the rest.
 
 ## Purpose
 
@@ -14,40 +23,42 @@ between their manager sessions.
 
 ## Core (the teeth)
 
-1. **Git is the protocol; Converge is the lens.** Collaboration between people
-   happens through the shared repository host — commits, pull requests, and
-   their comments. Converge renders that flow; it never replaces it.
-2. **Manager sessions never talk to each other directly.** Two stewards both
-   running Converge still meet as Converge · host · Converge, and neither
-   manager session knows the other exists. That is what keeps a teammate on
-   plain tooling a first-class participant, and keeps the seam between two
+1. **Git is the protocol; Converge is the lens.** `(REQUIRED)` Collaboration
+   between people happens through the shared repository host — commits, pull
+   requests, and their comments. Converge renders that flow; it never replaces
+   it.
+2. **Manager sessions never talk to each other directly.** `(EXCLUDED)` Two
+   stewards both running Converge still meet as Converge · host · Converge, and
+   neither manager session knows the other exists. That is what keeps a teammate
+   on plain tooling a first-class participant, and keeps the seam between two
    parties something a person can read.
-3. **Three origins, one review.** A proposal from your manager session, from a
-   teammate, or from a pull request is shown identically: what changes sentence
-   by sentence · the evidence · what does not change. Where it came from is a
-   fact about the proposal, never a different experience.
-4. **Pull-request comments are a two-way bridge.** A question asked in Converge
-   arrives as a comment; the reply arrives back inside the same review. The
-   teammate never leaves their tools, and the steward never copies a judgment
-   between tools.
-5. **Your answer returns where the proposal came from.** *ratified · ratified
-   with edits · declined · later* — written to the dated ratification record and
-   posted back to the origin, in the steward's own words.
-6. **Inbound changes arrive without you asking for them.** Webhooks where the
-   host offers them, polling as the honest fallback. Freshness is never made the
-   steward's job, and the fallback is named rather than assumed.
-7. **The manager session is not in the hot path.** A write made in the app goes
-   through the ordinary repository and proposal mechanism directly; the manager
-   session learns of it as an event and folds it into its next turn.
-8. **One steward per manager session.** Whose word counts is settled when the
-   session is registered, not inferred from whoever is looking. Everyone else is
-   a teammate, whose proposals get the same reading and none of the authority.
-9. **A ratification is a change to the repository, made the ordinary way.** The
-   word is recorded and the text it ratifies is committed, so what was agreed
-   has one record, and it is the one everybody already reads.
-10. **Converge adds no second collaboration surface.** Not another issue
-    tracker, another document store, or a code-review tool. What a teammate
-    needs to see is visible on the host, in the host's own terms.
+3. **Three origins, one review.** `(REQUIRED)` A proposal from your manager
+   session, from a teammate, or from a pull request is shown identically: what
+   changes sentence by sentence · the evidence · what does not change. Where it
+   came from is a fact about the proposal, never a different experience.
+4. **Pull-request comments are a two-way bridge.** `(REQUIRED)` A question
+   asked in Converge arrives as a comment; the reply arrives back inside the
+   same review. The teammate never leaves their tools, and the steward never
+   copies a judgment between tools.
+5. **Your answer returns where the proposal came from.** `(REQUIRED)` *ratified
+   · ratified with edits · declined · later* — written to the dated ratification
+   record and posted back to the origin, in the steward's own words.
+6. **Inbound changes arrive without you asking for them.** `(IDIOM)` Webhooks
+   where the host offers them, polling as the honest fallback. Freshness is
+   never made the steward's job, and the fallback is named rather than assumed.
+7. **The manager session is not in the hot path.** `(REQUIRED)` A write made in
+   the app goes through the ordinary repository and proposal mechanism directly;
+   the manager session learns of it as an event and folds it into its next turn.
+8. **One steward per manager session.** `(REQUIRED)` Whose word counts is
+   settled when the session is registered, not inferred from whoever is looking.
+   Everyone else is a teammate, whose proposals get the same reading and none of
+   the authority.
+9. **A ratification is a change to the repository, made the ordinary way.**
+   `(REQUIRED)` The word is recorded and the text it ratifies is committed, so
+   what was agreed has one record, and it is the one everybody already reads.
+10. **Converge adds no second collaboration surface.** `(EXCLUDED)` Not another
+    issue tracker, another document store, or a code-review tool. What a
+    teammate needs to see is visible on the host, in the host's own terms.
 
 ## What v1 deliberately does NOT freeze
 

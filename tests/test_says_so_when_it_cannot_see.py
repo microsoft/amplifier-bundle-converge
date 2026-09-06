@@ -63,13 +63,6 @@ def test_unset_limits_are_an_invitation_not_a_failure(tmp_path):
     assert "not set any limits" in reading.note
 
 
-def test_the_page_shows_every_honest_note_it_has(client):
-    """The example project has no work queue and no lanes. Both must be said."""
-    html = client.get("/operation").text
-    assert "honest" in html, "the page hid what it could not read"
-    assert "0 of" not in html, "a gauge was drawn from data that could not be read"
-
-
 def test_an_empty_answer_and_an_unreadable_source_never_look_the_same(project: Path):
     """A queue that answers and is empty is `available`; one that cannot be
     reached is not. The page draws these two differently, which it can only do

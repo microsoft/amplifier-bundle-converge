@@ -11,7 +11,9 @@
 5. **At most five things ask for your word at once,** and every answer lands in
    a dated ratification record.
 6. **Plain state words everywhere.**
-7. **The app holds no data of its own.**
+7. **The app holds no copy of the project's truth.** Your own reading — where
+   you have read to, what you are keeping — is yours, kept per person outside
+   the repository.
 8. **Whatever you can do here, the manager session can do too.**
 9. **Every behavior carries one of four words.**
 10. **`IDIOM` means the behavior is required and its shape is not.**

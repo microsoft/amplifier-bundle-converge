@@ -2,6 +2,10 @@
 
 Every test runs against a throwaway project and a throwaway app home, so
 nothing here can touch a real project or a real steward's last-read markers.
+
+The example project this copies from is the one the superseded surface kit
+ships. That kit stays where it is: the ledger's own checks and this file read
+it, so retiring the page on 2026-09-06 did not retire the fixture with it.
 """
 
 from __future__ import annotations
@@ -28,13 +32,3 @@ def project(tmp_path, app_home) -> Path:
     target = tmp_path / "project"
     shutil.copytree(FIXTURE, target)
     return target
-
-
-@pytest.fixture
-def client(project):
-    from fastapi.testclient import TestClient
-
-    from amplifier_converge.web.app import create_app
-
-    app = create_app(project, "kettle", include_remote_proposals=False)
-    return TestClient(app)
