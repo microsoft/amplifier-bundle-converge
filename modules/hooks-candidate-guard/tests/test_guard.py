@@ -1509,3 +1509,403 @@ def test_w4c_guarded_globs_also_match_the_shipped_behavior_config() -> None:
     assert m, "behaviors/converge.yaml no longer sets guarded_globs"
     shipped = {v.strip().strip("\"'") for v in m.group(1).split(",")}
     assert shipped == set(config.guarded_globs)
+
+
+# ---------------------------------------------------------------------------
+# W5 -- the half-freeze: a lock whose record cannot land afterwards
+#
+#   converge-p17d  A document is locked by editing its own H1, and the record
+#                  of that lock is more text in the SAME file. A session that
+#                  did it in two edits stamped the H1 first, and its own guard
+#                  then refused the changelog edit -- because by then the file
+#                  read locked. The vision was left half-frozen: the status
+#                  word landed, the record of why it landed did not, and the
+#                  session never recovered. Measured 2026-09-06T03:50:03Z,
+#                  adopter harness scenario 2 (evaluations/adopter/RESULT.md).
+#
+# The fix keeps the guard's promise exactly as it was -- no content edit to a
+# locked document, ever -- and adds one thing beside it: a write may not LEAVE
+# a document locked without, in that same write, the record of its locking.
+# The half-frozen state stops being reachable rather than becoming editable.
+# ---------------------------------------------------------------------------
+
+DRAFT_VISION = (
+    "# Demo \u2014 Vision (DRAFT)\n"
+    "\n"
+    "## Where this is going\n"
+    "\n"
+    "One place for direction and one place for operation.\n"
+    "\n"
+    "## Changelog\n"
+    "\n"
+    "- **2026-09-05 \u2014 v1 (DRAFT).** First written.\n"
+)
+
+#: Edit one of two: the H1 stamped, and nothing else. This is the write that
+#: produced the wedge, and the one the guard now refuses.
+STAMP_ONLY = DRAFT_VISION.replace(
+    "# Demo \u2014 Vision (DRAFT)", "# Demo \u2014 Vision (FROZEN 2026-09-06)"
+)
+
+LOCK_ENTRY = (
+    "- **2026-09-06 \u2014 v1 (FROZEN 2026-09-06).** Locked on the steward's word; "
+    "the four Freeze Bar conditions are recorded in "
+    "docs/workflow/owner-ratifications-2026-09-06.md.\n"
+)
+
+#: The sanctioned shape: one write, carrying both halves of the freeze.
+STAMP_AND_RECORD = STAMP_ONLY.replace(
+    "- **2026-09-05 \u2014 v1 (DRAFT).** First written.\n",
+    LOCK_ENTRY + "- **2026-09-05 \u2014 v1 (DRAFT).** First written.\n",
+)
+
+
+def test_w5_stamping_the_h1_alone_is_refused(tmp_path: Path) -> None:
+    """Edit one of two, refused: this is the write that created the wedge.
+
+    Fails on the pre-fix guard, which returned `continue` here and so let the
+    document reach a state its own next edit could not repair.
+    """
+    _write(tmp_path, "docs/VISION.md", DRAFT_VISION)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "docs/VISION.md", "content": STAMP_ONLY},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+    assert [(name, p["reason_code"]) for name, p in decision.events] == [
+        ("converge:guard_blocked", "lock_without_record")
+    ]
+
+
+def test_w5_the_refusal_leaves_the_document_a_draft(tmp_path: Path) -> None:
+    """The refusal is what keeps the file repairable: nothing was written, so
+    the document is still a draft and the combined write can simply be
+    re-issued. A guard that denied AFTER the stamp landed would be the wedge
+    itself."""
+    path = _write(tmp_path, "docs/VISION.md", DRAFT_VISION)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "docs/VISION.md", "content": STAMP_ONLY},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+    assert path.read_text(encoding="utf-8") == DRAFT_VISION
+    assert not re.search(_config().frozen_marker_regex, path.read_text(encoding="utf-8"))
+
+
+def test_w5_one_write_carrying_both_halves_is_allowed(tmp_path: Path) -> None:
+    """The whole point: the freeze is one edit, and one edit goes through."""
+    _write(tmp_path, "docs/VISION.md", DRAFT_VISION)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "docs/VISION.md", "content": STAMP_AND_RECORD},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+    assert decision.events == []
+
+
+def test_w5_the_deny_names_the_one_edit_remedy(tmp_path: Path) -> None:
+    """A refusal that does not say what to do instead is how the harness
+    session spent twenty minutes grepping for a way out."""
+    _write(tmp_path, "docs/VISION.md", DRAFT_VISION)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "docs/VISION.md", "content": STAMP_ONLY},
+        _config(),
+        str(tmp_path),
+    )
+
+    reason = decision.result.reason or ""
+    assert "ONE edit" in reason
+    assert "Changelog" in reason
+    assert "still a draft" in reason
+    assert "half-frozen" in reason
+    assert "documents.v1" in reason
+
+
+def test_w5_the_second_edit_of_a_two_edit_freeze_is_still_denied(
+    tmp_path: Path,
+) -> None:
+    """The promise is unchanged, and this is the test that says so.
+
+    Given a document ALREADY half-frozen (the state the harness reached), the
+    changelog edit is still refused, exactly as before -- the guard never
+    admits a content edit to a locked document. That is why the fix had to
+    make the state unreachable rather than make it writable.
+    """
+    _write(tmp_path, "docs/VISION.md", STAMP_ONLY)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "docs/VISION.md", "content": STAMP_AND_RECORD},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+    assert [(name, p["reason_code"]) for name, p in decision.events] == [
+        ("converge:guard_blocked", "frozen_direct_edit")
+    ]
+
+
+def test_w5_an_edit_file_stamp_alone_is_refused(tmp_path: Path) -> None:
+    """The tool the harness session actually used was edit_file, which never
+    carries the resulting file -- only the span it replaces. The check applies
+    the replacement itself rather than declining to look."""
+    _write(tmp_path, "docs/VISION.md", DRAFT_VISION)
+
+    decision = evaluate_tool_pre(
+        "edit_file",
+        {
+            "file_path": "docs/VISION.md",
+            "old_string": "# Demo \u2014 Vision (DRAFT)",
+            "new_string": "# Demo \u2014 Vision (FROZEN 2026-09-06)",
+        },
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+
+
+def test_w5_an_edit_file_carrying_both_halves_is_allowed(tmp_path: Path) -> None:
+    _write(tmp_path, "docs/VISION.md", DRAFT_VISION)
+
+    decision = evaluate_tool_pre(
+        "edit_file",
+        {
+            "file_path": "docs/VISION.md",
+            "old_string": DRAFT_VISION,
+            "new_string": STAMP_AND_RECORD,
+        },
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+
+
+def test_w5_an_apply_patch_stamp_alone_is_refused(tmp_path: Path) -> None:
+    _write(tmp_path, "docs/VISION.md", DRAFT_VISION)
+    diff = (
+        "--- a/docs/VISION.md\n"
+        "+++ b/docs/VISION.md\n"
+        "@@ -1 +1 @@\n"
+        "-# Demo \u2014 Vision (DRAFT)\n"
+        "+# Demo \u2014 Vision (FROZEN 2026-09-06)\n"
+    )
+
+    decision = evaluate_tool_pre(
+        "apply_patch",
+        {"type": "update_file", "path": "docs/VISION.md", "diff": diff},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+
+
+def test_w5_an_apply_patch_carrying_both_halves_is_allowed(tmp_path: Path) -> None:
+    _write(tmp_path, "docs/VISION.md", DRAFT_VISION)
+    diff = (
+        "--- a/docs/VISION.md\n"
+        "+++ b/docs/VISION.md\n"
+        "@@ -1 +1 @@\n"
+        "-# Demo \u2014 Vision (DRAFT)\n"
+        "+# Demo \u2014 Vision (FROZEN 2026-09-06)\n"
+        "@@ -9 +9,2 @@\n"
+        "+" + LOCK_ENTRY
+    )
+
+    decision = evaluate_tool_pre(
+        "apply_patch",
+        {"type": "update_file", "path": "docs/VISION.md", "diff": diff},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+
+
+def test_w5_a_changelog_line_already_on_disk_is_not_a_new_record(
+    tmp_path: Path,
+) -> None:
+    """A document whose changelog already mentions an earlier version's freeze
+    must not satisfy the check by accident. The record has to be one THIS
+    write adds."""
+    stale = DRAFT_VISION.replace(
+        "- **2026-09-05 \u2014 v1 (DRAFT).** First written.\n",
+        "- **2026-01-01 \u2014 v0 (FROZEN 2026-01-01).** An older version's lock.\n"
+        "- **2026-09-05 \u2014 v1 (DRAFT).** First written.\n",
+    )
+    _write(tmp_path, "docs/VISION.md", stale)
+    stamped = stale.replace(
+        "# Demo \u2014 Vision (DRAFT)", "# Demo \u2014 Vision (FROZEN 2026-09-06)"
+    )
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "docs/VISION.md", "content": stamped},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        DRAFT_VISION + "\nAnother paragraph while it is still a draft.\n",
+        DRAFT_VISION.replace("One place", "Exactly one place"),
+    ],
+    ids=["append", "reword"],
+)
+def test_w5_ordinary_draft_writing_is_untouched(tmp_path: Path, content: str) -> None:
+    """The check must cost a drafting session nothing. A write that does not
+    lock the document is not this check's business."""
+    _write(tmp_path, "docs/VISION.md", DRAFT_VISION)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "docs/VISION.md", "content": content},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+
+
+def test_w5_a_file_that_does_not_exist_yet_is_out_of_scope(tmp_path: Path) -> None:
+    """The honest limit, stated as a test: this check watches the DRAFT ->
+    LOCKED transition of a document already on disk. Creating a file that
+    already carries a locking word is a different act (an import, a copy, a
+    fixture) and the guard has never had an opinion about it."""
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/imported.v1.md", "content": STAMP_ONLY},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+
+
+def test_w5_the_check_is_configurable_off(tmp_path: Path) -> None:
+    _write(tmp_path, "docs/VISION.md", DRAFT_VISION)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "docs/VISION.md", "content": STAMP_ONLY},
+        _config(require_lock_record=False),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue"
+
+
+def test_w5_a_contract_is_covered_too_not_only_the_vision(tmp_path: Path) -> None:
+    draft = (
+        "# Demo Contract \u2014 v1 (DRAFT)\n"
+        "\n"
+        "## Core (the teeth)\n"
+        "\n"
+        "**Core 1.** The app shows only what it can read.\n"
+    )
+    _write(tmp_path, "contracts/demo.v1.md", draft)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {
+            "file_path": "contracts/demo.v1.md",
+            "content": draft.replace("(DRAFT)", "(FROZEN 2026-09-06)"),
+        },
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+
+
+def test_w5_the_shipped_behavior_config_does_not_disable_the_check() -> None:
+    """The W3a drift tripwire, extended to the new key. behaviors/converge.yaml
+    may leave it unset -- the module default is on -- but it must never ship
+    it off, which would restore the wedge for every repo on the shipped
+    config while the module's own tests stayed green."""
+    text = BEHAVIOR_YAML.read_text(encoding="utf-8")
+
+    assert _config().require_lock_record is True
+    assert not re.search(r"^\s*require_lock_record:\s*false\s*$", text, re.MULTILINE)
+
+
+def test_w5_the_apps_own_lock_passes_this_guard(tmp_path: Path) -> None:
+    """The two halves of the fix, checked against each other.
+
+    `app/writes.py::lock_document` is the OTHER way a document gets locked in
+    this project, and it writes files directly -- the guard never sees it. So
+    this runs a real lock against a real git repository and then puts the
+    guard's own evaluator over the exact before/after text the app produced.
+
+    It is the only test in either suite that would catch the two drifting
+    apart: if the app went back to stamping the H1 alone, every test in
+    `app/tests/test_lock_write.py` could still be made to pass while a
+    session-side lock of the same document was refused.
+    """
+    import subprocess
+    import sys
+
+    sys.path.insert(0, str(REPO_ROOT))
+    try:
+        from app import writes  # noqa: PLC0415 -- import cost belongs to this test
+    except ImportError as exc:  # pragma: no cover -- app/ is stdlib-only today
+        pytest.fail(f"app.writes should import with no extra dependencies: {exc}")
+
+    repo = tmp_path / "demo"
+    (repo / "docs").mkdir(parents=True)
+    doc = repo / "docs" / "VISION.md"
+    doc.write_text(DRAFT_VISION, encoding="utf-8")
+    for args in (
+        ("init", "-q", "-b", "main"),
+        ("add", "-A"),
+        ("commit", "-q", "-m", "seed"),
+    ):
+        subprocess.run(
+            ["git", "-c", "user.name=T", "-c", "user.email=t@e.invalid", *args],
+            cwd=repo,
+            check=True,
+            capture_output=True,
+        )
+
+    before = doc.read_text(encoding="utf-8")
+    result = writes.lock_document(
+        repo,
+        doc,
+        conditions=["one", "two", "three", "four"],
+        doc_id="vision",
+        user="steward",
+    )
+    assert result["ok"] is True, result
+    after = doc.read_text(encoding="utf-8")
+    assert re.search(_config().frozen_marker_regex, after), "the app did not lock it"
+
+    doc.write_text(before, encoding="utf-8")  # a draft again, for the probe
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "docs/VISION.md", "content": after},
+        _config(),
+        str(repo),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason

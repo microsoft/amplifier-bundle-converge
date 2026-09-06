@@ -1,13 +1,14 @@
 ---
 name: freeze-bar
 description: >
-  Check whether a draft vision or contract is ready to be locked. Use before
-  proposing that something be locked, when reviewing the checks behind it, or
-  when someone says a document is "done". Covers the four conditions for
-  locking, the steward-only decision, and the hold-loosely state — a document
-  that meets the bar but is deliberately left unlocked. Applies VISION principle
-  2 and PROTOCOL.md §5.
-version: 0.2.0
+  Check whether a draft vision or contract is ready to be locked, and write the
+  lock correctly once it is. Use before proposing that something be locked, when
+  reviewing the checks behind it, when someone says a document is "done", or at
+  the moment of actually stamping one. Covers the four conditions for locking,
+  the steward-only decision, the hold-loosely state — a document that meets the
+  bar but is deliberately left unlocked — and the one-edit rule that keeps a
+  freeze from half-landing. Applies VISION principle 2 and PROTOCOL.md §5.
+version: 0.3.0
 ---
 
 # When a document is ready to be locked
@@ -35,6 +36,54 @@ anyone; it changes only by written proposal, backed by evidence.
 Locking is one of the four calls that reach the steward. Anyone else — a manager
 session, a worker session, a teammate — can show that the four conditions are
 met. That is a recommendation. The lock is the steward's word.
+
+## Writing the lock: ONE edit, never two
+
+A document is locked by editing its own H1 — and the record of that lock is
+more text in the *same file*. So the two halves must land in **one write**:
+
+1. the H1 stamped `(FROZEN <date>)`, and
+2. the `## Changelog` entry recording the ratification,
+
+together, in a single edit and a single commit.
+
+Do it in two edits and the second one is refused, whichever order you pick.
+The guard reads the file's own text: the moment the H1 says FROZEN the
+document is law, and a locked document takes no edit in place — including the
+edit that would say why it was locked. The file is left **half-frozen**: the
+status word landed, the record of why it landed did not, and nothing can
+repair it in place afterwards.
+
+That is measured, not hypothetical. On 2026-09-06 a manager session locked a
+project's vision by stamping the H1, then tried to add the changelog line as a
+separate edit; its own guard refused, the vision sat half-frozen, and the
+session never got past it (`evaluations/adopter/RESULT.md` scenario 2,
+`converge-p17d`).
+
+What the one write looks like:
+
+```markdown
+# sensorlog — Vision (FROZEN 2026-09-06)
+
+...
+
+## Changelog
+
+- **2026-09-06 — locked (FROZEN 2026-09-06).** The steward answered the four
+  Freeze Bar conditions; they are recorded verbatim in
+  `docs/workflow/owner-ratifications-2026-09-06.md`.
+- **2026-09-05 — v1 (DRAFT).** First written.
+```
+
+The entry is history, not a second status: `documents.v1` Core 6 puts status
+in the H1 and nowhere else, and the changelog is not where it looks. Core 7 is
+what asks for the entry, and asks it to carry its evidence — so name where the
+four answers are kept rather than asserting that they were given.
+
+`hooks-candidate-guard` now refuses the stamp-alone write outright, before
+anything is written, so the document stays a draft and the combined write can
+simply be re-issued. **If it refuses you, do not reach for the proposal path**
+— the document is not locked yet. Put the two halves in one write.
 
 ## Hold loosely: met the bar, deliberately left open
 

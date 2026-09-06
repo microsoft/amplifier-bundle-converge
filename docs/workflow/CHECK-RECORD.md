@@ -72,3 +72,12 @@ Merged the last lanes (priority-write, feedback-ask-words) and wired the voice-f
     ledger tally                                          -> {None: 1, 'CONFORMS': 109, 'GAP': 10, 'NOT-ASSERTABLE': 53, 'OPEN-PINNED': 3}
     uv run --extra app pytest -q app/tests                -> 1 failed, 294 passed (test_writes_named pins the two writes the wave just added — converge-f9ac/6pbg)
 The wave is closed; the queue holds the follow-ups the lanes discovered (33) and the steward's decisions.
+
+## 2026-09-06 08:46 - wave 13 (the adopter run's three defects), two lanes merged
+Merged w13-lock-atomic (converge-p17d: the freeze is one edit — H1 stamp and changelog row in one write or neither) and w13-stuck-and-stale (converge-4vf6 stall rule; converge-8gb2 install-check refuses a phantom package path) into main at f794e77, then re-ran the check myself:
+    cd modules/hooks-candidate-guard && uv run --with pytest --with pytest-asyncio pytest -q tests/   -> 118 passed
+    uv run --extra app --with pytest --with httpx pytest -q app/tests                              -> 300 passed, 149 skipped
+    uv run --extra web --with pytest --with httpx pytest -q tests/                                 -> 187 passed
+    uv run conformance/documents/run.py . --work-items docs/work-items.json                      -> PASS
+    uv run conformance/composition/run.py .                                                        -> PASS
+    uv run --with pyyaml ledger/checks/verify.py                                                   -> 4 rows drifted: CVG-013/019/021 read the plan record, which grew; CVG-020 counts one stamped-but-not-yet-briefed return (this turn's, briefed at its end). Re-derive lane filed.

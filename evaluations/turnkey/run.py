@@ -312,6 +312,17 @@ STALL_DECLARED = re.compile(
     r"unchanged branch|never returned|did not return|refus(?:ed|al))\b",
     re.I,
 )
+# Clause 9's "across iterations" is a COUNT, and until the stall stamp carried
+# one nothing on disk did. The manager mode now names the number (three) and
+# asks for it in the declaration -- `Iterations without progress: 3.` -- so the
+# count can be read here instead of being the reading's standing blind spot.
+# The looser second alternative catches a session that wrote the same fact as
+# prose ("no progress across 3 iterations"), because the fact is what matters.
+STALL_ITERATIONS = re.compile(
+    r"iterations?(?:[ \t]+without[ \t]+progress)?[ \t]*[:=][ \t]*([0-9]+)"
+    r"|\b(?:across|after|for)[ \t]+([0-9]+)[ \t]+iterations?\b",
+    re.I,
+)
 CALL_STAMP = re.compile(r"\bCALL[ \t]+([A-Za-z][A-Za-z ]{2,20}?)[ \t]*[-:\u2014]")
 CONTINUED = re.compile(r"\bContinued[ \t]*:[ \t]*([^.;]*)", re.I)
 # `Live: a, b` names them; `Live 4` counts them. Both are the same fact, and a
@@ -1659,6 +1670,15 @@ def assert_lanes_touch_different_files(lanes: list[dict]) -> dict:
                    **facts)
 
 
+def _declared_iterations(text: str) -> int | None:
+    """The count of iterations without progress a declaration carries, if any."""
+    found = STALL_ITERATIONS.search(text or "")
+    if not found:
+        return None
+    digits = found.group(1) or found.group(2)
+    return int(digits) if digits is not None else None
+
+
 def assert_stalls_are_declared(stalls: list[dict], records: list[dict],
                                coverage: dict | None = None) -> dict:
     """Clause 9 — no progress becomes stuck WITH CAUSE, not another iteration.
@@ -1681,11 +1701,19 @@ def assert_stalls_are_declared(stalls: list[dict], records: list[dict],
 
     WHAT A PASS DOES NOT PROVE. Whether the cause the record gives is the real
     one, or an adequate one — this reads that a stop was written down and shows
-    the words, and a reader judges the cause. Nor whether the lane had already
-    been retried before it was declared: clause 9's "across iterations" needs a
-    count of attempts, and nothing on disk here records one. A record that
-    declares the stop and then relaunches in place reads as declared, which is
-    the honest limit of what an artifact left on disk can settle.
+    the words, and a reader judges the cause. A record that declares the stop
+    and then relaunches in place reads as declared, which is the honest limit of
+    what an artifact left on disk can settle.
+
+    THE ITERATION COUNT, which this used to have no way to ask about. Clause 9's
+    "across iterations" is a count of attempts, and until the stall stamp carried
+    one nothing on disk recorded it — so this reading said so and moved on. The
+    manager mode now names the number (three) and asks the declaration to carry
+    it, so a count is read out of the declaring record when there is one and its
+    absence is reported as an absence rather than passed over. What a count still
+    cannot prove is that it is TRUE: attempts leave no trace of their own, so a
+    session that tried six times and wrote three has written a number nobody can
+    check. Read it as the session's own report, like the return log.
 
     HOW MANY LANES THE READING COULD ACTUALLY ASK ABOUT, which the SKIP used to
     leave out. `commits_beyond` answers None for a lane whose worktree is gone
@@ -1731,7 +1759,8 @@ def assert_stalls_are_declared(stalls: list[dict], records: list[dict],
             for sentence in SENTENCE_BREAK.split(text):
                 if lane in sentence and STALL_DECLARED.search(sentence):
                     said = {"lane": lane, "record": text[:160],
-                            "sentence": sentence.strip()[:160]}
+                            "sentence": sentence.strip()[:160],
+                            "iterations": _declared_iterations(text)}
                     break
             if said:
                 break
@@ -1742,9 +1771,11 @@ def assert_stalls_are_declared(stalls: list[dict], records: list[dict],
                               "record": (naming[-1].get("text") or "")[:160]})
         else:
             unnamed.append({"lane": lane, "record": None})
+    counted = [d for d in declared if d.get("iterations") is not None]
     facts = {"stalled": [s["lane"] for s in stalls], "declared": declared,
              "mentioned_only": mentioned, "records_read": len(records),
-             "undeclared": [r["lane"] for r in unnamed + mentioned]}
+             "undeclared": [r["lane"] for r in unnamed + mentioned],
+             "iterations_declared": {d["lane"]: d["iterations"] for d in counted}}
     if unnamed or mentioned:
         halves = []
         if unnamed:
@@ -1764,12 +1795,19 @@ def assert_stalls_are_declared(stalls: list[dict], records: list[dict],
                        + "; ".join(halves),
                        **facts)
     first = declared[0]
+    if counted:
+        count = (f"; the record counts {counted[0]['iterations']} iteration(s) "
+                 f"without progress before the stop, which is this session's own "
+                 "report and not a number anything here can check")
+    else:
+        count = ("; no record carries an iteration count, so how many attempts "
+                 "preceded the stop is unread")
     return _clause(9, PASS,
                    f"{len(declared)} lane(s) stopped with an unchanged branch and "
                    f"each is named in a record that says it stopped — "
                    f"{first['lane']}: {first['sentence']!r}; this reads that the "
                    "stop was written down, not whether the cause it gives is the "
-                   "real one",
+                   "real one" + count,
                    **facts)
 
 
@@ -3317,6 +3355,93 @@ def step_attribution(ctx: Context) -> Result:
                   evidence=evidence)
 
 
+def judge_rerun_path(path_exists: bool, toplevel: str | None, path: str,
+                     row: dict | None) -> dict:
+    """Was the re-run check run from a path that exists, against this tree?
+
+    Two halves, and the second one is the half that was measured failing.
+
+    - **The path exists.** A check re-run from a directory that has been
+      removed is not a check. Nothing else here matters if this is false.
+    - **The installed thing resolves into the repository under test.** This is
+      `install-check.py`'s own `installed-tree` reading, taken here rather than
+      re-derived, so the harness and the command a person runs by hand cannot
+      drift apart.
+
+    Measured on 2026-09-06, adopter run 03:50Z, scenario 1: a manager session
+    ran the right command in the right repository, and the import resolved
+    through a stale editable binding to the lane worktree it had just merged.
+    The re-run passed, the worktree was removed, and main was left with a
+    failing check the re-run had already certified.
+    """
+    facts = {"path": path, "path_exists": path_exists, "git_toplevel": toplevel,
+             "installed_tree": row}
+    if not path_exists:
+        return {"verdict": FAIL, "why": f"the re-run check would run from {path}, "
+                "which does not exist", **facts}
+    if toplevel is None:
+        return {"verdict": FAIL, "why": f"{path} exists but git cannot name a "
+                "checkout there, so the re-run has no tree to be about", **facts}
+    if row is None:
+        return {"verdict": SKIP, "why": "the install check here carries no "
+                "installed-tree reading, so where the installed package resolves "
+                "is unread", "awaits": "an install check that reads the installed "
+                "package's own path", **facts}
+    status = row.get("status")
+    if status == "OK":
+        return {"verdict": PASS, "why": f"the re-run runs from {path}, which "
+                f"exists, and {row.get('detail')}", **facts}
+    if status == "MISSING":
+        return {"verdict": FAIL, "why": f"the re-run runs from {path}, but "
+                f"{row.get('detail')}", **facts}
+    return {"verdict": SKIP, "why": f"where the installed package resolves could "
+            f"not be read: {row.get('detail')}",
+            "awaits": "an installed copy of the package to resolve", **facts}
+
+
+def step_installed_tree(ctx: Context) -> Result:
+    """(l) The re-run check ran from a path that must exist - clause 7.
+
+    Steps (g) and (h) merge and re-run the contract check. Neither of them can
+    say whether the thing under test was the thing that was merged: both run a
+    command in a directory, and an installed package resolves wherever its
+    install record points, which need not be that directory at all.
+    """
+    path = ctx.wave_repo
+    exists = ctx.env.exists(path)
+    toplevel = None
+    if exists:
+        seen = ctx.env.run(["git", "-C", path, "rev-parse", "--show-toplevel"],
+                           timeout=120.0)
+        toplevel = first_line(seen.out) if seen.ok else None
+
+    row = None
+    script = f"{ctx.repo}/scripts/install-check.py"
+    if ctx.env.exists(script):
+        ran = ctx.env.run(
+            ["uv", "run", script, "--json-only", "--repo-root", ctx.repo],
+            cwd=ctx.repo, timeout=max(ctx.timeout, 600.0),
+            env={"AMPLIFIER_HOME": ctx.amplifier_home} if ctx.amplifier_home else None,
+        )
+        report = parse_json(ran.out)
+        if isinstance(report, dict):
+            row = next((c for c in report.get("checks", [])
+                        if c.get("id") == "installed-tree"), None)
+
+    reading = judge_rerun_path(exists, toplevel, path, row)
+    evidence = {"repository_under_test": ctx.repo, "install_check": script,
+                **{k: v for k, v in reading.items() if k not in ("verdict", "why")}}
+    verdict, why = reading["verdict"], reading["why"]
+    if verdict == FAIL:
+        return Result(FAIL, f"The re-run check cannot be trusted here: {why}.",
+                      evidence=evidence)
+    if verdict == SKIP:
+        return Result(SKIP, f"Where the re-run check ran could not be settled: {why}.",
+                      reason=reading.get("awaits", why), evidence=evidence)
+    return Result(PASS, f"The re-run check is about this tree: {why}.",
+                  evidence=evidence)
+
+
 STEPS = [
     ("a", "environment", "a fresh isolated environment stood up", step_environment),
     ("b", "install", "the one documented install performed", step_install),
@@ -3334,6 +3459,8 @@ STEPS = [
     ("j", "clauses", "the seven Core clauses the nine steps never read", step_clauses),
     ("k", "attribution", "who produced the artifact, not only that it exists",
      step_attribution),
+    ("l", "installed_tree", "the re-run check ran from a path that must exist",
+     step_installed_tree),
 ]
 
 # The steps that ARE the turnkey sentence. Everything else is a clause reading.
@@ -3828,6 +3955,33 @@ def self_check() -> dict:
                       [{"text": "cycle 3: refilled w6-x. w6-y is stuck at the "
                                 "provider prompt."}]
                   )["verdict"] == FAIL))
+    cases.append(("a declaration carrying its iteration count gives the count up",
+                  assert_stalls_are_declared(
+                      [{"lane": "w6-x"}],
+                      [{"text": "STUCK w6-x - the guard refuses the edit. "
+                                "Iterations without progress: 3. Routed: plan."}]
+                  )["iterations_declared"] == {"w6-x": 3}))
+    cases.append(("a declaration with NO count reports the count as unread",
+                  assert_stalls_are_declared(
+                      [{"lane": "w6-x"}],
+                      [{"text": "cycle 3: w6-x died at the provider prompt"}]
+                  )["iterations_declared"] == {}))
+
+    resolved_here = {"id": "installed-tree", "status": "OK", "detail": "in this tree"}
+    resolved_elsewhere = {"id": "installed-tree", "status": "MISSING",
+                          "detail": "resolves to /w/lanes/w3/repo/src, which is NOT "
+                                    "inside the repository under test"}
+    cases.append(("a re-run from a path that does not exist FAILS clause 7",
+                  judge_rerun_path(False, None, "/w/lanes/w3/repo",
+                                   resolved_here)["verdict"] == FAIL))
+    cases.append(("a re-run resolving to another worktree FAILS clause 7",
+                  judge_rerun_path(True, "/w/repo", "/w/repo",
+                                   resolved_elsewhere)["verdict"] == FAIL))
+    cases.append(("a re-run resolving into the merged tree is clause 7 kept",
+                  judge_rerun_path(True, "/w/repo", "/w/repo",
+                                   resolved_here)["verdict"] == PASS))
+    cases.append(("no installed reading is a skip, never a pass",
+                  judge_rerun_path(True, "/w/repo", "/w/repo", None)["verdict"] == SKIP))
 
     quoted = {"id": "p-1", "title": "the changes view is misaligned",
               "description": "Source — the steward on build b7ed3f0, quoted: 'the "
@@ -4292,7 +4446,7 @@ def main(argv: list[str] | None = None) -> int:
     # did. It is a phase, not a tenth step -- the contract's sentence has nine.
     wave_after = "d" if (wanted is None or "d" in wanted) else None
     want_wave = (args.wave is not False) and mode == DRIVEN and (
-        wanted is None or bool(wanted & set("efghijk"))
+        wanted is None or bool(wanted & set("efghijkl"))
     )
     if args.wave is False:
         notes.append("--no-wave: no manager session was run; steps (e)-(i) judge "
@@ -4335,7 +4489,7 @@ def main(argv: list[str] | None = None) -> int:
                                 reason="the harness failed while running this step")
             row = {
                 "step": letter, "name": name, "asserts": description,
-                "mode": ctx.mode if letter in "defghijk" else DRIVEN,
+                "mode": ctx.mode if letter in "defghijkl" else DRIVEN,
                 "status": result.status, "detail": result.detail,
             }
             if result.reason:

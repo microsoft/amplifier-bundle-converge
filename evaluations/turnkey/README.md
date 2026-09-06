@@ -17,9 +17,9 @@ same day, which is how the contract came to record it. The contract changed by
 proposal and the owner's word, never because a harness went green; this is the
 evidence the sentence points at.
 
-The nine steps are that sentence and only that sentence. Two further steps,
-(j) and (k), read the Core clauses the sentence never reaches; they are tallied
-apart and described under [Two more steps](#two-more-steps--the-clauses-the-sentence-does-not-reach).
+The nine steps are that sentence and only that sentence. Three further steps,
+(j), (k) and (l), read the Core clauses the sentence never reaches; they are
+tallied apart and described under [Two more steps](#two-more-steps--the-clauses-the-sentence-does-not-reach).
 
 ```sh
 ./evaluations/turnkey/run.sh                        # fresh container, real wave
@@ -68,9 +68,10 @@ any manager session followed it.
 |---|---|---|---|
 | j | `clauses` | the lane briefs the manager session wrote, its own plan record in the workspace, git, the queue | 2 · 3 · 4 · 6 · 9 · 11 · 13 |
 | k | `attribution` | which side of a lane merge a check-run record arrived on, and the queue's own resolution text | 7 · 8 · 12 |
+| l | `installed_tree` | whether the path the re-run check ran from still exists, and where the installed package actually resolves | 7 |
 
 **They are not part of the turnkey sentence and never change its verdict.**
-The report carries two tallies — `turnkey` (a–i) and `clauses` (j–k) — so a
+The report carries two tallies — `turnkey` (a–i) and `clauses` (j–l) — so a
 clause reading going red can never be mistaken for the gate going red, and the
 exit code still follows the whole run, because a broken promise is a broken
 promise.
@@ -115,6 +116,24 @@ RESULT.md says so rather than leaving it to be found out. The clause 7 and 8
 attribution has been exercised on a purpose-built repository — a real lane merge
 and a real integration — in `tests/test_turnkey.py`, which is a fixture and not
 this host, and RESULT.md says that too.
+
+**Step (l) asks the question (g) and (h) cannot.** Both of those run a command
+in a directory, and an installed package resolves wherever its install record
+points — which need not be that directory. Measured on 2026-09-06 (adopter run
+03:50Z, scenario 1): a manager session merged a lane, re-ran the check itself as
+clause 7 requires, and it passed through a stale editable binding to the lane's
+own worktree; the worktree was then removed and main was left with a failing
+check the re-run had already certified. Step (l) reads two things — that the path
+the re-run ran from still exists, and `install-check.py`'s own `installed-tree`
+verdict, taken rather than re-derived so the harness and the command a person
+runs by hand cannot drift apart.
+
+**Clause 9 now carries a count.** Its reading finds the record that says a lane
+stopped; what it never had was clause 9's *across iterations*, because nothing on
+disk recorded one. `modes/converge-manager.md` names the number (three) and asks
+the stall stamp to carry it, so the count is read out of the declaring record when
+there is one — and reported as absent when there is not. What a count cannot prove
+is that it is true: attempts leave no trace of their own.
 
 **Clause 9 needed an event, not a parser.** Its reading looks for a lane whose
 terminal session is gone and whose branch carries no commit beyond its base —

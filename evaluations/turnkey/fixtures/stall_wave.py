@@ -40,8 +40,9 @@ wave, which is the fabricated failure this harness exists to refuse.
 THE ONE THING THAT DIFFERS BETWEEN THE TWO VARIANTS is a single plan-record
 entry:
 
-    declared (default)  the plan record names lumen-index and says what stopped
-                        it -> step (j) reads Core 9 PASS
+    declared (default)  the plan record names lumen-index, says what stopped it,
+                        and carries the iteration count clause 9 asks for
+                        -> step (j) reads Core 9 PASS
     --hidden            the same stall, and no record names the lane at all
                         -> step (j) reads Core 9 FAIL
 
@@ -112,8 +113,8 @@ PLAN_DECLARED = (
     "- 2026-09-04T09:41:00Z cycle 2: {stalled} is stuck and is not being "
     "relaunched. Its worker session exited with an unchanged branch: the clause "
     "it was given names a file this fixture does not carry, so there is nothing "
-    "for it to change. Routed to the plan as a fixture defect, not retried; "
-    "{moved} kept running beside it.\n"
+    "for it to change. Iterations without progress: 3. Routed to the plan as a "
+    "fixture defect, not retried; {moved} kept running beside it.\n"
 )
 
 PLAN_HIDDEN = (
