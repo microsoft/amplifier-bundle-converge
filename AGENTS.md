@@ -85,7 +85,7 @@ uv run conformance/documents/run.py .            # a kit that reads the reposito
 the repository-reading kits take a path, the experience kits take the running
 app's URL. Read it before you run one.
 
-The documents kit's rule 9a reads the work queue, which is not a file in this tree — refresh its export with `uv run scripts/export-work-items.py --project converge --out docs/work-items.json` before you trust that rule's verdict.
+The documents kit's rule 9a reads the work queue, which is not a file in this tree — refresh its export with `uv run scripts/export-work-items.py --project converge --out docs/work-items.json` before you trust that rule's verdict. **That export is the documents kit's input, and nothing else's.** `ledger/checks/verify.py` reads the queue itself, live, through `amplifier-work-tracker`; when it cannot, it says so loudly and fails rather than passing on a snapshot nobody refreshed (converge-j0u5).
 
 Rules for the check itself:
 

@@ -67,6 +67,10 @@ that also read a repository share that convention from one place too,
 The documents kit's rule 9a reads the work queue, which is not a file in this
 tree — refresh its export with `uv run scripts/export-work-items.py --project
 converge --out docs/work-items.json` before you trust that rule's verdict.
+**That export is this kit's input, and nothing else's.** The ledger's own gate,
+`ledger/checks/verify.py`, reads the queue live through `amplifier-work-tracker`
+instead: it needs liveness, not prose, and a snapshot refreshed by hand could
+never fail it (converge-j0u5).
 
 ### Reading the app needs a cookie, and that is not an oversight
 
