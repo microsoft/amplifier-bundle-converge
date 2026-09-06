@@ -8,7 +8,10 @@ set; and whoever builds a body for it. This contract is one section of the
 platform mechanism: every clause below is tagged REQUIRED (present and behaving
 as written) or IDIOM (required; its shape follows the platform, and the review
 question is whether the behavior is satisfied). An idiom satisfies a behavior;
-it never subtracts one.
+it never subtracts one. Every clause is also placed against the umbrella's three
+surface classes: the tag is its **full app** placement; **quick-access** carries
+clauses 6 and 7 (`OPTIONAL`) and **notification** clause 8 (`OPTIONAL`); what a
+class is not given, it is `EXCLUDED` from.
 
 ## Purpose
 
@@ -20,48 +23,48 @@ proof behind them; it never hands the deciding back to the steward.
 ## Core (the teeth)
 
 1. **The objective, the limits, and today's strategy stand at the top, in the
-   manager session's own words.** *(REQUIRED)* A steward should learn what is
+   manager session's own words.** `(REQUIRED)` A steward should learn what is
    being pursued and why this way before seeing a single piece of work.
 2. **The plan is shown in waves, with the lanes inside them, and every grouping
-   carries its reason.** *(REQUIRED)* A wave says what a batch of work is for;
+   carries its reason.** `(REQUIRED)` A wave says what a batch of work is for;
    a lane is one piece being carried out inside it. When the plan is redrawn,
    the reason for the redraw is shown too.
 3. **The return brief is the first thing a returning steward reads.**
-   *(REQUIRED)* Time away · what finished · what is stuck · what needs your
+   `(REQUIRED)` Time away · what finished · what is stuck · what needs your
    word · what quietly changed. The story is told in sentences, never inferred
    from charts.
 4. **A confidence timeline gives the narrative of the operation, and each turn
-   in it opens onto its evidence.** *(REQUIRED)* It records the moments that
+   in it opens onto its evidence.** `(REQUIRED)` It records the moments that
    changed how sure the manager session is — and how sure it now is — not every
    step it took.
-5. **Throughput is shown as flow, and never offered as outcome.** *(REQUIRED)*
+5. **Throughput is shown as flow, and never offered as outcome.** `(REQUIRED)`
    Work derived, resolved, verified, reopened, and stuck say whether things are
    moving. Whether reality is moving toward the agreement is a separate reading,
    and it is the one that counts.
 6. **Lanes running are shown against lanes intended, with the fill control
-   beside them.** *(REQUIRED)* Empty lanes are the most common quiet waste, so
+   beside them.** `(REQUIRED)` Empty lanes are the most common quiet waste, so
    the ratio is on the surface and filling them is one gesture.
-7. **Work truly ready is shown against work waiting on you.** *(REQUIRED)* The
+7. **Work truly ready is shown against work waiting on you.** `(REQUIRED)` The
    second number is the steward's own backlog, and seeing it is what keeps the
    operation from stalling politely behind a person.
 8. **Each lane carries a plain state word and evidence you can open.**
-   *(REQUIRED)* Working · Quiet · Silent — may have died. Underneath sits what
+   `(REQUIRED)` Working · Quiet · Silent — may have died. Underneath sits what
    the lane actually produced, so a claim can be inspected rather than believed.
-9. **Watch session opens that worker session's live view.** *(IDIOM)* The whole
+9. **Watch session opens that worker session's live view.** `(IDIOM)` The whole
    ladder is walkable — direction, wave, lane, and finally the session itself —
    for the rare moment a steward wants the bottom rung.
 10. **Feedback can be dropped in seconds, in whatever form is to hand.**
-    *(IDIOM)* Text, a screenshot, or voice. The manager session interprets it;
+    `(IDIOM)` Text, a screenshot, or voice. The manager session interprets it;
     the steward is never made to write a work item.
-11. **Steering sets the limits and never assigns the work.** *(REQUIRED)*
+11. **Steering sets the limits and never assigns the work.** `(REQUIRED)`
     Objective, budget, lane count, fill the lanes, and have the manager session
     review this. Planning stays with the manager session, which is what makes
     the plan worth reading.
-12. **Stopping something is never a board button.** *(REQUIRED)* Work stops
+12. **Stopping something is never a board button.** `(REQUIRED)` Work stops
     because the objective changed or the steward said so in words — not because
     a card was dragged into a column.
 13. **Every manager session you run is listed, sorted by which one needs you,
-    and you can tell them all at once.** *(REQUIRED)* Several projects run at
+    and you can tell them all at once.** `(REQUIRED)` Several projects run at
     once, and one message to all of them beats visiting each in turn.
 
 ## What v1 deliberately does NOT freeze

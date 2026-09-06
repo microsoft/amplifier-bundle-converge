@@ -399,6 +399,68 @@ def test_an_exempt_route_is_exempt_because_a_contract_says_what_it_is():
     assert kit.exempt_write("/api/managers/{mid}/publish") is None
 
 
+def test_a_per_person_store_that_is_not_your_reading_is_still_a_second_copy():
+    """Clause 7, ratified 2026-09-06, widened what a body may keep by ONE named
+    thing — your own reading, kept per person outside the repository — not by
+    "anything kept outside the repository". A per-person store of the project's
+    work queue is still a second copy of the truth, and rule 7 must still refuse
+    it. Without this the ratification would have turned the rule into a rule
+    about WHERE a store lives rather than WHAT it holds.
+    """
+    kit = kit_module()
+    import repotarget
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    assert kit.CLAUSE7_ALLOWS_THE_READING.search(ratified), \
+        "the premise: this repository's clause 7 is the ratified one"
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "contracts").mkdir()
+        (root / "app").mkdir()
+        (root / "contracts" / "experience.v1.md").write_text(ratified, encoding="utf-8")
+        repo = repotarget.Repo(root, "checkout")
+
+        queue_cache = root / "app" / "queue_cache.py"
+        queue_cache.write_text(
+            '"""A copy of the project\'s work queue, one file per person."""\n'
+            "from pathlib import Path\n"
+            'PATH = Path.home() / ".amplifier" / "work-items.json"\n',
+            encoding="utf-8")
+        refused = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert refused["status"] == "FAIL", refused
+        assert "queue_cache.py" in refused["detail"], refused
+
+        queue_cache.unlink()
+        (root / "app" / "state_store.py").write_text(
+            '"""Where each steward\'s own reading is remembered, per person: the\n'
+            'read point, and the kept marks."""\n'
+            "from pathlib import Path\n"
+            'PATH = Path.home() / ".amplifier" / "converge-app.state.json"\n',
+            encoding="utf-8")
+        allowed = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert allowed["status"] == "PASS", allowed
+
+
+def test_rule_7_reads_the_clause_and_not_the_reserved_section():
+    """Before the ratification the arbiter was the umbrella's Reserved section,
+    which asked where the reading cursor was kept. That question is answered and
+    deleted, so a rule still reading it would report the app's own good
+    behaviour as a defect.
+    """
+    kit = kit_module()
+    import repotarget
+    repo = repotarget.Repo(REPO, "checkout")
+    reserved = kit.reserved_section(CONTRACT.read_text(encoding="utf-8"))
+    assert not re.search(r"reading cursor", reserved, re.I), \
+        "the premise: the Reserved question is gone"
+    assert kit.check_no_copy_of_the_projects_truth(None, repo)["status"] == "PASS"
+    for _pattern, contract, clause, phrase in kit.CONTRACT_NAMED_WRITES:
+        if phrase.pattern.startswith("kept per person"):
+            assert clause == 7, "the read route is cited to a clause, not to Reserved"
+            break
+    else:
+        raise AssertionError("no citation for the read route")
+
+
 if __name__ == "__main__":
     failures = []
     for name, fn in sorted(list(globals().items())):

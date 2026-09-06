@@ -34,9 +34,11 @@ behavior on the way.
 6. **Plain state words everywhere.** Contracts: *Kept · Not yet · Broken ·
    Pinned open · Can't check*. Work: *Truly ready · Waiting on you · Working ·
    Stuck · Done*. Lanes: *Working · Quiet · Silent — may have died*.
-7. **The app holds no data of its own.** It shows the project's documents, code
-   record, work queue, lanes, return log, and pending decisions. A second copy
-   of the truth is a defect, not a cache.
+7. **The app holds no copy of the project's truth.** It shows the project's
+   documents, code record, work queue, lanes, return log, and pending
+   decisions, and keeps none of them; a second copy of the truth is a defect,
+   not a cache. Your own reading — where you have read to, what you are
+   keeping — is yours, kept per person outside the repository.
 8. **Whatever you can do here, the manager session can do too.** Every write
    names a manager-session operation that does the same thing, so nothing the
    project needs is reachable only by a person at a screen.
@@ -64,9 +66,9 @@ behavior on the way.
 15. **This umbrella governs a family.** The places are held by
     `experience-direction.v1` · `experience-operation.v1` ·
     `experience-console.v1` · `experience-collaboration.v1`; the idioms of one
-    body by one `platform-*.v1` — `platform-browser.v1` and
-    `platform-web-app.v1` first, then one per native body. A platform contract
-    adds no behavior and removes none.
+    body by one `platform-*.v1` — `platform-web.v1` first, the browser and the
+    installable web app being one body, then one per native body. A platform
+    contract adds no behavior and removes none.
 
 ## What v1 deliberately does NOT freeze
 
@@ -96,5 +98,3 @@ behavior on the way.
 
 - Whether quick-access and notification each earn their own contract once a body
   ships them.
-- Where the reading cursor behind "what changed since you last read" is kept,
-  given the app holds no data of its own.

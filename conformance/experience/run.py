@@ -93,8 +93,8 @@ KIT = Kit(
          "every state the app serves is said in one of the three plain vocabularies"),
         ("6b", 6, "no_machine_vocabulary_outside_a_details_fold",
          "no machine vocabulary appears outside a Details fold"),
-        ("7", 7, "the_app_holds_no_data_of_its_own",
-         "the app holds no data of its own beyond what the umbrella leaves open"),
+        ("7", 7, "the_app_holds_no_copy_of_the_projects_truth",
+         "the app holds no copy of the project's truth; your own reading is yours"),
         ("8", 8, "every_write_names_a_manager_session_operation",
          "every write names a manager-session operation that does the same thing"),
         ("9", 9, "every_behavior_carries_one_of_four_words",
@@ -169,8 +169,13 @@ CONTRACT_NAMED_WRITES = (
      "experience-direction.v1.md", 8, re.compile(r"accepting and reverting", re.I)),
     (re.compile(r"/changes/\{[^}]+\}/edit$"),
      "experience-direction.v1.md", 5, re.compile(r"direct editing", re.I)),
+    # Until 2026-09-06 this citation pointed at the umbrella's Reserved section,
+    # which asked where the reading cursor was kept. Clause 7 now answers that
+    # question in the teeth, and the Reserved bullet is gone, so the citation
+    # moves to the clause that names the behaviour.
     (re.compile(r"/docs/[^/]+/[^/]+/read$"),
-     "experience.v1.md", None, re.compile(r"reading cursor", re.I)),
+     "experience.v1.md", 7,
+     re.compile(r"kept per person outside the repository", re.I)),
 )
 
 #: Core 6 — the three plain vocabularies, in the contract's own words.
@@ -201,6 +206,29 @@ STORE_MARKERS = (
     ("shelve", re.compile(r"\bshelve\b")),
     ("pickle", re.compile(r"\bpickle\.(dump|dumps)\b")),
     ("a JSON file of its own", re.compile(r"Path\.home\(\)[^\n]*\.json")),
+)
+
+#: Core 7, as ratified 2026-09-06 — the ONE store the clause allows, in its own
+#: words: "Your own reading — where you have read to, what you are keeping — is
+#: yours, kept per person outside the repository." Before that word the clause
+#: allowed none and its Reserved section left the question open, so this rule
+#: read the Reserved section to decide. The question is answered now, so the
+#: rule reads the clause.
+CLAUSE7_ALLOWS_THE_READING = re.compile(
+    r"kept per person outside the repository", re.I)
+
+#: What makes a store THE reading rather than a second copy of the truth: it
+#: holds where you have read to and what you are keeping, and it is kept per
+#: person. Both halves are required — a per-person store of work items is still
+#: a copy of the project's truth, and a shared reading store is not "yours".
+READING_STORE_MARKERS = (
+    re.compile(r"read[ _-]?point", re.I),
+    re.compile(r"kept marks?", re.I),
+    re.compile(r"reading (?:store|cursor)", re.I),
+)
+PER_PERSON_MARKERS = (
+    re.compile(r"Path\.home\(\)"),
+    re.compile(r"per[ -](?:person|steward)", re.I),
 )
 
 #: Core 8 — how a body publishes the manager-session operation behind a write.
@@ -585,9 +613,9 @@ def check_machine_vocabulary_is_folded(snapshot):
 
 
 # --------------------------------------------------------------------------- #
-# Core 7 — the app holds no data of its own                                    #
+# Core 7 — the app holds no copy of the project's truth                        #
 # --------------------------------------------------------------------------- #
-def check_no_data_of_its_own(snapshot, repo):
+def check_no_copy_of_the_projects_truth(snapshot, repo):
     if not repo:
         return KIT.skip("7", repo.missing)
     stores = []
@@ -595,28 +623,43 @@ def check_no_data_of_its_own(snapshot, repo):
         body = path.read_text(encoding="utf-8", errors="replace")
         for name, pattern in STORE_MARKERS:
             if pattern.search(body):
-                stores.append({"file": repo.rel(path), "kind": name})
+                stores.append({
+                    "file": repo.rel(path),
+                    "kind": name,
+                    "is_the_reading": bool(
+                        any(p.search(body) for p in READING_STORE_MARKERS)
+                        and any(p.search(body) for p in PER_PERSON_MARKERS)),
+                })
+                break
     if not stores:
         return KIT.ok("7", "the app keeps no store of its own — every screen is drawn "
                            "from the project's own files and queues",
                       repository=str(repo.root))
-    reserved = reserved_section(repo.text(CONTRACT))
-    left_open = bool(re.search(r"reading cursor|last read", reserved, re.I))
+    clause = dict(core_clauses(repo.text(CONTRACT))).get(7, "")
+    allows_the_reading = bool(CLAUSE7_ALLOWS_THE_READING.search(clause))
     listed = ", ".join(f"{s['file']} ({s['kind']})" for s in stores)
-    if not left_open:
+    if not allows_the_reading:
         return KIT.bad(
             "7",
-            f"the app keeps a store of its own — {listed} — and the umbrella's Reserved "
-            "section leaves no such question open, so this is a second copy of the truth",
-            stores=stores)
+            f"the app keeps a store of its own — {listed} — and clause 7 allows it none, "
+            "so this is a second copy of the truth",
+            stores=stores, clause_allows_the_reading=False)
+    not_the_reading = [s["file"] for s in stores if not s["is_the_reading"]]
+    if not_the_reading:
+        return KIT.bad(
+            "7",
+            f"clause 7 allows exactly one store — your own reading, kept per person "
+            f"outside the repository — and {not_the_reading} is not it, so this is a "
+            "second copy of the truth",
+            stores=stores, clause_allows_the_reading=True)
     return KIT.ok(
         "7",
-        f"the app keeps one store of its own ({listed}), and it is exactly the question "
-        "the umbrella's Reserved section leaves open — where the reading cursor behind "
-        "\"what changed since you last read\" is kept. What that store actually holds is "
-        "beyond a static read; that it is an open question and not a silent second copy "
-        "is what this row asserts.",
-        stores=stores, reserved_question=True)
+        f"the only store the app keeps ({listed}) is the one clause 7 names as yours — "
+        "where you have read to and what you are keeping, kept per person outside the "
+        "repository. What that file holds at runtime is beyond a static read; that every "
+        "store the app keeps is that per-person reading, and that the clause allows it, "
+        "is what this rule asserts.",
+        stores=stores, clause_allows_the_reading=True)
 
 
 # --------------------------------------------------------------------------- #
@@ -902,7 +945,7 @@ def run_conformance(snapshot):
         check_dated_ratification_record(snapshot, repo),    # 5b
         check_state_words_served(snapshot),                 # 6a
         check_machine_vocabulary_is_folded(snapshot),       # 6b
-        check_no_data_of_its_own(snapshot, repo),           # 7
+        check_no_copy_of_the_projects_truth(snapshot, repo),  # 7
         check_writes_name_a_manager_operation(snapshot),    # 8
         check_behavior_words(snapshot, repo),               # 9
         KIT.skip("10"),                                     # 10

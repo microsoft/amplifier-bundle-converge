@@ -158,3 +158,21 @@ own evidence.
   and the two `IDIOM` tags say exactly what they said before; only their
   typography changes, from italic to a code span.
 
+
+## The steward's word
+
+One of four: *ratified* · *ratified with edits* · *declined* · *later*.
+
+Answer here:
+
+```
+Word: Yep, all look good to me, make it so.
+Date: 2026-09-06
+Edits (if "ratified with edits"): none — ratified as written
+```
+
+Recorded in `docs/workflow/owner-ratifications-2026-09-06.md`, round 2, against
+the card for this file on the lock sheet `docs/workflow/LOCK-SHEET-2026-09-06.md`.
+Applied to `contracts/experience-direction.v1.md` on 2026-09-06 by `converge-r4e5` — all three fenced before/after pairs above — nine required tags, two idiom tags, one placement sentence,
+verbatim, 96 lines → 99. This file is the archive of the proposal as it was answered;
+the contract is the law.

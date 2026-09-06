@@ -331,3 +331,25 @@ word arrives only here.
 - **The tmux connector, the watch-session reuse, and the "never the dashboard"
   boundary all stand exactly as written.**
 
+
+## The steward's word
+
+One of four: *ratified* · *ratified with edits* · *declined* · *later*.
+
+Answer here:
+
+```
+Word: Yep, all look good to me, make it so.
+Date: 2026-09-06
+Edits (if "ratified with edits"): none — ratified as written
+```
+
+Recorded in `docs/workflow/owner-ratifications-2026-09-06.md`, round 2, against
+the card for this file on the lock sheet `docs/workflow/LOCK-SHEET-2026-09-06.md`.
+This contract's proposal also carries an earlier word, recorded by the app on
+2026-09-05 at 20:01:47-07:00 (`docs/workflow/owner-ratifications-2026-09-05.md`)
+and never applied — the surprise the lock sheet found and filed as `converge-5i5m`.
+Both words say the same thing and this is the apply both were owed.
+Applied to `contracts/experience-console.v1.md` on 2026-09-06 by `converge-r4e5` — all eleven fenced before/after pairs above,
+verbatim, 80 lines → 90, and 96 with the changelog row this apply added. This file is the archive of the proposal as it was answered;
+the contract is the law.
