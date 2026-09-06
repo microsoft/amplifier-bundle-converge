@@ -6,7 +6,8 @@ push that must be refused. Copy from here into your own repository.
 
 **Eight files.** Every one is listed below, including the three you do not need
 on day one — so that "I have them all" is something you can check rather than
-assume.
+assume. This index makes a ninth entry in the directory and is not one of them:
+it is not copied anywhere.
 
 | File | Copy it to | Needed on day one |
 |---|---|---|

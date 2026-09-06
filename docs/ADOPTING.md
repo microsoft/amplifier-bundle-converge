@@ -140,8 +140,9 @@ happens with nothing to read first.
 
 Converge's promise has to hold for a colleague who never installs the bundle and
 for a coding agent that is not an Amplifier session. That is what
-[`docs/workspace-template/`](workspace-template/) is for. It holds **eight**
-files, and here is every one of them — including the ones you do not need.
+[`docs/workspace-template/`](workspace-template/) is for. The kit is **eight**
+files — the directory also holds an index of them, which is not copied
+anywhere — and here is every one, including the ones you do not need.
 
 | File | Where it goes | Needed on day one |
 |---|---|---|
