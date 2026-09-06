@@ -1,4 +1,4 @@
-# Manager Console Contract — v1 (DRAFT — content owner-ratified 2026-09-03)
+# Manager Console Contract — v1 (FROZEN 2026-09-06)
 
 **Who builds against this:** the intent steward, who talks to the manager
 session while looking at either place; whoever builds the console pane in any
@@ -94,3 +94,4 @@ know what the first one is missing.
 | Date | Change | Evidence |
 |---|---|---|
 | 2026-09-06 | Every clause carries one of the four words as a code span, and each is placed across full app · quick-access · notification | `docs/workflow/experience-console.v1-candidate.ratified.md`; owner words 2026-09-05T20:01:47-07:00 and 2026-09-06 round 2 |
+| 2026-09-06 | Locked on the steward's word "1) lock" (tidy card, round 3) — kits PASS, rows Kept, no proposal open; changes from here go through a `<name>.vN-candidate.md` proposal | docs/workflow/owner-ratifications-2026-09-06.md round 3 |
