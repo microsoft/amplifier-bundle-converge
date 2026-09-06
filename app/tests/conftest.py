@@ -121,3 +121,22 @@ def _reap_this_runs_tmux_sockets():
             f"\ncleared {len(ours)} tmux socket(s) this run created "
             f"({len(still_serving)} still had a live server): {names}"
         )
+
+
+@pytest.fixture(autouse=True)
+def _no_default_workspace_discovery(request, monkeypatch):
+    """Tests name their workspaces explicitly (the `workspaces` key) or have none.
+
+    Discovery's default root is the parent of this checkout — on a developer's
+    host that is a live workspace holding a real `registration.toml`, and a test
+    that wrote a config with only hand-written managers would otherwise see the
+    host's manager sessions too (measured 2026-09-06: two tests went red the
+    moment this host's own manager registered). The default is a production
+    convenience, not a test input.
+    """
+    from app import config as _config
+
+    if request.node.get_closest_marker("real_default_roots"):
+        return  # this test is ABOUT the default; let it see the real one
+    monkeypatch.setattr(_config, "default_workspace_roots", lambda: ())
+    monkeypatch.delenv(_config.WORKSPACES_ENV, raising=False)

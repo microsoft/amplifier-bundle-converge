@@ -300,6 +300,7 @@ def test_home_lists_a_registered_manager_nobody_named_by_hand(tmp_path: Path, mo
     assert card["repoBranches"] == [{"path": str(place["repo"]), "branch": "main"}]
 
 
+@pytest.mark.real_default_roots
 def test_the_default_workspace_root_is_the_parent_of_the_apps_own_repo(tmp_path: Path) -> None:
     """With no `workspaces` key, the app looks beside its own checkout.
 
