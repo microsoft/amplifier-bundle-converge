@@ -2,9 +2,13 @@
 # adopter.yaml -- DTU profile for the early-adopter harness
 # =============================================================================
 #
-# One container that stands in for an early adopter's machine on the day they
+# A container that stands in for an early adopter's machine on the day they
 # first hear about Converge: the Amplifier CLI is there, a provider is
 # configured, git and a multiplexer are there -- and Converge is NOT.
+#
+# The harness launches ONE OF THESE PER SCENARIO. Sharing one across scenarios
+# makes the second scenario's install row a measurement of the first scenario's
+# adopter, which is what happened on 2026-09-04.
 #
 # ---- WHAT THIS PROFILE DELIBERATELY DOES **NOT** PRE-INSTALL, AND WHY -------
 # Read this before reading any red step in ../RESULT.md, so an induced failure
