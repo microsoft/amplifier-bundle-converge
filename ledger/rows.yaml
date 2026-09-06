@@ -202,7 +202,7 @@
 # the sweep rather than trusting a filing: every `test_\w+` named anywhere in
 # this file was compared against the live suite's 129 function names.
 # ONE CHECK SCRIPT WAS DELETED, WHICH THIS PASS DOES NOT TREAT AS ROUTINE.
-# ledger/checks/surface_clause9.py rendered its subject from the removed module,
+# ledger/checks/surface_clause9.py (deleted 2026-09-06 with the page it rendered) rendered its subject from the removed module,
 # so it could not run at all and could not be repaired without choosing a
 # different body — a decision, not a repair. Two lines outside ledger/ still
 # name it; filed as converge-3hew rather than touched.
@@ -595,9 +595,9 @@
     - file: contracts/composition.v1.md
       sha256: 077451fba18a2baa8f4162bc4af6dd164976d304adad8f193871b120b4203d39
     - file: contracts/documents.v1.md
-      sha256: c51768297460b27f064096feb6f22e999e24695bba688d0d152074068a84bea9
+      sha256: 723f892311333cca098c5d782210359be9c30f7c1d491c5c4d8c07c064ba1e86
     - file: contracts/operation.v1.md
-      sha256: 823a71330fcfe69b016231773a861c221059f6f15f6d26ed6a90e9737cb1deed
+      sha256: 7615b5c1088687126b2bdf09e7f7cafe2df5ee9f4b65de823727a80f8fa139cf
     - file: contracts/surface.v1.md
       sha256: b4d3f3838637ec6d7781735a59db2bf7386ea66c265dce1122a77513e514741d
     # The experience family, ratified DRAFT 2026-09-03. Pinned by converge-pq2.
@@ -612,7 +612,7 @@
     - file: contracts/experience-collaboration.v1.md
       sha256: d76c8e6c61edb1e81d07b10c99c85906fab405d40532e01bb40fa30884e23bbf
     - file: contracts/platform-web.v1.md
-      sha256: a7afe69a5c976ceebee50ed015f673448c5eece19a9986d69c0b5209c73a5e67
+      sha256: 306c88fbf63304a6de062fd1e6710995aabb851e8d9fbe62654fb3c3c1eca94b
     - file: contracts/platform-ios.v1.md
       sha256: 46b3842c18a314997e33bbdccfe14081a2c82d6613cfe54ca9246bc101c7f43a
     - file: contracts/platform-android.v1.md
@@ -628,6 +628,7 @@
       exit: 0
       stdout_contains: "077451fba18a2baa8f4162bc4af6dd164976d304adad8f193871b120b4203d39"
   notes: |
+    RAN 2026-09-06 14:20 → re-pinned after lane w19-tidy stamped 'held loosely 2026-09-06' into the H1 of documents.v1, operation.v1 and platform-web.v1 (the steward's lock-sheet word); re-review: git diff shows line 1 only in each — no clause text moved.
     RAN 2026-09-06 13:35 → re-pinned after round 3: documents.v1 Core 4 applied (H1 amended), four section contracts locked (H1 FROZEN; console also a changelog row). Diff per file: line 1 (+ one changelog row on console); no Core clause text moved except documents.v1 Core 4's ratified line.
     SEEDED 2026-09-02 from `sha256sum contracts/*.md`, run at repo 2543e1c.
     Verified identical on `main` at seed time (`git show main:contracts/<f>` →
@@ -3401,9 +3402,27 @@
     showing the change" was false while the check said done. It surfaced only
     because the person watching ran the check themselves. That is Core 7's
     business, not this clause's.
-    THE ADOPT HALF OF Core 14 IS CVG-302, and it is red. converge-njaj stays
-    open on that half. This row carries no `work` ref because a green row may
-    not carry one.
+    THE ADOPT HALF OF Core 14 IS CVG-302, AND IT IS NOW Kept. CLOSING NOTE
+    RE-DERIVED 2026-09-06 (converge-j696, lane w19-tidy): this paragraph read
+    "it is red. converge-njaj stays open on that half", and both halves stopped
+    being true earlier the same day. CVG-302 was re-derived to CONFORMS on the
+    run recorded in evaluations/adopter/RESULT.md — 2026-09-06T08:57:06Z, its
+    own container adopter-20260906085706-s2, GREEN, 12 pass 0 fail — and
+    converge-njaj was resolved on that same evidence.
+    WHAT THAT RUN CHANGES FOR THIS ROW, AND IT IS ONE THING. This row's `proves`
+    says "chain complete and measured, sequence attested and unmeasured". The
+    sequence is now measured on the ADOPT path: two harness rows added for it,
+    S2.7 (the work in flight paused first, said in the plan record) and S2.8
+    (the investigation answers are dated before the drafts), both PASS, dating
+    those records against the drafts rather than trusting the AI user's account.
+    THE BLANK PATH STILL HAS NO ORDER ROWS, AND DELIBERATELY SO — a blank
+    repository has no work in flight to pause and nothing to read first, so
+    there is no order there to measure. This row's own reading is unchanged by
+    the adopt run; nothing above needed re-reading.
+    RAN 2026-09-06 → BLANK-WAKE-SESSION-VISION-CONTRACT-LEDGER-QUEUE-ALL-SEEN
+    (re-observed by `uv run --with pyyaml ledger/checks/verify.py` on this
+    tree; the probe reads the same RESULT.md scenario-1 rows as before).
+    This row carries no `work` ref because a green row may not carry one.
 
 - id: CVG-302
   title: the first wake on an EXISTING repository — adopt, and the work in flight pauses first
@@ -3897,7 +3916,7 @@
     keeps two live readers after this pass — conformance/documents/run.py and
     tests/conftest.py, whose example project is its fixture — so the retirement
     lane's "retire it if nothing else reads it" condition is still not met. The
-    third reader, ledger/checks/surface_clause9.py, is deleted here (CVG-038).
+    third reader, ledger/checks/surface_clause9.py (deleted 2026-09-06 with the page it rendered), is deleted here (CVG-038).
     RETITLED, AS THIS ROW ALREADY WAS ONCE FOR THE MIRROR-IMAGE REASON. It read
     "rule 8c passes on every page"; no page is passing anything. The id is
     unchanged, as ids always are.
@@ -4093,11 +4112,11 @@
     CONFORMS → NOT-ASSERTABLE. RAN 2026-09-06 → NO-SURFACE-PAGE-BODY.
     THE OLD PROBE DID NOT GO RED WITH A READING — IT STOPPED HAVING ONE. Run on
     this tree before it was replaced, `uv run --extra web --with httpx python
-    ledger/checks/surface_clause9.py` exits 1 with empty stdout and, on stderr:
+    ledger/checks/surface_clause9.py (deleted 2026-09-06 with the page it rendered)` exits 1 with empty stdout and, on stderr:
     "ModuleNotFoundError: No module named 'amplifier_converge.web'". That is not
     six-of-eight or two-of-eight; it is no number at all, which is exactly the
     difference between Broken and Can't check.
-    ledger/checks/surface_clause9.py IS DELETED IN THE SAME COMMIT AS THIS ROW.
+    ledger/checks/surface_clause9.py (deleted 2026-09-06 with the page it rendered) IS DELETED IN THE SAME COMMIT AS THIS ROW.
     It is 190 lines whose whole purpose was to render a module that no longer
     exists, nothing else in the tree imports it, and it cannot be repaired
     without choosing a different body — which is a decision, not a repair. Left
@@ -5338,13 +5357,27 @@
     kind: indexed
     ref: conformance/documents/run.py (rules 12a, 12b)
   proves: >
-    That the four participant-kit files and five workspace-template files EXIST.
-    Not that any of them contains what the clause requires of it — that is CVG-064.
+    That the four participant-kit files EXIST, and that every file in
+    docs/workspace-template/ is accounted for — the eight kit files the rule
+    lists, plus that directory's own README.md, which is named as its index and
+    copied nowhere. Not that any of them contains what the clause requires of it
+    — that is CVG-064.
   notes: >
-    RAN 2026-09-03 (re-run by converge-12o)
-    → rule 12a PASS ("all 4 participant-kit file(s) present" —
+    RE-DERIVED 2026-09-06 (converge-h2gk, lane w19-tidy). Rule 12b was widened
+    on 2026-09-05 under converge-mvq5: it now measures all eight kit files under
+    docs/workspace-template/ and also fails on a file in that directory that
+    neither the kit list nor the named not-copied set accounts for. This row's
+    evidence still quoted the pre-widening detail string, which no run emits any
+    more, and its `proves` undercounted the kit by three. Both re-read against a
+    run rather than edited to taste.
+    RAN 2026-09-06 → rule 12a PASS ("all 4 participant-kit file(s) present" —
     docs/CONTRACTS-README.md, AGENTS.md, PINS.md, .githooks/pre-push) and rule
-    12b PASS ("all 5 workspace-template file(s) present").
+    12b PASS ("all 9 workspace-template file(s) accounted for"), in a run
+    reporting VERDICT: PASS (pass=18 fail=0 skip=9). Nine is eight plus the
+    directory's own README.md; `ls docs/workspace-template/ | wc -l` prints 9.
+    PRIOR READING, KEPT SO THE CORRECTION IS LEGIBLE: RAN 2026-09-03 (re-run by
+    converge-12o) → rule 12a PASS and rule 12b PASS ("all 5 workspace-template
+    file(s) present"). The disposition did not move; only the evidence caught up.
     RULE NUMBERS CORRECTED 2026-09-03 by converge-12o: the ref read
     `(rules 5a, 5b)`, which after wave 4's renumber name two Core 5 rules about
     bold leads and clause numbering — a different clause entirely. Re-run at

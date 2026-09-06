@@ -14,9 +14,17 @@ Three contracts govern the method. A family of contracts governs the app.
 
 | Contract | What it promises | Status |
 |---|---|---|
-| [`contracts/composition.v1.md`](../contracts/composition.v1.md) | Converge sits lightly on a host and never touches work that isn't its own. | Draft |
-| [`contracts/operation.v1.md`](../contracts/operation.v1.md) | A manager session carries work from gap to verified result without spending your attention. | Draft |
-| [`contracts/documents.v1.md`](../contracts/documents.v1.md) | Every vision, contract, proposal, brief, and work item has one readable shape. | Draft |
+| [`contracts/composition.v1.md`](../contracts/composition.v1.md) | Converge sits lightly on a host and never touches work that isn't its own. | Locked 2026-09-06 |
+| [`contracts/operation.v1.md`](../contracts/operation.v1.md) | A manager session carries work from gap to verified result without spending your attention. | Draft — held loosely 2026-09-06 |
+| [`contracts/documents.v1.md`](../contracts/documents.v1.md) | Every vision, contract, proposal, brief, and work item has one readable shape. | Draft — held loosely 2026-09-06 |
+
+**Three status words, and they mean different things.** *Locked* is the steward's
+word: the four conditions below are answered and nothing edits the file in place
+again. *Draft* is a document still being written. *Draft — held loosely* is a
+document that meets all four conditions and was deliberately left open anyway,
+so its neighbours can still move it; that is a decision, recorded per document
+in [`docs/workflow/LOCK-SHEET-2026-09-06.md`](workflow/LOCK-SHEET-2026-09-06.md),
+and each such file says it in its own first heading.
 
 ### The experience family
 
@@ -28,16 +36,16 @@ in [`docs/RIGHT-SIZING.md`](RIGHT-SIZING.md).
 
 | Contract | What it promises | Status |
 |---|---|---|
-| `contracts/experience.v1.md` | Umbrella — the behaviors every body of the app keeps, whatever it runs on. | Not yet written |
-| `contracts/experience-direction.v1.md` | Direction — the vision and contracts as one experience: read, see what changed, review, restore. | Not yet written |
-| `contracts/experience-operation.v1.md` | Operation — the manager session at work: return brief, strategy, waves and lanes, evidence, limits. | Not yet written |
-| `contracts/experience-console.v1.md` | The Manager Console — one pane that stays open beside either place, carrying your live conversation. | Not yet written |
-| `contracts/experience-collaboration.v1.md` | People collaborate through the shared code host; a teammate's proposal and a manager session's read alike. | Not yet written |
-| `contracts/platform-web.v1.md` | The browser and installable web app body, in its own idiom. | Not yet written |
-| `contracts/platform-ios.v1.md` | The iOS body, in its own idiom. | Not yet written |
-| `contracts/platform-android.v1.md` | The Android body, in its own idiom. | Not yet written |
-| `contracts/platform-macos.v1.md` | The macOS body, in its own idiom. | Not yet written |
-| `contracts/platform-windows.v1.md` | The Windows body, in its own idiom. | Not yet written |
+| [`contracts/experience.v1.md`](../contracts/experience.v1.md) | Umbrella — the behaviors every body of the app keeps, whatever it runs on. | Draft |
+| [`contracts/experience-direction.v1.md`](../contracts/experience-direction.v1.md) | Direction — the vision and contracts as one experience: read, see what changed, review, restore. | Locked 2026-09-06 |
+| [`contracts/experience-operation.v1.md`](../contracts/experience-operation.v1.md) | Operation — the manager session at work: return brief, strategy, waves and lanes, evidence, limits. | Locked 2026-09-06 |
+| [`contracts/experience-console.v1.md`](../contracts/experience-console.v1.md) | The Manager Console — one pane that stays open beside either place, carrying your live conversation. | Locked 2026-09-06 |
+| [`contracts/experience-collaboration.v1.md`](../contracts/experience-collaboration.v1.md) | People collaborate through the shared code host; a teammate's proposal and a manager session's read alike. | Locked 2026-09-06 |
+| [`contracts/platform-web.v1.md`](../contracts/platform-web.v1.md) | The browser and installable web app body, in its own idiom. | Draft — held loosely 2026-09-06 |
+| [`contracts/platform-ios.v1.md`](../contracts/platform-ios.v1.md) | The iOS body, in its own idiom. | Draft |
+| [`contracts/platform-android.v1.md`](../contracts/platform-android.v1.md) | The Android body, in its own idiom. | Draft |
+| [`contracts/platform-macos.v1.md`](../contracts/platform-macos.v1.md) | The macOS body, in its own idiom. | Draft |
+| [`contracts/platform-windows.v1.md`](../contracts/platform-windows.v1.md) | The Windows body, in its own idiom. | Draft |
 | [`contracts/surface.v1.md`](../contracts/surface.v1.md) | The first statement of the two places — now carried by the family above. | Superseded 2026-09-03 |
 
 ## The anatomy every contract follows
@@ -121,8 +129,8 @@ manager session's proposal are reviewed identically.
 
 ## Quickstart by audience
 
-- **Intent steward** — read `docs/VISION.md`, then the four contracts, then
-  `PINS.md`. You make exactly four kinds of call: ratify a change of direction,
+- **Intent steward** — read `docs/VISION.md`, then the three contracts that
+  govern the method, then `PINS.md`. You make exactly four kinds of call: ratify a change of direction,
   make an irreversible choice, check what only a person or device can check, set
   priority or stop. Anything else that reaches you is a defect — say so.
 - **Teammate** — read the one contract your work touches. Disagree with it by

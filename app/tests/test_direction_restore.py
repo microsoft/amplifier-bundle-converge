@@ -79,7 +79,11 @@ Check — a lock refusal names its own cause (converge-8r5)
      FAILS IF: the toast says the app answers no lock route, or names
      converge-eci. Both are causes the screen did not observe.
   l. On a DRAFT contract the ledger watches, tick the three and lock it for
-     real. SEE "Locked: FROZEN", and the H1 stamped on disk.
+     real. SEE a toast reading "Locked — <contract> now carries FROZEN <date>
+     in its first line, so every change to it is a proposal from here.", and
+     the same word stamped in the H1 on disk.
+     FAILS IF: the toast is the bare token "Locked: FROZEN" (converge-nal), or
+     it reports a lock while the H1 on disk is unchanged.
 
 Check — it holds at both widths
   m. Repeat (c)-(f) at 1280x800 and at 390x844. At each, with History open, run
@@ -740,9 +744,19 @@ def test_the_lock_toast_carries_the_servers_sentence_and_no_cause_of_its_own() -
     assert "converge-eci" not in catch, (
         "the catch still names converge-eci as the reason nothing was locked"
     )
-    # The success path is untouched and still reports the document locked.
-    assert "res && res.locked ? `Locked: ${res.locked}`" in body, (
+    # The success path still reports the document locked, and still names the
+    # word stamped in its H1 — but as a sentence rather than the bare token
+    # (converge-nal). Pinned by what it must SAY, not by one exact template, so
+    # rewording it again does not fail a test that was never about the wording.
+    success = _uncommented(body.partition("} catch (err) {")[0])
+    assert "res && res.locked" in success, (
         "a successful lock no longer reports the document locked"
+    )
+    assert "Locked" in success and "${res.locked}" in success, (
+        "the success report no longer names the locking word stamped in the H1"
+    )
+    assert "Locked: ${res.locked}" not in success, (
+        "the success report is the machine's token again, not a sentence for the steward"
     )
 
 

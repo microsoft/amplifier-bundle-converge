@@ -553,7 +553,20 @@ export async function sendLock(answered) {
   closeDialog();
   try {
     const res = await api.lock(state.managerId, state.repoId, state.docId, { conditions: answered });
-    toast(res && res.locked ? `Locked: ${res.locked}` : 'This document is locked.');
+    // A sentence, not the machine's token echoed back (converge-nal). The word
+    // itself still appears, because `FROZEN <date>` is exactly what is now
+    // stamped in the document's own first line (documents.v1 §6) and a steward
+    // who goes looking should find the same word — but the report around it is
+    // plain, and it says what the lock now means for that document.
+    //
+    // Only ever said about a write that landed: `locked`, `day` and `file` come
+    // back on the success path alone, and every refusal arrives as an exception
+    // carrying its own sentence (below).
+    toast(
+      res && res.locked
+        ? `Locked — ${res.file || 'this document'} now carries ${res.locked}${res.day ? ` ${res.day}` : ''} in its first line, so every change to it is a proposal from here.`
+        : 'This document is locked.',
+    );
     await hooks.reloadDoc();
   } catch (err) {
     // What refused, in its own words, and no cause of our own on top of it

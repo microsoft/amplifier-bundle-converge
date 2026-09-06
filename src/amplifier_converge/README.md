@@ -35,10 +35,18 @@ app on 8788 instead.
 
 **It was retired on 2026-09-06 on the intent steward's word** — the page, the
 subcommand, and the tests that exercised only the page. The readers and writers
-above stayed, because `app/` uses them. Its conformance kit stayed too, at
-`conformance/_superseded/surface/`: `ledger/checks/surface_clause9.py`,
-`conformance/documents/run.py` and `tests/conftest.py` all still read it, so
-retiring the page did not retire the kit.
+above stayed, because `app/` uses them. Its conformance kit stayed too, at `conformance/_superseded/surface/`: two
+readers still read it — `conformance/documents/run.py` and `tests/conftest.py`
+— so retiring the page did not retire the kit. There was a third,
+`ledger/checks/surface_clause9.py`, and it went with the page on the same day
+(converge-g499): it rendered its subject from the module the retirement
+removed, so every run of it exited 1 on a `ModuleNotFoundError`.
+
+The `web` extra in `pyproject.toml` stays, and not out of caution: the retired
+kit's own `conformance/_superseded/surface/README.md` still invokes
+`uv run --extra web`, and `uv` refuses outright — rather than warning — when an
+extra named on the command line is not defined. Removing the extra would break
+that README's commands, so the extra outlives the page it was added for.
 
 `amplifier-converge` itself remains as the package's command, now with no
 subcommand at all.

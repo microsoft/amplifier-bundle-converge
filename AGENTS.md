@@ -66,7 +66,7 @@ session. `PINS.md` records exactly what each one checks, including where they
 currently disagree. **If a guard refuses you, do not work around it.** The
 refusal is the rule working. If the guard is wrong, file that as work.
 
-Every contract in `contracts/` is `(DRAFT)` today, so neither guard is currently
+- Six documents are locked as of 2026-09-06 (docs/VISION.md, contracts/composition.v1.md, experience-operation, -console, -collaboration, -direction): both guards — the pre-push scan and hooks-candidate-guard — are ACTIVE for them; a change goes through a `<name>.vN-candidate.md` proposal beside the file. The remaining contracts are DRAFT (three held loosely) and may be edited in place with a changelog row when it fits.
 blocking anything. The rule still holds — write proposals, not edits, the moment
 one locks.
 
