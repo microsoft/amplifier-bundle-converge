@@ -129,3 +129,11 @@ Merged w16-apply-ux (converge-r4e5, -nn6, -71q) and w16-retire-web (converge-5i8
     uv run conformance/composition/run.py .                                  -> PASS
     ./.githooks/pre-push main                                                -> clean — no locked contract edited
     uv run --with pyyaml ledger/checks/verify.py                             -> red on the surface rows (CVG-038/039/057/066) whose page was retired — a reconcile lane re-derives them; CVG-017/018 read this entry.
+
+## 2026-09-06 13:13 - wave 17: the surface rows after the retirement; two proposals drafted
+Merged w17-reconcile-9 (converge-g499, -uub0: nine surface rows re-derived to Can't check with the retirement named; CVG-019 re-read) and w17-two-candidates (converge-528q: contracts/documents.v1-candidate.md — how an amendment is recorded at the 100-line ceiling; docs/VISION.md-candidate.md — the lock entry as a bullet) into main at c51ca35, then re-ran the check myself:
+    uv run --with pyyaml ledger/checks/verify.py                             ->   [FAIL] CVG-030  exit=0 expect=0  'NO-SURFACE-PAGE-BODY'
+    uv run conformance/documents/run.py . --work-items docs/work-items.json -> PASS
+    uv run conformance/composition/run.py .                                  -> PASS
+    uv run --extra web --with pytest --with httpx pytest -q tests/           -> 137 passed, 1 skipped
+    ./.githooks/pre-push main                                                -> clean
