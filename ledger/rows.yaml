@@ -1642,19 +1642,24 @@
   disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 2 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 2 (CVG-012) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-2-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J; else echo CLAUSE-2-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 2 - " modes/converge-manager.md && python3 ledger/checks/turnkey_clause.py CVG-012 PASS "each declare the paths that lane owns" | grep -q "ASSERTS-THIS"; then echo CLAUSE-2-LIVE-READING-SAYS-THE-PLAN-IS-VISIBLE; else echo CLAUSE-2-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-2-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J"
+      stdout_contains: "CLAUSE-2-LIVE-READING-SAYS-THE-PLAN-IS-VISIBLE"
   proves: >
-    That the mode still encodes this clause, AND that the turnkey's step (j)
-    read a wave's own leavings and recorded Core 2 PASS — the lane briefs each
-    declare the paths their lane owns, and the plan record gives REASONS for
-    dated decisions rather than only announcing them. NOT that every plan is
-    visible. The recorded reading is four briefs and 11 of 35 dated decisions,
-    on one host on one day; the clause names four things — order, dependencies,
-    collisions, opportunistic picks — and this reading covers ownership and
-    reasons. A decision nobody wrote down is invisible to it.
+    That the mode still encodes this clause, AND that step (j)'s reading of it,
+    taken LIVE against this host's own manager workspace rather than read out of
+    a pasted step block, says Core 2 PASS — the lane briefs each declare the
+    paths their lane owns, and the plan record gives REASONS for dated decisions
+    rather than only announcing them. NOT that every plan is visible. The
+    clause names four things — order, dependencies, collisions, opportunistic
+    picks — and this reading covers ownership and reasons only. A decision
+    nobody wrote down is invisible to it, and most are not written down: the
+    live reading on 2026-09-06 found reasons for 19 of 90 dated decisions and
+    passed anyway, so the reason half of this green is a floor and not a rate.
+    The probe pins the verdict word and the durable phrase, never the counts —
+    the counts move between two runs minutes apart (89 entries then 90), which
+    is the reading being live and is not drift.
   notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-2. See CVG-010 for the shared cause.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-2. The
@@ -1689,7 +1694,27 @@
     order, dependencies, collisions and opportunistic picks with reasons; this
     reading covers the ownership half of a brief and the reason half of a plan
     entry, on one wave, on one host. `proves` says so.
-    THE `work` REF IS GONE, because a green row may not carry one."
+    THE `work` REF IS GONE, because a green row may not carry one.
+    ────────────────────────────────────────────────────────────────────────────
+    RAN 2026-09-06 (converge-1nb4) → CLAUSE-2-LIVE-READING-SAYS-THE-PLAN-IS-VISIBLE.
+    RE-DERIVED, AND THE ROUTE CHANGED WHILE THE DISPOSITION DID NOT. Above, this
+    row asserted through `ledger/checks/turnkey_step.py`, which reads the step
+    block pasted into `evaluations/turnkey/RESULT.md`. That file is written by
+    whichever lane owns `evaluations/`, so the row asserted the last paste and
+    not the current reading — the exact hazard `turnkey_clause.py` was written
+    for, after CVG-013 sat green on a stale word for a day. converge-usns caught
+    three sibling rows already drifted on that route; this one had not drifted,
+    only gone unprotected. It now asserts through the live reader, like CVG-013,
+    CVG-019 and CVG-021.
+    THE LIVE READING, TAKEN FROM THIS WORKTREE ON 2026-09-06: Core 2 (CVG-012)
+    PASS: 2 lane brief(s) each declare the paths that lane owns, and the plan
+    record at /home/bkrabach/dev/vision-focused-team-ci/.converge/converge/HIGHWAY.md
+    gives reasons for 19 of its 90 dated decisions. CONFORMS is what that earns,
+    so CONFORMS is what it keeps.
+    THIS GREEN IS NARROWER THAN THE ONE IT REPLACES, NOT WIDER. The old note
+    quoted four briefs; the live reading sees two, because two lanes were live
+    at the moment it was taken. A reading of the wave that happens to be running
+    cannot say anything about the waves that are not."
 
 - id: CVG-013
   title: never the bottleneck
@@ -1866,22 +1891,29 @@
       **Feedback is signal, not a ticket.** Before filing: read and quote the
       evidence; confirm which version was seen; merge reports sharing a cause and
       split one hiding several
-  disposition: CONFORMS
+  disposition: GAP
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 4 - " modes/converge-manager.md && [ -f context/manager/feedback-intake.md ] && python3 ledger/checks/turnkey_step.py j "Core 4 (CVG-014) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-4-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J; else echo CLAUSE-4-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 4 - " modes/converge-manager.md && [ -f context/manager/feedback-intake.md ] && python3 ledger/checks/turnkey_clause.py CVG-014 FAIL "carry no enrichment" | grep -q "ASSERTS-THIS"; then echo CLAUSE-4-LIVE-READING-SAYS-AN-ITEM-FILED-FROM-FEEDBACK-QUOTES-NOTHING; else echo CLAUSE-4-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-4-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J"
+      stdout_contains: "CLAUSE-4-LIVE-READING-SAYS-AN-ITEM-FILED-FROM-FEEDBACK-QUOTES-NOTHING"
   proves: >
     That the mode plus context/manager/feedback-intake.md still encode the eight
-    intake rules, AND that step (j) held a raw report and its filed item side by
-    side and recorded Core 4 PASS — the item quotes the report and names the
-    version it was said about. NOT the whole clause. The reading covers the
-    first two intake rules (quote the evidence, confirm the version) on ONE
-    filed item; MERGING reports that share a cause and SPLITTING one that hides
-    several is read by nothing, and the same run recorded a triage naming no
-    item at all, reported unresolved rather than passed.
+    intake rules, AND — this is a RED row, so the probe pins the failure — that
+    step (j)'s reading of this clause, taken LIVE against this host's own
+    manager workspace rather than read out of a pasted step block, says Core 4
+    FAIL: an item filed from feedback carries no enrichment. The probe asserts
+    the red, so it fires when the red is fixed as well as if the mode stops
+    encoding the clause; either way the row is re-read rather than left sitting.
+    NOT that the clause is wholly broken. Of five pairings the step could put
+    side by side, one IS enriched (converge-f5f quotes the report and names the
+    version) and one is not (converge-3rzz names a version and never quotes).
+    NOT the whole clause either way: MERGING reports that share a cause and
+    SPLITTING one that hides several is read by nothing at all, and three
+    triages naming no item are reported unresolved rather than passed, which is
+    the reader refusing to fabricate in the direction that would have looked
+    worse for it.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-4-WITH-INTAKE. The kit assert "No raw
     feedback becomes work without a quoted source and enrichment" has no runner
@@ -1920,6 +1952,38 @@
     a split. `proves` says so, and this row is green on the quoting-and-version
     half only.
     THE `work` REF IS GONE, because a green row may not carry one.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-1nb4) AND MOVED CONFORMS → GAP.
+    RAN 2026-09-06 →
+    CLAUSE-4-LIVE-READING-SAYS-AN-ITEM-FILED-FROM-FEEDBACK-QUOTES-NOTHING.
+    THIS ROW WAS GREEN ON A PASTE, AND THE READER SAYS THE OPPOSITE. Everything
+    above rests on `ledger/checks/turnkey_step.py`, which reads the step block
+    pasted into `evaluations/turnkey/RESULT.md`. That file is written by
+    whichever lane owns `evaluations/`, so this row asserted the last paste and
+    stayed confidently green while the live reading had moved. converge-usns
+    caught it; this pass re-derives it.
+    THE LIVE READING, TAKEN FROM THIS WORKTREE ON 2026-09-06: Core 4 (CVG-014)
+    FAIL: 1 item(s) filed from feedback carry no enrichment: converge-3rzz never
+    quotes the report. Five pairings were read; converge-f5f is enriched,
+    converge-3rzz is not.
+    THE PROBE NOW PINS THE RED, not the mode file and not a paste, so this row
+    flips the moment the reading moves in EITHER direction — which is what
+    `turnkey_clause.py` exists for and what `turnkey_step.py` could not do.
+    THE NEGATIVE CONTROL THAT SHOWS THE TWO ROUTES ARE NOT THE SAME ROUTE, run
+    on 2026-09-06 with the workspace pointed at a directory holding no plan
+    record (`CONVERGE_MANAGER_WORKSPACE=/tmp`), which is the cheapest way to
+    make a reading unavailable:
+      new route  -> TURNKEY-CLAUSE-CVG-014-CANNOT-READ-HERE: no manager
+                    workspace to read a plan record from
+                    -> the probe takes its else branch, and this row goes red
+      old route  -> TURNKEY-STEP-J-PASS-ASSERTS-THIS
+    The old route asserts Core 4 PASS with no reading taken at all, because the
+    sentence it matches is sitting in a file in this repository. That is the
+    whole failure converge-usns reported, reproduced in one command.
+    WHAT WOULD MAKE IT GREEN AGAIN: the quote restored to converge-3rzz's
+    record, or an intake convention that will not let a filing without one land
+    — then the reading re-taken. converge-58pa carries it.
+  work: converge-58pa
 
 - id: CVG-015
   title: lanes are real sessions
@@ -1998,18 +2062,25 @@
   disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 6 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 6 (CVG-016) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-6-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J; else echo CLAUSE-6-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 6 - " modes/converge-manager.md && python3 ledger/checks/turnkey_clause.py CVG-016 PASS "collide with no other lane''s" | grep -q "ASSERTS-THIS" || python3 ledger/checks/turnkey_clause.py CVG-016 SKIP "were running at once" | grep -q "ASSERTS-THIS"; then echo CLAUSE-6-LIVE-READING-SAYS-THE-LANES-RUNNING-NOW-DECLARE-DISJOINT-PATHS; else echo CLAUSE-6-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-6-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J"
+      stdout_contains: "CLAUSE-6-LIVE-READING-SAYS-THE-LANES-RUNNING-NOW-DECLARE-DISJOINT-PATHS"
   proves: >
-    That the mode still encodes this clause, AND that step (j) judged four lanes
-    running at once and recorded Core 6 PASS on the DECLARED half — each brief
-    declares paths that collide with no other lane's. NOT the ACTUAL half: the
-    same reading says only one of the four had commits yet, so the files the
-    lanes really touched could not be compared, and two empty branches share no
-    file by not having one. NOT the shortfall half either — a width shortfall
-    surfacing as a repair the steward answers with a word is read by nothing.
+    That the mode still encodes this clause, AND that step (j)'s reading of it,
+    taken LIVE against this host's own manager workspace rather than read out of
+    a pasted step block, says Core 6 PASS on the DECLARED half — the lanes
+    running AT THE MOMENT OF THE READ declare paths that collide with no other
+    lane's. NOT the ACTUAL half: the same reading says 0 of the 2 had commits
+    yet, so the files the lanes really touched could not be compared, and two
+    empty branches share no file by not having one. NOT the shortfall half
+    either — a width shortfall surfacing as a repair the steward answers with a
+    word is read by nothing.
+    AND NOT THE PRACTICE, ONLY THE PAIR. This reading judges whichever lanes
+    happen to be live when it is taken, so it says nothing about pairs it did
+    not see. On 2026-09-06 the same reader answered FAIL earlier in the day and
+    PASS later, on the same briefing practice, because the pair had changed.
+    `notes` carries the measurement and what it settles.
   notes: "RAN 2026-09-02 → MODE-ENCODES-CLAUSE-6. See CVG-010.
     ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-0gb). RAN → MODE-ENCODES-CLAUSE-6. The
@@ -2046,7 +2117,54 @@
     four had no commits at read time), and the clause's shortfall half — a
     shortfall past a bounded interval becoming a repair card. `proves` carries
     both.
-    THE `work` REF IS GONE, because a green row may not carry one."
+    THE `work` REF IS GONE, because a green row may not carry one.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-1nb4) AND HELD AT CONFORMS.
+    RAN 2026-09-06 →
+    CLAUSE-6-LIVE-READING-SAYS-THE-LANES-RUNNING-NOW-DECLARE-DISJOINT-PATHS.
+    THE ROUTE CHANGED. Everything above rests on `ledger/checks/turnkey_step.py`,
+    which reads the step block pasted into `evaluations/turnkey/RESULT.md` — a
+    file written by whichever lane owns `evaluations/`, so the row asserted the
+    last paste rather than the current reading. It now asserts through
+    `ledger/checks/turnkey_clause.py`, like CVG-013, CVG-019 and CVG-021.
+    THE CORE 6 QUESTION converge-usns REFUSED TO GUESS AT, ANSWERED IN WRITING.
+    It asked: two briefs split `ledger/` by ROW between concurrent lanes — one
+    lane owns row CVG-302, the others own everything except it — so can the
+    reading see a row-level split, or must it count it as an overlap? MEASURED,
+    not assumed, by running the harness's own `brief_ownership` and
+    `_paths_collide` over the two real brief files on this host:
+      w14-adopt-rerun   -> ['evaluations/adopter', 'ledger']
+      w14-reconcile-8   -> ['ledger']
+      declared collisions between them -> [('ledger', 'ledger')]
+    IT MUST COUNT IT AS AN OVERLAP, AND IT CANNOT DO OTHERWISE. `brief_ownership`
+    takes only backticked path tokens up to the first sentence break, so the
+    qualifiers — EXCEPT row CVG-302, and (row CVG-302 only) — are dropped as
+    prose before any comparison happens; both briefs normalise to `ledger`, and
+    `_paths_collide` compares path prefixes.
+    AND BY THE CLAUSE'S OWN WORDS IT SHOULD. Core 6 promises lanes fill only
+    with items that provably touch DIFFERENT FILES. Two lanes carving one file
+    are not touching different files, whatever their briefs say about rows.
+    Teaching the reader to honour a row-level split would make it agree with the
+    briefs and disagree with the contract, which is the wrong direction to move
+    a check. So the reading is not blind here; it is strict, and the strictness
+    is the clause.
+    WHY THIS ROW IS STILL GREEN ANYWAY, AND HOW NARROW THAT GREEN IS. The live
+    reading taken from this worktree on 2026-09-06 says: Core 6 (CVG-016) PASS:
+    2 lanes ran at once, each brief declares paths that collide with no other
+    lane's, and the actual half is unmeasured: only 0 of them has commits yet.
+    The two it saw were w14-run-the-app and w14-reconcile-8, which share nothing.
+    Taken EARLIER THE SAME DAY the identical reader said FAIL, naming
+    w14-adopt-rerun and w14-reconcile-7 both owning `ledger` (converge-usns
+    records that run). Same practice, opposite verdicts, hours apart — the
+    verdict tracks which lanes happen to be live at the moment of the read, not
+    whether the practice is sound. CONFORMS is what today's reading earns and is
+    all this row claims; a reader who wants the practice judged wants
+    converge-zjcs, which carries the briefing decision and is deliberately NOT
+    this row's ref, because a green row may not carry one.
+    EXPECT THIS ROW TO GO RED WITHOUT ANYTHING BREAKING. If the ledger-splitting
+    pair is concurrent when the probe next runs, it will report the overlap and
+    this row will flip. That red will be a true reading of the clause as written
+    and a real practice named — not a false alarm to suppress."
 
 - id: CVG-017
   title: done means the manager session re-ran the check
@@ -2945,20 +3063,27 @@
     quote: |
       **Hand off when done.** A manager session that has lost its footing says so,
       writes a hand-off a fresh session can resume from, and stops.
-  disposition: CONFORMS
+  disposition: GAP
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 13 - " modes/converge-manager.md && python3 ledger/checks/turnkey_step.py j "Core 13 (CVG-023) PASS" | grep -q "PASS-ASSERTS-THIS"; then echo CLAUSE-13-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J; else echo CLAUSE-13-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 13 - " modes/converge-manager.md && python3 ledger/checks/turnkey_clause.py CVG-023 FAIL "say only what finished and never what remains" | grep -q "ASSERTS-THIS"; then echo CLAUSE-13-LIVE-READING-SAYS-A-RECORDED-CLOSE-HANDS-OVER-NOTHING; else echo CLAUSE-13-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-13-ENCODED-AND-ASSERTED-BY-TURNKEY-STEP-J"
+      stdout_contains: "CLAUSE-13-LIVE-READING-SAYS-A-RECORDED-CLOSE-HANDS-OVER-NOTHING"
   proves: >
-    That the mode still encodes this clause, AND that step (j) read the recorded
-    closes of a real wave and found each one names what REMAINED — residuals,
-    what was parked, what was still live — so a fresh session could resume from
-    the record alone. NOT that a manager session which LOST ITS FOOTING wrote
-    one: two closes were read, both of sessions that finished. The clause's
-    hardest case, the session that stops badly, has still never been observed.
+    That the mode still encodes this clause, AND — this is a RED row, so the
+    probe pins the failure — that step (j)'s reading of it, taken LIVE against
+    this host's own manager workspace rather than read out of a pasted step
+    block, says Core 13 FAIL: recorded closes say only what finished and never
+    what remains. The probe asserts the red, so it fires when the red is fixed
+    as well as if the mode stops encoding the clause; either way the row is
+    re-read rather than left sitting.
+    NOT that no close is resumable: 3 of 6 do name what remained and pass, so
+    the difference the reading found is what was WRITTEN, not what it can see.
+    NOT that a manager session which LOST ITS FOOTING failed to write one — the
+    clause's hardest case has still never been observed on this host, and every
+    close read was of a session that finished. What is red is the easier half:
+    a session that ended by choice and left the next one nothing.
   notes: >
     RAN 2026-09-02 → MODE-ENCODES-CLAUSE-13. The kit assert "a hand-off exists for
     every manager session that ended by choice" has no runner and no artifact to
@@ -2997,6 +3122,31 @@
     'one was owed and not written' — it can now only judge the ones that were
     written. `proves` carries that.
     THE `work` REF IS GONE, because a green row may not carry one.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-1nb4) AND MOVED CONFORMS → GAP.
+    RAN 2026-09-06 →
+    CLAUSE-13-LIVE-READING-SAYS-A-RECORDED-CLOSE-HANDS-OVER-NOTHING.
+    THIS ROW WAS GREEN ON A PASTE, AND THE READER SAYS THE OPPOSITE. Everything
+    above rests on `ledger/checks/turnkey_step.py`, which reads the step block
+    pasted into `evaluations/turnkey/RESULT.md` — written by whichever lane owns
+    `evaluations/`, so this row asserted the last paste and stayed confidently
+    green while the live reading had moved. converge-usns caught it; this pass
+    re-derives it through `ledger/checks/turnkey_clause.py`.
+    THE LIVE READING, TAKEN FROM THIS WORKTREE ON 2026-09-06: Core 13 (CVG-023)
+    FAIL: 3 of 6 recorded close(s) say only what finished and never what
+    remains, so a fresh session has nothing to resume from. The three are the
+    W8, W11 and W12 closes.
+    THE NEWEST CLOSE IS ONE OF THE THREE, which is the worst place for this
+    clause to fail: the entry a fresh session reads FIRST is the one that hands
+    it nothing.
+    THE OLD GREEN WAS NOT WRONG WHEN IT WAS WRITTEN, AND THAT IS THE POINT. Two
+    closes existed then and both were resumable. Four more were written since,
+    three of them bare, and a row pinned to a paste could not notice. A probe on
+    the live route notices the day it happens.
+    WHAT WOULD MAKE IT GREEN AGAIN: a close convention that requires the remains
+    half so every future close carries it, or the three bare entries amended
+    where that is honest — then the reading re-taken. converge-om7p carries it.
+  work: converge-om7p
 
 - id: CVG-301
   title: the first wake on a BLANK repository — investigate, then propose

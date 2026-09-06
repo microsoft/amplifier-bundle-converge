@@ -1,10 +1,27 @@
 # The Converge companion app
 
+    scripts/run-app.sh
+
+That is the one command, and it is the one `README.md` names: it serves on
+<http://127.0.0.1:8788>, prints that URL, says how you sign in, and prints every
+workspace root it scanned for manager sessions. `--lan` binds every interface
+instead of loopback and prints the address another device can open (here,
+<http://spark-1:8788> — 192.168.1.5); `--port N` moves it off 8788; anything
+else is handed to `app.serve` unchanged. Ctrl-C stops it.
+
+Underneath it is one line, and running that line yourself is the same thing:
+
     uv run --extra app python -m app.serve --host 0.0.0.0 --port 8788
 
-On the LAN: <http://spark-1:8788> (192.168.1.5). As a service: `cp
+**As a service**, which is how this host runs it — `cp
 app/converge-app.service ~/.config/systemd/user/ && systemctl --user enable
---now converge-app`. Tests: `uv run --extra app --with pytest --with httpx pytest -q app/tests`.
+--now converge-app`. The unit runs the module line above directly rather than
+the wrapper: a unit file already carries the working directory, the arguments
+and the restart policy, so the wrapper's whole job — remembering `--extra app`,
+choosing a bind, printing where to go — is already done by systemd and would
+only be a second place for the port to drift. Change the port in one of them and
+you have changed it in one of them. Tests: `uv run --extra app --with pytest
+--with httpx pytest -q app/tests`.
 
 **Sign-in is your machine account, checked by PAM** — the same check `login`
 makes; the app keeps no passwords. What it keeps is a signed cookie naming

@@ -120,8 +120,18 @@ def find_workspace() -> tuple[pathlib.Path | None, str]:
         for candidate in [start, *start.parents]:
             if is_workspace(candidate):
                 return candidate, f"found above {start}"
+            # The clause-5 layout (modes/converge-manager.md, "Where you run"):
+            # a manager session's record lives at <workspace>/.converge/<id>/,
+            # which is a SIBLING of the repository, not an ancestor. From the
+            # integration checkout the walk above never sees it; from a lane
+            # worktree under lanes/ it does. Look one step sideways too.
+            side = candidate / ".converge"
+            if side.is_dir():
+                for record in sorted(side.iterdir()):
+                    if record.is_dir() and is_workspace(record):
+                        return record, f"found beside {candidate} (clause-5 layout, {record.name})"
     return None, (f"no ancestor of {here} or of any registered worktree holds "
-                  f"both {' and '.join(MARKERS)}")
+                  f"both {' and '.join(MARKERS)}, and no ancestor's .converge/<id>/ does either")
 
 
 def read(letter: str) -> tuple[dict | None, str]:

@@ -98,3 +98,12 @@ Merged w14-adopt-rerun into main at 0896483, then re-read the artifacts myself:
     uv run conformance/documents/run.py . --work-items docs/work-items.json -> PASS
     amplifier-digital-twin list                    -> no adopter-* container
 Both first-wake paths of operation.v1 Core 14 are Kept on measurement: new project 9/9 (03:50Z run), existing project 12/12 (08:57Z run), each in a fresh container with an AI user reading only README.md.
+
+## 2026-09-06 10:02 - wave 14 closed: reconcile-8 and run-the-app
+Merged w14-reconcile-8 (CVG-012/014/016/023 moved off the pasted block onto the live reading) and w14-run-the-app (converge-sf1u: scripts/run-app.sh, README "Run the app", the agent context's "The app"; converge-jcha: the locking test asserts the one-edit truth) into main at 52b9906, then re-ran the check myself:
+    uv run --extra app --with pytest --with httpx pytest -q app/tests        -> 319 passed, 149 skipped
+    bash scripts/run-app.sh --port 8797 (own port)                           -> printed the URL, sign-in and workspace roots; /healthz 200; stopped
+    uv run conformance/documents/run.py . --work-items docs/work-items.json -> PASS
+    uv run conformance/composition/run.py .                                  -> PASS
+    uv run --with pyyaml ledger/checks/verify.py                             -> nine live-route rows red for ONE cause: the reader walked ancestors for the plan record and the clause-5 layout puts it beside the repository. Taught it the layout in place (ledger/checks/turnkey_clause.py); re-run below.
+Step 4 of the steward's order is complete: manager sessions register themselves, the app discovers them, and one command runs the app, told in README and the agent context.
