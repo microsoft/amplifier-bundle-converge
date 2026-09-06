@@ -174,6 +174,47 @@
 # kit-assert bullet the amendment ADDED to composition.v1 has neither a ledger
 # row nor a kit rule. The fact it describes holds on this host; the promise that
 # the kit asserts it does not. converge-lhkf carries both halves.
+# RE-DERIVED 2026-09-06 (converge-g499) — THE RECONCILE AFTER A BODY WAS
+# RETIRED, WHICH IS A DIRECTION THIS LEDGER HAD NOT BEEN MOVED IN BEFORE. On
+# 2026-09-06 the intent steward said retire the earlier two-halves web page
+# (docs/workflow/owner-ratifications-2026-09-06.md round 2); converge-5i8k took
+# src/amplifier_converge/web/ out at commit eea3166 and filed what it could not
+# reach. The gate went red the same day, and every one of its four failures was
+# a row still reading a page that no longer exists:
+#   CVG-038  exit 1, empty stdout — ModuleNotFoundError, not a verdict
+#   CVG-066  SURFACE-RULE-8C-NOT-ASSERTED-AGAINST-THE-APP (its own else-branch)
+#   CVG-057  PAGE-WALK-ASSERTED=0, down from 1
+#   CVG-039  the indexed-path tripwire, on a whole file that was deleted
+# SEVEN ROWS MOVED CONFORMS → NOT-ASSERTABLE, AND THE WORD MATTERS. A promise
+# whose body was deliberately withdrawn is not Broken (nothing failed) and not
+# Kept (nothing ran) — it is Can't check, with the retirement, its date, its
+# commit and the steward's word named in each justification. LEDGER-FORMAT names
+# no retirement shape, so every row STAYS: the ledger is a record, and the dated
+# readings taken while the page existed stay inside each row rather than being
+# tidied away. The reasoning is in one place — the surface.v1 section header.
+# NINE ROWS WERE READ, NOT FOUR, BECAUSE THE GATE CANNOT SEE A CITE IN PROSE.
+# Beyond the four above: CVG-030 and CVG-037's indexed refs named test functions
+# that no longer exist inside files that still do; CVG-034 named THREE such
+# functions and was on nobody's list; CVG-053 (documents.v1, still Kept) and
+# CVG-213 (platform-web, still Can't check) cited the deleted tests in prose.
+# Every one of those would have gone on reading green or plausible while
+# pointing a reader at nothing. HOW THEY WERE FOUND, so the next pass repeats
+# the sweep rather than trusting a filing: every `test_\w+` named anywhere in
+# this file was compared against the live suite's 129 function names.
+# ONE CHECK SCRIPT WAS DELETED, WHICH THIS PASS DOES NOT TREAT AS ROUTINE.
+# ledger/checks/surface_clause9.py rendered its subject from the removed module,
+# so it could not run at all and could not be repaired without choosing a
+# different body — a decision, not a repair. Two lines outside ledger/ still
+# name it; filed as converge-3hew rather than touched.
+# WHAT WAS NOT DONE, AND WHY IT WAS THE OTHER WAY OUT. converge-uub0 named two:
+# re-point these checks at the app on 8788, or give the rows the disposition a
+# superseded contract's clauses take when no body answers them. The first was
+# refused: surface.v1 was superseded on 2026-09-03 and app/ is governed by the
+# experience family, which has its own kits and its own rows — asserting a
+# superseded contract against a body the newer contracts own would put two
+# verdicts on one thing and hide a regression in whichever went green.
+# CVG-019 IS IN THIS PASS AND HAS NOTHING TO DO WITH THE RETIREMENT: it drifts
+# with the plan record, it was re-run live, and it still reads 0 of 132 lanes.
 #
 # WHAT THIS REPO OWES
 # -------------------
@@ -1489,6 +1530,25 @@
     clean laptop while this row was red, and would read SKIP on a CI runner that
     installs no app bundles. It may not be read as a claim about the repository;
     CVG-006 and CVG-009 are the rows that make those, and both are green.
+    ────────────────────────────────────────────────────────────────────────────
+    OBSERVED 2026-09-06 (converge-g499), NOT RE-DERIVED — THE LIMIT ABOVE
+    HAPPENED. This row's disposition, probe and expect are untouched; what is
+    recorded is that the reading FLAPPED under a lane that was not looking at it.
+    Three runs of `uv run --with pyyaml ledger/checks/verify.py` inside about an
+    hour, with nothing in this tree touching composition/: PASS, then SKIP —
+    which FAILED the whole gate, naming this row — then PASS again. Run directly
+    between the last two, the kit itself said: [PASS] 6c … "with 20 app bundle(s)
+    composed -- 1 of them this repository's -- an unrelated session's mount plan
+    carries no session-wide spawn policy and its spawned helper keeps shell
+    (tool-bash), delegation (tool-delegate), skills (tool-skills)".
+    THE COUNT KEEPS MOVING AND THE PROBE IS RIGHT NOT TO PIN IT: 22 on 2026-09-04
+    before the carrier left, 21 after, 20 today. Other sessions install and
+    remove bundles on this machine while the gate runs.
+    WHY THIS IS WRITTEN HERE RATHER THAN ACTED ON. A SKIP fails the gate in the
+    same words a real regression would, so a lane that saw only the middle run
+    would owe this row a full re-read for nothing. Making a SKIP legible without
+    making it silent is a design call, not a reconcile's to take; filed as
+    converge-ucai.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # operation.v1 — 15 rows.  The contract names its own gate "**Red today** —
@@ -2661,7 +2721,35 @@
     re-derivation. Re-run against the plan record as it stands after the two locks
     and this lane's apply, it answers exactly as it did before, so there is nothing
     here to bump and nothing to move. What it is still waiting on is unchanged, and
-    it is not an instrument: a wave on this host that actually stalls."
+    it is not an instrument: a wave on this host that actually stalls.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-g499, the reconcile after the retirement).
+    STILL GAP, READING UNCHANGED, DENOMINATOR STILL ZERO AND STILL WIDENING. RAN
+    2026-09-06 →
+    CLAUSE-9-READING-ANSWERS-BOTH-WAYS-AND-THIS-HOST-HAS-STILL-NEVER-STALLED.
+    Live on this host, uv run evaluations/turnkey/run.py --env local --workspace
+    /home/bkrabach/dev/vision-focused-team-ci/.converge/converge --project
+    converge --steps j, verbatim: Core 9 (CVG-019) SKIP: no lane ended without
+    commits, so no stall exists for this reading to judge — the reading ran and
+    found nothing — read 0 of 132 lane(s) in the manifest; 130 could not be read
+    at all (worktree gone and branch not in any checkout reachable from here):
+    engine-surface-contract, ai-context-currency, engine-surface-seed,
+    w1-composition, w1-guard, w1-documents, and 124 more.
+    THE ONLY NEWS IS THE SIZE OF THE HOLE, AND IT IS THE SAME NEWS AS LAST TIME.
+    0 of 114 with 109 unreadable on 2026-09-05; 0 of 123 with 120 today's earlier
+    pass; 0 of 132 with 130 now. Nine more lanes in the manifest, ten more
+    unreadable. Not one lane this host has ever run can be read by this reading,
+    so the SKIP is still an instrument failure standing in front of the event the
+    row is actually waiting for.
+    NOTHING WAS TOUCHED, AND THE REASONS ARE THE ONES ALREADY ON THIS ROW. The
+    fragment is still verbatim what the reading says, so the probe is not lying;
+    pinning the coverage numbers would turn an ordinary lane merge into a false
+    alarm; manifest.tsv belongs to the manager workspace and converge-7c52
+    already carries it; converge-7stl is open and is still what would close this
+    row — a real lane on this host ending with an unchanged branch.
+    THIS ROW HAS NOTHING TO DO WITH THE RETIREMENT that the rest of this pass is
+    about. It is here because it drifts with the plan record and the item that
+    opened this pass asked for it by name, not because a page went away."
   work: converge-7stl
 
 - id: CVG-020
@@ -3446,14 +3534,47 @@
     a session's behaviour.
 
 # ─────────────────────────────────────────────────────────────────────────────
-# surface.v1 — 12 rows.  The contract names "the companion web page shipped
-# inside Converge" as its reference implementation.  THAT PAGE DOES NOT EXIST
-# IN THIS REPO (converge-2qh is building it).  So every clause is GAP — except
-# one, where the verified mockup contradicts the clause outright.
+# surface.v1 — 13 rows.  CONFORMS=6, NOT-ASSERTABLE=7, and the seven are all the
+# same story.  READ THIS BEFORE READING ANY ROW BELOW.
 #
-# Each row records what the surface kit reports AGAINST THE VERIFIED MOCKUP,
-# an out-of-repo read-only reference pinned in CVG-037's `subject:`.  That is
-# real evidence the DESIGN is wired.  It is not evidence this repo ships anything.
+# THE BODY THESE ROWS JUDGED WAS RETIRED ON 2026-09-06, ON THE INTENT STEWARD'S
+# OWN WORD.  The contract names "the companion web page shipped inside Converge"
+# as its reference implementation.  That page — src/amplifier_converge/web/ —
+# was removed at commit eea3166 (docs/workflow/owner-ratifications-2026-09-06.md
+# round 2, work item converge-5i8k), together with the `amplifier-converge web`
+# subcommand and the 47 test cases that only exercised it.  surface.v1 itself was
+# SUPERSEDED on 2026-09-03 by the experience family, which is written against a
+# different body: the app in app/, with its own five kits and its own rows.
+#
+# SO SEVEN CLAUSES HAVE NO SUBJECT HERE, AND EACH READS Can't check.  Not Kept —
+# nothing ran.  Not Broken — nothing failed.  A promise whose body was
+# deliberately withdrawn is unjudgeable, and saying so is the whole point of the
+# fifth word.  The rows are KEPT, because the ledger is a record and ids are
+# never reused; LEDGER-FORMAT names no retirement shape, so nothing is deleted.
+#
+# SIX OF THE SEVEN SHARE ONE ASSERTION, and it is not a formality:
+#     if ls -d src/amplifier_converge/web tests/test_renders_at_both_widths.py …
+#     → NO-SURFACE-PAGE-BODY
+# It watches for the body coming BACK.  The day a page reappears under those
+# names, six rows go red together and ask to be re-derived rather than sitting
+# quietly Can't check — the same instrument, and the same reasoning, as the 36
+# platform rows below.  Controlled in both directions on 2026-09-06: with a
+# `web` package present, and with only the width test present, it prints
+# SURFACE-PAGE-BODY-REAPPEARED.  The seventh, CVG-057, keeps a live probe
+# because half of what it measured (the words map) is still shipped.
+#
+# WHAT ASSERTED THESE ROWS WHILE THEY WERE GREEN is kept inside each one, dated,
+# under a RE-DERIVED 2026-09-06 line — so a reader who finds an old resolution
+# or an old note claiming this contract is kept can see exactly when that stopped
+# being true and why.  The out-of-repo mockup pinned in CVG-037's `subject:` is
+# still hashed by the gate and is still NOT a subject: it FAILs the vocabulary
+# rule and always has.
+#
+# THE SIX ROWS STILL Kept ARE KEPT ON THE LIBRARY, NOT ON A PAGE: CVG-031, 032,
+# 033, 035, 036 and 056 read reading/ and writing/ directly (the strip, the four
+# writes, the state it owns, what changed, the dated ratification record), and
+# every test they name still exists — checked function by function in this pass,
+# not assumed from a filename.
 # ─────────────────────────────────────────────────────────────────────────────
 
 - id: CVG-030
@@ -3464,10 +3585,19 @@
     quote: |
       **Two places and a short list.** *Direction* — the vision and contracts as
       one experience. *Operation* — the manager session at work as one experience.
-  disposition: CONFORMS
+  disposition: NOT-ASSERTABLE
   assertion:
-    kind: indexed
-    ref: tests/test_two_places_and_the_strip.py + tests/test_answering_shortens_the_list.py
+    kind: absence
+    ref: 'if ls -d src/amplifier_converge/web tests/test_renders_at_both_widths.py 2>/dev/null | grep -q .; then echo SURFACE-PAGE-BODY-REAPPEARED; else echo NO-SURFACE-PAGE-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-SURFACE-PAGE-BODY"
+  justification: >
+    THE TWO PLACES WERE TWO PAGES, AND THE PAGE IS GONE. This row rested on
+    test_the_two_places_are_reachable_from_every_page, which fetched `/`,
+    `/direction` and `/operation` and looked for the links between them; it was
+    deleted with the body it read. See the surface.v1 section header above for
+    the retirement and why every row in this block reads the same way.
   notes: >
     RAN 2026-09-02 `uv run --extra web --with pytest --with httpx pytest tests/ -q`
     → 116 passed. test_the_two_places_are_reachable_from_every_page asserts both
@@ -3477,6 +3607,26 @@
     "Nothing needing you is said aloud, as good news"; and
     test_answering_shortens_the_list covers the shortening.
     FLIPPED FROM GAP THIS SESSION — see the header's SECOND RECONCILE note.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-g499, the reconcile after the retirement).
+    CONFORMS → NOT-ASSERTABLE. RAN 2026-09-06 → NO-SURFACE-PAGE-BODY.
+    TWO OF THE FOUR TESTS NAMED ABOVE NO LONGER EXIST, and this row's assertion
+    was the half that went. Measured by listing every `def test_` in `tests/`
+    (129 functions today) and looking for them: neither
+    test_the_two_places_are_reachable_from_every_page nor
+    test_an_empty_list_reads_as_good_news is among them. Both took a `client`
+    and read rendered HTML; the page they read was retired on 2026-09-06.
+    WHAT SURVIVES, NAMED SO A READER DOES NOT MISTAKE THIS FOR TOTAL LOSS: the
+    short-list half of the bold lead is still asserted, by
+    test_the_short_list_never_shows_more_than_five and
+    test_every_decision_arrives_worked_out, both reading `reading/strip.py`
+    directly. But the SENTENCES THIS ROW QUOTES are about the two places, not
+    the cap, and nothing renders those two places any more. A green on the cap
+    would be a green for a different sentence.
+    THE INDEXED REF WAS DROPPED RATHER THAN TRIMMED TO THE SURVIVOR. Both files
+    it named still exist, so verify.py's path check never noticed anything — the
+    exact "confident pointer at nothing" this ledger has been caught by twice
+    (see CVG-103 in the header). A ref that resolves is not a ref that asserts.
 
 - id: CVG-031
   title: decisions arrive worked out
@@ -3547,15 +3697,39 @@
       **Proposals look the same whoever proposed.** A manager session's draft and
       a teammate's pull request: what changes, sentence by sentence · the evidence
       · what does not change · your questions pinned to paragraphs.
-  disposition: CONFORMS
+  disposition: NOT-ASSERTABLE
   assertion:
-    kind: indexed
-    ref: tests/test_two_places_and_the_strip.py (test_both_kinds_of_proposal_are_read_the_same_way, test_a_proposal_missing_its_evidence_is_named_as_such, test_a_question_can_be_attached_to_a_paragraph)
+    kind: absence
+    ref: 'if ls -d src/amplifier_converge/web tests/test_renders_at_both_widths.py 2>/dev/null | grep -q .; then echo SURFACE-PAGE-BODY-REAPPEARED; else echo NO-SURFACE-PAGE-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-SURFACE-PAGE-BODY"
+  justification: >
+    ALL THREE TESTS THIS ROW NAMED WERE DELETED WITH THE PAGE. Each fetched
+    `/direction` or a proposal page and read the rendered result; none has a
+    body to read any more. See the surface.v1 section header above for the
+    retirement and why every row in this block reads the same way.
   notes: >
     RAN 2026-09-02 → 116 passed. Three tests, one per part of the clause: both
     kinds read the same way, a proposal missing its evidence is named as such
     (rather than passing quietly), and a question can be pinned to a paragraph.
     FLIPPED FROM GAP THIS SESSION.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-g499, the reconcile after the retirement).
+    CONFORMS → NOT-ASSERTABLE. RAN 2026-09-06 → NO-SURFACE-PAGE-BODY.
+    THIS ROW IS THE WORST OF THE SEVEN AND WAS NOT ON THE FILED LIST. Its ref
+    named three test functions and ALL THREE are gone — checked against every
+    `def test_` in `tests/` (129 today): test_both_kinds_of_proposal_are_read_the_same_way,
+    test_a_proposal_missing_its_evidence_is_named_as_such and
+    test_a_question_can_be_attached_to_a_paragraph are none of them. The FILE
+    they lived in still exists, so verify.py's indexed-path check passed over it
+    without a word, and the row would have gone on reading Kept on the strength
+    of three functions that no longer exist.
+    HOW IT WAS FOUND, so the next pass can repeat it rather than rely on a
+    filing: every `test_\\w+` named anywhere in this ledger was compared against
+    the live suite's function list. That is what turned the four failing rows the
+    gate reported into nine rows to read (CVG-034 and CVG-213 were the two the
+    retirement lane's own filing, converge-uub0, did not name).
 
 - id: CVG-035
   title: what changed since you last read this
@@ -3602,10 +3776,20 @@
     quote: |
       Technical detail waits behind a Details fold. The app surfaces; it does not
       interrupt.
-  disposition: CONFORMS
+  disposition: NOT-ASSERTABLE
   assertion:
-    kind: indexed
-    ref: tests/test_two_places_and_the_strip.py (test_technical_words_stay_behind_a_details_fold)
+    kind: absence
+    ref: 'if ls -d src/amplifier_converge/web tests/test_renders_at_both_widths.py 2>/dev/null | grep -q .; then echo SURFACE-PAGE-BODY-REAPPEARED; else echo NO-SURFACE-PAGE-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-SURFACE-PAGE-BODY"
+  justification: >
+    THE FOLD THIS ROW WATCHED WAS A FOLD ON A PAGE. Its one test,
+    test_technical_words_stay_behind_a_details_fold, rendered the page and read
+    what sat outside a `<details>`; it was deleted with the page on 2026-09-06.
+    The pinned mockup below is NOT a substitute subject — it FAILs this clause's
+    sibling rule and always has. See the surface.v1 section header above for the
+    retirement and why every row in this block reads the same way.
   subject:                     # DECLARED DEVIATION 3 — out-of-repo, see header
     path: /home/bkrabach/dev/vision-focused-team-ci/ai_working/converge-ux-mockups/index.html
     repo: vision-focused-team-ci@32743b1
@@ -3616,9 +3800,12 @@
       is measured against these exact bytes and would be unreproducible without
       the pin.
   proves: >
-    That the app puts technical detail behind a Details fold. NOT that the app's
-    own words avoid internal vocabulary — nothing scans the shipped app for that.
-    See CVG-066.
+    Since 2026-09-06, only that no page body has come back under the names this
+    row's assertion watches. It no longer proves anything about a fold, because
+    there is no rendered surface here to fold anything behind. The reading it
+    USED to carry — that the app puts technical detail behind a Details fold —
+    is kept in the notes below as a record of what was true while the page
+    existed, and must not be read as a claim about today.
   notes: >
     RAN 2026-09-02 → 116 passed, including
     test_technical_words_stay_behind_a_details_fold.
@@ -3638,34 +3825,82 @@
     The protocol-authority ruling that permitted VIOLATION against a DRAFT clause
     (draft-vs-locked governs the remedy, not the observation) stands on the record
     for the next time one is needed.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-g499, the reconcile after the retirement).
+    CONFORMS → NOT-ASSERTABLE. RAN 2026-09-06 → NO-SURFACE-PAGE-BODY.
+    THE SUBJECT CHANGED UNDERNEATH THIS ROW FOR THE SECOND TIME, and this time it
+    changed to nothing. The note above records the first time — mockup → app —
+    and says plainly that the VIOLATION "did not get FIXED, the SUBJECT changed
+    underneath it". The same discipline applies in the other direction now: the
+    app half was not BROKEN, its body was retired, so the row reads Can't check
+    rather than Broken.
+    THE MOCKUP PIN STAYS AND IS STILL NOT A SUBJECT. `subject:` above is kept for
+    the reason it already gives — the 2026-09-02 finding is measured against
+    those exact bytes and is unreproducible without them — and verify.py still
+    hashes it (it matched on this run). Pointing this row back at the mockup to
+    keep a reading alive would be choosing a flattering subject, which is the one
+    move CVG-038's own notes were written to forbid.
 
 - id: CVG-066
-  title: the app's own words, judged by the shipped kit — rule 8c passes on every page, read from the kit's retired home
+  title: the app's own words, judged by the shipped kit — the kit stands, the pages it judged are retired
   contract:
     file: contracts/surface.v1.md
     clause: "Conformance kit asserts, bullet 5"
     quote: "No internal vocabulary outside Details folds."
-  disposition: CONFORMS
+  disposition: NOT-ASSERTABLE
   assertion:
-    kind: probe
-    ref: 'if uv run --extra web --with pytest --with httpx pytest "tests/test_plain_words_on_the_surface.py::test_the_shipped_kit_reports_rule_8c_pass_on_every_page" -q >/dev/null 2>&1; then echo SURFACE-RULE-8C-PASSES-ON-EVERY-APP-PAGE; else echo SURFACE-RULE-8C-NOT-ASSERTED-AGAINST-THE-APP; fi'
+    kind: absence
+    ref: 'if ls -d src/amplifier_converge/web tests/test_renders_at_both_widths.py 2>/dev/null | grep -q .; then echo SURFACE-PAGE-BODY-REAPPEARED; else echo NO-SURFACE-PAGE-BODY; fi'
     expect:
       exit: 0
-      stdout_contains: "SURFACE-RULE-8C-PASSES-ON-EVERY-APP-PAGE"
+      stdout_contains: "NO-SURFACE-PAGE-BODY"
+  justification: >
+    THE SCANNER OUTLIVED WHAT IT SCANNED. `conformance/_superseded/surface/run.py`
+    is still on disk and its rule 8c still works; what is gone is the set of
+    rendered pages it was handed. The test that did the handing —
+    test_the_shipped_kit_reports_rule_8c_pass_on_every_page — was deleted with the
+    page on 2026-09-06, and so was
+    test_the_apps_own_copy_never_uses_an_internal_term beside it. A rule with no
+    subject returns no verdict, which is Can't check. See the surface.v1 section
+    header above for the retirement and why every row in this block reads the
+    same way.
   proves: >
-    That the SHIPPED kit — now `conformance/_superseded/surface/run.py`, imported
-    from where it lives and not reimplemented — reports rule 8c PASS on the HTML
-    of every page the app declares, rendered against a project deliberately
-    written in the machinery's own words. It is the kit's verdict, not a test's
-    opinion of the kit. NOT that the pinned mockup passes: it still does not
-    (CVG-037). And NOT that a LIVE kit carries this scan — the kit that carries
-    it is retired, which is a fact about where the assertion lives, recorded
-    below, not a gap in the assertion itself.
-    THE READING THIS ROW CARRIED FOR ONE DAY, 2026-09-03 to 2026-09-04, KEPT FOR
-    THE RECORD — That the wiring which used to carry this promise DOES NOT RUN
-    any more. The probe asserted the gap itself, so that it would flip green-ward
-    the moment the caller was re-pointed or the scan found a new home. It flipped.
+    Since 2026-09-06, only that no page body has come back under the names this
+    row's assertion watches. It is deliberately NOT the old probe with its
+    expectation flipped: that probe ran `pytest` on a node id that no longer
+    exists, so it would have "passed" by failing to collect a test — a green from
+    an error, which is the shape this ledger has been caught by before. The
+    readings this row carried while a page existed are kept in the notes below as
+    a record, and are not claims about today.
   notes: >
+    THIS ROW'S NOTES RUN NEWEST FIRST, unlike its neighbours. The 2026-09-06 pass
+    is at the top; everything below it is a dated record of a reading taken while
+    a page still existed.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-g499, the reconcile after the retirement).
+    CONFORMS → NOT-ASSERTABLE. RAN 2026-09-06 → NO-SURFACE-PAGE-BODY.
+    THE OLD PROBE WAS ALREADY SAYING SO, IN ITS OWN WORDS, AND IT WAS RIGHT.
+    Run on this tree before it was replaced it printed
+    SURFACE-RULE-8C-NOT-ASSERTED-AGAINST-THE-APP — the else-branch a previous
+    pass built precisely so this could not go quiet. The row was written to catch
+    exactly this state; what has changed is that the state is now permanent by
+    decision rather than temporary by accident, so the disposition must move
+    rather than the probe wait for a re-pointing that is not coming.
+    WHY IT IS NOT GAP, WHICH IS WHERE THIS ROW SAT ON 2026-09-03 FOR THE SAME
+    SYMPTOM. Then, the pages existed and nothing was scanning them: a real gap,
+    with a named fix (converge-h5k, one line) and work owed. Today there are no
+    pages. Nobody owes work to scan a body that was deliberately withdrawn, and
+    operation.v1 Core 1 forbids filing work nobody owes — the same reasoning the
+    36 platform rows carry (see the platform-ios section header).
+    THE KIT ITSELF IS UNTOUCHED AND STAYS. `conformance/_superseded/surface/`
+    keeps two live readers after this pass — conformance/documents/run.py and
+    tests/conftest.py, whose example project is its fixture — so the retirement
+    lane's "retire it if nothing else reads it" condition is still not met. The
+    third reader, ledger/checks/surface_clause9.py, is deleted here (CVG-038).
+    RETITLED, AS THIS ROW ALREADY WAS ONCE FOR THE MIRROR-IMAGE REASON. It read
+    "rule 8c passes on every page"; no page is passing anything. The id is
+    unchanged, as ids always are.
+    ────────────────────────────────────────────────────────────────────────────
     RE-DERIVED 2026-09-04 (converge-nf4, the reconcile after wave 7) AND MOVED
     GAP → CONFORMS. RAN → SURFACE-RULE-8C-PASSES-ON-EVERY-APP-PAGE. Behind it:
     `pytest tests/test_plain_words_on_the_surface.py -q` → 9 passed, the same
@@ -3757,29 +3992,28 @@
       **The whole operation in view.** Lanes running against lanes intended, with
       the fill control · running against waiting-on-you · truly ready against
       waiting on you · the plan in order with reasons
-  disposition: CONFORMS
+  disposition: NOT-ASSERTABLE
   assertion:
-    kind: probe
-    ref: 'uv run --extra web --with httpx python ledger/checks/surface_clause9.py 2>/dev/null'
+    kind: absence
+    ref: 'if ls -d src/amplifier_converge/web tests/test_renders_at_both_widths.py 2>/dev/null | grep -q .; then echo SURFACE-PAGE-BODY-REAPPEARED; else echo NO-SURFACE-PAGE-BODY; fi'
     expect:
       exit: 0
-      stdout_contains: "SURFACE-CLAUSE-9 SHIPPED-FIXTURE=6-OF-8-GAUGE=SKIP READABLE-SUBJECT=8-OF-8-GAUGE=PASS"
+      stdout_contains: "NO-SURFACE-PAGE-BODY"
+  justification: >
+    THE /operation PAGE THIS ROW READ NO LONGER EXISTS. Its probe rendered the
+    page from `amplifier_converge.web.app` and handed the HTML to the retired
+    kit's rules 9a and 9b; the module was deleted on 2026-09-06 and the probe
+    exited 1 with empty output from that moment. The KIT still stands and its
+    two rules still work — what is gone is the body they judged. See the
+    surface.v1 section header above for the retirement and why every row in this
+    block reads the same way.
   proves: >
-    That the SHIPPED surface kit's rules 9a and 9b, imported from where they live
-    and not reimplemented, find ALL EIGHT things this clause puts in view on the
-    app's own rendered /operation page, and a gauge that states a number, WHEN THE
-    PAGE IS GIVEN A SUBJECT IT CAN READ — a lanes directory and a work queue that
-    answers. And, in the same line, that the kit's own shipped fixture — no lanes,
-    no queue — still shows six of eight with the gauge declining.
-    BOTH COUNTS ARE THE PIN, and they fail in opposite directions: a page that
-    regresses moves READABLE-SUBJECT, and a subject quietly swapped for a
-    flattering one moves SHIPPED-FIXTURE. A verdict word alone could tell neither
-    (LEDGER-FORMAT §3).
-    NOT that this machine's work queue reads — the queue is a stub on PATH, named
-    as one in the probe. What is proved is what the PAGE does with a readable
-    queue, which is what the clause asks. NOT that the assertion lives in the live
-    suite either — the kit is retired, a fact about the check's home recorded
-    below, the same one CVG-066 carries.
+    Since 2026-09-06, only that no page body has come back under the names this
+    row's assertion watches. It proves nothing about what is in view, because
+    there is no view here to read. The two-subject reading it USED to carry is
+    kept in the notes below as a record; it is not a claim about today, and the
+    day someone re-renders a page under these names this row goes red and must
+    be re-derived rather than resurrected from that record.
   notes: >
     RAN 2026-09-02 → NO-TEST-FILE-FOR-CLAUSE-9. The app ships with a test file per
     clause for 1, 2, 3, 4, 5, 6, 7 and 10 — and none for 9, the longest clause in
@@ -3853,6 +4087,37 @@
     THE `work` REF IS GONE, NOT MOVED. converge-do8 is resolved, and the reading
     that resolved it is now reproduced here from a run rather than cited from a
     note. A CONFORMS row carries no tracker ref (LEDGER-FORMAT §2).
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-g499, the reconcile after the retirement).
+    CONFORMS → NOT-ASSERTABLE. RAN 2026-09-06 → NO-SURFACE-PAGE-BODY.
+    THE OLD PROBE DID NOT GO RED WITH A READING — IT STOPPED HAVING ONE. Run on
+    this tree before it was replaced, `uv run --extra web --with httpx python
+    ledger/checks/surface_clause9.py` exits 1 with empty stdout and, on stderr:
+    "ModuleNotFoundError: No module named 'amplifier_converge.web'". That is not
+    six-of-eight or two-of-eight; it is no number at all, which is exactly the
+    difference between Broken and Can't check.
+    ledger/checks/surface_clause9.py IS DELETED IN THE SAME COMMIT AS THIS ROW.
+    It is 190 lines whose whole purpose was to render a module that no longer
+    exists, nothing else in the tree imports it, and it cannot be repaired
+    without choosing a different body — which is a decision, not a repair. Left
+    in place it would be the third kind of lie this ledger keeps catching: a
+    check that looks like it watches something. It is in git history at eea3166~1
+    for anyone who wants the two-subject method back.
+    TWO CONSEQUENCES OUTSIDE THIS LANE, WRITTEN DOWN RATHER THAN TOUCHED, both
+    naming that file as a live reader of things that now have one reader fewer:
+    src/amplifier_converge/README.md line 39 lists it among the three readers of
+    conformance/_superseded/surface/ (two remain — conformance/documents/run.py
+    and tests/conftest.py — so the retired kit still stays), and converge-4iu0's
+    account of why the `web` extra survives names it beside the retired kit's own
+    README (that README still invokes `uv run --extra web`, so the extra still
+    has a reader). Filed as converge-3hew.
+    WHAT WOULD BRING THIS CLAUSE BACK, so the row is not a dead end: the app in
+    app/ shows the same eight things and is judged by the experience family's own
+    kits and rows (experience-operation.v1). This clause belongs to a superseded
+    contract; re-pointing it at that app would assert surface.v1 against a body
+    the newer contracts already own. If the whole operation stops being in view
+    THERE, the rows that go red are the experience-operation ones, and that is
+    the right place for it to hurt.
 
 - id: CVG-039
   title: phone first, companion first
@@ -3862,10 +4127,22 @@
     quote: |
       **Phone first, companion first.** Large targets, one-handed answers. The
       first release ships inside the bundle as a simple web page
-  disposition: CONFORMS
+  disposition: NOT-ASSERTABLE
   assertion:
-    kind: indexed
-    ref: tests/test_renders_at_both_widths.py
+    kind: absence
+    ref: 'if ls -d src/amplifier_converge/web tests/test_renders_at_both_widths.py 2>/dev/null | grep -q .; then echo SURFACE-PAGE-BODY-REAPPEARED; else echo NO-SURFACE-PAGE-BODY; fi'
+    expect:
+      exit: 0
+      stdout_contains: "NO-SURFACE-PAGE-BODY"
+  justification: >
+    THIS CLAUSE SAYS THE FIRST RELEASE SHIPS INSIDE THE BUNDLE AS A SIMPLE WEB
+    PAGE, AND AS OF 2026-09-06 IT DOES NOT. The page was retired on the steward's
+    word and the whole of tests/test_renders_at_both_widths.py — this row's only
+    assertion, fourteen cases, every one of them reading
+    `amplifier_converge.web.styles` — was deleted with it. This is the row where
+    Can't check is hardest to accept and most clearly right: the clause is not
+    BROKEN by a page that renders badly, it is unjudgeable because the thing it
+    describes was deliberately withdrawn. See the surface.v1 section header above.
   notes: >
     RAN 2026-09-02 → 116 passed. The file's docstring names both the clause and
     the kit assert it operationalizes: "Surface.v1 clause 10 and the kit's
@@ -3876,6 +4153,25 @@
     ships inside the bundle, and as of commit 05b3f09 it does —
     src/amplifier_converge/web/, reachable as `amplifier-converge`.
     FLIPPED FROM GAP THIS SESSION.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-g499, the reconcile after the retirement).
+    CONFORMS → NOT-ASSERTABLE. RAN 2026-09-06 → NO-SURFACE-PAGE-BODY.
+    THIS IS THE LINE ABOVE, RUNNING BACKWARDS, AND IT IS WORTH READING TWICE.
+    On 2026-09-02 this row went green because the page arrived at 05b3f09; on
+    2026-09-06 the steward said retire it (docs/workflow/owner-ratifications-2026-09-06.md
+    round 2, converge-5i8k, commit eea3166) and it left. Both movements are the
+    ledger doing its job. Neither is a regression: the second was a decision.
+    THE ONLY ROW OF THE SEVEN THE GATE COULD SEE BY ITSELF. verify.py's
+    indexed-path tripwire named it outright — "every indexed ref path exists on
+    disk ([('CVG-039', 'tests/test_renders_at_both_widths.py')])" — because the
+    whole FILE went. The other six pointed at functions inside files that
+    survived, or at a script that still existed, and the path check passed them
+    all. That asymmetry is the argument for the function-level sweep recorded in
+    CVG-034.
+    ONE MORE PLACE STILL NAMED THAT FILE, AND IT IS REPAIRED IN THIS PASS RATHER
+    THAN FILED, because it is inside this lane's own file: CVG-213's
+    justification (platform-web Core 14) cited it as the structural half of the
+    two-width promise. See that row.
 
 - id: CVG-056
   title: every answer lands in the dated ratification record
@@ -3902,22 +4198,33 @@
     quote: |
       *Kept · Not yet · Broken · Pinned open · Can't check* for contracts;
       *Working · Quiet · Silent — may have died* for lanes.
-  disposition: CONFORMS
+  disposition: NOT-ASSERTABLE
   assertion:
     kind: probe
     ref: 'python3 -c "import sys,pathlib;sys.path.insert(0,\"src\");from amplifier_converge import words;need=[\"Kept\",\"Not yet\",\"Broken\",\"Pinned open\",\"Can''t check\",\"Working\",\"Quiet\",\"Silent — may have died\"];have=set(words.CONTRACT_STATES)|set(words.LANE_STATES);t=pathlib.Path(\"tests/test_plain_words_on_the_surface.py\");w=t.read_text().count(\"def test_every_state_word_shown_is_one_of_the_plain_words\") if t.exists() else 0;print(\"SURFACE-STATE-VOCABULARY=%d-OF-8 PAGE-WALK-ASSERTED=%d\" % (sum(x in have for x in need), w))"'
     expect:
       exit: 0
-      stdout_contains: "SURFACE-STATE-VOCABULARY=8-OF-8 PAGE-WALK-ASSERTED=1"
+      stdout_contains: "SURFACE-STATE-VOCABULARY=8-OF-8 PAGE-WALK-ASSERTED=0"
+  justification: >
+    HALF OF THIS ROW SURVIVED THE RETIREMENT AND HALF DID NOT, AND THE HALF THAT
+    DIED IS THE ONE THE CLAUSE IS ABOUT. The eight words are still the app
+    library's declared vocabulary — the probe still measures that, live, and it
+    still reads 8-OF-8. What is gone is any surface that SHOWS them: the walk
+    that rendered every page and refused a word from outside the map was deleted
+    with the page on 2026-09-06. A map nothing renders cannot keep a promise
+    about what a steward reads, so this is Can't check — not Kept on the strength
+    of the surviving half, and not Broken, because nothing failed.
   proves: >
-    Two things together, which is why the probe prints two numbers. (a) That all
-    eight words this clause names are the app's declared vocabulary for those two
-    kinds of thing — `words.CONTRACT_STATES` and `words.LANE_STATES`, compared
-    against the eight literals from the quote above, so renaming or dropping one
-    flips this row. (b) That a test still walks every page and refuses any state
-    it finds that is not one of those words. NOT that each of the eight is
-    reachable on some page: nothing asserts that a lane in this repository ever
-    reaches "Silent — may have died".
+    Since 2026-09-06, ONE thing and the absence of a second, which is why the
+    probe still prints two numbers. (a) That all eight words this clause names
+    are still the app library's declared vocabulary — `words.CONTRACT_STATES` and
+    `words.LANE_STATES`, compared against the eight literals from the quote
+    above, so renaming or dropping one flips this row. (b) That NO test walks a
+    rendered page and refuses a word from outside that map: the count is pinned
+    at 0, so the day such a walk returns this row goes red and must be
+    re-derived, rather than the ledger quietly keeping a Can't check over a
+    clause that has become checkable again. It does NOT prove the clause: a
+    vocabulary nothing displays is not a surface that speaks plainly.
   notes: >
     RAN 2026-09-03 → SURFACE-STATE-VOCABULARY=8-OF-8 PAGE-WALK-ASSERTED=1, and
     the test suite behind it: `pytest tests/test_plain_words_on_the_surface.py`
@@ -3938,6 +4245,30 @@
     stop a fixture named "Broken" inflating a literal word count, is gone with
     the count that needed it.
     Its sibling — internal words that must be ABSENT — is CVG-066.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-g499, the reconcile after the retirement).
+    CONFORMS → NOT-ASSERTABLE, AND THE PROBE WAS KEPT WHERE ITS SIX NEIGHBOURS
+    LOST THEIRS. RAN 2026-09-06 → SURFACE-STATE-VOCABULARY=8-OF-8
+    PAGE-WALK-ASSERTED=0. The first number is unchanged since 2026-09-03; the
+    second went 1 → 0 when tests/test_plain_words_on_the_surface.py lost the
+    seven assertions that needed a rendered page (that file shrank from 340 lines
+    to two tests, and its own docstring now records why).
+    WHY THIS ROW KEEPS A LIVE PROBE AND THE OTHER SIX TAKE THE SHARED
+    body-has-not-returned CHECK: they have nothing left to measure, and this one
+    does. Swapping this probe for the shared one would have stopped watching
+    `words.py`, which is still shipped and still the one map every internal state
+    is translated through. The zero is pinned beside the eight for the same
+    reason CVG-038 pinned two subjects: a number that can move in either
+    direction cannot be mistaken for a verdict.
+    IT IS PINNED AT ZERO ON PURPOSE, AND THAT IS NOT A CHECK WEAKENED TO GO
+    GREEN. The disposition moved the hard way (Kept → Can't check) in the same
+    edit, and the pin now says out loud that nothing walks a page — so a walk
+    coming back is a red row and a re-derivation, not a silent return to green.
+    THE TEST THAT REMAINS IS NAMED SO NOBODY LOOKS FOR IT TWICE:
+    test_one_map_turns_every_internal_state_into_a_surface_word still passes and
+    still asserts the map; test_the_walk_catches_a_real_leak still proves the
+    walking machinery can fail. Neither renders anything. `pytest
+    tests/test_plain_words_on_the_surface.py -q` → 2 passed on this tree.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # documents.v1 — 26 rows for 13 clauses.  Nine clauses carry more than one row,
@@ -4946,9 +5277,15 @@
     half of the same quote is not proved by this probe and is not claimed by it:
     rule 11b SKIPs here on purpose ("a claim about a file this kit never opened")
     and names conformance/surface's vocabulary rule as the place that does assert
-    it. That place is rowed under surface.v1 at CVG-037 and CVG-066, and CVG-066
-    is what moved it from the pinned mockup onto the shipped app in this same
-    pass. READ THE ID IN THAT SKIP REASON WITH CARE: as shipped today
+    it. That place is rowed under surface.v1 at CVG-037 and CVG-066 — AND SINCE
+    2026-09-06 NEITHER OF THOSE ROWS ASSERTS ANYTHING: the page they judged was
+    retired on the steward's word, both now read Can't check, and rule 11b's
+    delegation therefore points at a place that no longer answers. The document
+    half this probe pins is unaffected, which is why the row is still Kept; the
+    app half is now unwatched by anything under surface.v1, and app/ is judged
+    instead by the experience family (experience.v1 Core 6 carries the same
+    promise, and converge-f1l is where its umbrella gets a kit).
+    READ THE ID IN THAT SKIP REASON WITH CARE: as shipped today
     (conformance/documents/run.py:156) it still says "rule 5", the number that
     row carried before the 2026-09-03 renumbering; the rule it means is 8c, and
     `5` now judges surface.v1 Core 5. That stale id is inside conformance/, which
@@ -4969,6 +5306,23 @@
     themselves nominate.
     PROBE RESHAPED for the reason given on CVG-052: the shared rule-id list could
     not tell which rule had arrived, so it pinned rule 11a's own verdict instead.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-READ 2026-09-06 (converge-g499, the reconcile after the retirement). STILL
+    CONFORMS, AND ONE DEAD CITE ABOVE IS NOW LABELLED RATHER THAN LEFT STANDING.
+    RAN 2026-09-06 → TECHNICAL-DETAIL-IN-DOCUMENTS-PASS. The probe reads the
+    documents kit against this tree and never touched the retired page, so the
+    disposition does not move.
+    THE APP-HALF CITE IN THE NOTE ABOVE IS DEAD AND IS KEPT AS A DATED RECORD.
+    `pytest tests/test_plain_words_on_the_surface.py::test_the_shipped_kit_reports_rule_8c_pass_on_every_page`
+    cannot be run any more — that test was deleted with the page on 2026-09-06.
+    The line stays because it says RAN 2026-09-03 and was true then; the `proves`
+    above now carries what is true today, which is that nothing under surface.v1
+    watches the app half at all.
+    THIS ROW IS WHY THE FOUR FAILING ROWS WERE NOT THE WHOLE JOB. Its probe was
+    green throughout and would have stayed green while pointing a reader at a
+    test that no longer exists — the failure mode converge-uub0 named as "they
+    will mislead the next reader", which no tripwire in verify.py can see because
+    a cite in prose is not an assertion.
 
 - id: CVG-054
   title: every converged repository carries the participant kit
@@ -8445,14 +8799,19 @@
     CVG-202, CVG-203, CVG-205 and CVG-206 all point at: one browser at two
     widths
     would settle five clauses at once.
-    WHAT EXISTS SHORT OF IT, and why neither is this row: the app asserts the
-    same
-    promise STRUCTURALLY against its own stylesheet in
-    tests/test_renders_at_both_widths.py, and app/static/dev/verify.py drives a
-    real Chromium at both widths against a stub server. The second is the shape
-    this needs; it points at a stub rather than the running app, and it is not
-    run
-    by any kit.
+    WHAT EXISTS SHORT OF IT, and why it is not this row: app/static/dev/verify.py
+    drives a real Chromium at both widths against a stub server. That is the
+    shape this needs; it points at a stub rather than the running app, and it is
+    not run by any kit.
+    ONE OF THE TWO THINGS THIS JUSTIFICATION USED TO NAME IS GONE, RECORDED
+    2026-09-06 (converge-g499). It said the app "asserts the same promise
+    STRUCTURALLY against its own stylesheet in
+    tests/test_renders_at_both_widths.py". That file was deleted whole with the
+    earlier web page on the steward's word (commit eea3166), so the structural
+    half no longer exists anywhere and this row is one instrument poorer than the
+    sentence above claimed. The disposition does not move — it was already Can't
+    check, for the reason in the first paragraph, which has nothing to do with
+    the retirement.
 
 # ────────────────────────────────────────────────────────────────────────────
 # platform-ios / android / macos / windows - 9 rows each, 36 in all.
