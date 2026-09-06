@@ -561,15 +561,15 @@
       sha256: b4d3f3838637ec6d7781735a59db2bf7386ea66c265dce1122a77513e514741d
     # The experience family, ratified DRAFT 2026-09-03. Pinned by converge-pq2.
     - file: contracts/experience.v1.md
-      sha256: 155450bae4e2035a358e346d4227635fc07a70f8a9434fb8cf65368c7bee987e
+      sha256: 81873dfd0fa98e8c855874723018e2b5a8f12548c32919bc89e2c9c7edb99560
     - file: contracts/experience-direction.v1.md
-      sha256: 3be94a533934781ea63c0300b0e82c9038f0b9b71cfb1c35fe8225db0ef60a07
+      sha256: 9fcfc554a31cea83e50b3ead9d839c7fe3c153c577662de5cf40df88d3884b33
     - file: contracts/experience-operation.v1.md
-      sha256: 800ab514ba093e215f4c7db286096feaad7655d8a4741612e830002089a252b4
+      sha256: d34ca2a3a0cf368e177a703c07cb87ae67b85ca912c5b9aaf659203eb0ff19f8
     - file: contracts/experience-console.v1.md
-      sha256: 11c2314132a6cb9a150fd4d4f163677fd6e657fb97c0a8b5d83d0e371fadd134
+      sha256: e169b023c652110170c2c50d3aa1f9ed548d998c428fcd3b4cbd22f553be5590
     - file: contracts/experience-collaboration.v1.md
-      sha256: 09a59ed9f486f23824c45ede18282eb92e572fc311f6e57d1cd1098a70f4e868
+      sha256: 976cd6eed1c26aace388526808dcb9bcdd664eb75e391f20882678cfd911b431
     - file: contracts/platform-web.v1.md
       sha256: a7afe69a5c976ceebee50ed015f673448c5eece19a9986d69c0b5209c73a5e67
     - file: contracts/platform-ios.v1.md
@@ -586,7 +586,7 @@
     expect:
       exit: 0
       stdout_contains: "077451fba18a2baa8f4162bc4af6dd164976d304adad8f193871b120b4203d39"
-  notes: >
+  notes: |
     SEEDED 2026-09-02 from `sha256sum contracts/*.md`, run at repo 2543e1c.
     Verified identical on `main` at seed time (`git show main:contracts/<f>` →
     same four hashes), so these pins do not go stale the moment this lane
@@ -691,11 +691,6 @@
     and not a thing to settle at the end of a reconcile. When it lands, this
     contract gains an eleventh row and that item is the one to read for why.
 
-# ─────────────────────────────────────────────────────────────────────────────
-# composition.v1 — 9 rows.  The healthy one: 7 of 9 CONFORM, each by a kit rule
-# or a command that fails when the fact stops being true.
-# ─────────────────────────────────────────────────────────────────────────────
-  notes: |
     RAN 2026-09-06 12:05 → composition.v1 re-pinned after its lock (H1 now FROZEN 2026-09-06 + one changelog row; no Core clause changed — diff is line 1 and the changelog).
     RAN 2026-09-04 → operation.v1 re-pinned after the line-77 markdown repair (548e899: closes a bold marker; no clause text changed).
     RAN 2026-09-04 → operation.v1 re-pinned after the ratified turnkey sentence (Conformance-kit-asserts section + changelog row; `git diff` shows no Core clause changed).
@@ -714,6 +709,63 @@
     ONE ROW MOVED FOR A REASON THAT IS NOT A CONTRACT EDIT: CVG-060, the OPEN-PINNED count of clauses running past three lines, 29 → 31. Re-pinned in its own row, with the two clauses named.
     A DEFECT IN THIS ROW, FOUND WHILE WRITING INTO IT AND FILED RATHER THAN QUIETLY RESTRUCTURED (converge-rloj): CVG-000 carries TWO `notes:` keys — the long folded block above the `composition.v1` banner comment, and this literal block. YAML keeps the last, so `yaml.safe_load` returns ONLY this block and the entire seed-and-four-reconciles history above it is invisible to every tool that reads the file, at exit 0. That is why this re-review is written here and not there. Measured 2026-09-06: `yaml.safe_load` → `notes` length 635 characters, beginning "RAN 2026-09-04 → operation.v1 re-pinned after the line-77 markdown repair".
 
+    ────────────────────────────────────────────────────────────────────────────
+    THE SEVENTH RE-REVIEW — 2026-09-06, converge-r4e5. FIVE PINS MISMATCHED (the
+    whole experience family) AND THE MANDATORY RE-REVIEW WAS RUN RATHER THAN THE
+    HASHES BUMPED (LEDGER-FORMAT §4). All five mismatches were caused by this item,
+    in the same commit that re-pins them, and all five are the steward's own word
+    applied: `docs/workflow/owner-ratifications-2026-09-06.md` round 2, verbatim —
+    "Yep, all look good to me, make it so." — ratifying as written the six proposals
+    in five candidate files, card by card on `docs/workflow/LOCK-SHEET-2026-09-06.md`.
+      experience.v1.md                155450ba… → 81873dfd…
+      experience-direction.v1.md      3be94a53… → 9fcfc554…
+      experience-operation.v1.md      800ab514… → d34ca2a3…
+      experience-console.v1.md        11c23141… → e169b023…
+      experience-collaboration.v1.md  09a59ed9… → 976cd6ee…
+    WHAT MOVED. Every fenced before/after pair was applied BY SCRIPT, never by hand,
+    and each had to match a declared number of times before anything was written:
+    experience.v1 two pairs and one deletion (100 lines → 100); experience-direction
+    three pairs, nine required tags and two idiom tags among them (96 → 99);
+    experience-operation three pairs, eleven and two (96 → 99); experience-console
+    eleven pairs (80 → 90, and 96 with the changelog row this apply added);
+    experience-collaboration eleven pairs (85 → 96). A second pass re-read each
+    contract and confirmed every `after` present and every `before` gone — except
+    where a `before` is a prefix of its own `after`, which is the four inheritance
+    paragraphs, each of which ADDS a sentence beside text that stays.
+    ALL 59 FAMILY ROWS WERE RE-READ AGAINST THE NEW BYTES. Forty-six of the
+    fifty-nine quotes stopped verifying, because the tag now sits inside the clause
+    each one quotes. Every one was re-derived FROM THE CONTRACT BYTES rather than
+    retyped: twenty-seven were the whole clause and carry the whole clause as it now
+    reads; nineteen were a prefix truncated mid-sentence when the row was seeded, and
+    those now carry the whole clause too. That last group is a WIDENING of what those
+    rows bind to, not a refresh, and it is recorded here rather than left for a
+    reader to discover row by row.
+    SIX ROWS MOVED, each re-derived in its own row: CVG-106 and CVG-186 off Pinned
+    open, because the steward answered converge-71q and converge-nn6; CVG-108,
+    CVG-112 and CVG-114 from Not yet to Kept, because the umbrella's rules 9, 13 and
+    15 pass against the applied contracts; and CVG-020 from Kept to Not yet, which
+    this item did NOT cause — a return stamped in the log at 2026-09-06 12:00 carries
+    none of the five parts, and that row's own words say a count that moves is a
+    re-read rather than a bump.
+    TWO ROWS WERE RE-READ AND LEFT WHERE THEY WERE: CVG-111 (rule 12 still red, now
+    for six routes rather than seven — the read route's citation moved off the
+    Reserved question, which is deleted, and onto clause 7, which answers it) and
+    CVG-060, whose count moved 31 → 32 for one clause and is re-pinned in its own row.
+    ONE LEDGER-INTEGRITY REPAIR, FOUND WHILE WRITING THIS NOTE AND FIXED HERE
+    RATHER THAN FILED, BECAUSE IT WAS HIDING THIS ROW'S OWN RECORD. CVG-000
+    carried TWO `notes:` keys — the seed, the fourth reconcile and the fifth
+    re-review in the first, the sixth in a second one added below the composition
+    banner. YAML keeps the last of a duplicated key and drops the rest silently,
+    so every reader that parsed this file saw a SYNC row whose notes began at
+    2026-09-04 and knew nothing of the seed. Nothing in `verify.py` checks for a
+    duplicated key, so nothing said so. The two are merged into one literal block
+    here, in the order they were written, with no word changed and nothing
+    dropped; `yaml.safe_load` now returns 15,457 characters where it returned
+    904, and the row count is unchanged at 179.
+# ─────────────────────────────────────────────────────────────────────────────
+# composition.v1 — 9 rows.  The healthy one: 7 of 9 CONFORM, each by a kit rule
+# or a command that fails when the fact stops being true.
+# ─────────────────────────────────────────────────────────────────────────────
 - id: CVG-001
   title: lean base, never the heavy package
   contract:
@@ -2598,7 +2650,17 @@
     THE ITEM'S PREMISE DID NOT REPRODUCE HERE EITHER: converge-7nn8 was filed
     saying this probe prints CLAUSE-9-STATE-CHANGED-REREAD-THIS-ROW, and it
     asserts instead, from both checkouts. What was measured about that is in
-    CVG-013's note of this date and is not repeated."
+    CVG-013's note of this date and is not repeated.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-r4e5). STILL GAP, READING UNCHANGED. RAN
+    2026-09-06 →
+    CLAUSE-9-READING-ANSWERS-BOTH-WAYS-AND-THIS-HOST-HAS-STILL-NEVER-STALLED.
+    The 2026-09-06 return brief warned that this row \"drifts every time the plan
+    record grows\" and said it would re-derive at the next integration; this is that
+    re-derivation. Re-run against the plan record as it stands after the two locks
+    and this lane's apply, it answers exactly as it did before, so there is nothing
+    here to bump and nothing to move. What it is still waiting on is unchanged, and
+    it is not an instrument: a wave on this host that actually stalls."
   work: converge-7stl
 
 - id: CVG-020
@@ -2610,13 +2672,13 @@
       **A brief on every return.** Time away · finished · stuck · needs you ·
       anything quietly broken — in sentences, appended to a log the steward can
       read.
-  disposition: CONFORMS
+  disposition: GAP
   assertion:
     kind: probe
     ref: 'python3 ledger/checks/return_log_ratio.py'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-10-STAMPED-RETURNS=2 BRIEFED-RETURNS=2 UNBRIEFED=0"
+      stdout_contains: "CLAUSE-10-STAMPED-RETURNS=3 BRIEFED-RETURNS=2 UNBRIEFED=1"
   proves: >
     That the manager mode still encodes clause 10 AND its stamp instruction, and
     that every return stamped in the log carries all five parts — two returns
@@ -2788,6 +2850,23 @@
     `proves` above and did not move — a return the manager session never recorded
     leaves no trace on either side of the ratio.
 
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-r4e5) AND MOVED CONFORMS → GAP, WHICH IS THIS ROW
+    WORKING RATHER THAN A REGRESSION IT SUFFERED. Its own words above: "It goes red
+    the moment a stamped return goes unbriefed (UNBRIEFED rises) … which is a
+    re-read, not a regression, and the row must be re-derived rather than bumped."
+    RAN 2026-09-06 → CLAUSE-10-STAMPED-RETURNS=3 BRIEFED-RETURNS=2 UNBRIEFED=1, the
+    reading naming the entry itself: "2026-09-06 12:00 - they came back and said the
+    whole sheet looks good -- missing time away, finished, stuck, needs you, quietly
+    broken". The heading is in the log and the five parts are not.
+    NOT CAUSED BY THIS ITEM, SAID PLAINLY RATHER THAN LEFT TO INFERENCE: the entry
+    was committed in 1bfdff7, before this lane began, and nothing in this lane
+    touches docs/workflow/OWNER-RETURN-LOG.md. The expect line moved with the reading
+    because a red row must assert what is true, not what was. The fix is the brief
+    itself — filed as converge-pqcr, for the manager session that took that return —
+    and the row goes back to Kept when the brief is written, not when the count is
+    edited.
+  work: converge-pqcr
 - id: CVG-021
   title: four calls reach the steward
   contract:
@@ -4119,7 +4198,7 @@
     ref: 'awk ''FNR==1{if(n>4)t++;n=0;c=0} /^## Core \(the teeth\)/{c=1;next} /^## /{if(n>4)t++;n=0;c=0;next} c&&/^[0-9]+\. /{if(n>4)t++;n=1;next} c&&NF&&n{n++} END{if(n>4)t++;print "CLAUSES-PAST-THREE-LINES=" t+0}'' contracts/*.md'
     expect:
       exit: 0
-      stdout_contains: "CLAUSES-PAST-THREE-LINES=31"
+      stdout_contains: "CLAUSES-PAST-THREE-LINES=32"
   justification: >
     RAN 2026-09-02 → CLAUSES-PAST-THREE-LINES=8. Rule 1e checks only that a clause
     continues in bold; nothing enforces the limit. Measured: composition Core 6 (5
@@ -4192,6 +4271,20 @@
     OPEN-PINNED; still no work filed, because filing it would presume the
     reading — but it is now hard to argue this stays undecided for free.
 
+    ────────────────────────────────────────────────────────────────────────────
+    RE-PINNED 2026-09-06 (converge-r4e5): CLAUSES-PAST-THREE-LINES 31 → 32. THE COUNT
+    IS THE PIN AND IT MOVED BECAUSE THIS ITEM MOVED IT. Applying the four ratified
+    section proposals inserts a tag into every Core clause of four contracts, and one
+    clause whose why ran to exactly three source lines now runs to four. Nothing
+    about the question this row is pinned on has changed — does the clause move to
+    fit the writing, or the writing come back to fit the clause — and this re-pin
+    does not answer it. RAN 2026-09-06 → CLAUSES-PAST-THREE-LINES=32.
+    RE-WRAPPING WAS MEASURED AND DELIBERATELY NOT USED TO PUT THE COUNT BACK.
+    Re-flowing the Core clauses at a wider column would drop several of the
+    thirty-two under three lines without changing one word, which would answer the
+    steward's open question by typography. That is why the changelog rows four of
+    these contracts owe were filed as converge-tabm instead of being bought with a
+    re-wrap.
 - id: CVG-046
   title: every kit's rule table is numbered to its contract's Core clauses
   contract:
@@ -5669,41 +5762,18 @@
     file: contracts/experience.v1.md
     clause: "Core 7"
     quote: |
-      **The app holds no data of its own.** It shows the project's documents, code
-      record, work queue, lanes, return log, and pending decisions. A second copy
-      of the truth is a defect, not a cache.
-  disposition: OPEN-PINNED
+      **The app holds no copy of the project's truth.** It shows the project's
+         documents, code record, work queue, lanes, return log, and pending
+         decisions, and keeps none of them; a second copy of the truth is a defect,
+         not a cache. Your own reading — where you have read to, what you are
+         keeping — is yours, kept per person outside the repository.
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'if grep -rlE "sqlite3|shelve|pickle\.dump" app/*.py | grep -q .; then echo APP-KEEPS-A-DATABASE; elif [ "$(grep -rlE "\.write_text\(|json\.dump\(" app/*.py | sort | tr "\n" " ")" != "app/feedback_voice.py app/state_store.py app/writes.py " ]; then echo A-MODULE-OUTSIDE-THE-THREE-WRITES-FILES; elif ! grep -q "DEFAULT_STATE_PATH = Path.home() / \".amplifier\" / \"converge-app.state.json\"" app/state_store.py; then echo THE-READING-STORE-MOVED; elif [ "$(grep -cE "mine\.setdefault\(" app/state_store.py)" != "2" ]; then echo THE-STORE-HOLDS-MORE-THAN-A-READ-POINT-AND-KEPT-MARKS; else echo ONE-PER-STEWARD-READING-STORE-OUTSIDE-THE-REPOSITORY; fi'
     expect:
       exit: 0
       stdout_contains: "ONE-PER-STEWARD-READING-STORE-OUTSIDE-THE-REPOSITORY"
-  justification: >
-    PINNED OPEN 2026-09-04 (converge-dgc) BECAUSE THE CONTRACT ITSELF LEAVES THIS
-    UNDECIDED, IN WRITING. experience.v1's own "Reserved / open questions" section
-    asks: "Where the reading cursor behind 'what changed since you last read' is
-    kept, given the app holds no data of its own." That is precisely this
-    question, written by the clause's own author, and it has never been answered.
-    PROTOCOL.md section 3.3: an undecided call is a ledger row asserting current
-    behaviour without forging a decision - not a vision, and not a quiet green.
-    THE TWO FACTS PULL OPPOSITE WAYS, AND BOTH ARE TRUE.
-    The clause's TEETH are kept: "A second copy of the truth is a defect, not a
-    cache." The store holds no document text, no work item, no lane state, no
-    return log, no pending decision. A commit sha is a pointer INTO the truth, not
-    a copy of it, and it goes stale in the one direction that is safe - pointing
-    at a commit that still exists.
-    The clause's LETTER is contradicted: the app does now hold a file of its own,
-    per steward, outside the repository, and it did not before wave 7.
-    A CANDIDATE IS WRITTEN RATHER THAN THE ROW BENT.
-    contracts/experience.v1-candidate.md carries a second proposed change (clause
-    7) distinguishing the project's truth - never copied - from the steward's own
-    reading, and answering the Reserved question by name. The reading it proposes:
-    where you have read to is not a fact about the project. Two stewards reading
-    the same repository have different, equally correct answers, and neither
-    belongs in the repository's history. experience.v1 stays the law until the
-    steward answers: ratified / ratified with edits / declined / later. Tracked as
-    converge-71q.
   proves: >
     That the app keeps no database, shelf or pickled state; that exactly three
     modules in app/ write files at all - app/writes.py and app/feedback_voice.py,
@@ -5728,6 +5798,33 @@
     claims source by source, and no machine here checks it. Nor does it read the
     store's contents at runtime - it reads the code that decides them.
   notes: >
+    RE-READ 2026-09-06 (converge-r4e5) AND MOVED OPEN-PINNED → CONFORMS. THE STEWARD
+    ANSWERED THE QUESTION THIS ROW WAS PINNED ON. The word, verbatim, from
+    `docs/workflow/owner-ratifications-2026-09-06.md` round 2: "Yep, all look good to
+    me, make it so." It ratifies, among the six, the second proposal in
+    `experience.v1-candidate` — now archived as
+    `docs/workflow/experience.v1-candidate.ratified.md`. Clause 7 now says the app
+    holds no copy of the project's TRUTH, and that "Your own reading — where you have
+    read to, what you are keeping — is yours, kept per person outside the
+    repository." The Reserved question this row quoted as its whole reason for being
+    pinned is deleted by the same ratification, so the contract no longer contradicts
+    itself and this row can read either way. converge-71q is answered and resolved,
+    so the `work` ref is dropped: a CONFORMS row may not carry one.
+    THE PROBE IS UNCHANGED, AND IT STILL FIRES IN THE DIRECTION THAT MATTERS. RAN
+    2026-09-06 → ONE-PER-STEWARD-READING-STORE-OUTSIDE-THE-REPOSITORY. A third
+    per-steward key, a store that moves, or a module writing outside the three writes
+    files still takes this row red — which is exactly the day the old wording would
+    have been the right one.
+    THE KIT HAD TO MOVE WITH THE CLAUSE, AND THIS ROW WOULD HAVE GONE RED IF IT HAD
+    NOT. Experience kit rule 7 decided by reading the umbrella's Reserved section, so
+    deleting that question turned the app's own good behaviour into a reported defect
+    — measured on the first run after the apply: "[FAIL] 7 the app keeps a store of
+    its own — app/state_store.py — and the umbrella's Reserved section leaves no such
+    question open". Rule 7 now reads clause 7, allows exactly the one store the
+    clause names, and refuses any other; the negative fixture and two self-tests pin
+    that a PER-PERSON store of the project's work queue is still a second copy of the
+    truth, so the ratification widened what is allowed by one named thing rather than
+    by "anything kept outside the repository". RAN 2026-09-06 → [PASS] 7.
     RE-DERIVED 2026-09-04 (converge-g82, the standing reconcile after wave 8).
     STILL OPEN-PINNED, AND THE PROBE FIRED CORRECTLY ON A THIRD WRITER.
     `verify.py` failed naming this row - "CVG-106 expect NOT met (exit=0,
@@ -5814,7 +5911,31 @@
     not the project's". That sentence was true when written and is the same
     argument the candidate now makes for the reading store; what changed is that
     the state left the browser, which is exactly why it needs the steward's word.
-  work: converge-71q
+    THE ORIGINAL PINNING, KEPT FOR THE RECORD —
+    PINNED OPEN 2026-09-04 (converge-dgc) BECAUSE THE CONTRACT ITSELF LEAVES THIS
+    UNDECIDED, IN WRITING. experience.v1's own "Reserved / open questions" section
+    asks: "Where the reading cursor behind 'what changed since you last read' is
+    kept, given the app holds no data of its own." That is precisely this
+    question, written by the clause's own author, and it has never been answered.
+    PROTOCOL.md section 3.3: an undecided call is a ledger row asserting current
+    behaviour without forging a decision - not a vision, and not a quiet green.
+    THE TWO FACTS PULL OPPOSITE WAYS, AND BOTH ARE TRUE.
+    The clause's TEETH are kept: "A second copy of the truth is a defect, not a
+    cache." The store holds no document text, no work item, no lane state, no
+    return log, no pending decision. A commit sha is a pointer INTO the truth, not
+    a copy of it, and it goes stale in the one direction that is safe - pointing
+    at a commit that still exists.
+    The clause's LETTER is contradicted: the app does now hold a file of its own,
+    per steward, outside the repository, and it did not before wave 7.
+    A CANDIDATE IS WRITTEN RATHER THAN THE ROW BENT.
+    contracts/experience.v1-candidate.md carries a second proposed change (clause
+    7) distinguishing the project's truth - never copied - from the steward's own
+    reading, and answering the Reserved question by name. The reading it proposes:
+    where you have read to is not a fact about the project. Two stewards reading
+    the same repository have different, equally correct answers, and neither
+    belongs in the repository's history. experience.v1 stays the law until the
+    steward answers: ratified / ratified with edits / declined / later. Tracked as
+    converge-71q.
 - id: CVG-107
   title: "whatever you can do here, the manager session can do too"
   contract:
@@ -5883,7 +6004,7 @@
       **Every behavior carries one of four words** — `REQUIRED`, `IDIOM`,
       `OPTIONAL`, `EXCLUDED`. Required is present and behaves as described, and its
       absence is a gap; optional a surface may carry; excluded it must not, and its
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience/run.py (rule 9)'
@@ -5926,7 +6047,23 @@
     learns nothing about what would close the row. converge-pip carries this
     clause and Core 13 together, as er6 did, and says in its own text: re-
     run both rules, do not read a resolution and conclude.
-  work: converge-pip
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-r4e5) AND MOVED GAP → CONFORMS. All four section
+    contracts now tag every Core clause, applied verbatim from the four candidates
+    the steward ratified on 2026-09-06 (round 2). RAN 2026-09-06, live against the
+    app on 127.0.0.1:8788:
+      [PASS] 9  every behavior in every section contract carries one of the four
+                words: experience-collaboration.v1.md (10); experience-console.v1.md
+                (10); experience-direction.v1.md (11); experience-operation.v1.md (13)
+    Forty-four clauses, forty-four words. Two of the four carried none at all before
+    this — console and collaboration were 10 of 10 untagged.
+    THE TAG IS A CODE SPAN, AND THAT IS A CHECKED PART OF IT, NOT A TYPOGRAPHICAL
+    PREFERENCE. Written the obvious way, in italics, the documents kit's rule 10a
+    reads the bare `EXCLUDED` as a machine state token standing in a contract's prose
+    and fails four documents; in backticks it passes, which is the form all four
+    ratified candidates use and the form `experience.v1` clause 9 already used. Both
+    kits were run after the apply: documents PASS (18 pass, 0 fail, 9 skip), and
+    experience rule 9 PASS above. converge-pip raised it; the `work` ref is dropped.
 - id: CVG-109
   title: "IDIOM means the behavior is required and its shape is not"
   contract:
@@ -6086,6 +6223,18 @@
     the collaboration bridge that experience-collaboration.v1 governs but
     never names as routes; the lock is experience-direction.v1 Core 11's own
     control; presence is its Core 10. converge-slpj carries it, and says so.
+    ────────────────────────────────────────────────────────────────────────────
+    RE-READ 2026-09-06 (converge-r4e5). STILL GAP, AND THE COUNT MOVED 7 → 6 FOR A
+    REASON THIS ITEM CAUSED AND THEN REPAIRED. Rule 12's citation for the read route
+    pointed at the umbrella's Reserved question — "where the reading cursor … is
+    kept" — and the ratified clause 7 answers that question and deletes it. For one
+    run the citation was stale and the route was counted as debt: "[FAIL] 12 7
+    feature(s) … (1 citation(s) went stale: ['/api/managers/{mid}/docs/…/read →
+    experience.v1.md Reserved'])". The citation now names clause 7 and the phrase it
+    actually says, "kept per person outside the repository", and the kit re-reads
+    every citation on every run, so it goes stale again the day that sentence moves
+    rather than quietly standing. RAN 2026-09-06 → [FAIL] 12, six routes named by no
+    contract in the family. The reading above is unchanged; six is the number now.
   work: converge-slpj
 - id: CVG-112
   title: "three surface classes, and every behavior placed against all three"
@@ -6096,7 +6245,7 @@
       **Three surface classes, named once:** *full app* · *quick-access* (widget,
       tray, menu bar) · *notification*. Every behavior is placed against all
       three, so "nobody thought about the widget" cannot pass as a decision.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: indexed
     ref: 'conformance/experience/run.py (rule 13)'
@@ -6146,7 +6295,27 @@
     halves are one sentence's two ends, but they are not the same size.
     THE CITE MOVED converge-er6 -> converge-pip; er6 is resolved and neither
     reading moved with it.
-  work: converge-pip
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-r4e5) AND MOVED GAP → CONFORMS. RAN 2026-09-06,
+    live against the app on 127.0.0.1:8788 → "[PASS] 13 every section contract places
+    its behaviors against all three surface classes". Before the apply not one of the
+    four so much as named `quick-access`, while all five platform contracts did — so
+    "nobody thought about the widget" could still pass as a decision, which is the
+    exact failure this clause exists to stop.
+    PLACEMENT IS A SENTENCE RATHER THAN A TABLE, AND THE PROPOSALS RECORD WHY: a
+    table is heading, blank, header row, separator and one row per clause, at least
+    seven lines, and it would have taken direction and operation past the
+    hundred-line bound `documents.v1` clause 2 fixes. So each contract places its
+    clauses in the paragraph that already explains the tags.
+    WHAT EACH ONE DECIDED, because a placement is a decision and belongs where it can
+    be argued with: direction excludes both other classes throughout (reading and
+    answering a document needs the document); operation gives quick-access clauses 6
+    and 7 and notification clause 8 as optional (lanes running against lanes
+    intended, work ready against work waiting on you, and a lane falling silent);
+    console excludes both throughout (a console is one live session beside the work);
+    collaboration excludes quick-access and gives notification clause 6, an inbound
+    proposal arriving. Promoting any of them is a later amendment with its own
+    evidence. converge-pip raised it; the `work` ref is dropped.
 - id: CVG-113
   title: "where a body genuinely cannot do a thing, it says so in the app"
   contract:
@@ -6227,17 +6396,18 @@
     clause: "Core 15"
     quote: |
       **This umbrella governs a family.** The places are held by
-      `experience-direction.v1` · `experience-operation.v1` ·
-      `experience-console.v1` · `experience-collaboration.v1`; the idioms of one
-      body by one `platform-*.v1` — `platform-browser.v1` and
-      `platform-web-app.v1` first, then one per native body.
-  disposition: GAP
+          `experience-direction.v1` · `experience-operation.v1` ·
+          `experience-console.v1` · `experience-collaboration.v1`; the idioms of one
+          body by one `platform-*.v1` — `platform-web.v1` first, the browser and the
+          installable web app being one body, then one per native body. A platform
+          contract adds no behavior and removes none.
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'python3 ledger/checks/clause_named_contracts.py contracts/experience.v1.md 15'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-15-NAMED-CONTRACTS NAMED=6 PRESENT=4 MISSING=platform-browser.v1,platform-web-app.v1"
+      stdout_contains: "CLAUSE-15-NAMED-CONTRACTS NAMED=5 PRESENT=5 MISSING=none"
   proves: >
     That of the six contracts clause 15 names by name, four exist in
     `contracts/` and two do not — read out of the clause itself, not out of this
@@ -6300,8 +6470,23 @@
     clause 15 to name platform-web.v1 as built, or split platform-web.v1
     into the two the clause names. A lane may not pick between two ratified
     readings.
-  work: converge-cho
-
+    ────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-r4e5) AND MOVED GAP → CONFORMS. THE CLAUSE NOW
+    NAMES THE CONTRACT THAT EXISTS. The steward ratified the first proposal in
+    `experience.v1-candidate` as written on 2026-09-06 (round 2, "Yep, all look good
+    to me, make it so.") and it was applied verbatim: `platform-browser.v1` and
+    `platform-web-app.v1` are replaced by "`platform-web.v1` first, the browser and
+    the installable web app being one body".
+    RAN 2026-09-06 → CLAUSE-15-NAMED-CONTRACTS NAMED=5 PRESENT=5 MISSING=none. The
+    expect line moved with the reading, because the count is the pin and a row that
+    asserts a stale count asserts nothing. The umbrella's own kit agrees, read live
+    against the app on 127.0.0.1:8788: "[PASS] 15 every one of the 5 contracts this
+    umbrella names exists in the repository". converge-cho raised it and the `work`
+    ref is dropped, a CONFORMS row may not carry one.
+    THE SEAM THE PROPOSAL NAMED IS NOT LOST. If a body ever gains or loses a
+    behaviour by being installed — a store, a review queue, a second build — the two
+    bodies are genuinely two, `platform-web.v1` clause 9 is where they split, and
+    this row goes back to counting six.
 # ────────────────────────────────────────────────────────────────────────────
 # experience-direction.v1 - 11 rows, one per Core clause. SEEDED 2026-09-03 by
 # converge-pq2, every disposition earned by a run of conformance/experience-
@@ -6316,8 +6501,8 @@
     clause: "Core 1"
     quote: |
       **Documents are organized per repository, with an All view across them.**
-      *(REQUIRED)* One manager session may hold several repositories, and the
-      agreement is one body of work, not one reading per checkout.
+         `(REQUIRED)` One manager session may hold several repositories, and the
+         agreement is one body of work, not one reading per checkout.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6333,8 +6518,9 @@
     clause: "Core 2"
     quote: |
       **Documents render properly, and the source is always one gesture away.**
-      *(REQUIRED)* Markdown, images, links between documents, tables, front
-      matter, Mermaid and DOT diagrams, and safely embedded HTML all render, and a
+         `(REQUIRED)` Markdown, images, links between documents, tables, front
+         matter, Mermaid and DOT diagrams, and safely embedded HTML all render, and a
+         raw source view sits beside every rendered one.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6354,9 +6540,9 @@
     file: contracts/experience-direction.v1.md
     clause: "Core 3"
     quote: |
-      **A reader can copy, download, zoom, and choose the width.** *(IDIOM)* Copy
-      as rendered, copy as source, download the source, read at page width or full
-      screen. The controls follow the platform; the four abilities do not.
+      **A reader can copy, download, zoom, and choose the width.** `(IDIOM)` Copy
+         as rendered, copy as source, download the source, read at page width or full
+         screen. The controls follow the platform; the four abilities do not.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6388,8 +6574,9 @@
     clause: "Core 4"
     quote: |
       **Every document carries four views: Reading · Changes · Review · History.**
-      *(REQUIRED)* Reading is the clean document. Changes is what moved since you
-      last read, sentence by sentence. Review is a proposal with its evidence and
+         `(REQUIRED)` Reading is the clean document. Changes is what moved since you
+         last read, sentence by sentence. Review is a proposal with its evidence and
+         your word. History is the document over time, in dates and proposal names.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6407,8 +6594,9 @@
     clause: "Core 5"
     quote: |
       **Direct editing is offered exactly where it is legal, and the guard is the
-      law.** *(REQUIRED)* A draft document may be edited in place, click to save.
-      A locked one may not, and the refusal comes from the guard that refuses —
+         law.** `(REQUIRED)` A draft document may be edited in place, click to save.
+         A locked one may not, and the refusal comes from the guard that refuses —
+         never from a hidden control or an instruction someone might follow.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6438,8 +6626,10 @@
     clause: "Core 6"
     quote: |
       **Restoring from history is a real action, and it routes through a proposal
-      when the target is locked.** *(REQUIRED)* Restore a wording, a paragraph, a
-      section, or the whole document. On a locked document the same gesture
+         when the target is locked.** `(REQUIRED)` Restore a wording, a paragraph, a
+         section, or the whole document. On a locked document the same gesture
+         produces a proposal to answer, so the lifecycle holds without the steward
+         having to know it does.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6467,9 +6657,11 @@
     file: contracts/experience-direction.v1.md
     clause: "Core 7"
     quote: |
-      **A proposal looks the same whoever proposed it.** *(REQUIRED)* Your manager
-      session's, a teammate's, a pull request's: what changes sentence by sentence
-      · why · the evidence · what does not change · the word to answer with. One
+      **A proposal looks the same whoever proposed it.** `(REQUIRED)` Your manager
+         session's, a teammate's, a pull request's: what changes sentence by sentence
+         · why · the evidence · what does not change · the word to answer with. One
+         that arrived from elsewhere carries your questions and your answer back to
+         where it came from.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6487,8 +6679,9 @@
     clause: "Core 8"
     quote: |
       **Accepting and reverting individual changes constructs "ratified with
-      edits."** *(REQUIRED)* A steward keeps six changes, drops one, fixes three
-      words, and answers once. The granular choices are not a new kind of
+         edits."** `(REQUIRED)` A steward keeps six changes, drops one, fixes three
+         words, and answers once. The granular choices are not a new kind of
+         ratification; they build the one word already in the vocabulary.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6524,9 +6717,9 @@
     file: contracts/experience-direction.v1.md
     clause: "Core 9"
     quote: |
-      **Ask is a scoped request whose output is always a proposal.** *(REQUIRED)*
-      Point at a paragraph, a document, or every document, say what you want, and
-      what returns is a proposal to review — never a silent edit, never a chat.
+      **Ask is a scoped request whose output is always a proposal.** `(REQUIRED)`
+         Point at a paragraph, a document, or every document, say what you want, and
+         what returns is a proposal to review — never a silent edit, never a chat.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6552,8 +6745,9 @@
     clause: "Core 10"
     quote: |
       **Concurrent editing is met with courtesy presence and reconciliation.**
-      *(IDIOM)* While a person is editing a section that is shown softly, and the
-      manager session backs off and queues rather than fights. If changes do
+          `(IDIOM)` While a person is editing a section that is shown softly, and the
+          manager session backs off and queues rather than fights. If changes do
+          collide, the choice offered is Use combined · Keep mine · Review both.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6585,8 +6779,10 @@
     clause: "Core 11"
     quote: |
       **The lock control is gated on the four conditions, and they are shown.**
-      *(REQUIRED)* It says what it means · it carries a real example of right and
-      wrong · it can be checked against reality · the steward has read it and
+          `(REQUIRED)` It says what it means · it carries a real example of right and
+          wrong · it can be checked against reality · the steward has read it and
+          agreed. The control is live only when all four are met, and nothing locks
+          on its own.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6630,8 +6826,8 @@
     clause: "Core 1"
     quote: |
       **The objective, the limits, and today's strategy stand at the top, in the
-      manager session's own words.** *(REQUIRED)* A steward should learn what is
-      being pursued and why this way before seeing a single piece of work.
+         manager session's own words.** `(REQUIRED)` A steward should learn what is
+         being pursued and why this way before seeing a single piece of work.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6647,8 +6843,9 @@
     clause: "Core 2"
     quote: |
       **The plan is shown in waves, with the lanes inside them, and every grouping
-      carries its reason.** *(REQUIRED)* A wave says what a batch of work is for;
-      a lane is one piece being carried out inside it. When the plan is redrawn,
+         carries its reason.** `(REQUIRED)` A wave says what a batch of work is for;
+         a lane is one piece being carried out inside it. When the plan is redrawn,
+         the reason for the redraw is shown too.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6683,8 +6880,9 @@
     clause: "Core 3"
     quote: |
       **The return brief is the first thing a returning steward reads.**
-      *(REQUIRED)* Time away · what finished · what is stuck · what needs your
-      word · what quietly changed. The story is told in sentences, never inferred
+         `(REQUIRED)` Time away · what finished · what is stuck · what needs your
+         word · what quietly changed. The story is told in sentences, never inferred
+         from charts.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6711,8 +6909,9 @@
     clause: "Core 4"
     quote: |
       **A confidence timeline gives the narrative of the operation, and each turn
-      in it opens onto its evidence.** *(REQUIRED)* It records the moments that
-      changed how sure the manager session is — and how sure it now is — not every
+         in it opens onto its evidence.** `(REQUIRED)` It records the moments that
+         changed how sure the manager session is — and how sure it now is — not every
+         step it took.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6739,9 +6938,10 @@
     file: contracts/experience-operation.v1.md
     clause: "Core 5"
     quote: |
-      **Throughput is shown as flow, and never offered as outcome.** *(REQUIRED)*
-      Work derived, resolved, verified, reopened, and stuck say whether things are
-      moving. Whether reality is moving toward the agreement is a separate reading,
+      **Throughput is shown as flow, and never offered as outcome.** `(REQUIRED)`
+         Work derived, resolved, verified, reopened, and stuck say whether things are
+         moving. Whether reality is moving toward the agreement is a separate reading,
+         and it is the one that counts.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6772,8 +6972,8 @@
     clause: "Core 6"
     quote: |
       **Lanes running are shown against lanes intended, with the fill control
-      beside them.** *(REQUIRED)* Empty lanes are the most common quiet waste, so
-      the ratio is on the surface and filling them is one gesture.
+         beside them.** `(REQUIRED)` Empty lanes are the most common quiet waste, so
+         the ratio is on the surface and filling them is one gesture.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6788,9 +6988,9 @@
     file: contracts/experience-operation.v1.md
     clause: "Core 7"
     quote: |
-      **Work truly ready is shown against work waiting on you.** *(REQUIRED)* The
-      second number is the steward's own backlog, and seeing it is what keeps the
-      operation from stalling politely behind a person.
+      **Work truly ready is shown against work waiting on you.** `(REQUIRED)` The
+         second number is the steward's own backlog, and seeing it is what keeps the
+         operation from stalling politely behind a person.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6818,8 +7018,8 @@
     clause: "Core 8"
     quote: |
       **Each lane carries a plain state word and evidence you can open.**
-      *(REQUIRED)* Working · Quiet · Silent — may have died. Underneath sits what
-      the lane actually produced, so a claim can be inspected rather than believed.
+         `(REQUIRED)` Working · Quiet · Silent — may have died. Underneath sits what
+         the lane actually produced, so a claim can be inspected rather than believed.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6851,9 +7051,9 @@
     file: contracts/experience-operation.v1.md
     clause: "Core 9"
     quote: |
-      **Watch session opens that worker session's live view.** *(IDIOM)* The whole
-      ladder is walkable — direction, wave, lane, and finally the session itself —
-      for the rare moment a steward wants the bottom rung.
+      **Watch session opens that worker session's live view.** `(IDIOM)` The whole
+         ladder is walkable — direction, wave, lane, and finally the session itself —
+         for the rare moment a steward wants the bottom rung.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6869,8 +7069,8 @@
     clause: "Core 10"
     quote: |
       **Feedback can be dropped in seconds, in whatever form is to hand.**
-      *(IDIOM)* Text, a screenshot, or voice. The manager session interprets it;
-      the steward is never made to write a work item.
+          `(IDIOM)` Text, a screenshot, or voice. The manager session interprets it;
+          the steward is never made to write a work item.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6889,9 +7089,10 @@
     file: contracts/experience-operation.v1.md
     clause: "Core 11"
     quote: |
-      **Steering sets the limits and never assigns the work.** *(REQUIRED)*
-      Objective, budget, lane count, fill the lanes, and have the manager session
-      review this. Planning stays with the manager session, which is what makes
+      **Steering sets the limits and never assigns the work.** `(REQUIRED)`
+          Objective, budget, lane count, fill the lanes, and have the manager session
+          review this. Planning stays with the manager session, which is what makes
+          the plan worth reading.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6918,9 +7119,9 @@
     file: contracts/experience-operation.v1.md
     clause: "Core 12"
     quote: |
-      **Stopping something is never a board button.** *(REQUIRED)* Work stops
-      because the objective changed or the steward said so in words — not because
-      a card was dragged into a column.
+      **Stopping something is never a board button.** `(REQUIRED)` Work stops
+          because the objective changed or the steward said so in words — not because
+          a card was dragged into a column.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6936,8 +7137,8 @@
     clause: "Core 13"
     quote: |
       **Every manager session you run is listed, sorted by which one needs you,
-      and you can tell them all at once.** *(REQUIRED)* Several projects run at
-      once, and one message to all of them beats visiting each in turn.
+          and you can tell them all at once.** `(REQUIRED)` Several projects run at
+          once, and one message to all of them beats visiting each in turn.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6973,9 +7174,9 @@
     file: contracts/experience-console.v1.md
     clause: "Core 1"
     quote: |
-      **The console is a pane, not a place.** It opens beside Direction or
-      Operation, and switching between them does not close it, restart it, or lose
-      a line of what was said.
+      **The console is a pane, not a place.** `(REQUIRED)` It opens beside
+         Direction or Operation, and switching between them does not close it,
+         restart it, or lose a line of what was said.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -6991,9 +7192,10 @@
     file: contracts/experience-console.v1.md
     clause: "Core 2"
     quote: |
-      **V1 carries the manager session exactly as it already runs.** The pane
-      embeds the live command-line session through the tmux connector — tmux being
-      the tool that lets a long-running terminal session be attached to from
+      **V1 carries the manager session exactly as it already runs.** `(REQUIRED)`
+         The pane embeds the live command-line session through the tmux connector —
+         tmux being the tool that lets a long-running terminal session be attached to
+         from somewhere else. Nothing about the manager has to be redesigned to ship.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7008,9 +7210,10 @@
     file: contracts/experience-console.v1.md
     clause: "Core 3"
     quote: |
-      **One console, one manager session, and it *is* that session.** What you type
-      there is what the manager session receives, not a summary the app relays — so
-      there is no second conversation to keep in step with the first.
+      **One console, one manager session, and it *is* that session.** `(REQUIRED)`
+         What you type there is what the manager session receives, not a summary the
+         app relays — so there is no second conversation to keep in step with the
+         first.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7042,9 +7245,10 @@
     file: contracts/experience-console.v1.md
     clause: "Core 4"
     quote: |
-      **Wide screen: a resizable pane. Small screen: a sliding tray.** This is
-      idiom, and the umbrella governs it — the shape follows the platform; the
-      behaviors (stays open, keeps its conversation, gets out of the way on demand)
+      **Wide screen: a resizable pane. Small screen: a sliding tray.** `(IDIOM)`
+         The umbrella governs it — the shape follows the platform; the behaviors
+         (stays open, keeps its conversation, gets out of the way on demand) do not
+         change.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7074,9 +7278,9 @@
     file: contracts/experience-console.v1.md
     clause: "Core 5"
     quote: |
-      **Watch session reuses this pane.** Watching a lane's live worker session
-      from Operation opens here rather than in a new place, and leaving it returns
-      the manager conversation where it stood.
+      **Watch session reuses this pane.** `(REQUIRED)` Watching a lane's live
+         worker session from Operation opens here rather than in a new place, and
+         leaving it returns the manager conversation where it stood.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7092,9 +7296,9 @@
     file: contracts/experience-console.v1.md
     clause: "Core 6"
     quote: |
-      **The console is never the dashboard.** Raw agent and tool activity is not
-      how the operation is understood; Operation is. Nothing there may require
-      reading the console to make sense.
+      **The console is never the dashboard.** `(EXCLUDED)` Raw agent and tool
+         activity is not how the operation is understood; Operation is. Nothing there
+         may require reading the console to make sense.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7110,9 +7314,9 @@
     file: contracts/experience-console.v1.md
     clause: "Core 7"
     quote: |
-      **Nothing that needs your word arrives only here.** Every decision reaches
-      you through the short list and its ratification sheet, so a steward who never
-      opens the console misses nothing and can answer everything.
+      **Nothing that needs your word arrives only here.** `(REQUIRED)` Every
+         decision reaches you through the short list and its ratification sheet, so a
+         steward who never opens the console misses nothing and can answer everything.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7127,9 +7331,9 @@
     file: contracts/experience-console.v1.md
     clause: "Core 8"
     quote: |
-      **The console never ratifies.** A word typed here is a message to the manager
-      session; any decision it produces comes back through the ordinary path and
-      lands in the dated ratification record.
+      **The console never ratifies.** `(EXCLUDED)` A word typed here is a message
+         to the manager session; any decision it produces comes back through the
+         ordinary path and lands in the dated ratification record.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7146,9 +7350,9 @@
     file: contracts/experience-console.v1.md
     clause: "Core 9"
     quote: |
-      **It is not a native chat in V1,** and nothing may be built to depend on it
-      being one. A native conversation later replaces the connector underneath
-      without changing one behavior above.
+      **It is not a native chat in V1.** `(EXCLUDED)` Nothing may be built to
+         depend on it being one; a native conversation later replaces the connector
+         underneath without changing one behavior above.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7164,9 +7368,9 @@
     file: contracts/experience-console.v1.md
     clause: "Core 10"
     quote: |
-      **It shows one manager session's own work and reaches nothing else.** The
-      machine may hold other terminal sessions, checkouts, and queues; none of
-      them appear merely because they exist.
+      **It shows one manager session's own work and reaches nothing else.**
+          `(REQUIRED)` The machine may hold other terminal sessions, checkouts, and
+          queues; none of them appear merely because they exist.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7208,9 +7412,10 @@
     file: contracts/experience-collaboration.v1.md
     clause: "Core 1"
     quote: |
-      **Git is the protocol; Converge is the lens.** Collaboration between people
-      happens through the shared repository host — commits, pull requests, and
-      their comments. Converge renders that flow; it never replaces it.
+      **Git is the protocol; Converge is the lens.** `(REQUIRED)` Collaboration
+         between people happens through the shared repository host — commits, pull
+         requests, and their comments. Converge renders that flow; it never replaces
+         it.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7251,9 +7456,11 @@
     file: contracts/experience-collaboration.v1.md
     clause: "Core 2"
     quote: |
-      **Manager sessions never talk to each other directly.** Two stewards both
-      running Converge still meet as Converge · host · Converge, and neither
-      manager session knows the other exists. That is what keeps a teammate on
+      **Manager sessions never talk to each other directly.** `(EXCLUDED)` Two
+         stewards both running Converge still meet as Converge · host · Converge, and
+         neither manager session knows the other exists. That is what keeps a teammate
+         on plain tooling a first-class participant, and keeps the seam between two
+         parties something a person can read.
   disposition: CONFORMS
   assertion:
     kind: absence
@@ -7276,9 +7483,10 @@
     file: contracts/experience-collaboration.v1.md
     clause: "Core 3"
     quote: |
-      **Three origins, one review.** A proposal from your manager session, from a
-      teammate, or from a pull request is shown identically: what changes sentence
-      by sentence · the evidence · what does not change. Where it came from is a
+      **Three origins, one review.** `(REQUIRED)` A proposal from your manager
+         session, from a teammate, or from a pull request is shown identically: what
+         changes sentence by sentence · the evidence · what does not change. Where it
+         came from is a fact about the proposal, never a different experience.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7299,9 +7507,10 @@
     file: contracts/experience-collaboration.v1.md
     clause: "Core 4"
     quote: |
-      **Pull-request comments are a two-way bridge.** A question asked in Converge
-      arrives as a comment; the reply arrives back inside the same review. The
-      teammate never leaves their tools, and the steward never copies a judgment
+      **Pull-request comments are a two-way bridge.** `(REQUIRED)` A question
+         asked in Converge arrives as a comment; the reply arrives back inside the
+         same review. The teammate never leaves their tools, and the steward never
+         copies a judgment between tools.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7380,9 +7589,9 @@
     file: contracts/experience-collaboration.v1.md
     clause: "Core 5"
     quote: |
-      **Your answer returns where the proposal came from.** *ratified · ratified
-      with edits · declined · later* — written to the dated ratification record and
-      posted back to the origin, in the steward's own words.
+      **Your answer returns where the proposal came from.** `(REQUIRED)` *ratified
+         · ratified with edits · declined · later* — written to the dated ratification
+         record and posted back to the origin, in the steward's own words.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7447,9 +7656,9 @@
     file: contracts/experience-collaboration.v1.md
     clause: "Core 6"
     quote: |
-      **Inbound changes arrive without you asking for them.** Webhooks where the
-      host offers them, polling as the honest fallback. Freshness is never made the
-      steward's job, and the fallback is named rather than assumed.
+      **Inbound changes arrive without you asking for them.** `(IDIOM)` Webhooks
+         where the host offers them, polling as the honest fallback. Freshness is
+         never made the steward's job, and the fallback is named rather than assumed.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7517,43 +7726,16 @@
     file: contracts/experience-collaboration.v1.md
     clause: "Core 7"
     quote: |
-      **The manager session is not in the hot path.** A write made in the app goes
-      through the ordinary repository and proposal mechanism directly; the manager
-      session learns of it as an event and folds it into its next turn.
-  disposition: OPEN-PINNED
+      **The manager session is not in the hot path.** `(REQUIRED)` A write made in
+         the app goes through the ordinary repository and proposal mechanism directly;
+         the manager session learns of it as an event and folds it into its next turn.
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'if grep -nE "tmux|send_keys|httpx|requests\.|urllib|socket\." app/writes.py | grep -q .; then echo WRITES-REACH-A-SESSION-OR-THE-NETWORK; elif [ "$(grep -cE "subprocess\.run\(" app/writes.py)" != "2" ]; then echo WRITE-PATH-PROCESS-COUNT-CHANGED; elif ! grep -q "\[\"git\", \*args\]" app/writes.py; then echo GIT-IS-NO-LONGER-THE-REPOSITORY-PROCESS; elif ! grep -q "\[\"amplifier\", \"run\", \"--mode\", \"single\"" app/writes.py; then echo THE-SECOND-PROCESS-IS-NOT-THE-DRAFTING-SESSION; elif ! grep -q "if drafter == \"agent\":" app/writes.py; then echo THE-DRAFTING-SESSION-IS-NO-LONGER-GATED; elif ! grep -q "CONVERGE_ASK_DRAFTER\", \"fixture\"" app/serve.py; then echo THE-DRAFTING-SESSION-IS-ON-BY-DEFAULT; else echo GIT-PLUS-ONE-DRAFTING-SESSION-THAT-IS-OFF-BY-DEFAULT; fi'
     expect:
       exit: 0
       stdout_contains: "GIT-PLUS-ONE-DRAFTING-SESSION-THAT-IS-OFF-BY-DEFAULT"
-  justification: >
-    PINNED OPEN 2026-09-04 (converge-dgc) BECAUSE THE READING IS GENUINELY
-    UNDECIDED, AND PROTOCOL.md section 3.3 SAYS AN UNDECIDED CALL IS A LEDGER ROW
-    THAT ASSERTS CURRENT BEHAVIOUR WITHOUT FORGING THE DECISION. Two readings, and
-    this lane can honestly reach neither:
-    (a) KEPT, THE PROBE WAS TOO NARROW. A headless `amplifier run --mode single`
-    is not *the* manager session: it is unregistered, has no steward (Core 8 -
-    "one steward per manager session"), and is discarded after one turn. The
-    clause's words are about the manager session, and no manager session is
-    reached by any write.
-    (b) BROKEN. The property this clause exists to protect is written in its own
-    contract's Conformance-kit-asserts section: "A write made in the app lands
-    through the repository mechanism without waiting for a manager turn." With
-    CONVERGE_ASK_DRAFTER=agent the ask write waits on an agent turn, up to
-    DRAFT_TIMEOUT = 240 seconds, before the proposal file is written. Whether that
-    agent is called the manager session is a naming question; the waiting is not.
-    WHY NOT SIMPLY PICK ONE. Moving this row to CONFORMS would require a probe
-    that reads "the only session-shaped process is behind an off-by-default
-    switch" - which redefines an unconditional clause as a claim about one
-    configuration, and is the weakening-a-check-to-make-it-green that AGENTS.md
-    rule 3 forbids. Moving it to VIOLATION would require calling a drafting
-    session the manager session, which it demonstrably is not, and calling a
-    switched-off capability broken. The decision is the steward's, at negotiation.
-    Filed as converge-nn6, which states the decision in one sentence and names
-    what each answer costs. converge-76y, the red-on-main report, asked for
-    exactly this: the probe re-derived to assert what clause 7 actually forbids,
-    with the reading recorded - not the `expect` edited to match the failure.
   proves: >
     That the app's write path speaks no tmux, sends no keys and makes no outbound
     call, that it starts exactly two processes, that the first is git in the
@@ -7576,6 +7758,19 @@
     an event and folds it into its next turn" - is a claim about a running agent
     that nothing here checks.
   notes: >
+    RE-READ 2026-09-06 (converge-r4e5) AND MOVED OPEN-PINNED → CONFORMS. THE STEWARD
+    ANSWERED converge-nn6. The word, verbatim, from
+    `docs/workflow/owner-ratifications-2026-09-06.md` round 2 — "Yep, all look good
+    to me, make it so." — given against the lock sheet, which asked this row's
+    question in one sentence and records the answer it carries: "an opt-in,
+    off-by-default headless drafting session on the app's write path is a helper, not
+    the manager session in the hot path (experience-collaboration.v1 clause 7 is
+    kept)." So the clause stands as written and no proposal is needed; the sheet said
+    plainly that the answer decides whether one is. converge-nn6 is answered and
+    resolved, so the `work` ref is dropped: a CONFORMS row may not carry one.
+    WHAT WOULD OVERTURN IT, UNCHANGED: the drafting session becoming the path rather
+    than an option beside it — on by default, or a write that waits on it. The
+    reading below is what to re-read on the day either of those changes.
     RE-DERIVED 2026-09-04 (converge-dgc, the reconcile after wave 8). CONFORMS ->
     OPEN-PINNED. THE SUBJECT MOVED THIS TIME, NOT THE PROXY: the previous
     re-derivation rebuilt a stale probe over unchanged behaviour, and this one
@@ -7639,16 +7834,43 @@
     docs/workflow/owner-ratifications-<date>.md; feedback writes
     .converge/feedback/<ts>.md; a steer rewrites .width. None of those is a round
     trip to anything.
-  work: converge-nn6
+    THE ORIGINAL PINNING, KEPT FOR THE RECORD —
+    PINNED OPEN 2026-09-04 (converge-dgc) BECAUSE THE READING IS GENUINELY
+    UNDECIDED, AND PROTOCOL.md section 3.3 SAYS AN UNDECIDED CALL IS A LEDGER ROW
+    THAT ASSERTS CURRENT BEHAVIOUR WITHOUT FORGING THE DECISION. Two readings, and
+    this lane can honestly reach neither:
+    (a) KEPT, THE PROBE WAS TOO NARROW. A headless `amplifier run --mode single`
+    is not *the* manager session: it is unregistered, has no steward (Core 8 -
+    "one steward per manager session"), and is discarded after one turn. The
+    clause's words are about the manager session, and no manager session is
+    reached by any write.
+    (b) BROKEN. The property this clause exists to protect is written in its own
+    contract's Conformance-kit-asserts section: "A write made in the app lands
+    through the repository mechanism without waiting for a manager turn." With
+    CONVERGE_ASK_DRAFTER=agent the ask write waits on an agent turn, up to
+    DRAFT_TIMEOUT = 240 seconds, before the proposal file is written. Whether that
+    agent is called the manager session is a naming question; the waiting is not.
+    WHY NOT SIMPLY PICK ONE. Moving this row to CONFORMS would require a probe
+    that reads "the only session-shaped process is behind an off-by-default
+    switch" - which redefines an unconditional clause as a claim about one
+    configuration, and is the weakening-a-check-to-make-it-green that AGENTS.md
+    rule 3 forbids. Moving it to VIOLATION would require calling a drafting
+    session the manager session, which it demonstrably is not, and calling a
+    switched-off capability broken. The decision is the steward's, at negotiation.
+    Filed as converge-nn6, which states the decision in one sentence and names
+    what each answer costs. converge-76y, the red-on-main report, asked for
+    exactly this: the probe re-derived to assert what clause 7 actually forbids,
+    with the reading recorded - not the `expect` edited to match the failure.
 - id: CVG-187
   title: "one steward per manager session"
   contract:
     file: contracts/experience-collaboration.v1.md
     clause: "Core 8"
     quote: |
-      **One steward per manager session.** Whose word counts is settled when the
-      session is registered, not inferred from whoever is looking. Everyone else is
-      a teammate, whose proposals get the same reading and none of the authority.
+      **One steward per manager session.** `(REQUIRED)` Whose word counts is
+         settled when the session is registered, not inferred from whoever is looking.
+         Everyone else is a teammate, whose proposals get the same reading and none of
+         the authority.
   disposition: CONFORMS
   assertion:
     kind: indexed
@@ -7724,9 +7946,9 @@
     file: contracts/experience-collaboration.v1.md
     clause: "Core 9"
     quote: |
-      **A ratification is a change to the repository, made the ordinary way.** The
-      word is recorded and the text it ratifies is committed, so what was agreed
-      has one record, and it is the one everybody already reads.
+      **A ratification is a change to the repository, made the ordinary way.**
+         `(REQUIRED)` The word is recorded and the text it ratifies is committed, so
+         what was agreed has one record, and it is the one everybody already reads.
   disposition: CONFORMS
   assertion:
     kind: probe
@@ -7748,9 +7970,9 @@
     file: contracts/experience-collaboration.v1.md
     clause: "Core 10"
     quote: |
-      **Converge adds no second collaboration surface.** Not another issue
-      tracker, another document store, or a code-review tool. What a teammate
-      needs to see is visible on the host, in the host's own terms.
+      **Converge adds no second collaboration surface.** `(EXCLUDED)` Not another
+          issue tracker, another document store, or a code-review tool. What a
+          teammate needs to see is visible on the host, in the host's own terms.
   disposition: CONFORMS
   assertion:
     kind: absence
