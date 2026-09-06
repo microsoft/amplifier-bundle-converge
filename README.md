@@ -264,7 +264,9 @@ anything the run started outside that directory — then delete the project's
 - `src/amplifier_converge/` — the Python package the app reads through, and
   **it is not the app above**. Its *readers and writers* turn a repository into
   the words on a page — documents, ledger, work queue, lanes, proposals, and the
-  four writes `surface.v1` named — and `app/` uses one of them (`app/data.py`
+  four writes `surface.v1` named before the experience family superseded it on
+  2026-09-03 (the app itself carries `experience.v1`'s five) — and `app/` uses
+  one of them (`app/data.py`
   says whether a promise is kept through `amplifier_converge.reading.kept`).
   [`src/amplifier_converge/README.md`](src/amplifier_converge/README.md) says
   what is used by what.
@@ -302,7 +304,7 @@ is copied under that name and made executable, not copied as it stands.
 | The check that says whether the install took | [`scripts/adopt-check.py`](scripts/adopt-check.py) |
 | The ratified rules (source of truth) | [`docs/PROTOCOL.md`](docs/PROTOCOL.md) |
 | The vision | [`docs/VISION.md`](docs/VISION.md) |
-| The four contracts | [`contracts/`](contracts/) — indexed in [`docs/CONTRACTS-README.md`](docs/CONTRACTS-README.md) |
+| The contracts — three govern the method, a family governs the app | [`contracts/`](contracts/) — indexed in [`docs/CONTRACTS-README.md`](docs/CONTRACTS-README.md) |
 | The announcement — what Converge is for | [`docs/ANNOUNCEMENT.md`](docs/ANNOUNCEMENT.md) |
 | Worked examples, one per contract | [`docs/examples/`](docs/examples/) |
 | This repository's own contract check | [`ledger/rows.yaml`](ledger/rows.yaml), with runnable checks in [`ledger/checks/`](ledger/checks/) |

@@ -1,4 +1,4 @@
-# Documents Contract — v1 (DRAFT — amended 2026-09-03, owner-ratified twice, amended 2026-09-06)
+# Documents Contract — v1 (DRAFT — held loosely 2026-09-06 — amended 2026-09-03, owner-ratified twice, amended 2026-09-06)
 
 **Who builds against this:** everyone who reads or writes a vision, contract,
 proposal, brief, or work item under Converge — in this repository and in every
