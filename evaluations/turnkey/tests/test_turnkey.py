@@ -311,7 +311,7 @@ def test_seeding_refuses_to_overwrite_existing_work(tmp_path):
 
 def test_every_step_is_named_and_ordered():
     letters = [letter for letter, _, _, _ in run.STEPS]
-    assert letters == list("abcdefghijk")
+    assert letters == list("abcdefghijkl")
 
 
 def test_the_turnkey_sentence_is_still_exactly_nine_steps():
@@ -963,6 +963,96 @@ def test_a_stall_named_with_its_cause_is_clause_9_kept():
                                           records)["verdict"] == run.PASS
 
 
+def test_a_declared_stall_carrying_its_iteration_count_is_read_as_counted():
+    """Clause 9's "across iterations" is a COUNT, and now something records it.
+
+    Measured on 2026-09-06, adopter run 03:50Z, scenario 2: a wedged manager
+    session polled for more than twenty minutes and declared nothing, because
+    the rule it was following named no number and so no iteration was ever the
+    last one. The manager mode now names three and asks the declaration to
+    carry the count; this is the reading that can see it.
+    """
+    records = [{"text": "2026-09-06T04:12:07Z STUCK w6-x - the guard refuses the "
+                        "changelog edit. Iterations without progress: 3. "
+                        "Routed: plan."}]
+    reading = run.assert_stalls_are_declared([{"lane": "w6-x"}], records)
+    assert reading["verdict"] == run.PASS
+    assert reading["declared"][0]["iterations"] == 3
+    assert reading["iterations_declared"] == {"w6-x": 3}
+    assert "3 iteration(s) without progress" in reading["why"]
+    # And it never claims the number is true, only that it was written down.
+    assert "not a number anything here can check" in reading["why"]
+
+
+def test_a_declared_stall_written_as_prose_still_gives_up_its_count():
+    records = [{"text": "cycle 20: w6-x stuck after 4 iterations with no progress; "
+                        "routed to the plan"}]
+    reading = run.assert_stalls_are_declared([{"lane": "w6-x"}], records)
+    assert reading["verdict"] == run.PASS
+    assert reading["iterations_declared"] == {"w6-x": 4}
+
+
+def test_a_declared_stall_with_no_count_says_the_count_is_unread():
+    """An absent count is reported as absent, never passed over in silence."""
+    records = [{"text": "cycle 20: w6-x died mid-work, 0 commits; relaunched"}]
+    reading = run.assert_stalls_are_declared([{"lane": "w6-x"}], records)
+    assert reading["verdict"] == run.PASS
+    assert reading["declared"][0]["iterations"] is None
+    assert reading["iterations_declared"] == {}
+    assert "no record carries an iteration count" in reading["why"]
+
+
+# --- clause 7, the half about which tree the re-run measured ---------------
+
+
+def test_a_rerun_from_a_path_that_does_not_exist_is_broken():
+    reading = run.judge_rerun_path(False, None, "/w/lanes/w3/repo", None)
+    assert reading["verdict"] == run.FAIL
+    assert "does not exist" in reading["why"]
+
+
+def test_a_rerun_that_resolves_to_another_worktree_is_broken():
+    """The measured defect: right command, right repository, wrong code.
+
+    Adopter run 03:50Z, scenario 1. The re-run passed through a stale editable
+    binding to the lane worktree that had just been merged and was about to be
+    deleted, so main was certified by a check that never read it.
+    """
+    row = {"id": "installed-tree", "status": "MISSING",
+           "detail": "The installed amplifier_converge resolves to "
+                     "/w/lanes/w3/repo/src/amplifier_converge, which is NOT "
+                     "inside the repository under test (/w/repo)."}
+    reading = run.judge_rerun_path(True, "/w/repo", "/w/repo", row)
+    assert reading["verdict"] == run.FAIL
+    assert "/w/lanes/w3/repo" in reading["why"]
+
+
+def test_a_rerun_against_the_merged_tree_is_kept():
+    row = {"id": "installed-tree", "status": "OK",
+           "detail": "The installed amplifier_converge resolves to "
+                     "/w/repo/src/amplifier_converge, inside the repository "
+                     "under test (/w/repo), so a check re-run here measures "
+                     "this tree."}
+    reading = run.judge_rerun_path(True, "/w/repo", "/w/repo", row)
+    assert reading["verdict"] == run.PASS
+    assert "/w/repo" in reading["why"]
+
+
+def test_a_rerun_with_no_installed_reading_says_what_it_waits_on():
+    """No reading is not a pass; it names the observation it still needs."""
+    reading = run.judge_rerun_path(True, "/w/repo", "/w/repo", None)
+    assert reading["verdict"] == run.SKIP
+    assert reading["awaits"]
+
+
+def test_a_rerun_where_nothing_is_installed_is_skipped_not_passed():
+    row = {"id": "installed-tree", "status": "SKIP",
+           "detail": "amplifier-converge is not on PATH, so there is no installed "
+                     "copy of amplifier_converge for this to resolve."}
+    reading = run.judge_rerun_path(True, "/w/repo", "/w/repo", row)
+    assert reading["verdict"] == run.SKIP
+
+
 # --- clause 4 -------------------------------------------------------------
 
 
@@ -1534,6 +1624,18 @@ def test_a_real_stall_the_plan_record_declares_is_clause_9_kept(declared_wave):
     assert "lumen-index" in reading["why"]
     assert "not whether the cause it gives is the real one" in reading["why"]
     assert result.status == run.PASS
+
+
+def test_a_real_stall_declares_how_many_iterations_it_ran_without_progress(declared_wave):
+    """Clause 9's count, read off a real wave rather than a synthetic record.
+
+    The fixture's declaration now carries the stamp the manager mode asks for,
+    so what the reading returns here is what a manager session following the
+    rule would leave behind.
+    """
+    _, reading = _clause_9(declared_wave)
+    assert reading["iterations_declared"] == {"lumen-index": 3}
+    assert "3 iteration(s) without progress" in reading["why"]
 
 
 def test_a_real_stall_nobody_declared_is_clause_9_broken(hidden_wave):
