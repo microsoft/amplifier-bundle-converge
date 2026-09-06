@@ -89,3 +89,5 @@ The one sentence operation.v1 opens with — fresh environment, one install, der
 **Stuck.** Nothing is stuck; one lane is at work on a state word.
 **Needs you.** Four words to reach a clean place, listed in the message: lock or hold the three section contracts, a word on the two small proposals, "later" or a choice on the two umbrella decisions, and "delete it" for the read-only copy of the old batch directory under your home.
 **Anything quietly broken.** One ledger row (the stall reading, CVG-019) goes red every time the plan record grows, because its expectation carries a count; I will make it count-free in place as part of the tidy.
+
+## 2026-09-06 13:29 - they gave the four words: lock, ratified, later, delete it
