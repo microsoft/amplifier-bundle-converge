@@ -869,6 +869,391 @@ def queue_verdict(sid: str, out: str) -> Step:
     )
 
 
+# ---- the first wake's ORDER, which state alone cannot show -----------------
+#
+# Core 14 does not only say a vision and contracts exist at the end. It says
+# the work in flight pauses FIRST, and that both paths read what is there
+# BEFORE proposing anything. Every probe above reads the container after the
+# run, so none of them can speak to sequence -- a vision written without
+# reading the code looks exactly like one written after. CVG-301 records that
+# hole in as many words: "chain complete and measured, sequence attested and
+# unmeasured", the attestation being the AI user's own account, which this
+# harness never treats as evidence about artifacts.
+#
+# What CAN be measured, and is all these two rows claim: the first-wake
+# convention asks for two records -- the pause said in the plan record, and
+# the four investigation answers written down -- and a record carries a date.
+# So date them, and date the drafts, and compare. Where the dating is exact
+# (a stamp the line carries itself, or a git add-commit) a wrong order is a
+# real FAIL. Where it rests on an mtime -- which is a LAST write and cannot
+# tell "written after" from "appended to after" -- anything but PASS is a
+# CAN'T TELL, because that is genuinely all the evidence supports.
+
+FIRST_WAKE_PROBE_PY = r'''
+"""Date the first wake: was the pause written down, and did the reading precede
+the drafts?
+
+Reads only what is on disk in this container. Prints its raw findings first,
+then a small block of markers the harness judges from -- so a reader can check
+the judgement against the same evidence it was made from.
+"""
+
+import datetime
+import os
+import pathlib
+import re
+import subprocess
+
+PROJECT = pathlib.Path(os.environ.get("ADOPTER_PROJECT_DIR", "/workspace/existing-project"))
+WORKSPACE = pathlib.Path(os.environ.get("ADOPTER_WORKSPACE", "/workspace"))
+
+ISO = re.compile(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(?::\d{2})?Z?")
+PAUSE = re.compile(r"\b(paus\w*|park\w*)\b", re.I)
+PAUSE_NOTHING = re.compile(r"\b(paus\w*|park\w*)\b\s*[:\-]*\s*(none|nothing)\b", re.I)
+SKIP_PARTS = (".git", "site-packages", "node_modules", "__pycache__", ".venv")
+
+# The four answers the first-wake convention asks to come back with. Three of
+# four must show in one file before it counts as the investigation record --
+# a lower bar reads a passing mention as a reading that happened.
+SIGNALS = {
+    "what-is-this": re.compile(r"what is this|what it is|what the (repo|repository|project) does", re.I),
+    "who-is-it-for": re.compile(r"who is it for|who it is for|who would be surprised", re.I),
+    "what-it-promises": re.compile(r"promis\w+", re.I),
+    "what-is-in-flight": re.compile(r"in flight|in-flight|half.done", re.I),
+}
+
+
+def skipped(p):
+    return any(part in SKIP_PARTS for part in p.parts)
+
+
+def git_added(p):
+    """When this path FIRST appeared, per git. Exact, and not appendable."""
+    d = p.parent
+    while d != d.parent:
+        if (d / ".git").exists():
+            break
+        d = d.parent
+    else:
+        return None
+    if not (d / ".git").exists():
+        return None
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(d), "log", "--diff-filter=A", "--format=%cI", "-1", "--", str(p)],
+            capture_output=True, text=True, timeout=30,
+        ).stdout.strip()
+    except Exception:
+        return None
+    return out or None
+
+
+def parse(iso):
+    """An aware UTC datetime, or None.
+
+    Everything here is compared as a MOMENT, never as text. `git log %cI`
+    prints the committer's local offset (`...T01:54:00-07:00`) while a plan
+    record's own stamp is usually `...T09:00:12Z`; comparing those two as
+    strings puts the earlier moment second. A stamp with no offset at all is
+    read as UTC, which is what the mode's own stamp format writes.
+    """
+    if not iso:
+        return None
+    s = iso.strip().replace(" ", "T")
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    try:
+        dt = datetime.datetime.fromisoformat(s)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
+    return dt.astimezone(datetime.timezone.utc)
+
+
+def show(dt):
+    return dt.isoformat(timespec="seconds") if dt else "-"
+
+
+def first_seen(p):
+    """(moment, source) -- 'git' is exact; 'mtime' is a LAST write, never exact."""
+    g = parse(git_added(p))
+    if g:
+        return g, "git"
+    ts = datetime.datetime.fromtimestamp(p.stat().st_mtime, datetime.timezone.utc)
+    return ts, "mtime"
+
+
+# ---- the drafts ------------------------------------------------------------
+drafts = []
+if PROJECT.is_dir():
+    for p in PROJECT.rglob("*.md"):
+        if skipped(p):
+            continue
+        rel = p.relative_to(PROJECT).as_posix()
+        if p.name.upper().startswith("VISION") or rel.startswith("contracts/"):
+            at, src = first_seen(p)
+            drafts.append((at, src, p))
+drafts.sort(key=lambda d: d[0])
+
+print("<<<DRAFTS")
+for at, src, p in drafts:
+    print("%s  [%s]  %s" % (show(at), src, p))
+if not drafts:
+    print("(no VISION*.md and no contracts/*.md in %s)" % PROJECT)
+print("DRAFTS>>>")
+
+draft_at = drafts[0][0] if drafts else None
+draft_src = drafts[0][1] if drafts else ""
+
+# ---- candidate records: the plan record, and anything in the project -------
+candidates = []
+seen = set()
+# os.walk rather than rglob: a permission error or a symlink loop halfway
+# through must not take the whole probe down, because a probe that crashes
+# is a CAN'T TELL on both rows and measures nothing.
+for base, dirs, files in os.walk(WORKSPACE, onerror=lambda e: None):
+    dirs[:] = [d for d in dirs if d not in SKIP_PARTS]
+    for name in files:
+        p = pathlib.Path(base) / name
+        if p.suffix.lower() not in (".md", ".txt", ".log"):
+            continue
+        s = str(p)
+        if "/.amplifier/" in s or "/cache/" in s:
+            continue
+        try:
+            if p.stat().st_size > 2_000_000:
+                continue
+        except OSError:
+            continue
+        if s not in seen:
+            seen.add(s)
+            candidates.append(p)
+candidates.sort()
+
+draft_paths = {str(p) for _, _, p in drafts}
+
+# ---- 1. the pause, said in the plan record ---------------------------------
+pause_hits = []
+for p in candidates:
+    if str(p) in draft_paths:
+        continue
+    try:
+        text = p.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        continue
+    for line in text.splitlines():
+        if not PAUSE.search(line) or PAUSE_NOTHING.search(line):
+            continue
+        stamp = ISO.search(line)
+        pause_hits.append((p, line.strip()[:200], stamp.group(0) if stamp else ""))
+
+print("<<<PAUSELINES")
+for p, line, stamp in pause_hits[:40]:
+    print("%s\n    %s%s" % (p, line, ("   [stamped %s]" % stamp) if stamp else "   [no stamp in the line]"))
+if not pause_hits:
+    print("(no line naming a pause or a park, in %d candidate records)" % len(candidates))
+print("PAUSELINES>>>")
+
+stamped = sorted(m for m in (parse(s) for _, _, s in pause_hits if s) if m)
+pause_at = stamped[0] if stamped else None
+if not draft_at or not pause_hits:
+    pause_order = "unknown"
+elif pause_at:
+    # The line stamps itself, so the moment is exact and a late one is a red.
+    pause_order = "yes" if pause_at <= draft_at else "no"
+else:
+    # No stamp in any line. Fall back to when the record itself first appeared;
+    # that can prove BEFORE but never AFTER, so a late one is unknown.
+    firsts = sorted(first_seen(p)[0] for p, _, _ in pause_hits)
+    pause_at = firsts[0]
+    pause_order = "yes" if pause_at <= draft_at else "unknown"
+
+# ---- 2. the four investigation answers, dated ------------------------------
+inv_hits = []
+for p in candidates:
+    if str(p) in draft_paths or p.name == "CONVERGE-README.md":
+        continue
+    try:
+        text = p.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        continue
+    matched = [name for name, rx in SIGNALS.items() if rx.search(text)]
+    if len(matched) >= 3:
+        at, src = first_seen(p)
+        inv_hits.append((at, src, p, matched))
+inv_hits.sort(key=lambda h: h[0])
+
+print("<<<INVESTIGATION")
+for at, src, p, matched in inv_hits[:20]:
+    print("%s  [%s]  %s\n    answers seen: %s" % (show(at), src, p, ", ".join(matched)))
+if not inv_hits:
+    print("(no record carrying three of the four investigation answers, in %d candidates)" % len(candidates))
+print("INVESTIGATION>>>")
+
+inv_at = inv_hits[0][0] if inv_hits else None
+inv_src = inv_hits[0][1] if inv_hits else ""
+if not draft_at or not inv_hits:
+    inv_order = "unknown"
+elif inv_at <= draft_at:
+    inv_order = "yes"
+elif inv_src == "git" and draft_src == "git":
+    inv_order = "no"  # both add-dates are exact, so this really is out of order
+else:
+    inv_order = "unknown"  # an mtime is a LAST write; it cannot say "after"
+
+print()
+print("--- what this measured ---")
+print("All moments are UTC. `git` is an add-commit date and is exact; `mtime`")
+print("is a LAST write, which can prove BEFORE but never AFTER.")
+print("DRAFTS-FOUND: %d" % len(drafts))
+print("DRAFTS-EARLIEST: %s" % show(draft_at))
+print("DRAFTS-EARLIEST-SOURCE: %s" % (draft_src or "-"))
+print("RECORDS-SEARCHED: %d" % len(candidates))
+print("PAUSE-LINES: %d" % len(pause_hits))
+print("PAUSE-EARLIEST: %s" % show(pause_at))
+print("PAUSE-BEFORE-DRAFT: %s" % pause_order)
+print("INVESTIGATION-FILES: %d" % len(inv_hits))
+print("INVESTIGATION-EARLIEST: %s" % show(inv_at))
+print("INVESTIGATION-BEFORE-DRAFT: %s" % inv_order)
+'''
+
+
+def _marker_str(out: str, key: str) -> str:
+    m = re.search(rf"^{key}:\s*(.+?)\s*$", out, re.M)
+    return m.group(1) if m else ""
+
+
+async def judge_first_wake_order(dtu: DTU, sid: str, project_dir: str) -> list[Step]:
+    script = (
+        "cat > /tmp/adopter-first-wake-probe.py <<'ADOPTER_PY'\n"
+        + FIRST_WAKE_PROBE_PY
+        + "\nADOPTER_PY\n"
+        f"ADOPTER_PROJECT_DIR={shlex.quote(project_dir)} "
+        "python3 /tmp/adopter-first-wake-probe.py 2>&1; true"
+    )
+    rc, out = await probe(dtu, script, timeout_s=300.0)
+    return [pause_verdict(sid, out), investigation_order_verdict(sid, out)]
+
+
+def pause_verdict(sid: str, out: str) -> Step:
+    """Was the pause of the work in flight written down, before any draft?"""
+    what = "The work in flight paused first, said in the plan record"
+    lines = _marker_int(out, "PAUSE-LINES")
+    order = _marker_str(out, "PAUSE-BEFORE-DRAFT")
+    pause_at = _marker_str(out, "PAUSE-EARLIEST")
+    draft_at = _marker_str(out, "DRAFTS-EARLIEST")
+    searched = _marker_int(out, "RECORDS-SEARCHED")
+
+    if lines < 0 or not order:
+        return Step(
+            f"{sid}.7",
+            what,
+            UNPROVEN,
+            out,
+            missing=(
+                "could not tell -- the first-wake probe did not report a result, so "
+                "whether the pause was written down is unmeasured"
+            ),
+        )
+    if lines == 0:
+        return Step(
+            f"{sid}.7",
+            what,
+            FAIL,
+            out,
+            missing=(
+                f"no line naming a pause or a park exists in any of the {searched} "
+                "records in the container -- a pause nobody wrote down is "
+                "indistinguishable from a session that wandered off"
+            ),
+        )
+    if order == "yes":
+        return Step(f"{sid}.7", what, PASS, out)
+    if order == "no":
+        return Step(
+            f"{sid}.7",
+            what,
+            FAIL,
+            out,
+            missing=(
+                f"the pause is written down, and it is dated AFTER the first draft "
+                f"({pause_at} vs {draft_at}) -- the drafting did not wait for it"
+            ),
+        )
+    return Step(
+        f"{sid}.7",
+        what,
+        UNPROVEN,
+        out,
+        missing=(
+            f"could not tell -- {lines} line(s) name a pause, but nothing dates one "
+            f"before the first draft ({draft_at or 'no draft was found to order against'}). "
+            "A stamped line, or a plan record git can date, is what would settle it"
+        ),
+    )
+
+
+def investigation_order_verdict(sid: str, out: str) -> Step:
+    """Were the four answers written down, and dated before the drafts?"""
+    what = "The investigation answers are dated before the drafts"
+    files = _marker_int(out, "INVESTIGATION-FILES")
+    order = _marker_str(out, "INVESTIGATION-BEFORE-DRAFT")
+    inv_at = _marker_str(out, "INVESTIGATION-EARLIEST")
+    draft_at = _marker_str(out, "DRAFTS-EARLIEST")
+    drafts = _marker_int(out, "DRAFTS-FOUND")
+
+    if files < 0 or not order:
+        return Step(
+            f"{sid}.8",
+            what,
+            UNPROVEN,
+            out,
+            missing=(
+                "could not tell -- the first-wake probe did not report a result, so "
+                "the order of the reading and the drafting is unmeasured"
+            ),
+        )
+    if files == 0:
+        return Step(
+            f"{sid}.8",
+            what,
+            FAIL,
+            out,
+            missing=(
+                "no record carrying the investigation answers exists anywhere in the "
+                "workspace, so the reading that must precede the drafts was never "
+                "written down where the steward could hold it against what they know"
+            ),
+        )
+    if order == "yes":
+        return Step(f"{sid}.8", what, PASS, out)
+    if order == "no":
+        return Step(
+            f"{sid}.8",
+            what,
+            FAIL,
+            out,
+            missing=(
+                f"the investigation record was added AFTER the first draft "
+                f"({inv_at} vs {draft_at}), both dated by git -- the drafting did not "
+                "wait for the reading"
+            ),
+        )
+    return Step(
+        f"{sid}.8",
+        what,
+        UNPROVEN,
+        out,
+        missing=(
+            f"could not tell -- {files} record(s) carry the answers, but nothing dates "
+            f"them before the {drafts} draft(s) exactly enough to say so. An mtime is a "
+            "LAST write: it cannot tell a record written after the drafts from one "
+            "appended to after them"
+        ),
+    )
+
+
 # ---------------------------------------------------------------------------
 # The run
 # ---------------------------------------------------------------------------
@@ -1051,6 +1436,73 @@ async def run_scenario(
         await judge_ledger(dtu, sid, run.project_dir),
         await judge_queue(dtu, sid),
     ]
+    # The two order rows are asked only on the adopt path. "The work in flight
+    # pauses first" is that path's own sentence -- a blank repository has no
+    # work in flight to pause and nothing to read, so asking there would
+    # manufacture a row whose only honest answer is "does not apply".
+    if run.key == "existing-project":
+        run.steps += await judge_first_wake_order(dtu, sid, run.project_dir)
+
+
+ARCHIVE_HEADING = "# Earlier runs"
+
+ARCHIVE_NOTE = (
+    "Every run this file has ever recorded, newest first. A run is never "
+    "erased by the next one: a RED run that a later run turns green is the "
+    "evidence that it moved, and a file that keeps only the latest verdict "
+    "cannot show that. Each run below is its own record, carrying its own "
+    "start time in its Provenance block.\n\n"
+    "Exactly one thing is changed when a run is archived: **its headings are "
+    "demoted one level**, so that `### S2.5 \u2026` names a row of the CURRENT "
+    "run and nothing else. Text inside fenced blocks is left byte for byte as "
+    "the probe printed it."
+)
+
+
+def _demote_headings(text: str) -> str:
+    """Push every Markdown heading down one level, outside fenced blocks.
+
+    Evidence fences carry other people's `#` lines -- a vision's own H1, a
+    YAML comment. Rewriting one of those would corrupt the evidence the row
+    was judged from, so the fence state is tracked and only real headings move.
+    """
+    out: list[str] = []
+    in_fence = False
+    for line in text.split("\n"):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            out.append(line)
+            continue
+        if not in_fence and re.match(r"^#{1,5} ", line):
+            line = "#" + line
+        out.append(line)
+    return "\n".join(out)
+
+
+def _archive_of(path: Path) -> str:
+    """The archive section to append below a newly written run, or ''."""
+    if not path.exists():
+        return ""
+    previous = path.read_text(encoding="utf-8")
+    head, sep, older = previous.partition(f"\n{ARCHIVE_HEADING}\n")
+    older_runs = ""
+    if sep:
+        # Already-archived runs keep their shape; only the top run moves. The
+        # note is rewritten fresh each time, so the previous copy of it is cut
+        # here rather than carried down and duplicated once per run.
+        idx = older.find("\n## Run ")
+        older_runs = older[idx:] if idx >= 0 else older
+    started = re.search(r"^- \*\*started\*\* \u2014 `([^`]+)`", head, re.M)
+    stamp = started.group(1) if started else "(no start time recorded in the file)"
+    parts = [
+        f"\n{ARCHIVE_HEADING}\n",
+        f"\n{ARCHIVE_NOTE}\n",
+        f"\n## Run {stamp}\n",
+        f"\n{_demote_headings(head.strip())}\n",
+    ]
+    if older_runs.strip():
+        parts.append(f"\n{older_runs.strip()}\n")
+    return "".join(parts)
 
 
 def write_result(path: Path, *, scenarios: list[ScenarioRun], meta: dict) -> str:
@@ -1074,6 +1526,15 @@ def write_result(path: Path, *, scenarios: list[ScenarioRun], meta: dict) -> str
     lines.append(
         f"**{overall}** \u2014 {n_pass} pass \u00b7 {n_fail} fail \u00b7 "
         f"{n_unproven} can't tell \u00b7 {n_skip} skip, run {meta['started']}."
+    )
+    lines.append("")
+    covered = ", ".join(r.name for r in scenarios) or "(no scenario ran)"
+    lines.append(
+        f"**This run covered: {covered}.** A run may be asked for one scenario "
+        "(`--scenarios existing-project`), and then the verdict above is that "
+        "scenario's alone \u2014 it says nothing about the one that did not run. "
+        f"Earlier runs are kept below under `{ARCHIVE_HEADING}`, newest first, "
+        "never overwritten."
     )
     lines.append("")
     lines.append(
@@ -1170,7 +1631,7 @@ def write_result(path: Path, *, scenarios: list[ScenarioRun], meta: dict) -> str
         lines.append(_fence(s.evidence))
         lines.append("")
 
-    text = "\n".join(lines) + "\n"
+    text = "\n".join(lines) + "\n" + _archive_of(path)
     path.write_text(text, encoding="utf-8")
     return overall
 
