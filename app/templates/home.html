@@ -23,4 +23,15 @@
     </div>
   </div>
   <div id="homeSessionGrid" class="home-session-grid"></div>
+  <!-- Where each manager session on this list came from. A session reaches
+       Home one of three ways - it registered itself, a person named it in the
+       config file, or it was discovered from a batch directory - and which one
+       it was decides what a steward does when a session is missing or stale.
+       Folded, because it is the machine's own bookkeeping and not the work;
+       one fold for the whole list rather than one per card, so the cards stay
+       the cards. Filled by render/home.js. -->
+  <details id="homeOriginFold" class="op-parity home-origin">
+    <summary>Details &mdash; where these manager sessions came from</summary>
+    <div id="homeOriginBody"></div>
+  </details>
 </section>

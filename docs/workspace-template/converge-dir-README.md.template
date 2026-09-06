@@ -13,6 +13,7 @@ space: delete a finished operation's directory and the project is untouched.
 <workspace>/.converge/
   README.md              <- this file
   <manager-id>/          <- one directory per project the workspace runs
+    registration.toml    who this manager session is, rewritten on every wake
     HIGHWAY.md           the plan record - the operating picture, rewritten each cycle
     manifest.tsv         which lane is on which branch, written by the tooling
     goals/               one pre-composed brief per queued item
@@ -25,6 +26,16 @@ space: delete a finished operation's directory and the project is untouched.
 
 `<manager-id>` is the project's own name - the one its work queue carries. Two
 projects run from the same workspace get two directories and share nothing.
+
+`registration.toml` is how the companion app finds this operation at all. The
+manager session rewrites it on **every** wake - its name, steward, workspace
+root, repositories with their default branches, plan record, tmux socket and
+session, work queue, and the time of that wake - and the app scans the workspace
+roots it knows for exactly this file. Nobody registers a manager session by hand,
+and an operation that started before any of this appears the next time it wakes.
+The stamp is also the heartbeat: past fifteen minutes with no rewrite, the app
+says the session is silent and may have died. Delete it and the operation simply
+stops being listed; the next wake writes it again.
 
 ## Why here and not under your home directory
 

@@ -119,6 +119,24 @@ def mtime_age(path: Path) -> float | None:
         return None
 
 
+def stamp_age(stamp: str) -> float | None:
+    """Seconds since an ISO-8601 stamp. None when there is no readable stamp.
+
+    A stamp with no zone is read as UTC, because that is what the writer
+    records; a stamp that cannot be parsed answers None rather than an age of
+    zero, so "nothing said when" never reads as "heard from just now".
+    """
+    if not (stamp or "").strip():
+        return None
+    try:
+        when = datetime.fromisoformat(stamp.strip())
+    except ValueError:
+        return None
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=timezone.utc)
+    return max(0.0, datetime.now(timezone.utc).timestamp() - when.timestamp())
+
+
 def render_markdown(text: str) -> str:
     """Markdown to HTML, server-side, with fenced code kept."""
     try:
@@ -260,6 +278,14 @@ LANE_WORD = {
     "quiet": "Quiet",
     "silent": "Silent — may have died",
 }
+
+#: How long a MANAGER session's heartbeat may go unrenewed before this app
+#: stops claiming the session is there. The mode writes its registration on
+#: every wake, so a stamp older than this means no wake has happened in that
+#: time — which is the same reading `LANE_WORD`'s third word makes about a
+#: lane, and is told in that same word below.
+MANAGER_SILENT_SECONDS = 15 * 60
+
 
 #: What a lane that has reported back produced, told in the WORK words of
 #: `experience.v1` Core 6 — because that is what these two states are: work
@@ -1100,6 +1126,47 @@ def _file_since(path: Path) -> str:
         return ""
 
 
+def manager_presence(mc: ManagerConfig) -> dict:
+    """Is this manager session still there? — `experience.v1` Core 1's last reading.
+
+    Core 1 says Home shows, among other things, "quiet or silent". The reading
+    behind that is the registration's own heartbeat: the mode writes the file
+    on every wake, so how long ago it was written is how long ago the session
+    was awake.
+
+    Three answers, and the third is a different thing from the second:
+
+    * **silent** — the stamp is older than `MANAGER_SILENT_SECONDS`. Told in
+      the same word a silent lane gets (`LANE_WORD["silent"]`), because it is
+      the same reading and `experience.v1` Core 6 fixes that word once.
+    * **here** — a stamp inside the window. Said as a time rather than a state
+      word: how long ago is what a steward actually wants, and there is no
+      plain state word for "answering normally" in Core 6's vocabulary.
+    * **nothing known** — no stamp at all, which is what a manager named only
+      by hand in the config file has. This answers with empty fields rather
+      than with either word above: never having registered is not the same as
+      having gone quiet, and showing it as silence would be a claim nothing
+      supports.
+    """
+    age = stamp_age(mc.last_seen)
+    if age is None:
+        return {"presence": "", "presenceLabel": "", "heard": "", "lastSeen": mc.last_seen}
+    words = age_words(age)
+    if age >= MANAGER_SILENT_SECONDS:
+        return {
+            "presence": "silent",
+            "presenceLabel": LANE_WORD["silent"],
+            "heard": words,
+            "lastSeen": mc.last_seen,
+        }
+    return {
+        "presence": "here",
+        "presenceLabel": "Last heard just now" if words == "just now" else f"Last heard {words} ago",
+        "heard": words,
+        "lastSeen": mc.last_seen,
+    }
+
+
 def manager_payload(mc: ManagerConfig) -> dict:
     """The manager card — status, lanes, objective, and what needs a person."""
     text = highway_text(mc)
@@ -1160,6 +1227,18 @@ def manager_payload(mc: ManagerConfig) -> dict:
         # never the signed-in reader's name, which is a fact about who is
         # looking rather than about who may answer.
         "steward": mc.steward,
+        # Where this manager came from, and whether it is still there. Both are
+        # facts about the REGISTRATION rather than about the work, which is why
+        # they sit apart from `status` above: `status` says whether the work
+        # needs a person, `presence` says whether anybody is still listening.
+        **manager_presence(mc),
+        "origin": mc.origin,
+        "workspace": str(mc.workspace or ""),
+        "planRecord": str(mc.plan_record or ""),
+        "registration": str(mc.registration or ""),
+        "repoBranches": [
+            {"path": str(one), "branch": mc.branch_of(one)} for one in mc.repos
+        ],
     }
 
 
@@ -1552,6 +1631,7 @@ def _lane_board(text: str) -> dict[str, str]:
 __all__ = [
     "BRIEF_PARTS",
     "LANE_WORD",
+    "MANAGER_SILENT_SECONDS",
     "NO_REASON_ON_RECORD",
     "OUTCOME_WORD",
     "OWNER_LOG",
@@ -1571,6 +1651,7 @@ __all__ = [
     "history_for",
     "lane_state",
     "manager_payload",
+    "manager_presence",
     "manifest_lanes",
     "operation_payload",
     "owner_log_commits",
@@ -1585,6 +1666,7 @@ __all__ = [
     "return_brief",
     "run",
     "sections_of",
+    "stamp_age",
     "throughput",
     "tmux_sessions",
     "tracker_counts",

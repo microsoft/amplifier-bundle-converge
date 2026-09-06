@@ -64,6 +64,53 @@ function wireTellAll() {
   button.addEventListener('click', tellAllSessions);
 }
 
+// --------------------------------------------------------------------------
+// whose word counts, and whether anybody is still listening
+// --------------------------------------------------------------------------
+//
+// `experience.v1` Core 1 says Home shows, for each manager session, how many
+// things want your word, lanes running against lanes intended, the last brief
+// line, and "quiet or silent". The last of those is the registration's own
+// heartbeat, read by `app/data.py`'s `manager_presence`, and it is a different
+// reading from the card's status: status says whether the WORK needs a person,
+// presence says whether the SESSION is still waking up at all.
+//
+// A manager with no registration carries an empty `presence`, and then nothing
+// is drawn. Never having registered is not the same as having gone quiet, and
+// a card that showed silence for it would be claiming something nothing here
+// knows.
+//
+// Both facts share ONE line, because `shell.css` gives every `<p>` inside a
+// card a 16px foot and three stacked paragraphs push the meta tiles off a
+// phone. That file belongs to another lane, so the markup bends instead.
+function registrationLine(m) {
+  // `experience-collaboration.v1` Core 8 - whose word counts on this session,
+  // settled at registration. Empty when the registration named nobody, and
+  // then the card says exactly that rather than the reader's own name.
+  const steward = m.steward
+    ? `Steward: ${escapeHtml(m.steward)}`
+    : 'No steward named in this session&rsquo;s registration';
+  const presence = m.presenceLabel
+    ? ` &middot; <span class="home-card-presence ${escapeHtml(m.presence)}">${escapeHtml(m.presenceLabel)}</span>`
+    : '';
+  return `<p class="muted home-card-registration">${steward}${presence}</p>`;
+}
+
+//: One row per manager, saying where it came from and when it was last awake.
+//: `origin` is written by `app/config.py`, which is the only place that knows.
+function renderOriginFold(sessions) {
+  const body = $('homeOriginBody');
+  if (!body) return;
+  if (!sessions.length) {
+    body.innerHTML = '<p class="muted">No manager session is listed yet, so there is nothing to say where anything came from.</p>';
+    return;
+  }
+  body.innerHTML = sessions.map((m) => `
+      <p><strong>${escapeHtml(m.name)}</strong> &mdash; ${escapeHtml(m.origin || 'origin not recorded')}.
+      ${m.lastSeen ? `Last awake ${escapeHtml(m.lastSeen)}.` : 'Never registered, so nothing here says when it was last awake.'}
+      ${m.workspace ? `Workspace root <code>${escapeHtml(m.workspace)}</code>.` : ''}</p>`).join('');
+}
+
 export function renderHome() {
   const sorted = [...data.managerList].sort((a, b) => b.needs - a.needs || (a.status === 'running' ? -1 : 1));
   $('homeAttentionTotal').textContent = data.managerList.reduce((sum, m) => sum + (m.needs || 0), 0);
@@ -74,6 +121,7 @@ export function renderHome() {
           <span class="status-dot ${escapeHtml(m.status)}"></span>
         </div>
         <p>${escapeHtml(m.summary)}</p>
+        ${registrationLine(m)}
         <div class="home-card-meta">
           <div><strong>${m.needs}</strong><span>need your word</span></div>
           <div><strong>${m.lanesActive}/${m.lanesMax}</strong><span>lanes</span></div>
@@ -83,5 +131,6 @@ export function renderHome() {
       </button>`).join('');
   qsa('[data-home-manager]').forEach((btn) =>
     btn.addEventListener('click', () => hooks.selectManager(btn.dataset.homeManager)));
+  renderOriginFold(sorted);
   wireTellAll();
 }
