@@ -82,3 +82,12 @@ The one sentence operation.v1 opens with — fresh environment, one install, der
 **Stuck.** Nothing is stuck; one small lane is fixing a lane-state word the app serves off the contract's vocabulary.
 **Needs you.** Three things, each answerable in a word and brought in the message: lock three section contracts whose kits pass and whose only blocker is gone; a word on two new proposals (how an amendment is recorded when a contract sits at the hundred-line ceiling, and the vision's lock entry rewritten as a bullet so the direction kit stops reporting a dropped table); and two decisions the umbrella kit has been red on since the family was written — ten routes beyond the five writes, and six features no contract names.
 **Anything quietly broken.** The vision's lock entry I wrote is a table row inside a bullet list, which renders as literal pipes and fails the direction kit's rule 2b — the vision is locked, so the fix is a proposal (drafted) rather than an edit; and an untracked __pycache__ under the retired page's path made six ledger rows read red on the integration checkout until I removed it.
+
+## 2026-09-06 13:23 - they came back asking for a clean place before the next work
+**Time away.** Twenty minutes since the last brief; nothing new ran in it except the one small lane.
+**Finished.** Nothing new since the last brief is claimed finished; the sheet's application stands as re-checked there.
+**Stuck.** Nothing is stuck; one lane is at work on a state word.
+**Needs you.** Four words to reach a clean place, listed in the message: lock or hold the three section contracts, a word on the two small proposals, "later" or a choice on the two umbrella decisions, and "delete it" for the read-only copy of the old batch directory under your home.
+**Anything quietly broken.** One ledger row (the stall reading, CVG-019) goes red every time the plan record grows, because its expectation carries a count; I will make it count-free in place as part of the tidy.
+
+## 2026-09-06 13:29 - they gave the four words: lock, ratified, later, delete it

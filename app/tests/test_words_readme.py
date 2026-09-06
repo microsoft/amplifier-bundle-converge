@@ -3,7 +3,7 @@
 **1. The lane's state word, as RENDERED** (`converge-6my`).
 
 `app/data.py` has served each lane a plain word all along -- `Working`,
-`Quiet`, `Silent -- may have died` for a lane at work, `Done` or `Stuck` for one
+`Quiet`, `Silent — may have died` for a lane at work, `Done` or `Stuck` for one
 that reported back -- and every existing check agreed it did. The screen did
 not: `.lane-status` is styled `text-transform:uppercase`, so a steward read the
 machine's screaming form of the word instead. `experience.v1` Core 6 fixes the

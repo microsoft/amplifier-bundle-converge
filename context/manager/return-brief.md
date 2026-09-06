@@ -66,7 +66,7 @@ empty one are not the same thing, and only the empty one is honest.
   the deciding sentence.
 - **No status vocabulary of its own.** Contracts read *Kept - Not yet - Broken -
   Pinned open - Can't check*; work reads *Truly ready - Waiting on you - Working
-  - Stuck - Done*; lanes read *Working - Quiet - Silent, may have died*.
+  - Stuck - Done*; lanes read *Working - Quiet - Silent - may have died*.
 
 ## When the manager session is stopping
 

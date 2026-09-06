@@ -1,4 +1,4 @@
-# Documents Contract — v1 (DRAFT — amended 2026-09-03, owner-ratified twice)
+# Documents Contract — v1 (DRAFT — amended 2026-09-03, owner-ratified twice, amended 2026-09-06)
 
 **Who builds against this:** everyone who reads or writes a vision, contract,
 proposal, brief, or work item under Converge — in this repository and in every
@@ -25,7 +25,8 @@ checked — by anyone, with any tool.
    and systems that would be surprised by a silent change.
 4. **The same sections, in the same order, every time.** Purpose → Core (the
    teeth) → What v1 deliberately does NOT freeze (with promotion triggers) →
-   Conformance kit asserts → Reserved / open questions → Changelog only if amended.
+   Conformance kit asserts → Reserved / open questions → Changelog only if amended
+   and it fits; otherwise the archived proposal is the record, H1 `amended <date>`.
    A contract may carry an additional section of its own, provided it neither
    displaces nor reorders the ones above.
 5. **Clauses lead with the rule as fact,** in bold, then one to three plain lines

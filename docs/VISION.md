@@ -65,6 +65,6 @@ The method end to end in isolated environments — a 6-for-6 evaluation, the gua
 
 ## Changelog
 
+- **2026-09-06 — v1 (FROZEN).** Locked on the steward's word "Yep, all look good to me, make it so." — the four conditions answered in docs/workflow/LOCK-SHEET-2026-09-06.md; changes from here go through a `<name>.vN-candidate.md` proposal. Evidence: docs/workflow/owner-ratifications-2026-09-06.md round 2.
 - **2026-09-03 — v1 (DRAFT), amended.** Principle 8 rewritten from the owner's experience brief: manager-session anchor, Manager Console, the fifth write (ask), one experience across browser/PWA/native under one umbrella contract. Manager-to-manager talk moved from "not yet" to "deliberately does not."
 - **2026-09-02 — v1 (DRAFT).** From the ratified rules, this project's own decision record, four rounds of alignment through the release announcement, and the measured record of the method in daily use.
-| 2026-09-06 | Locked on the steward's word "Yep, all look good to me, make it so." — the four conditions answered in docs/workflow/LOCK-SHEET-2026-09-06.md; changes from here go through a `<name>.vN-candidate.md` proposal | docs/workflow/owner-ratifications-2026-09-06.md round 2 |
