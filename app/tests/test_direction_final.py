@@ -856,6 +856,28 @@ def test_locking_stamps_the_document_and_says_so(server, project, browser):
     So this is that rewrite. `contracts/documents.v1.md` clause 6 puts a
     document's status in its H1 and nowhere else, so the H1 on disk is what is
     read here — not the toast, which is only the app's report of it.
+
+    **What "and nothing else" means changed once more, on purpose.** Until
+    2026-09-06 the last assertion below read `kept == body` — the H1 is stamped
+    and not one line under it moves. Wave 13 (`6eb550b`) deliberately made the
+    freeze ONE edit: the stamp and the document's own changelog entry recording
+    it land in the same write and the same commit, because a locked document
+    takes no edit in place and a second write to add the record would be refused
+    by the guard the lock had just switched on. So the old assertion was pinning
+    the behaviour that was replaced, and it failed here wherever Playwright was
+    installed (`converge-jcha`), measured on this tree before this rewrite:
+
+        [lock] everything below the H1 is unchanged: False
+        AssertionError: locking rewrote something below the H1; it stamps the
+        H1 and nothing else
+        Left contains 4 more items, first extra item: ''
+
+    Those four lines are the changelog block. The check below now asserts the
+    behaviour that shipped: the H1 is stamped, **exactly one** changelog entry
+    is appended under `## Changelog`, and nothing that was already below the H1
+    moves. That is still a real check — a lock that rewrote a Core clause, or
+    appended two entries, or stamped the H1 while writing no record at all,
+    fails it.
     """
     errors: list[str] = []
     ctx, page = _boot(browser, server, project, 1280, 800, errors)
@@ -894,10 +916,17 @@ def test_locking_stamps_the_document_and_says_so(server, project, browser):
     head, body = before.splitlines()[0], before.splitlines()[1:]
     stamped, kept = after.splitlines()[0], after.splitlines()[1:]
 
+    # The one edit, read as two halves: what was already below the H1, and what
+    # the lock added under it.
+    unchanged, added = kept[: len(body)], kept[len(body) :]
+    written = [line for line in added if line.strip()]
+
     print(f"[lock] toast: {toast}")
     print(f"[lock] H1 before: {head}")
     print(f"[lock] H1 after:  {stamped}")
-    print(f"[lock] everything below the H1 is unchanged: {kept == body}")
+    print(f"[lock] lines already below the H1 are unchanged: {unchanged == body}")
+    for line in written:
+        print(f"[lock] added: {line}")
     print(f"[lock] console errors: {errors or 'none'}")
 
     assert "Locked" in toast, f"the app did not say the lock landed: {toast!r}"
@@ -909,7 +938,28 @@ def test_locking_stamps_the_document_and_says_so(server, project, browser):
         f"the document's H1 was not stamped although the app said it locked: {stamped!r}"
     )
     assert "(DRAFT)" not in stamped, f"the H1 still carries its draft status: {stamped!r}"
-    assert kept == body, "locking rewrote something below the H1; it stamps the H1 and nothing else"
+    # The freeze is one edit: the stamp and the record of it, together. Nothing
+    # that was already below the H1 moves…
+    assert unchanged == body, (
+        "locking rewrote or dropped a line that was already below the H1; "
+        "it stamps the H1 and appends its own changelog entry, and nothing else"
+    )
+    # …and the only thing added is that entry, under the changelog heading this
+    # document did not have before.
+    assert written, (
+        "locking stamped the H1 and wrote no record of it — the freeze is one edit "
+        "and half of it is missing, which no later edit can repair: the file now "
+        "reads locked, so the write that would say why is refused"
+    )
+    assert len(written) == 2, (
+        f"locking wrote more than the one changelog entry it records itself with: {written}"
+    )
+    assert written[0] == "## Changelog", (
+        f"the appended lines are not the document's changelog section: {written}"
+    )
+    assert written[1].startswith(f"- **{day} \u2014 locked (FROZEN {day}).**"), (
+        f"the lock wrote no dated changelog entry naming the locking word: {written[1]!r}"
+    )
     assert not errors, f"the page logged errors: {errors}"
     ctx.close()
 

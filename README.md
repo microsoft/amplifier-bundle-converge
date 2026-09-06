@@ -169,6 +169,41 @@ between your contracts and the code. The manager session plans the order, briefs
 and launches the worker sessions, checks their results by re-running the check
 itself, and writes you a brief every time you come back.
 
+### Run the app
+
+The manager session works whether or not you watch it. The app is where you
+watch it — the two halves above, read from your own repository. From a checkout
+of this repository, one command:
+
+```
+scripts/run-app.sh
+```
+
+It prints where to open it — **<http://127.0.0.1:8788>** — and stops with
+Ctrl-C. You sign in with your account on that machine, the same username and
+password as `login`; the app keeps no passwords of its own. It stays on
+loopback unless you say `--lan`, and takes `--port N` when 8788 is busy.
+
+**What you see** is Home: the list of manager sessions you run, each with what
+wants your word, lanes running against lanes intended, and its last brief line.
+Open one and you are in Direction and Operation, with the Manager Console as a
+pane beside either.
+
+**How a manager session gets there** — nobody adds it. On every wake a manager
+session writes its own registration to
+`<workspace>/.converge/<manager-id>/registration.toml`, and the app scans for
+those files on every request. So a session you started before you first ran the
+app appears the next time it wakes, and the stamp it writes each wake is how the
+page knows whether it is still there. Under the list, **Details — where these
+manager sessions came from** says for each one whether it registered itself, was
+named by hand, or was discovered — and where the app looked. A session missing
+from Home is nearly always a workspace root nobody scanned, and the command
+prints every root it scanned as it starts.
+
+To keep it running across logout and reboot, run it as a service —
+[`app/README.md`](app/README.md) carries the unit file and the rest of the
+app's operation.
+
 ### What appears where
 
 | Where | What |
@@ -260,7 +295,7 @@ is copied under that name and made executable, not copied as it stands.
 | The conformance kits the ledger runs | [`conformance/`](conformance/) |
 | The deck — a six-minute walk-through | [`docs/presentation/amplifier-converge.html`](docs/presentation/amplifier-converge.html) |
 | The explainer — the sit-down companion, about twelve minutes | [`docs/presentation/explainer/index.html`](docs/presentation/explainer/index.html) |
-| The app (the two halves) | [`src/amplifier_converge/`](src/amplifier_converge/) |
+| The app you open beside a project (the two halves) | [`app/`](app/), started by [`scripts/run-app.sh`](scripts/run-app.sh) and documented in [`app/README.md`](app/README.md) |
 | Design records — dated snapshots, not current law | [`docs/design/`](docs/design/) |
 | The starter ledger format (a draft convention, not a contract) | [`docs/LEDGER-FORMAT.md`](docs/LEDGER-FORMAT.md) |
 

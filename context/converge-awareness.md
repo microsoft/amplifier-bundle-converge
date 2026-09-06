@@ -37,6 +37,20 @@ clause by clause to `contracts/operation.v1.md`, and pulls in the feedback-intak
 and return-brief conventions. Where the mode and a clause disagree, the clause
 wins.
 
+## The app — where the steward watches
+
+From a checkout of the Converge repository, `scripts/run-app.sh` serves the app
+on <http://127.0.0.1:8788> and prints that URL; sign-in is the machine account,
+`--lan` puts it on the network, `--port N` moves it. Nobody adds a manager
+session to it: each one writes
+`<workspace>/.converge/<manager-id>/registration.toml` on every wake (`uv run
+scripts/register-manager.py --steward <name>`), the app scans for those files on
+every request, and the stamp each wake writes is how the page tells a session
+that is still there from one that has gone quiet. So a session that started
+before the app did appears the next time it wakes — and one missing from Home is
+nearly always a workspace root nobody scanned, which the command prints as it
+starts. `app/README.md` carries the rest, including running it as a service.
+
 ## Documents and proposals
 
 A **locked** document — one the steward has read and agreed to — cannot be edited
