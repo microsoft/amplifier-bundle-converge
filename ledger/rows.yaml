@@ -743,10 +743,11 @@
     SIX ROWS MOVED, each re-derived in its own row: CVG-106 and CVG-186 off Pinned
     open, because the steward answered converge-71q and converge-nn6; CVG-108,
     CVG-112 and CVG-114 from Not yet to Kept, because the umbrella's rules 9, 13 and
-    15 pass against the applied contracts; and CVG-020 from Kept to Not yet, which
-    this item did NOT cause — a return stamped in the log at 2026-09-06 12:00 carries
-    none of the five parts, and that row's own words say a count that moves is a
-    re-read rather than a bump.
+    15 pass against the applied contracts; and and CVG-020, which was
+    re-derived twice: to Not yet against this lane's branch point, where a return
+    stamped 2026-09-06 12:00 carried none of the five parts, and back to Kept after
+    merging `main`, which had briefed it meanwhile on a file this lane does not own.
+    The second reading is the one that stands, and both are recorded in that row.
     TWO ROWS WERE RE-READ AND LEFT WHERE THEY WERE: CVG-111 (rule 12 still red, now
     for six routes rather than seven — the read route's citation moved off the
     Reserved question, which is deleted, and onto clause 7, which answers it) and
@@ -2672,13 +2673,13 @@
       **A brief on every return.** Time away · finished · stuck · needs you ·
       anything quietly broken — in sentences, appended to a log the steward can
       read.
-  disposition: GAP
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'python3 ledger/checks/return_log_ratio.py'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-10-STAMPED-RETURNS=3 BRIEFED-RETURNS=2 UNBRIEFED=1"
+      stdout_contains: "CLAUSE-10-STAMPED-RETURNS=3 BRIEFED-RETURNS=3 UNBRIEFED=0"
   proves: >
     That the manager mode still encodes clause 10 AND its stamp instruction, and
     that every return stamped in the log carries all five parts — two returns
@@ -2851,22 +2852,25 @@
     leaves no trace on either side of the ratio.
 
     ────────────────────────────────────────────────────────────────────────────
-    RE-DERIVED 2026-09-06 (converge-r4e5) AND MOVED CONFORMS → GAP, WHICH IS THIS ROW
-    WORKING RATHER THAN A REGRESSION IT SUFFERED. Its own words above: "It goes red
-    the moment a stamped return goes unbriefed (UNBRIEFED rises) … which is a
-    re-read, not a regression, and the row must be re-derived rather than bumped."
-    RAN 2026-09-06 → CLAUSE-10-STAMPED-RETURNS=3 BRIEFED-RETURNS=2 UNBRIEFED=1, the
-    reading naming the entry itself: "2026-09-06 12:00 - they came back and said the
-    whole sheet looks good -- missing time away, finished, stuck, needs you, quietly
-    broken". The heading is in the log and the five parts are not.
-    NOT CAUSED BY THIS ITEM, SAID PLAINLY RATHER THAN LEFT TO INFERENCE: the entry
-    was committed in 1bfdff7, before this lane began, and nothing in this lane
-    touches docs/workflow/OWNER-RETURN-LOG.md. The expect line moved with the reading
-    because a red row must assert what is true, not what was. The fix is the brief
-    itself — filed as converge-pqcr, for the manager session that took that return —
-    and the row goes back to Kept when the brief is written, not when the count is
-    edited.
-  work: converge-pqcr
+    RE-DERIVED 2026-09-06 (converge-r4e5), TWICE, AND THE SECOND READING IS THE ONE
+    THAT STANDS: STILL CONFORMS, RE-PINNED 2·2·0 → 3·3·0. RAN 2026-09-06 →
+    CLAUSE-10-STAMPED-RETURNS=3 BRIEFED-RETURNS=3 UNBRIEFED=0. One more return was
+    briefed — "2026-09-06 12:00 - they came back and said the whole sheet looks
+    good", with all five parts — so both sides of the ratio rose together, which
+    this row's own words call a re-read rather than a regression.
+    WHY IT WAS READ TWICE, RECORDED BECAUSE THE FIRST READING WAS PUBLISHED IN THIS
+    LANE'S FIRST COMMIT AND IS IN ITS HISTORY. Read against the commit this lane
+    branched from (d4e2831), the probe answered STAMPED=3 BRIEFED=2 UNBRIEFED=1: the
+    heading for that return existed and the five parts did not, so the row was
+    re-derived to *Not yet* and the missing brief filed as converge-pqcr. The brief
+    had in fact been written on `main` (fe3d0ec) while this lane was working, on a
+    file this lane does not own and never touched. Merging `main` into the lane
+    settled it, and the row is re-derived here against the tree it will actually
+    land on rather than against a branch point.
+    THE LESSON THIS ROW PAID FOR, LEFT WHERE THE NEXT RECONCILE WILL SEE IT: a row
+    whose probe reads a file NO LANE OWNS must be derived against the integration
+    branch, not the lane's own base, or it reports a gap that was closed elsewhere
+    while it was reading. Nothing in `verify.py` notices the difference.
 - id: CVG-021
   title: four calls reach the steward
   contract:
