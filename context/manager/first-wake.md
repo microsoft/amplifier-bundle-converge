@@ -47,6 +47,12 @@ code editor could read back to you:
 4. **What is in flight?** Open branches, running work, anything half-done. This
    is what the pause is protecting, and it is the part only this moment can see.
 
+One thing belongs in that first brief besides the four answers: **where the
+steward can watch this** - the app's URL when it answers on
+`http://127.0.0.1:8788`, and the one command that starts it
+(`scripts/run-app.sh`) when it does not - because the registration written in
+step 0 puts this session on a page nobody has been told how to open.
+
 On a blank repository all four have the same answer - *nothing yet* - and saying
 so is the honest move. Inventing findings to fill the shape is how a first wake
 goes wrong. There the steward's own sentences are the whole of the input.

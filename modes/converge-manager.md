@@ -401,6 +401,10 @@ repository already hold code?**
    scripts/register-manager.py --steward <name> --print`. A first wake is
    exactly when a steward most needs to see that a session exists at all, and
    the loop's step 1 has not run yet on this path. Every later wake re-writes it.
+   **Then, if the app answers — `curl -sf http://127.0.0.1:8788/healthz` — name
+   that URL in your first brief**, because a registration a steward cannot open
+   the page to see is a heartbeat into an empty room; if nothing answers, say
+   the one command that starts it (`scripts/run-app.sh`) instead of the URL.
 1. **Pause the work in flight, and say so in the plan record.** Nothing new is
    launched against a repository whose direction is not written down yet.
 2. **Investigate what is there** - what the repository is, who it is for, what
