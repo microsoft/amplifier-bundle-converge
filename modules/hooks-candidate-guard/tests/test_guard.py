@@ -1909,3 +1909,338 @@ def test_w5_the_apps_own_lock_passes_this_guard(tmp_path: Path) -> None:
     )
 
     assert decision.result.action == "continue", decision.result.reason
+
+
+# ---------------------------------------------------------------------------
+# W6 -- a governed repo BELOW the session cwd
+#
+#   converge-qfi9  Measured 2026-09-06: with the session cwd at a multi-repo
+#                  workspace root, `edit_file` on a FROZEN
+#                  `amplifier-work-tracker/contracts/operator-surface.v1.md`
+#                  went through THREE times across three sessions, with this
+#                  module mounted and evaluating (53 guard events in the
+#                  session log). Cause: the target was relativized against the
+#                  SESSION cwd, so it read as
+#                  `amplifier-work-tracker/contracts/...` and matched no
+#                  shipped glob -- `contracts/*.md` is anchored at the start.
+#                  The same call with cwd=<the repo> denied.
+#
+#                  A guarded_glob is a statement about a REPOSITORY's layout,
+#                  so a target is now resolved in its own repository's frame:
+#                  the nearest ancestor carrying `.git`, bounded at cwd.
+# ---------------------------------------------------------------------------
+
+
+def _below_cwd_repo(tmp_path: Path) -> tuple[Path, Path]:
+    """The measured shape: cwd is a workspace root; the governed repo is a
+    git repository one level below it. Returns (workspace, repo)."""
+    repo = tmp_path / "amplifier-work-tracker"
+    (repo / ".git").mkdir(parents=True)
+    return tmp_path, repo
+
+
+def test_w6_frozen_contract_in_a_repo_below_cwd_is_denied(tmp_path: Path) -> None:
+    """The reproduction, pinned. Before the fix this returned `continue`."""
+    workspace, repo = _below_cwd_repo(tmp_path)
+    _write(repo, "contracts/operator-surface.v1.md", FROZEN_STAMP + "body")
+
+    decision = evaluate_tool_pre(
+        "edit_file",
+        {
+            "file_path": str(repo / "contracts" / "operator-surface.v1.md"),
+            "old_string": "body",
+            "new_string": "tampered",
+        },
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+    assert [e[1]["reason_code"] for e in decision.events] == ["frozen_direct_edit"]
+
+
+def test_w6_the_h1_form_is_denied_below_cwd_too(tmp_path: Path) -> None:
+    """The ratified anatomy (status in the H1) reaches below cwd as well."""
+    workspace, repo = _below_cwd_repo(tmp_path)
+    _write(repo, "docs/VISION.md", "# Vision v1 (RATIFIED 2026-09-03)\n\nbody\n")
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": str(repo / "docs" / "VISION.md"), "content": "rewritten"},
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+
+
+def test_w6_the_deny_names_a_path_the_reader_can_use_from_cwd(tmp_path: Path) -> None:
+    """Decisions are made in the repo's frame; humans are told the cwd frame.
+
+    Handing a reader `contracts/operator-surface.v2-candidate.md` when their
+    cwd is the workspace names a file in the wrong repository.
+    """
+    workspace, repo = _below_cwd_repo(tmp_path)
+    _write(repo, "contracts/operator-surface.v1.md", FROZEN_STAMP + "body")
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {
+            "file_path": str(repo / "contracts" / "operator-surface.v1.md"),
+            "content": "new",
+        },
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "deny"
+    assert (
+        "amplifier-work-tracker/contracts/operator-surface.v1.md"
+        in decision.result.reason
+    )
+    assert (
+        "amplifier-work-tracker/contracts/operator-surface.v2-candidate.md"
+        in decision.result.reason
+    )
+    assert (
+        decision.events[0][1]["path"]
+        == "amplifier-work-tracker/contracts/operator-surface.v1.md"
+    )
+
+
+def test_w6_a_stamped_candidate_beside_the_below_cwd_contract_opens_the_hatch(
+    tmp_path: Path,
+) -> None:
+    """The remedy has to reach where the bug did.
+
+    The proposal's `target:` line is written the way a person standing in that
+    repo writes it -- relative to THEIR repo. Fixing the deny without this is
+    a deny with no reachable remedy: measured, `**/`-prefixed guarded_globs
+    (the smaller alternative) leave this case denied.
+    """
+    workspace, repo = _below_cwd_repo(tmp_path)
+    _write(repo, "contracts/operator-surface.v1.md", FROZEN_STAMP + "body")
+    _write(
+        repo,
+        "contracts/operator-surface.v2-candidate.md",
+        "target: contracts/operator-surface.v1.md\n\n" + RATIFIED_STAMP,
+    )
+
+    decision = evaluate_tool_pre(
+        "edit_file",
+        {
+            "file_path": str(repo / "contracts" / "operator-surface.v1.md"),
+            "old_string": "body",
+            "new_string": "amended",
+        },
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+    assert decision.events[0][0] == "converge:guard_allowed_ratified"
+    assert decision.events[0][1]["candidate"] == (
+        "contracts/operator-surface.v2-candidate.md"
+    )
+
+
+def test_w6_an_unratified_candidate_below_cwd_does_not_unlock(tmp_path: Path) -> None:
+    workspace, repo = _below_cwd_repo(tmp_path)
+    _write(repo, "contracts/operator-surface.v1.md", FROZEN_STAMP + "body")
+    _write(
+        repo,
+        "contracts/operator-surface.v2-candidate.md",
+        "target: contracts/operator-surface.v1.md\n\nstill under discussion\n",
+    )
+
+    decision = evaluate_tool_pre(
+        "edit_file",
+        {
+            "file_path": str(repo / "contracts" / "operator-surface.v1.md"),
+            "old_string": "body",
+            "new_string": "amended",
+        },
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+
+
+def test_w6_writing_the_proposal_itself_below_cwd_is_allowed(tmp_path: Path) -> None:
+    """always_allow_globs still resolve for the below-cwd case."""
+    workspace, repo = _below_cwd_repo(tmp_path)
+    _write(repo, "contracts/operator-surface.v1.md", FROZEN_STAMP + "body")
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {
+            "file_path": str(repo / "contracts" / "operator-surface.v2-candidate.md"),
+            "content": "target: contracts/operator-surface.v1.md\n\nthe proposal\n",
+        },
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+
+
+def test_w6_bash_laundering_into_a_below_cwd_contract_is_denied(
+    tmp_path: Path,
+) -> None:
+    workspace, repo = _below_cwd_repo(tmp_path)
+    _write(repo, "contracts/operator-surface.v1.md", FROZEN_STAMP + "body")
+    target = repo / "contracts" / "operator-surface.v1.md"
+
+    decision = evaluate_tool_pre(
+        "bash",
+        {"command": f"echo tampered > {target}"},
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+    assert decision.events[0][1]["reason_code"] == "frozen_bash_write"
+
+
+def test_w6_the_half_freeze_check_reaches_a_repo_below_cwd(tmp_path: Path) -> None:
+    """W5's check is made in the same frame -- so it works below cwd too."""
+    workspace, repo = _below_cwd_repo(tmp_path)
+    _write(repo, "docs/VISION.md", "# Vision v1 (DRAFT)\n\nbody\n")
+
+    decision = evaluate_tool_pre(
+        "edit_file",
+        {
+            "file_path": str(repo / "docs" / "VISION.md"),
+            "old_string": "# Vision v1 (DRAFT)",
+            "new_string": "# Vision v1 (FROZEN 2026-09-06)",
+        },
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+    assert decision.events[0][1]["reason_code"] == "lock_without_record"
+
+
+def test_w6_a_git_worktree_dot_git_file_is_a_repository_root(tmp_path: Path) -> None:
+    """Every Converge lane is a worktree, where `.git` is a FILE, not a dir."""
+    workspace = tmp_path
+    repo = workspace / "lane-worktree"
+    repo.mkdir()
+    (repo / ".git").write_text("gitdir: /elsewhere/.git/worktrees/lane\n")
+    _write(repo, "contracts/x.v1.md", FROZEN_STAMP + "body")
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": str(repo / "contracts" / "x.v1.md"), "content": "new"},
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+
+
+def test_w6_the_deepest_repository_governs(tmp_path: Path) -> None:
+    """cwd is itself a repo, and the target lives in a nested one.
+
+    The nested repo's own layout wins -- its `contracts/` is the one the
+    glob is a statement about.
+    """
+    workspace = tmp_path
+    (workspace / ".git").mkdir()
+    inner = workspace / "vendor" / "inner-repo"
+    (inner / ".git").mkdir(parents=True)
+    _write(inner, "contracts/x.v1.md", FROZEN_STAMP + "body")
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": str(inner / "contracts" / "x.v1.md"), "content": "new"},
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+
+
+def test_w6_cwd_as_the_repo_root_is_unchanged(tmp_path: Path) -> None:
+    """The pre-existing shape: cwd IS the governed repo. Both frames agree."""
+    (tmp_path / ".git").mkdir()
+    _write(tmp_path, "contracts/x.v1.md", FROZEN_STAMP + "body")
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "new"},
+        _config(),
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny"
+    assert decision.events[0][1]["path"] == "contracts/x.v1.md"
+
+
+def test_w6_a_repository_outside_cwd_is_still_out_of_scope(tmp_path: Path) -> None:
+    """U9's within-cwd invariant is untouched: the root search is bounded at
+    cwd, so a sibling repository is still not this hook's business."""
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    outside = tmp_path / "outside-repo"
+    (outside / ".git").mkdir(parents=True)
+    _write(outside, "contracts/x.v1.md", FROZEN_STAMP + "body")
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": str(outside / "contracts" / "x.v1.md"), "content": "new"},
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "continue"
+
+
+def test_w6_a_non_repository_directory_below_cwd_is_the_documented_limit(
+    tmp_path: Path,
+) -> None:
+    """The honest limit, pinned rather than left to be discovered.
+
+    A directory below cwd that is not a git repository has no repository
+    frame, so it falls back to cwd and is matched exactly as before. Stated
+    in the module README under "Which repository a path belongs to".
+    """
+    workspace = tmp_path
+    notes = workspace / "notes"  # deliberately NOT a repo
+    _write(notes, "contracts/x.v1.md", FROZEN_STAMP + "body")
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": str(notes / "contracts" / "x.v1.md"), "content": "new"},
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "continue"
+
+
+def test_w6_the_break_glass_token_is_read_in_the_repos_own_frame(
+    tmp_path: Path,
+) -> None:
+    """One frame for the whole decision: the token lives in the repo whose
+    document it unlocks, and its `file:` line is that repo's path."""
+    workspace, repo = _below_cwd_repo(tmp_path)
+    _write(repo, "contracts/x.v1.md", FROZEN_STAMP + "body")
+    _write(
+        repo,
+        ".converge/UNLOCK",
+        "file: contracts/x.v1.md\nreason: incident\nby: steward\n",
+    )
+    config = _config(escape_mode="token", allow_emergency_unlock=True)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": str(repo / "contracts" / "x.v1.md"), "content": "new"},
+        config,
+        str(workspace),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+    assert decision.events[0][0] == "converge:guard_unlock_used"
