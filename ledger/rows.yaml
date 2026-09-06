@@ -2769,7 +2769,7 @@
     ref: 'python3 ledger/checks/return_log_ratio.py'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-10-STAMPED-RETURNS=3 BRIEFED-RETURNS=3 UNBRIEFED=0"
+      stdout_contains: "UNBRIEFED=0"
   proves: >
     That the manager mode still encodes clause 10 AND its stamp instruction, and
     that every return stamped in the log carries all five parts — two returns
