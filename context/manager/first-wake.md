@@ -75,7 +75,18 @@ first two let you seed.
 
 ## After the word
 
-Seed the ledger: one row per checkable clause, each row starting at the verdict
+If the word locks a document, **the freeze is one edit, never two.** A document
+is locked by editing its own H1, and the record of that lock is more text in the
+same file - so the H1 stamped `(FROZEN <date>)` and the `## Changelog` entry
+recording the ratification go in a single write and a single commit. Written as
+two edits, the second is always refused: the file already reads locked by then,
+and a locked document takes no edit in place, including the one that would say
+why it was locked. What is left is a half-frozen file - the status word landed,
+the record of why it landed did not - and no later edit repairs it. That is
+measured, not a caution: it stopped a first wake dead on 2026-09-06
+(`converge-p17d`). The `freeze-bar` skill carries the exact shape.
+
+Then seed the ledger: one row per checkable clause, each row starting at the verdict
 the repository actually earns today, which on a first day is mostly *Not yet*. A
 row seeded at *Kept* because the clause sounds obviously true is the drift this
 whole method exists to catch. Then derive the queue from the gap between what

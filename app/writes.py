@@ -978,6 +978,59 @@ def _h1_locked(line: str, day: str) -> str:
     return f"{body} (FROZEN {day})"
 
 
+#: The document's own record of its locking. `## Changelog` is the last section
+#: `documents.v1` Core 4 allows, and both shipped templates produce one.
+CHANGELOG_HEADING = re.compile(r"^#{2,6}\s+Changelog\b", re.IGNORECASE)
+
+
+def _lock_changelog_entry(day: str, user: str) -> str:
+    """The changelog line that records a lock, in this repository's own shape.
+
+    Dated first, so `conformance/documents` rule 7b reads it as an entry, and
+    naming where the four conditions are kept, so the entry carries its
+    evidence rather than asserting one. It is history, not a second status:
+    `documents.v1` Core 6 puts status in the H1 and nowhere else, and the
+    changelog is not where rule 6 looks.
+    """
+    who = user or "The steward"
+    return (
+        f"- **{day} \u2014 locked (FROZEN {day}).** {who} answered the four Freeze Bar "
+        f"conditions in Converge; they are recorded verbatim in "
+        f"`docs/workflow/owner-ratifications-{day}.md`, beside the commit that "
+        f"stamped this heading."
+    )
+
+
+def _with_changelog_entry(lines: list[str], heading: int, entry: str) -> list[str]:
+    """`lines` with `entry` as the newest changelog entry.
+
+    Newest first, under the document's existing `## Changelog`; a document
+    without one gets the section at the end, which is where Core 4 puts it.
+    Only a heading BELOW the H1 counts, so the H1's own index never moves and
+    the caller can still read the stamped heading back out of the list.
+    """
+    out = list(lines)
+    where = next(
+        (i for i in range(heading + 1, len(out)) if CHANGELOG_HEADING.match(out[i])),
+        -1,
+    )
+    if where < 0:
+        while out and not out[-1].strip():
+            out.pop()
+        return out + ["", "## Changelog", "", entry, ""]
+
+    at = where + 1
+    while at < len(out) and not out[at].strip():
+        at += 1
+    if at == where + 1:  # nothing blank between the heading and what follows
+        out.insert(at, "")
+        at += 1
+    out.insert(at, entry)
+    if out[-1].strip():
+        out.append("")
+    return out
+
+
 def lock_document(
     repo: Path,
     path: Path,
@@ -1000,11 +1053,22 @@ def lock_document(
     `apply_change` above), a heading with nowhere to put a status, and a
     request that did not carry all four of the Freeze Bar's conditions.
 
-    What it leaves behind is two records of one act: the commit, authored
-    `<steward> via Converge`, and an entry in today's ratification record
-    carrying the four conditions in the steward's own words. The commit is
-    made first — a record of a lock that did not happen would be worse than
-    no record at all.
+    The stamp and the document's own changelog entry recording it are ONE
+    write and ONE commit. They have to be: a locked document takes no edit in
+    place, so a second write to add the record would be refused by the guard
+    that locking just switched on, and the file would sit half-frozen — the
+    status word landed, the record of why it landed did not, and no later edit
+    can repair it (`converge-p17d`, measured 2026-09-06 in the adopter
+    harness).
+
+    What it leaves behind is three records of one act: the document's own
+    changelog entry, the commit that carries it authored `<steward> via
+    Converge`, and an entry in today's ratification record with the four
+    conditions in the steward's own words. The first two are the same commit;
+    the third is a separate file and is written only once that commit is in,
+    because a record of a lock that did not happen would be worse than no
+    record at all — and it stays out of the commit because it collects every
+    steward word of the day, not only this one.
     """
     when = when or _now()
     repo, path = Path(repo), Path(path)
@@ -1057,8 +1121,16 @@ def lock_document(
             "error": f"{rel} has uncommitted changes, so locking it would carry them too. Commit or discard them first.",
         }
 
+    # ONE write, carrying both halves of the freeze. A document is locked by
+    # editing its own H1, and the record of that lock is more text in the SAME
+    # file \u2014 so done as two writes, whichever went second would be refused by
+    # the locked-document guard, and the file would be left half-frozen: the
+    # status word landed, the record of why it landed did not (converge-p17d,
+    # measured 2026-09-06 in the adopter harness). They land together or not
+    # at all.
     day = when.strftime("%Y-%m-%d")
     lines[heading] = _h1_locked(lines[heading], day)
+    lines = _with_changelog_entry(lines, heading, _lock_changelog_entry(day, user))
     stamped = "\n".join(lines)
     path.write_text(stamped, encoding="utf-8")
 

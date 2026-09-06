@@ -21,6 +21,11 @@ Implements the decision order from
    beats guarding -- checked first.
 6. Guarded-path determination (§2.5): glob match AND (optionally) the
    FROZEN/RATIFIED marker actually present in the file's current content.
+6b. The half-freeze check (converge-p17d), for a matching path that is NOT
+   yet locked: a write may not leave the document locked unless that same
+   write also adds the line recording the lock. Refused before anything is
+   written, so the document stays a draft and the combined write can be
+   re-issued.
 7. Escape hatch (§2.7) per guarded path: ratified-CANDIDATE (primary) or
    emergency-unlock token (fallback, config-gated).
 8. Otherwise -> deny (§2.6).
@@ -116,6 +121,26 @@ class GuardConfig:
         r"|^#.*\((?:FROZEN|RATIFIED)\b"
     )
     always_allow_globs: list[str] = field(default_factory=lambda: list(PROPOSAL_GLOBS))
+
+    # The half-freeze check (converge-p17d). A document is locked by editing
+    # its own H1, and the record of that lock is more text in the SAME file.
+    # Done in two edits, the first one lands the status word and the second is
+    # refused by the branch above -- because by then the file reads locked. The
+    # document is left half-frozen and no later edit can repair it.
+    #
+    # So: a write may not LEAVE a guarded document locked unless that same
+    # write also adds the line recording the lock. The promise above is
+    # untouched -- a locked document still takes no content edit, ever. What
+    # changes is that the half-frozen state stops being reachable, rather than
+    # becoming writable. The refusal happens BEFORE anything is written, so the
+    # document is still a draft and the combined write can just be re-issued.
+    require_lock_record: bool = True
+    # What counts as the record: a non-heading line naming a locking word. The
+    # status stamp itself never counts (it is what is being recorded), and
+    # neither does a line already on disk -- the record has to be one THIS
+    # write adds, or an older version's changelog entry would satisfy it by
+    # accident.
+    lock_record_regex: str = r"(?im)^(?!\s*#).*\b(?:FROZEN|RATIFIED|LOCKED)\b"
 
     # §2.3 tools intercepted + path extraction
     intercept_tools: list[str] = field(
@@ -448,6 +473,151 @@ def _is_guarded(rel: str, config: GuardConfig, cwd: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# The half-freeze check (converge-p17d)
+# ---------------------------------------------------------------------------
+
+
+def _added_diff_lines(body: str) -> list[str]:
+    """The lines a unified / V4A diff body would ADD, with the ``+`` stripped.
+
+    ``+++ b/<path>`` is a file header, not an added line, and is skipped.
+    """
+    added: list[str] = []
+    for line in body.splitlines():
+        if line.startswith("+++"):
+            continue
+        if line.startswith("+"):
+            added.append(line[1:])
+    return added
+
+
+def _resulting_content(tool_input: dict[str, Any], before: str) -> str | None:
+    """Best-effort reconstruction of what the file would say after this write.
+
+    Keyed on the FIELDS present rather than on the tool name, so a
+    differently-named composition of the same tool is read the same way:
+
+      - ``content``                      -> the whole file (write_file / Write)
+      - ``old_string`` / ``new_string``  -> the replacement applied to ``before``
+                                            (edit_file / Edit / MultiEdit)
+      - ``diff`` / ``patch``             -> ``before`` plus the diff's added
+                                            lines (apply_patch). Deliberately
+                                            additive: a patch is not applied
+                                            here, and it does not need to be --
+                                            a stamp and a changelog entry are
+                                            both ADDED lines.
+
+    Returns None when the write's result cannot be reconstructed at all, which
+    the caller treats as "no opinion" rather than as a refusal.
+    """
+    content = tool_input.get("content")
+    if isinstance(content, str):
+        return content
+
+    old = tool_input.get("old_string")
+    new = tool_input.get("new_string")
+    if isinstance(old, str) and isinstance(new, str) and old:
+        if tool_input.get("replace_all"):
+            return before.replace(old, new)
+        return before.replace(old, new, 1)
+
+    added: list[str] = []
+    for body_field in ("diff", "patch"):
+        body = tool_input.get(body_field)
+        if isinstance(body, str) and body:
+            added.extend(_added_diff_lines(body))
+    if added:
+        return before + "\n" + "\n".join(added)
+
+    return None
+
+
+def _lock_without_record(
+    rel: str, tool_input: dict[str, Any], config: GuardConfig, cwd: str
+) -> str | None:
+    """Return the locking marker a write would leave UNRECORDED, else None.
+
+    Caller has already established that ``rel`` matches ``guarded_globs`` and
+    that the file is NOT currently locked (so the ordinary deny path does not
+    own it).
+
+    The honest limit, stated once: this watches the DRAFT -> LOCKED transition
+    of a document already on disk. A file that does not exist yet is out of
+    scope -- creating one that already carries a locking word is an import or
+    a copy, a different act the guard has never had an opinion about. Nor does
+    the ``bash`` branch reach here: a shell write's resulting content is not
+    knowable from the command line alone.
+    """
+    abs_path = Path(cwd) / rel
+    if not abs_path.is_file():
+        return None
+    before = _read_file_text(abs_path)
+    if re.search(config.frozen_marker_regex, before):
+        return None  # already locked -- §2.6 owns this write, not this check
+
+    after = _resulting_content(tool_input, before)
+    if after is None:
+        return None
+    marker = re.search(config.frozen_marker_regex, after)
+    if marker is None:
+        return None  # this write does not lock anything
+
+    seen = {line.strip() for line in before.splitlines()}
+    for line in after.splitlines():
+        text = line.strip()
+        if not text or text in seen:
+            continue  # already on disk: not a record THIS write adds
+        if re.search(config.frozen_marker_regex, line):
+            continue  # the status stamp is not its own record
+        if re.search(config.lock_record_regex, line):
+            return None
+    return marker.group(0).strip()
+
+
+def _lock_record_deny(items: list[tuple[str, str]]) -> HookResult:
+    rel_path = ", ".join(rel for rel, _ in items)
+    marker = items[0][1] if items else "the locking word"
+    day = "2026-09-06"
+    found = re.search(r"(\d{4}-\d{2}-\d{2})", marker)
+    if found:
+        day = found.group(1)
+    reason = (
+        f"converge/candidate-guard: BLOCKED a write to '{rel_path}' that would "
+        f"lock the document without recording the lock.\n"
+        f"This write stamps {marker!r} into the file but adds no line recording "
+        "that locking, so the document would be left half-frozen: the status "
+        "word lands, the record of why it landed does not \u2014 and every later "
+        "edit that would add it is refused, because by then the file reads "
+        "locked.\n"
+        "contracts/documents.v1 Core 6 (status lives in the H1 parenthetical "
+        "and nowhere else) and Core 7 (a dated changelog whose entries carry "
+        "evidence).\n"
+        "Remedy: the freeze is ONE edit, never two. In a single write, stamp "
+        "the H1 AND add the Changelog entry that records the ratification \u2014 "
+        "for example:\n"
+        f"    # <Title> (FROZEN {day})\n"
+        "    ...\n"
+        "    ## Changelog\n"
+        "\n"
+        f"    - **{day} \u2014 v1 (FROZEN {day}).** Locked on the steward's word; "
+        "the four Freeze Bar conditions are recorded in "
+        f"docs/workflow/owner-ratifications-{day}.md.\n"
+        "Nothing has been written: the document is still a draft, so re-issue "
+        "the two halves as one write."
+    )
+    user_message = (
+        f"Blocked a lock of {rel_path} that carries no record of the locking \u2014 "
+        "stamp the H1 and write the Changelog entry in ONE edit."
+    )
+    return HookResult(
+        action="deny",
+        reason=reason,
+        user_message=user_message,
+        user_message_level="error",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Escape hatch (spec §2.7)
 # ---------------------------------------------------------------------------
 
@@ -727,6 +897,7 @@ def evaluate_tool_pre(
         return GuardDecision(HookResult(action="continue"))
 
     guarded_paths: list[str] = []
+    unrecorded_locks: list[tuple[str, str]] = []
     for raw in raw_paths:
         rel = normalize_repo_relative(raw, cwd)
         if rel is None:
@@ -742,6 +913,13 @@ def evaluate_tool_pre(
             continue
         try:
             guarded = _is_guarded(rel, config, cwd)
+            # Step 6b -- the half-freeze check (converge-p17d). Only for a path
+            # that is NOT already locked: a locked one is the deny path's, and
+            # this check must never be what makes a locked file writable.
+            if not guarded and config.require_lock_record:
+                marker = _lock_without_record(rel, tool_input, config, cwd)
+                if marker is not None:
+                    unrecorded_locks.append((rel, marker))
         except Exception as exc:  # noqa: BLE001 -- deliberate: fail-closed per spec §2.8
             if config.fail_closed_on_error:
                 return GuardDecision(
@@ -762,6 +940,21 @@ def evaluate_tool_pre(
             guarded_paths.append(rel)
 
     if not guarded_paths:
+        if unrecorded_locks:
+            return GuardDecision(
+                _lock_record_deny(unrecorded_locks),
+                [
+                    (
+                        "converge:guard_blocked",
+                        {
+                            "path": rel,
+                            "tool": tool_name,
+                            "reason_code": "lock_without_record",
+                        },
+                    )
+                    for rel, _ in unrecorded_locks
+                ],
+            )
         if config.enforce_encode_before_impl:
             gate_result = _check_encode_gate(raw_paths, config, cwd)
             if gate_result is not None:

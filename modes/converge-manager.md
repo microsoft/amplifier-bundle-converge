@@ -376,6 +376,14 @@ repository already hold code?**
 
 4. **On the word, seed the ledger** - one row per checkable clause, each row
    starting at the verdict the repository actually earns today.
+
+   If the word also locks a document, **the freeze is ONE edit, never two**:
+   the H1 stamped `(FROZEN <date>)` and the `## Changelog` entry recording the
+   ratification go in the SAME write. Split across two, the second is refused -
+   the file already reads locked, and a locked document takes no edit in place,
+   including the one that would say why it was locked. It is left half-frozen
+   and nothing repairs it afterwards (measured 2026-09-06, `converge-p17d`).
+   The `freeze-bar` skill carries the exact shape.
 5. **File the alignment items** - the gap between what was just agreed and what
    the code does, every item naming the contract it serves.
 
