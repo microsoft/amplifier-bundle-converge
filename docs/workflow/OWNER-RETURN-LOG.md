@@ -61,3 +61,10 @@ The one sentence operation.v1 opens with — fresh environment, one install, der
 **Stuck.** Nothing is stuck: the existing-project path failed its last two steps because locking a vision was two edits and the second was refused; that is fixed and the adopt scenario is re-running now, alone, in one container.
 **Needs you.** Nothing needs you this turn; the six older candidates and three pinned rows from before still wait, and none blocks the work in flight.
 **Anything quietly broken.** The watchdog can no longer re-wake this session (the CLI reports no session matching its id), so I am polling directly and nothing is unsupervised, but a resumed session should check that first; four ledger rows read the plan record and say "state changed, re-read" after the merges — a reconcile lane is on them.
+
+## 2026-09-06 - the adopt scenario is green: both first-wake paths hold
+**Time away.** Fifty minutes since the mode came on, one wave.
+**Finished.** The existing-project scenario of the adopter harness is green twelve of twelve in a fresh container with an AI user reading only README.md (run 08:57Z), which I re-read from RESULT.md and the two ledger rows it moved; with the new-project scenario already green nine of nine, operation.v1 Core 14 is kept on both paths and the third step of your order — the non-UX product ready for early adopters from README alone — is met by measurement, not assertion.
+**Stuck.** Nothing is stuck.
+**Needs you.** Nothing new; the six candidates and three pinned rows from before still wait and block nothing.
+**Anything quietly broken.** Two tests went red when this host's own manager session registered itself (discovery found the live registration during the suite); repaired in place and recorded; and one ledger row that reads the stall record (CVG-019) drifts every time the plan record grows — it re-derives at the next integration.
