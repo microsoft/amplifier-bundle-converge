@@ -137,3 +137,13 @@ Merged w17-reconcile-9 (converge-g499, -uub0: nine surface rows re-derived to Ca
     uv run conformance/composition/run.py .                                  -> PASS
     uv run --extra web --with pytest --with httpx pytest -q tests/           -> 137 passed, 1 skipped
     ./.githooks/pre-push main                                                -> clean
+
+## 2026-09-06 13:36 - round 3 of the steward's word: four locks, two proposals applied, the queue swept
+Merged w18-state-word (converge-lsa0) into main; applied documents.v1 Core 4 (H1 amended, archive is the record) and the vision's lock entry (under the guard's ratified-candidate rule, candidate archived); locked experience-operation, -console, -collaboration, -direction (one write each; a changelog row only where it fits); re-pinned five SYNC hashes; archived the 2026-09-03 protocol candidate; swept the queue (23 items resolved as already true with their evidence, 23 deferred as next work with the reason on each, 10 hygiene items in lane w19-tidy). Re-ran the check myself at 28749cc:
+    ./.githooks/pre-push main                                                -> clean — no locked contract edited
+    uv run conformance/documents/run.py .                                    -> PASS
+    uv run conformance/composition/run.py .                                  -> PASS
+    uv run conformance/experience-direction/run.py <app> --cookie            -> PASS (2b cleared by the vision fix)
+    uv run --extra app --with pytest --with httpx pytest -q app/tests        -> 319 passed, 149 skipped
+    uv run --with pyyaml ledger/checks/verify.py                             -> one row: CVG-020 counts this turn's stamped-not-yet-briefed return; green when the brief lands.
+Locked today: docs/VISION.md, composition.v1, experience-operation.v1, experience-console.v1, experience-collaboration.v1, experience-direction.v1. Held loosely: documents.v1, operation.v1, platform-web.v1. Not candidates: experience.v1 (umbrella: 4b/6a/12 are the steward's next-work decisions), the four native platforms, surface.v1 (superseded, body retired).
