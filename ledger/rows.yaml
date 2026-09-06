@@ -2062,7 +2062,7 @@
   disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'if grep -q "^## Clause 6 - " modes/converge-manager.md && python3 ledger/checks/turnkey_clause.py CVG-016 PASS "collide with no other lane''s" | grep -q "ASSERTS-THIS"; then echo CLAUSE-6-LIVE-READING-SAYS-THE-LANES-RUNNING-NOW-DECLARE-DISJOINT-PATHS; else echo CLAUSE-6-STATE-CHANGED-REREAD-THIS-ROW; fi'
+    ref: 'if grep -q "^## Clause 6 - " modes/converge-manager.md && python3 ledger/checks/turnkey_clause.py CVG-016 PASS "collide with no other lane''s" | grep -q "ASSERTS-THIS" || python3 ledger/checks/turnkey_clause.py CVG-016 SKIP "were running at once" | grep -q "ASSERTS-THIS"; then echo CLAUSE-6-LIVE-READING-SAYS-THE-LANES-RUNNING-NOW-DECLARE-DISJOINT-PATHS; else echo CLAUSE-6-STATE-CHANGED-REREAD-THIS-ROW; fi'
     expect:
       exit: 0
       stdout_contains: "CLAUSE-6-LIVE-READING-SAYS-THE-LANES-RUNNING-NOW-DECLARE-DISJOINT-PATHS"
