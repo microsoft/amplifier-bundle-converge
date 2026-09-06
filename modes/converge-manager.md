@@ -21,6 +21,7 @@ mode:
     context:
       - "@converge:context/manager/feedback-intake.md"
       - "@converge:context/manager/first-wake.md"
+      - "@converge:context/manager/registration.md"
       - "@converge:context/manager/return-brief.md"
       - "@converge:context/manager/stalls.md"
       - "@converge:context/manager/wave-record.md"
@@ -396,6 +397,10 @@ repository already hold code?**
 
 **It does - you are adopting.** In this order:
 
+0. **Register first, before anything else** - `uv run
+   scripts/register-manager.py --steward <name> --print`. A first wake is
+   exactly when a steward most needs to see that a session exists at all, and
+   the loop's step 1 has not run yet on this path. Every later wake re-writes it.
 1. **Pause the work in flight, and say so in the plan record.** Nothing new is
    launched against a repository whose direction is not written down yet.
 2. **Investigate what is there** - what the repository is, who it is for, what
@@ -448,7 +453,18 @@ clause 14 above runs in its place, once.
 happened, and it is what makes "a brief on every return" a thing that can be
 checked rather than hoped for.
 
-1. **Heartbeat** - mark yourself alive so nothing else takes over mid-turn.
+1. **Heartbeat, and register** - mark yourself alive so nothing else takes over
+   mid-turn, and write your registration so a steward can see you:
+
+       uv run scripts/register-manager.py --steward <name> --print
+
+   It writes `<workspace>/.converge/<manager-id>/registration.toml` and stamps
+   `last_seen` with this wake. **Write it every wake, unconditionally** - the
+   stamp IS the heartbeat the app reads to say whether this session is still
+   there, and an already-running session appears on Home for the first time
+   only because this step does not check whether the file is already there. It
+   costs a rename. The registration convention loaded with this mode carries
+   the fields, the two things it refuses to guess, and how the app finds it.
 2. **Status** - run the instrument once and paste its output. The deficit is
    computed, not noticed (clause 6).
 3. **Refill first if under width** - before merging, before reporting, before

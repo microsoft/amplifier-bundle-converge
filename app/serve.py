@@ -208,7 +208,16 @@ def create_app(
             {
                 "user": who(request),
                 "managers": [data.manager_payload(one) for one in found.managers],
-                "config": {"source": found.source, "note": found.note, "discovered": found.discovered},
+                "config": {
+                    "source": found.source,
+                    "note": found.note,
+                    "discovered": found.discovered,
+                    # Every workspace root scanned for a manager session's own
+                    # `.converge/<id>/registration.toml`. Carried so a steward
+                    # whose session is missing from Home can see WHERE this app
+                    # looked, rather than guessing at it.
+                    "workspaces": [str(one) for one in found.workspaces],
+                },
             }
         )
 
@@ -723,8 +732,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     found = made.state.settings
     print(f"config: {found.source}", flush=True)
+    # Where registrations were looked for, said out loud at boot: a manager
+    # session missing from Home is nearly always a workspace root nobody
+    # scanned, and this is the one line that shows which ones were.
+    for root in found.workspaces:
+        print(f"  workspace root scanned: {root}/{config.CONVERGE_DIR}/*/{config.REGISTRATION_NAME}", flush=True)
     for one in found.managers:
         print(f"  manager {one.id}: batch={one.batch_dir} repos={[str(r) for r in one.repos]} socket={one.tmux_socket}", flush=True)
+        print(f"    {one.origin or 'origin not recorded'}; last seen {one.last_seen or 'never'}", flush=True)
     print(f"serving on http://{args.host}:{args.port} — every route behind a PAM sign-in", flush=True)
     uvicorn.run(made, host=args.host, port=args.port, log_level="info")
     return 0

@@ -14,10 +14,12 @@ from 127.0.0.1 is gated like any other, because when the server is bound to
 the LAN, "it came from localhost" says nothing about who is asking. Only
 `/login`, `/static`, `/branding` and `/healthz` answer without a cookie.
 
-**What it watches** is `~/.amplifier/converge-app.toml` — one `[[managers]]`
-block per manager session naming its `batch_dir`, `repos`, `tracker_project`,
-and the explicit `tmux_socket` its lanes run on. With no file, every
-`~/dev/hw-*/HIGHWAY.md` is discovered as a manager instead.
+**What it watches** is every manager session that has registered itself, plus
+`~/.amplifier/converge-app.toml` — one `[[managers]]` block per manager session
+naming its `batch_dir`, `repos`, `tracker_project`, and the explicit
+`tmux_socket` its lanes run on. With no file at all, every
+`~/dev/hw-*/HIGHWAY.md` is discovered as a manager beside the registered ones.
+The next section says how registration works.
 
 One more key on that block says **whose word counts**: `steward = "<name>"`.
 `experience-collaboration.v1` Core 8 asks for that to be settled when the
@@ -26,6 +28,50 @@ block that names no steward answers with an empty one rather than with the name
 of whoever is signed in. Everyone else is a teammate: their proposals get the
 same reading and none of the authority. A discovered manager names no steward,
 because it was never registered.
+
+## How managers appear here
+
+Nobody edits a file to put a manager session on Home. **On every wake, a manager
+session writes its own registration** — `<workspace>/.converge/<manager-id>/registration.toml`,
+by `scripts/register-manager.py` — naming itself, its steward, its workspace
+root, the repositories it steers with their default branches, its plan record,
+its tmux socket and session, its work queue, and the moment of that wake. This
+app scans for those files on every request and shows what it finds.
+`experience.v1` Core 2 asks that Home be the list of manager sessions you run,
+and a list that only grows when somebody edits a config file is not that list.
+
+**Where it looks**, in this order:
+
+1. every path in `workspaces` in `~/.amplifier/converge-app.toml`, or — when it
+   names none — **the parent of this app's own repository**, which is the
+   workspace root whenever the app is checked out beside the workspace's other
+   repositories, and is the ordinary case;
+2. plus any path in `CONVERGE_WORKSPACES`, `:`-separated, for a host whose
+   workspaces do not all sit in one place.
+
+Both are printed at boot, one line per root, because a manager session missing
+from Home is nearly always a root nobody scanned.
+
+**A hand-written block still wins.** Name a manager in `[[managers]]` and that
+block is what is shown, once, even if a registration of the same id exists — a
+person's answer outranks a process's. What it takes from the registration is
+`last_seen`, and the workspace root and plan record where the block named
+neither: when a session was last awake is a fact only the session has, and
+filling a hole is not overruling an answer.
+
+**Last seen, and going silent.** The stamp *is* the heartbeat — the mode writes
+the file unconditionally each wake, so how old it is, is how long since the
+session woke. Under fifteen minutes a card reads *Last heard 3m ago*; past
+fifteen it reads **Silent — may have died**, the same word `experience.v1` Core
+6 fixes for a lane that has stopped answering, because it is the same reading. A
+manager named only by hand has no stamp at all and reads neither: never having
+registered is a different silence from having gone quiet, and this app does not
+show one as the other. **Details — where these manager sessions came from**,
+under the list on Home, says for each one whether it registered itself, was
+named by hand, or was discovered from a batch directory — and where.
+
+An **existing** manager session needs nothing done to it. It registers on its
+next wake, because the mode writes the file whether or not one is already there.
 
 ## What is real
 
