@@ -29,7 +29,7 @@ The acceptance, clause by clause, and what would falsify each
    root: Home lists it with steward, repos and lane count, and `/api/boot`
    carries it.* Falsified if `/api/boot` answers an empty `managers` list, or a
    card with no steward, no repo count, or no lane count.
-3. *A heartbeat 16 minutes old reads "Silent, may have died".* Falsified if the
+3. *A heartbeat 16 minutes old reads "Silent - may have died".* Falsified if the
    card claims the session is there, or says nothing at all.
 4. *A hand-written manager and a registration of the same id: the hand-written
    one is shown ONCE, with the registration's last-seen.* Falsified by two
@@ -40,15 +40,23 @@ The acceptance, clause by clause, and what would falsify each
 
 One deliberate wording note
 ---------------------------
-The acceptance quotes the silent word with a comma - *Silent, may have died*.
-This repository spells that word once, in `app/data.py`'s `LANE_WORD`, as
-**Silent - may have died** (em dash), which is the spelling `experience.v1`
-Core 6 fixes and which four existing test modules and the
-`experience-operation` kit already assert. Introducing a second spelling of one
-state word would be the exact drift Core 6 exists to prevent, so the served
-label reuses `LANE_WORD["silent"]` and the assertion below is written against
-that constant - plus, separately, against the two halves of the phrase, so this
-test still fails if the word stops saying that a session may have died.
+The acceptance this file was written against punctuated the silent word with a
+comma where the contract uses a dash. This repository spells that word once, in
+`app/data.py`'s `LANE_WORD`, as **Silent - may have died** (em dash; this module
+is ASCII, so the dash is transliterated here exactly as the middots in the
+contract's list are), which is the spelling `experience.v1` Core 6 fixes and
+which four existing test modules and the `experience-operation` kit already
+assert. Introducing a second spelling of one state word would be the exact drift
+Core 6 exists to prevent, so the served label reuses `LANE_WORD["silent"]` and
+the assertion below is written against that constant - plus, separately, against
+the two halves of the phrase, so this test still fails if the word stops saying
+that a session may have died.
+
+Settled on 2026-09-06 (`converge-lsa0`): the comma spelling is gone from this
+module and from `context/manager/return-brief.md`, and
+`conformance/experience/run.py` now transcribes the clause's whole phrase rather
+than a short "Silent", which is what made its rule 6a read FAIL against an app
+that was already right.
 """
 
 from __future__ import annotations
@@ -321,7 +329,7 @@ def test_the_default_workspace_root_is_the_parent_of_the_apps_own_repo(tmp_path:
 
 
 # --------------------------------------------------------------------------
-# 3. sixteen minutes: Silent, may have died
+# 3. sixteen minutes: Silent - may have died
 # --------------------------------------------------------------------------
 
 

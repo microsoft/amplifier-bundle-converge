@@ -179,10 +179,22 @@ CONTRACT_NAMED_WRITES = (
 )
 
 #: Core 6 — the three plain vocabularies, in the contract's own words.
+#:
+#: The third lane word is the whole phrase, dash and all. Until 2026-09-06 this
+#: kit transcribed it as bare "Silent" and rule 6a read FAIL against an app that
+#: was right: the clause says, verbatim,
+#:
+#:     Lanes: *Working · Quiet · Silent — may have died*.
+#:                                                   (contracts/experience.v1.md:36)
+#:
+#: and `app/data.py`'s `LANE_WORD` serves exactly that. Rule 6a matches a served
+#: word against this table exactly, so a short transcription here cannot ever
+#: match — the kit was reporting its own typo as the app's defect. The contract
+#: carries the long form, so the kit reads the long form.
 PLAIN_WORDS = {
     "contracts": ("Kept", "Not yet", "Broken", "Pinned open", "Can't check"),
     "work": ("Truly ready", "Waiting on you", "Working", "Stuck", "Done"),
-    "lanes": ("Working", "Quiet", "Silent"),
+    "lanes": ("Working", "Quiet", "Silent — may have died"),
 }
 
 #: Core 6 — the machine's own words for the same states. Case-sensitive on
