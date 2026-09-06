@@ -16,7 +16,11 @@ Implements the decision order from
 1. ``not config.enabled`` -> continue.
 2. ``bash`` scan (self-contained branch, §2.4).
 3. ``tool_name`` not in (intercept_tools | tool_name_aliases) -> continue.
-4. Extract paths (§2.3), normalized repo-relative against cwd.
+4. Extract paths (§2.3), resolved against the GOVERNING repository root --
+   the nearest ancestor of the target that carries a ``.git`` entry, bounded
+   at cwd (converge-qfi9). A repo that sits BELOW the session cwd is guarded
+   by its own layout; the within-cwd invariant is unchanged, so a path
+   outside cwd is still out of scope.
 5. ``always_allow_globs`` (both proposal names -- see ``PROPOSAL_GLOBS``)
    beats guarding -- checked first.
 6. Guarded-path determination (§2.5): glob match AND (optionally) the
@@ -180,7 +184,9 @@ class GuardConfig:
     ratified_stamp_regex: str = r"(?im)^ratified(?:\s+as\s+edited)?\b.*\bby\s+owner\b"
     candidate_target_field: str = "target"
     allow_emergency_unlock: bool = False
-    # Path (relative to cwd) of the git-tracked break-glass token file. See
+    # Path of the git-tracked break-glass token file, relative to the guarded
+    # document's own governing repository root (converge-qfi9) -- the same
+    # frame its `file:` line is read in. See
     # spec §2.7 FALLBACK: a flat `file:` / `reason:` / `by:` text file, only
     # honored when allow_emergency_unlock is True.
     emergency_unlock_token: str = ".converge/UNLOCK"
@@ -351,6 +357,11 @@ def normalize_repo_relative(raw_path: str, cwd: str) -> str | None:
     Returns ``None`` if the path resolves outside ``cwd`` -- out of scope
     for this hook (spec §2.3 / Test Plan U9); the within-cwd invariant is
     owned elsewhere (the reconciler / recipe layer).
+
+    This is the within-cwd GATE, and it is also how a proposal's ``target:``
+    line and the break-glass token's ``file:`` line are read -- in those two
+    cases ``cwd`` is passed the governing repository root, so the whole
+    decision stays in one frame (see ``resolve_target_path``).
     """
     if not raw_path:
         return None
@@ -378,6 +389,104 @@ def _relpath(path: str, start: str) -> str:
     import os
 
     return os.path.relpath(path, start)
+
+
+# ---------------------------------------------------------------------------
+# Governing-root resolution (converge-qfi9)
+# ---------------------------------------------------------------------------
+#
+# `guarded_globs` -- `contracts/*.md`, `docs/VISION.md`, `PROTOCOL.md` -- is a
+# statement about a REPOSITORY's layout, not about whichever directory a
+# session happens to have been started in. Relativizing against the session
+# cwd conflated the two: with cwd at a multi-repo workspace root, a FROZEN
+# `amplifier-work-tracker/contracts/operator-surface.v1.md` normalized to
+# `amplifier-work-tracker/contracts/...`, which matches no shipped glob, and
+# three direct edits to a locked contract went through unblocked (measured
+# 2026-09-06, three sessions, the module mounted and evaluating throughout).
+#
+# So a target is resolved in its OWN repository's frame: the nearest ancestor
+# carrying a `.git` entry, searched from the file's directory upward and
+# bounded at cwd. `.git` is tested with `.exists()`, not `.is_dir()`, because
+# in a git worktree (every Converge lane is one) `.git` is a file.
+#
+# Why not simply ship `**/`-prefixed globs instead (the smaller change): it
+# fixes the deny and silently welds the remedy shut. Measured on this same
+# fixture -- with `**/contracts/*.md` and cwd at the workspace, a ratified
+# `contracts/operator-surface.v2-candidate.md` sitting beside the contract
+# no longer opens the escape hatch, because the proposal's `target:` line
+# normalizes against cwd while the guarded path does not. A deny with no
+# reachable remedy is worse than the bug. Resolving everything -- the guarded
+# path, the proposal search, the `target:` line, the break-glass token -- in
+# one repository frame keeps the hatch coherent.
+#
+# Honest limit: a directory below cwd that is not a git repository has no
+# repository frame, so it falls back to cwd and is matched as before.
+
+
+def find_governing_root(abs_path: str, cwd: str) -> str:
+    """Return the repository root that governs ``abs_path``.
+
+    Searches from the target's own directory upward for the first ancestor
+    containing a ``.git`` entry, stopping at ``cwd``. Falls back to ``cwd``
+    when the target is not inside a repository below it -- which is exactly
+    the pre-existing behavior, so a session whose cwd IS the repo root is
+    unaffected.
+    """
+    cwd_abs = _abspath(Path(cwd))
+    chain: list[str] = []
+    current = Path(_abspath(Path(abs_path))).parent
+    while True:
+        current_abs = _abspath(current)
+        chain.append(current_abs)
+        if current_abs == cwd_abs:
+            break
+        parent = current.parent
+        if _abspath(parent) == current_abs:
+            # Walked to the filesystem root without meeting cwd. The caller's
+            # within-cwd check should make this unreachable; fall back rather
+            # than search outside cwd.
+            return cwd_abs
+        current = parent
+    for candidate in chain:  # deepest first
+        try:
+            if (Path(candidate) / ".git").exists():
+                return candidate
+        except OSError:
+            continue
+    return cwd_abs
+
+
+@dataclass(frozen=True)
+class TargetPath:
+    """A write target, expressed in the two frames the guard needs.
+
+    ``rel`` is the frame every decision is made in -- glob matching, the
+    on-disk marker read, the proposal search, the token check. ``display``
+    is the frame a human reads: a path they can actually use from the
+    session cwd. They are identical whenever cwd IS the repository root.
+    """
+
+    root: str  # absolute governing repository root
+    rel: str  # target relative to ``root`` (posix) -- what globs match
+    display: str  # target relative to cwd (posix) -- what messages/events show
+
+
+def resolve_target_path(raw_path: str, cwd: str) -> TargetPath | None:
+    """Resolve ``raw_path`` to its governing repo frame, or None if out of scope.
+
+    Out of scope means the same thing it has always meant: the path resolves
+    outside ``cwd`` (spec §2.3 / Test Plan U9).
+    """
+    cwd_rel = normalize_repo_relative(raw_path, cwd)
+    if cwd_rel is None:
+        return None
+    try:
+        abs_path = _abspath(Path(cwd) / cwd_rel)
+        root = find_governing_root(abs_path, cwd)
+        rel = _relpath(abs_path, root)
+    except (OSError, ValueError):
+        return None
+    return TargetPath(root=root, rel=rel.replace("\\", "/"), display=cwd_rel)
 
 
 # ---------------------------------------------------------------------------
@@ -453,7 +562,7 @@ def _read_file_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _is_guarded(rel: str, config: GuardConfig, cwd: str) -> bool:
+def _is_guarded(rel: str, config: GuardConfig, root: str) -> bool:
     """Caller has already confirmed ``rel`` matches ``guarded_globs``.
 
     Returns True iff the file's *current* on-disk content carries the
@@ -463,7 +572,7 @@ def _is_guarded(rel: str, config: GuardConfig, cwd: str) -> bool:
     """
     if not config.require_frozen_marker:
         return True
-    abs_path = Path(cwd) / rel
+    abs_path = Path(root) / rel
     if not abs_path.is_file():
         # Doesn't exist yet (a new file under a guarded glob) -- can't
         # already be FROZEN, so this is a create, not a frozen-file amendment.
@@ -533,7 +642,7 @@ def _resulting_content(tool_input: dict[str, Any], before: str) -> str | None:
 
 
 def _lock_without_record(
-    rel: str, tool_input: dict[str, Any], config: GuardConfig, cwd: str
+    rel: str, tool_input: dict[str, Any], config: GuardConfig, root: str
 ) -> str | None:
     """Return the locking marker a write would leave UNRECORDED, else None.
 
@@ -548,7 +657,7 @@ def _lock_without_record(
     the ``bash`` branch reach here: a shell write's resulting content is not
     knowable from the command line alone.
     """
-    abs_path = Path(cwd) / rel
+    abs_path = Path(root) / rel
     if not abs_path.is_file():
         return None
     before = _read_file_text(abs_path)
@@ -631,19 +740,25 @@ def _extract_field(content: str, field_name: str) -> str | None:
     return value or None
 
 
-def _find_ratified_candidate(rel: str, cwd: str, config: GuardConfig) -> str | None:
-    """Search cwd for a proposal file -- under either sanctioned name,
-    ``<contract>.vN-candidate.md`` or the legacy ``CANDIDATE-*.md`` -- whose
-    ``target:`` names ``rel`` and whose content carries the ratified stamp.
-    Returns the proposal's repo-relative path, or None.
+def _find_ratified_candidate(rel: str, root: str, config: GuardConfig) -> str | None:
+    """Search the guarded document's own repository for a proposal file --
+    under either sanctioned name, ``<contract>.vN-candidate.md`` or the legacy
+    ``CANDIDATE-*.md`` -- whose ``target:`` names ``rel`` and whose content
+    carries the ratified stamp. Returns the proposal's repo-relative path,
+    or None.
 
     The ``target:`` line is required under BOTH names: the guard never infers
-    which contract a proposal amends from its filename alone."""
-    root = Path(cwd)
+    which contract a proposal amends from its filename alone.
+
+    ``root`` is the governing repository root the guarded path was resolved
+    against (converge-qfi9), NOT necessarily the session cwd -- so a proposal
+    beside a contract in a repo BELOW cwd, carrying the ``target:`` line a
+    person in that repo would write, still opens the hatch."""
+    search_root = Path(root)
     seen: set[Path] = set()
     for pattern in config.candidate_glob:
         try:
-            matches = list(root.glob(pattern))
+            matches = list(search_root.glob(pattern))
         except (OSError, ValueError):
             continue
         for candidate_path in matches:
@@ -657,23 +772,23 @@ def _find_ratified_candidate(rel: str, cwd: str, config: GuardConfig) -> str | N
             target = _extract_field(content, config.candidate_target_field)
             if target is None:
                 continue
-            target_rel = normalize_repo_relative(target, cwd)
+            target_rel = normalize_repo_relative(target, root)
             if target_rel != rel:
                 continue
             if re.search(config.ratified_stamp_regex, content):
                 try:
-                    return str(candidate_path.relative_to(root))
+                    return str(candidate_path.relative_to(search_root))
                 except ValueError:
                     return str(candidate_path)
     return None
 
 
-def _check_emergency_unlock(rel: str, cwd: str, config: GuardConfig) -> str | None:
+def _check_emergency_unlock(rel: str, root: str, config: GuardConfig) -> str | None:
     """Break-glass fallback (spec §2.7 FALLBACK). Returns a human-readable
     detail string (for the emitted event) if the token unlocks ``rel``."""
     if not config.allow_emergency_unlock:
         return None
-    token_path = Path(cwd) / config.emergency_unlock_token
+    token_path = Path(root) / config.emergency_unlock_token
     if not token_path.is_file():
         return None
     try:
@@ -683,7 +798,7 @@ def _check_emergency_unlock(rel: str, cwd: str, config: GuardConfig) -> str | No
     file_field = _extract_field(content, "file")
     if file_field is None:
         return None
-    target_rel = normalize_repo_relative(file_field, cwd)
+    target_rel = normalize_repo_relative(file_field, root)
     if target_rel != rel:
         return None
     reason_field = _extract_field(content, "reason") or ""
@@ -692,17 +807,17 @@ def _check_emergency_unlock(rel: str, cwd: str, config: GuardConfig) -> str | No
 
 
 def _check_escape_hatch(
-    rel: str, config: GuardConfig, cwd: str
+    rel: str, config: GuardConfig, root: str
 ) -> tuple[str, str] | None:
     """Returns (kind, detail) where kind is "ratified" or "token", or None
     if no escape hatch validates for ``rel``."""
     mode = config.escape_mode
     if mode in ("ratified_candidate", "both"):
-        candidate = _find_ratified_candidate(rel, cwd, config)
+        candidate = _find_ratified_candidate(rel, root, config)
         if candidate is not None:
             return ("ratified", candidate)
     if mode in ("token", "both"):
-        unlock = _check_emergency_unlock(rel, cwd, config)
+        unlock = _check_emergency_unlock(rel, root, config)
         if unlock is not None:
             return ("token", unlock)
     return None
@@ -829,19 +944,19 @@ def _evaluate_bash(
     candidates = _scan_bash_candidates(command, config)
     guarded_hits: list[str] = []
     for raw in candidates:
-        rel = normalize_repo_relative(raw, cwd)
-        if rel is None:
+        target = resolve_target_path(raw, cwd)
+        if target is None:
             continue
-        if _glob_match_any(rel, config.always_allow_globs):
+        if _glob_match_any(target.rel, config.always_allow_globs):
             continue
-        if not _glob_match_any(rel, config.guarded_globs):
+        if not _glob_match_any(target.rel, config.guarded_globs):
             continue
         try:
-            if _is_guarded(rel, config, cwd):
-                guarded_hits.append(rel)
+            if _is_guarded(target.rel, config, target.root):
+                guarded_hits.append(target.display)
         except Exception:  # noqa: BLE001 -- deliberate: fail-closed per spec §2.8
             if config.fail_closed_on_error:
-                guarded_hits.append(rel)
+                guarded_hits.append(target.display)
             # else: swallow and treat as not-guarded (continue) for this hit.
 
     if not guarded_hits:
@@ -896,30 +1011,32 @@ def evaluate_tool_pre(
     if not raw_paths:
         return GuardDecision(HookResult(action="continue"))
 
-    guarded_paths: list[str] = []
+    guarded_paths: list[TargetPath] = []
     unrecorded_locks: list[tuple[str, str]] = []
     for raw in raw_paths:
-        rel = normalize_repo_relative(raw, cwd)
-        if rel is None:
+        target = resolve_target_path(raw, cwd)
+        if target is None:
             # Step 9 (partial): outside cwd is out of this hook's scope (U9)
             continue
 
         # Step 5 -- always-allow (CANDIDATE) beats guarding, checked first
-        if _glob_match_any(rel, config.always_allow_globs):
+        if _glob_match_any(target.rel, config.always_allow_globs):
             continue
 
         # Step 6 -- guarded-path determination, with fail-closed on error
-        if not _glob_match_any(rel, config.guarded_globs):
+        if not _glob_match_any(target.rel, config.guarded_globs):
             continue
         try:
-            guarded = _is_guarded(rel, config, cwd)
+            guarded = _is_guarded(target.rel, config, target.root)
             # Step 6b -- the half-freeze check (converge-p17d). Only for a path
             # that is NOT already locked: a locked one is the deny path's, and
             # this check must never be what makes a locked file writable.
             if not guarded and config.require_lock_record:
-                marker = _lock_without_record(rel, tool_input, config, cwd)
+                marker = _lock_without_record(
+                    target.rel, tool_input, config, target.root
+                )
                 if marker is not None:
-                    unrecorded_locks.append((rel, marker))
+                    unrecorded_locks.append((target.display, marker))
         except Exception as exc:  # noqa: BLE001 -- deliberate: fail-closed per spec §2.8
             if config.fail_closed_on_error:
                 return GuardDecision(
@@ -927,17 +1044,18 @@ def evaluate_tool_pre(
                         action="deny",
                         reason=(
                             f"converge/candidate-guard: guard evaluation error for "
-                            f"'{rel}': {exc}. Failing closed (spec §2.8)."
+                            f"'{target.display}': {exc}. Failing closed (spec §2.8)."
                         ),
                         user_message=(
-                            f"Guard evaluation error for {rel} — failing closed."
+                            f"Guard evaluation error for {target.display} — "
+                            "failing closed."
                         ),
                         user_message_level="error",
                     )
                 )
             continue
         if guarded:
-            guarded_paths.append(rel)
+            guarded_paths.append(target)
 
     if not guarded_paths:
         if unrecorded_locks:
@@ -964,22 +1082,25 @@ def evaluate_tool_pre(
     # Step 7/8 -- escape hatch per guarded path; deny if any lacks one
     events: list[tuple[str, dict[str, Any]]] = []
     blocked: list[str] = []
-    for rel in guarded_paths:
-        escape = _check_escape_hatch(rel, config, cwd)
+    for target in guarded_paths:
+        escape = _check_escape_hatch(target.rel, config, target.root)
         if escape is None:
-            blocked.append(rel)
+            blocked.append(target.display)
         else:
             kind, detail = escape
             if kind == "ratified":
                 events.append(
                     (
                         "converge:guard_allowed_ratified",
-                        {"path": rel, "candidate": detail},
+                        {"path": target.display, "candidate": detail},
                     )
                 )
             else:
                 events.append(
-                    ("converge:guard_unlock_used", {"path": rel, "token": detail})
+                    (
+                        "converge:guard_unlock_used",
+                        {"path": target.display, "token": detail},
+                    )
                 )
 
     if blocked:
