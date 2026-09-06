@@ -68,3 +68,5 @@ The one sentence operation.v1 opens with — fresh environment, one install, der
 **Stuck.** Nothing is stuck.
 **Needs you.** Nothing new; the six candidates and three pinned rows from before still wait and block nothing.
 **Anything quietly broken.** Two tests went red when this host's own manager session registered itself (discovery found the live registration during the suite); repaired in place and recorded; and one ledger row that reads the stall record (CVG-019) drifts every time the plan record grows — it re-derives at the next integration.
+
+## 2026-09-06 12:00 - they came back and said the whole sheet looks good
