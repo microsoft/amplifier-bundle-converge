@@ -493,6 +493,70 @@ def test_only_the_current_run_owns_the_third_level_step_headings(tmp_path):
     assert any(ln.startswith("#### S2.5 ") and ln.endswith("FAIL") for ln in text.split("\n"))
 
 
+def test_a_scenario_this_run_did_not_re_measure_keeps_its_heading(tmp_path):
+    """The defect this rule exists for, caught by `verify.py` on 2026-09-06:
+    archiving a two-scenario run under a scenario-2-only run demoted the S1
+    rows, and CVG-301 -- whose probe greps `### S1.5 ... - PASS` -- went red
+    though nothing about the blank path had changed. An unrepeated measurement
+    is still the latest one there is.
+
+    Falsified by: `### S1.5` disappearing after an S2-only run archives the
+    run that measured it.
+    """
+    both = H.ScenarioRun(name="New project", key="new-project", sid="S1", project_dir="/workspace/n")
+    both.dtu_id = "adopter-test-s1"
+    both.steps = [H.Step("S1.5", "the contract check is seeded", H.PASS, "seen")]
+    adopt = H.ScenarioRun(
+        name="Existing project (adopt)", key="existing-project", sid="S2",
+        project_dir="/workspace/e",
+    )
+    adopt.dtu_id = "adopter-test-s2"
+    adopt.steps = [H.Step("S2.5", "the contract check is seeded", H.FAIL, "absent")]
+    H.write_result(
+        tmp_path / "RESULT.md",
+        scenarios=[both, adopt],
+        meta={"started": "2026-09-06T03:50:03+00:00"},
+    )
+
+    adopt_again = H.ScenarioRun(
+        name="Existing project (adopt)", key="existing-project", sid="S2",
+        project_dir="/workspace/e",
+    )
+    adopt_again.dtu_id = "adopter-test-s2b"
+    adopt_again.steps = [H.Step("S2.5", "the contract check is seeded", H.PASS, "seen")]
+    H.write_result(
+        tmp_path / "RESULT.md",
+        scenarios=[adopt_again],
+        meta={"started": "2026-09-06T08:57:06+00:00"},
+    )
+    lines = (tmp_path / "RESULT.md").read_text(encoding="utf-8").split("\n")
+
+    s1 = [ln for ln in lines if ln.startswith("### S1.5 ")]
+    assert len(s1) == 1 and s1[0].endswith("PASS"), "S1 was not re-measured; it keeps its heading"
+    s2 = [ln for ln in lines if ln.startswith("### S2.5 ")]
+    assert len(s2) == 1 and s2[0].endswith("PASS"), "S2 was re-measured; the new row owns `###`"
+    assert any(ln.startswith("#### S2.5 ") and ln.endswith("FAIL") for ln in lines)
+
+
+def test_older_runs_do_not_sink_a_level_on_every_write(tmp_path):
+    """A run archived once is archived. Re-demoting its `## Run` heading each
+    time would bury the third run's date under six hashes.
+
+    Falsified by: any `### Run ` heading.
+    """
+    for started in ("one", "two", "three", "four"):
+        run = H.ScenarioRun(
+            name="Existing project (adopt)", key="existing-project", sid="S2",
+            project_dir="/workspace/e",
+        )
+        run.dtu_id = f"adopter-test-{started}"
+        run.steps = [H.Step("S2.5", "a", H.PASS, "seen")]
+        H.write_result(tmp_path / "RESULT.md", scenarios=[run], meta={"started": started})
+    lines = (tmp_path / "RESULT.md").read_text(encoding="utf-8").split("\n")
+    assert len([ln for ln in lines if ln.startswith("## Run ")]) == 3
+    assert not [ln for ln in lines if ln.startswith("### Run ")]
+
+
 def test_a_hash_inside_an_evidence_fence_is_left_alone(tmp_path):
     """A vision's own `# mdstrip - Vision (DRAFT)` lives inside an evidence
     fence. Demoting it would corrupt the evidence a row was judged from.

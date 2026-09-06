@@ -1452,15 +1452,34 @@ ARCHIVE_NOTE = (
     "evidence that it moved, and a file that keeps only the latest verdict "
     "cannot show that. Each run below is its own record, carrying its own "
     "start time in its Provenance block.\n\n"
-    "Exactly one thing is changed when a run is archived: **its headings are "
-    "demoted one level**, so that `### S2.5 \u2026` names a row of the CURRENT "
-    "run and nothing else. Text inside fenced blocks is left byte for byte as "
-    "the probe printed it."
+    "**A `### S<step>` heading always names the most recent measurement of "
+    "that step, wherever in this file it sits.** When a run is archived, its "
+    "headings drop one level -- except the steps this run did NOT re-measure, "
+    "which keep theirs, because an unrepeated measurement is still the latest "
+    "one there is, and the run heading above it says when it was taken. That "
+    "is what lets a single-scenario run be affordable without quietly "
+    "unpublishing the other scenario's result. Text inside fenced blocks is "
+    "left byte for byte as the probe printed it."
 )
 
+STEP_HEADING = re.compile(r"^(#{2,6}) (S\d+\.[A-Za-z0-9]+) \u2014 ")
 
-def _demote_headings(text: str) -> str:
-    """Push every Markdown heading down one level, outside fenced blocks.
+
+def _demote_headings(
+    text: str, covered: frozenset[str], *, structural: bool = True
+) -> str:
+    """Push archived headings down one level, outside fenced blocks.
+
+    `structural` is False for runs that were archived by an EARLIER write and
+    are only being re-scanned for step headings the current run replaces.
+    Demoting their `## Run <stamp>` a second time would sink every older run
+    one level deeper on every subsequent run, for no reason.
+
+    `covered` holds the step ids the CURRENT run measured. A step heading for
+    one of those is demoted -- the current run's own row takes its place at
+    `###`. A step heading for an id the current run did not touch is left
+    exactly where it is: it is still the newest measurement of that step, and
+    demoting it would unpublish a result nothing has replaced.
 
     Evidence fences carry other people's `#` lines -- a vision's own H1, a
     YAML comment. Rewriting one of those would corrupt the evidence the row
@@ -1474,12 +1493,17 @@ def _demote_headings(text: str) -> str:
             out.append(line)
             continue
         if not in_fence and re.match(r"^#{1,5} ", line):
-            line = "#" + line
+            m = STEP_HEADING.match(line)
+            if m:
+                if m.group(2) in covered:
+                    line = "#" + line
+            elif structural:
+                line = "#" + line
         out.append(line)
     return "\n".join(out)
 
 
-def _archive_of(path: Path) -> str:
+def _archive_of(path: Path, covered: frozenset[str]) -> str:
     """The archive section to append below a newly written run, or ''."""
     if not path.exists():
         return ""
@@ -1498,10 +1522,15 @@ def _archive_of(path: Path) -> str:
         f"\n{ARCHIVE_HEADING}\n",
         f"\n{ARCHIVE_NOTE}\n",
         f"\n## Run {stamp}\n",
-        f"\n{_demote_headings(head.strip())}\n",
+        f"\n{_demote_headings(head.strip(), covered)}\n",
     ]
     if older_runs.strip():
-        parts.append(f"\n{older_runs.strip()}\n")
+        # Older runs are re-scanned too, never carried blind: a step this run
+        # measured must lose its `###` wherever the last measurement of it
+        # sits, or two runs would claim the same heading.
+        parts.append(
+            f"\n{_demote_headings(older_runs.strip(), covered, structural=False)}\n"
+        )
     return "".join(parts)
 
 
@@ -1528,13 +1557,14 @@ def write_result(path: Path, *, scenarios: list[ScenarioRun], meta: dict) -> str
         f"{n_unproven} can't tell \u00b7 {n_skip} skip, run {meta['started']}."
     )
     lines.append("")
-    covered = ", ".join(r.name for r in scenarios) or "(no scenario ran)"
+    ran = ", ".join(r.name for r in scenarios) or "(no scenario ran)"
     lines.append(
-        f"**This run covered: {covered}.** A run may be asked for one scenario "
+        f"**This run covered: {ran}.** A run may be asked for one scenario "
         "(`--scenarios existing-project`), and then the verdict above is that "
         "scenario's alone \u2014 it says nothing about the one that did not run. "
         f"Earlier runs are kept below under `{ARCHIVE_HEADING}`, newest first, "
-        "never overwritten."
+        "never overwritten; a scenario this run did not re-measure keeps its "
+        "last result, at its last heading, dated by the run it came from."
     )
     lines.append("")
     lines.append(
@@ -1631,7 +1661,8 @@ def write_result(path: Path, *, scenarios: list[ScenarioRun], meta: dict) -> str
         lines.append(_fence(s.evidence))
         lines.append("")
 
-    text = "\n".join(lines) + "\n" + _archive_of(path)
+    covered = frozenset(s.id for s in all_steps)
+    text = "\n".join(lines) + "\n" + _archive_of(path, covered)
     path.write_text(text, encoding="utf-8")
     return overall
 
