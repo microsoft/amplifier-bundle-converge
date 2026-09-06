@@ -91,8 +91,11 @@ RULES = [
      "a Converge session reaches a lean-base helper and one of Converge's own"),
     ("4", 4, "host_requirement_in_readme",
      "the host requirement is one sentence in the README"),
-    ("5", 5, "work_queue_on_both_install_paths",
+    ("5a", 5, "work_queue_on_both_install_paths",
      "the shared work queue rides on both install paths"),
+    ("5b", 5, "one_install_command_is_the_adopters_path",
+     "the README names exactly one command as the path an adopter takes, marks every "
+     "other path advanced, and nowhere afterwards recommends against the one it named"),
     ("6a", 6, "no_session_wide_tool_stripping",
      "no session-wide tool-stripping setting anywhere"),
     ("6b", 6, "unrelated_session_keeps_tools",
@@ -168,6 +171,32 @@ HOST_SENTENCE_TESTS = [
 # installs, so the queue must be named in BOTH — a queue on one path only means
 # the contract checker can file work on one install and not the other.
 WORK_QUEUE_RE = re.compile(r"work-tracker")
+
+# Core 5's second promise (rewritten 2026-09-06, steward word "ratified, please
+# continue"): "The README names exactly one command as that path ... and marks
+# the multi-command full-workspace install as the advanced path, saying in one
+# sentence who needs it ... Nothing later in the README recommends against the
+# path it just named." The failure this catches was measured in the README
+# itself: `:53` named one path THE install path and `:93-96` preferred the other
+# for the first thing an adopter does.
+INSTALL_HEADING_RE = re.compile(r"^(#{1,6})\s+.*\binstall\b.*$", re.I)
+BOLD_LEAD_RE = re.compile(r"^\*\*.+?\*\*")
+#: How a README may name one path as the one to take. Shape, not a command
+#: string, so renaming the command does not silently un-assert the clause.
+NAMED_PATH_RES = [
+    ("names it THE install path", re.compile(r"\bTHE\s+install\s+path\b")),
+    ("names it the path an adopter takes",
+     re.compile(r"\bthe\s+path\s+an\s+adopter\s+takes\b", re.I)),
+    ("says start here", re.compile(r"\bstart\s+here\b", re.I)),
+]
+ADVANCED_RE = re.compile(r"\badvanced\b", re.I)
+#: "saying in one sentence who needs it: a host that supplies neither the
+#: session base nor the mode machinery" — one sentence, about a host, saying
+#: what it lacks or needs.
+WHO_NEEDS_HOST_RE = re.compile(r"\bhosts?\b", re.I)
+WHO_NEEDS_VERB_RE = re.compile(r"\b(needs?|supplies|supply|without|neither|lacks?)\b", re.I)
+AGAINST_RE = re.compile(r"\b(prefer|prefers|preferred|instead\s+use|recommend|recommends|recommended)\b", re.I)
+BACKTICK_RE = re.compile(r"`([^`]+)`")
 
 LOADED_DIRS = ["behaviors", "context"]
 LOADED_FILES = ["bundle.md"]
@@ -672,7 +701,7 @@ def check_work_queue_on_both_paths(root: Path):
     paths = []
     meta, err = load_bundle_frontmatter(root)
     if err:
-        return _result("5", "FAIL", err)
+        return _result("5a", "FAIL", err)
     root_uris = [u for u in _include_uris(meta) if WORK_QUEUE_RE.search(u)]
     paths.append({"path": "bundle.md (the root install)", "status": "PASS" if root_uris else "FAIL",
                   "detail": (f"names the work queue: {root_uris[0]}" if root_uris
@@ -682,7 +711,7 @@ def check_work_queue_on_both_paths(root: Path):
         try:
             doc = yaml.safe_load(p.read_text(encoding="utf-8", errors="replace"))
         except yaml.YAMLError as e:
-            return _result("5", "FAIL", f"{_rel(root, p)} is not valid YAML: {e}")
+            return _result("5a", "FAIL", f"{_rel(root, p)} is not valid YAML: {e}")
         if not isinstance(doc, dict):
             continue
         for u in _include_uris(doc):
@@ -696,17 +725,214 @@ def check_work_queue_on_both_paths(root: Path):
     missing = [p for p in paths if p["status"] == "FAIL"]
     if missing:
         return _result(
-            "5", "FAIL",
+            "5a", "FAIL",
             "the shared work queue does not ride on "
             + "; ".join(f"{m['path']} — {m['detail']}" for m in missing),
             paths=paths,
         )
     return _result(
-        "5", "PASS",
+        "5a", "PASS",
         "the shared work queue rides on both install paths "
         f"(bundle.md and {behavior_hits[0]['file']})",
         paths=paths,
     )
+
+
+# --------------------------------------------------------------------------- #
+# clause 5, second promise — one install command is the adopter's path         #
+# --------------------------------------------------------------------------- #
+def install_section(root: Path):
+    """(lines, error) for the README's install section.
+
+    The section starts at the first heading whose text contains "install" and
+    ends at the next heading of the same or higher level. Fenced blocks are
+    tracked while scanning, so a `# comment` inside a code fence is never
+    mistaken for a heading that ends the section.
+    """
+    f = root / "README.md"
+    if not f.is_file():
+        return None, "no README.md at the repository root — no install path is named anywhere"
+    lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
+    start, level, fenced = None, None, False
+    for i, ln in enumerate(lines):
+        if ln.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
+        m = INSTALL_HEADING_RE.match(ln)
+        if m:
+            start, level = i, len(m.group(1))
+            break
+    if start is None:
+        return None, "README.md has no install section — no heading names an install"
+    end, fenced = len(lines), False
+    for j in range(start + 1, len(lines)):
+        if lines[j].lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
+        m = re.match(r"^(#{1,6})\s", lines[j])
+        if m and len(m.group(1)) <= level:
+            end = j
+            break
+    return (lines[start:end], start), None
+
+
+def install_paths(section):
+    """Every install PATH in the section: a bold lead line, then its commands.
+
+    A path is a line that begins in bold — the shape every install path in this
+    project's README already uses — followed within three lines by a fenced
+    block. The proximity requirement is what keeps the section's other fenced
+    commands (a check command, a `git config` line) from being read as install
+    paths they are not.
+    """
+    lines, offset = section
+    paths, lead, i = [], None, 0
+    while i < len(lines):
+        ln = lines[i]
+        if ln.lstrip().startswith("```"):
+            cmds, j = [], i + 1
+            while j < len(lines) and not lines[j].lstrip().startswith("```"):
+                t = lines[j].strip()
+                if t and not t.startswith("#"):
+                    cmds.append(t)
+                j += 1
+            if lead is not None and cmds and (i - lead[1]) <= 3:
+                paths.append({"lead": lead[0], "line": offset + lead[1] + 1,
+                              "commands": cmds, "prose_from": j + 1})
+            lead = None
+            i = j + 1
+            continue
+        if BOLD_LEAD_RE.match(ln):
+            lead = (ln.strip(), i)
+        i += 1
+    return paths
+
+
+def _strip_fences(lines):
+    """Drop fenced code blocks. A command inside a fence is not prose about it.
+
+    Without this, flattening a README to sentences runs the fence's own
+    backticks into the surrounding text: the sentence splitter finds no
+    terminator across a command block and the inline-code spans pair up
+    across the fence markers. Measured on a fixture 2026-09-06 — a "prefer"
+    sentence three lines below a fence was swallowed whole.
+    """
+    out, fenced = [], False
+    for ln in lines:
+        if ln.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if not fenced:
+            out.append(ln)
+    return out
+
+
+def _sentences(text: str):
+    flat = re.sub(r"\s+", " ", re.sub(r"(?m)^\s*>\s?", "", text))
+    return [s.strip() for s in re.split(r"(?<=[.!?])\s+", flat) if s.strip()]
+
+
+def check_one_install_command(root: Path):
+    """Core 5: "One install command is the path an adopter takes."
+
+    Three promises, judged separately so a failure names which one broke:
+    exactly one path is named as the adopter's path and it is ONE command;
+    every other path is marked advanced and says who needs it; and nothing
+    later in the README recommends against the path it just named.
+
+    The rule judges the SHAPE the clause names, not which command is chosen —
+    the clause names the path by shape too, so a rename does not silently
+    un-assert it.
+    """
+    section, err = install_section(root)
+    if err:
+        return _result("5b", "FAIL", err)
+    paths = install_paths(section)
+    if not paths:
+        return _result("5b", "FAIL",
+                       "the README's install section presents no install command at all")
+
+    named, unnamed = [], []
+    for p in paths:
+        hits = [label for label, rx in NAMED_PATH_RES if rx.search(p["lead"])]
+        (named if hits else unnamed).append(dict(p, marks=hits))
+
+    findings = []
+    if len(named) != 1:
+        findings.append(
+            f"{len(named)} of {len(paths)} install path(s) are named as the path an "
+            f"adopter takes, and the clause asks for exactly one — "
+            + "; ".join(f"{p['lead'][:70]!r} (README.md:{p['line']})" for p in paths))
+    else:
+        the_path = named[0]
+        if len(the_path["commands"]) != 1:
+            findings.append(
+                f"the named path is {len(the_path['commands'])} commands, not one: "
+                f"{the_path['lead'][:70]!r} (README.md:{the_path['line']})")
+        for p in unnamed:
+            if not ADVANCED_RE.search(p["lead"]):
+                findings.append(
+                    f"a second install path is not marked advanced: {p['lead'][:70]!r} "
+                    f"(README.md:{p['line']})")
+                continue
+            prose = []
+            for ln in section[0][p["prose_from"]:]:
+                if ln.lstrip().startswith("```") or BOLD_LEAD_RE.match(ln) or ln.startswith("#"):
+                    break
+                prose.append(ln)
+            if not any(WHO_NEEDS_HOST_RE.search(s) and WHO_NEEDS_VERB_RE.search(s)
+                       for s in _sentences(" ".join(prose))):
+                findings.append(
+                    f"the advanced path at README.md:{p['line']} does not say who needs "
+                    f"it — no sentence after it names the host it is for")
+        against = _recommends_against(root, the_path, unnamed)
+        findings.extend(against)
+
+    if findings:
+        return _result("5b", "FAIL",
+                       "the README's install section does not present one command as the "
+                       "adopter's path: " + "; ".join(findings),
+                       paths=[{"lead": p["lead"], "line": p["line"],
+                               "commands": p["commands"]} for p in paths],
+                       findings=findings)
+    return _result(
+        "5b", "PASS",
+        f"README.md:{named[0]['line']} names exactly one command as the adopter's path "
+        f"({named[0]['lead'][:70]!r}), {len(unnamed)} other path(s) are marked advanced "
+        f"with who needs them, and nothing later recommends against it",
+        paths=[{"lead": p["lead"], "line": p["line"], "commands": p["commands"]}
+               for p in paths],
+    )
+
+
+def _recommends_against(root: Path, the_path, others):
+    """Sentences after the named path that steer a reader to a different one.
+
+    A sentence counts only when it both urges a preference AND quotes a span
+    that belongs to another path's command and not to the named one. That
+    second half is what keeps a sentence *about* the named path — "the `--app`
+    behavior is the quick path" — from reading as an argument against it.
+    """
+    text = (root / "README.md").read_text(encoding="utf-8", errors="replace")
+    lines = text.splitlines()
+    after = " ".join(_strip_fences(lines[the_path["line"]:]))
+    mine = "\n".join(the_path["commands"])
+    theirs = "\n".join(c for p in others for c in p["commands"])
+    out = []
+    for s in _sentences(after):
+        if not AGAINST_RE.search(s):
+            continue
+        for span in BACKTICK_RE.findall(s):
+            span = span.strip()
+            if len(span) < 4 or span in mine or span not in theirs:
+                continue
+            out.append(f"a later sentence recommends against the named path: {s[:160]!r}")
+            break
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -831,7 +1057,8 @@ def run_conformance(root: Path) -> dict:
         check_helpers_carry_the_rulebook(root),  # 3a
         _from_live("3b", probe.session_row()),
         check_host_requirement(root),          # 4
-        check_work_queue_on_both_paths(root),  # 5
+        check_work_queue_on_both_paths(root),  # 5a
+        check_one_install_command(root),       # 5b
         check_no_tool_stripping(root),         # 6a
         _from_live("6b", probe.neighbour_row()),
         _from_live("6c", probe.host_row()),

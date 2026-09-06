@@ -4,11 +4,25 @@ A fixture repository for the composition.v1 conformance kit. It conforms.
 
 ## Install
 
-**The behavior path (`--app`):** composes the capability payload onto whatever
-bundle is already active.
+**THE install path — the behavior (`--app`):**
 
-**The full-workspace path:** composes the root `bundle.md`, which assembles on
-the lean `anchors` base.
+```
+amplifier bundle add git+https://example.invalid/sample-good@main#subdirectory=behaviors/sample.yaml --app
+```
+
+One command. It composes the capability payload onto whatever bundle is already
+active (composition.v1 Core 5, and rule 5b's positive fixture).
+
+**Advanced — the full-workspace install:**
+
+```
+amplifier bundle add git+https://example.invalid/sample-good@main
+amplifier bundle use sample-good
+```
+
+Two commands, and who needs them: a host that supplies neither the session base
+nor the mode machinery. It composes the root `bundle.md`, which assembles on the
+lean `anchors` base itself rather than taking one from the host.
 
 > **Host requirement (composition.v1 Core 4, and rule 4's positive fixture).**
 > An automated step resolves its helpers only from the session it runs in, so

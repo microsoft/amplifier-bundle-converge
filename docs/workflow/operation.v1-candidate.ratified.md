@@ -267,7 +267,12 @@ One of four: *ratified* · *ratified with edits* · *declined* · *later*.
 Answer here:
 
 ```
-Word:
-Date:
-Edits (if "ratified with edits"):
+Word: ratified, please continue
+Date: 2026-09-06
+Edits (if "ratified with edits"): none — ratified as written
 ```
+
+Recorded in `docs/workflow/owner-ratifications-2026-09-06.md`, round 1. Applied
+to `contracts/operation.v1.md` on 2026-09-06 by `converge-462l` — all eight
+before/after pairs above, verbatim, 97 lines → 99. This file is the archive of
+the proposal as it was answered; the contract is the law.

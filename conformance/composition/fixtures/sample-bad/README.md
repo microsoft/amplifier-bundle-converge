@@ -16,6 +16,29 @@ VIOLATES 5: the shared work queue is named on the root install path
 target — does not include it, so work can be filed after one install and
 silently cannot after the other.
 
+## Install
+
+**THE install path — the behavior (`--app`):**
+
+```
+amplifier bundle add git+https://example.invalid/sample-bad@main#subdirectory=behaviors/sample.yaml --app
+```
+
+**The full-workspace path:**
+
+```
+amplifier bundle add git+https://example.invalid/sample-bad@main
+amplifier bundle use sample-bad
+```
+
+Both work, and for anything real, prefer `bundle use sample-bad`.
+
+VIOLATES 5b, twice, in the shape the real README was measured in on 2026-09-05:
+one path is named **THE** install path, the second is never marked advanced, and
+a sentence further down sends the reader to that second path for the first thing
+they will actually do. A reader is told which path to take and then told to take
+the other one.
+
 VIOLATES 3b: `agents/reader.md` exists on disk and no `agents:` block composes
 it, so a live session on this repository never reaches it — and because
 `bundle.md` pulls in the heavy package instead of the lean base, that session
