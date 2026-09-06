@@ -7,6 +7,12 @@ where a project is going and what must be true of it; the work of getting there
 is planned, run, and checked for you, and comes back to you only where a person
 is irreplaceable.
 
+**New here? Start with [`docs/ADOPTING.md`](docs/ADOPTING.md) — your first day,
+start to finish.** One command to install, one command to check it took, and the
+exact words that start a manager session on your own project. It asks you to
+understand nothing about how any of this works. Everything below is here for
+after it is running.
+
 ## The three roles
 
 - **You — the intent steward.** You set the direction and make the decisions
@@ -99,6 +105,30 @@ lightweight composition onto a session that already has its own base, the
 strips tools from **every** spawned sub-agent in every session — unacceptable
 collateral for a composable bundle, so it is deliberately absent everywhere.
 
+### Did the install take?
+
+An install can look fine and leave you with nothing: a second bundle registered
+under the name `converge` makes the manager session mode vanish with no error
+anywhere (`converge-348`). One command says which you have, and needs no clone:
+
+```
+uv run https://raw.githubusercontent.com/microsoft/amplifier-bundle-converge/main/scripts/adopt-check.py
+```
+
+It leaves 0 and says *the install took* when `converge-manager` is in this
+Amplifier's mode list; it leaves 1 and names the two known causes and their
+fixes when it is not. It also reports whether the work queue answers, whether
+the locked-contract guard is installed in the repository you are standing in,
+and whether a manager session has ever run here. It changes nothing — it only
+looks. From a checkout of this repository, `uv run scripts/adopt-check.py` is
+the same command.
+
+If you cloned this repository, enable the locked-contract guard once per clone:
+
+```
+git config core.hooksPath .githooks
+```
+
 Installed is not started. **Where** you start a manager session decides where
 everything it stands up lives, so start it as below rather than wherever your
 terminal happens to be.
@@ -129,6 +159,13 @@ wherever you were standing when you typed the next command.
 amplifier
 /mode converge-manager
 ```
+
+**If the first attempt comes back refused rather than switching, type it again.**
+The confirmation gate refuses once by design; the second call takes. You know it
+took when the prompt itself changes to `[converge-manager]>` — an ordinary
+session is not a manager session, however it answers. A second refusal, or a
+mode that is not offered at all, is a different problem: run the check under
+[Did the install take?](#did-the-install-take) above, which names the cause.
 
 **3. Say what you want to be true, and where the work comes from.**
 
@@ -207,12 +244,19 @@ therefore carries four files, and this repository carries its own:
 | [`.githooks/pre-push`](.githooks/pre-push) | A pre-push scan that refuses edits to locked contracts, so the rule holds even without the bundle. |
 
 Templates for a project adopting the method live in
-[`docs/workspace-template/`](docs/workspace-template/).
+[`docs/workspace-template/`](docs/workspace-template/) — eight files, each one
+listed in [that directory's own README](docs/workspace-template/README.md) with
+where it goes and whether you need it on day one. The one whose name changes on
+the way in is the pre-push scan: git runs it only at `.githooks/pre-push`, so it
+is copied under that name and made executable, not copied as it stands.
+[`docs/ADOPTING.md`](docs/ADOPTING.md) walks the whole of it.
 
 ## Where everything lives
 
 | | Where |
 |---|---|
+| The adopter's first day — install, check, start | [`docs/ADOPTING.md`](docs/ADOPTING.md) |
+| The check that says whether the install took | [`scripts/adopt-check.py`](scripts/adopt-check.py) |
 | The ratified rules (source of truth) | [`docs/PROTOCOL.md`](docs/PROTOCOL.md) |
 | The vision | [`docs/VISION.md`](docs/VISION.md) |
 | The four contracts | [`contracts/`](contracts/) — indexed in [`docs/CONTRACTS-README.md`](docs/CONTRACTS-README.md) |
@@ -231,8 +275,12 @@ either file directly.
 
 ## Reading order
 
-[`docs/PROTOCOL.md`](docs/PROTOCOL.md) → this README →
+**Using it:** [`docs/ADOPTING.md`](docs/ADOPTING.md) — and that is the whole of
+it. The first day needs no other document.
+
+**Understanding it, afterwards:** this README →
 [`docs/ANNOUNCEMENT.md`](docs/ANNOUNCEMENT.md) →
+[`docs/PROTOCOL.md`](docs/PROTOCOL.md) →
 [`docs/design/mechanism-spec.md`](docs/design/mechanism-spec.md) → the
 presentation.
 
