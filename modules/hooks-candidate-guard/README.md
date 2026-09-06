@@ -11,6 +11,39 @@ Full design: `docs/design/hooks-candidate-guard-spec.md`.
 
 ## Changelog
 
+### 2026-09-06 — the half-freeze: a lock whose record could not land
+
+**`converge-p17d` — locking a vision left it half-frozen.** A document is
+locked by editing its own H1, and the record of that lock is more text in the
+*same file*. A manager session did it in two edits: the H1 stamp landed, and
+this guard then refused the changelog edit that recorded the ratification —
+because by then the file read locked. The vision was left with the status word
+and no record of why, no later edit could repair it, and the session never
+recovered. Measured 2026-09-06T03:50:03Z, adopter harness scenario 2
+(`evaluations/adopter/RESULT.md`), and the reason that scenario was RED.
+
+The trap was structural, not a slip: whichever half went second was always
+going to be refused. **The promise is unchanged** — a locked document still
+takes no content edit, from anyone, ever. What is added beside it is one rule:
+
+> A write may not **leave** a guarded document locked unless that same write
+> also adds the line recording the lock.
+
+So the half-frozen state stops being *reachable* rather than becoming
+writable. The refusal lands **before** anything is written, so the document is
+still a draft and the two halves can simply be re-issued as one write — and
+the refusal says exactly that, rather than pointing at the proposal path a
+still-unlocked document does not need.
+
+Keys: `require_lock_record` (default `true`), `lock_record_regex`. Tests: W5 in
+`tests/test_guard.py` — eight of them fail against the pre-fix `guard.py`.
+
+Honest limits, all three tested: a file that does not exist yet is out of scope
+(creating one that already says FROZEN is an import, not a lock); the `bash`
+branch cannot see a write's resulting content, so it is not covered; and a
+document *already* half-frozen is repaired through the ordinary proposal path,
+because by then it really is locked.
+
 ### 2026-09-03 — one word, one path, one false alarm
 
 Two reports, two independent causes, both silent in the wrong direction.
@@ -395,6 +428,8 @@ Every key below is overridable via the hook's `config:` block in
 | `require_frozen_marker` | `true` | Also require the FROZEN/RATIFIED marker in current content. |
 | `frozen_marker_regex` | `(?im)^\*\*Status:\*\*\s*(?:RATIFIED\|FROZEN)\|^status:\s*FROZEN\|^#.*\((?:FROZEN\|RATIFIED)\b` | How "locked" is detected — **both** ratified H1 words plus all the legacy body markers. Byte-identical to the shipped `behaviors/converge.yaml` value; a test asserts they cannot diverge. |
 | `always_allow_globs` | `["**/*.v[0-9]*-candidate.md", "**/CANDIDATE-*.md"]` | Both proposal names — always allowed, checked before guarding. |
+| `require_lock_record` | `true` | The half-freeze check (`converge-p17d`): refuse a write that would leave a guarded document locked without, in that same write, the line recording the lock. Applies only to a path that is **not** already locked, so it can never make a locked file writable. |
+| `lock_record_regex` | `(?im)^(?!\s*#).*\b(?:FROZEN\|RATIFIED\|LOCKED)\b` | What counts as that record: a non-heading line naming a locking word. The status stamp itself never counts (it is what is being recorded), and neither does a line already on disk — the record must be one *this* write adds. |
 | `intercept_tools` | `["write_file", "edit_file", "apply_patch"]` | Native tool names to intercept. |
 | `tool_name_aliases` | `["Write", "Edit", "MultiEdit"]` | Claude-Code-style aliases, same path handling as write_file/edit_file. |
 | `path_fields` | `["file_path", "path"]` | Field name(s) to read the path from, in order. |

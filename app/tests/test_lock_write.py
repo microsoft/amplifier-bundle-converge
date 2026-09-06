@@ -41,6 +41,10 @@ VISION = """# Demo Vision (DRAFT)
 ## Where this is going
 
 One place for direction and one place for operation.
+
+## Changelog
+
+- **2026-09-05 — v1 (DRAFT).** First written.
 """
 
 #: The plain shape: one word in the parenthetical, and nothing else in it.
@@ -417,3 +421,132 @@ def test_a_lock_with_no_body_at_all_is_refused_rather_than_crashing(client) -> N
     answer = client.post("/api/managers/demo/docs/demo-repo/demo/lock")
     assert answer.status_code == 400
     assert "four" in answer.json()["error"]
+
+
+# --------------------------------------------------------------------------
+# the freeze is one write: the stamp and the record of it land together
+#
+#   converge-p17d  A document is locked by editing its own H1, and the record
+#                  of that lock is more text in the SAME file. Split across
+#                  two writes, the second is refused by the locked-document
+#                  guard that the first one just switched on, and the file is
+#                  left half-frozen. Measured 2026-09-06 in the adopter
+#                  harness (evaluations/adopter/RESULT.md, scenario 2).
+# --------------------------------------------------------------------------
+
+
+def _changelog_entries(text: str) -> list[str]:
+    return [line for line in text.splitlines() if line.startswith("- **")]
+
+
+def test_the_lock_writes_the_changelog_entry_in_the_same_commit(client, project) -> None:
+    """GIVEN a drafted vision and the steward's word, WHEN it is locked, THEN
+    the H1 status AND the entry recording that ratification are both in the
+    file, and both are in the one commit."""
+    sign_in(client)
+    doc = project["repo"] / "docs" / "VISION.md"
+
+    code, body = lock(client, "vision")
+    assert code == 200, body
+
+    day = _today()
+    text = doc.read_text(encoding="utf-8")
+    assert text.splitlines()[0] == f"# Demo Vision (FROZEN {day})"
+
+    entries = _changelog_entries(text)
+    assert entries[0].startswith(f"- **{day} \u2014 locked (FROZEN {day}).**"), entries
+    assert "- **2026-09-05 \u2014 v1 (DRAFT).** First written." in entries, (
+        "the older changelog entries were not kept"
+    )
+
+    # One commit, carrying both halves, and nothing of the document left over.
+    assert _porcelain(project["repo"], "docs/VISION.md") == ""
+    shown = _read(project["repo"], "show", "--format=", "--", "docs/VISION.md")
+    assert f"+# Demo Vision (FROZEN {day})" in shown
+    assert f"+- **{day} \u2014 locked (FROZEN {day}).**" in shown
+
+
+def test_the_locked_document_never_reads_frozen_without_its_record(client, project) -> None:
+    """The state the item forbids, asserted directly on the committed file:
+    a FROZEN heading with no changelog line naming the word that froze it.
+
+    Falsified the day this passes against a working tree where the entry was
+    added by a SECOND write \u2014 hence the porcelain check: the assertion is
+    about the committed state, not about what happens to be on disk.
+    """
+    sign_in(client)
+    for doc_id, rel in [
+        ("vision", "docs/VISION.md"),
+        ("demo", "contracts/demo.v1.md"),
+        ("bare", "contracts/bare.v1.md"),
+    ]:
+        code, body = lock(client, doc_id)
+        assert code == 200, (doc_id, body)
+        assert _porcelain(project["repo"], rel) == "", rel
+
+        text = (project["repo"] / rel).read_text(encoding="utf-8")
+        assert "FROZEN" in text.splitlines()[0], rel
+        recorded = [
+            line
+            for line in text.splitlines()[1:]
+            if not line.startswith("#") and "FROZEN" in line
+        ]
+        assert recorded, f"{rel} is frozen in its heading and nowhere records it"
+
+
+def test_a_document_with_no_changelog_gets_one_at_the_end(client, project) -> None:
+    """`documents.v1` Core 4 puts the changelog last, and both shipped
+    templates produce one \u2014 but a document that has none must still come out
+    of a lock carrying the record of it."""
+    sign_in(client)
+    assert lock(client, "demo")[0] == 200
+
+    text = (project["repo"] / "contracts" / "demo.v1.md").read_text(encoding="utf-8")
+    headings = [line for line in text.splitlines() if line.startswith("## ")]
+    assert headings[-1] == "## Changelog", headings
+    assert _changelog_entries(text)[0].startswith(f"- **{_today()} \u2014 locked")
+    assert "**Core 1.** The app shows only what it can read." in text
+
+
+def test_the_entry_names_where_the_four_conditions_are_kept(client, project) -> None:
+    """Core 7 asks a changelog entry to carry its evidence. The evidence for a
+    lock is the steward's four answers, and they are kept in the ratification
+    record \u2014 so the entry names that file rather than asserting the lock."""
+    sign_in(client)
+    code, body = lock(client, "vision")
+    assert code == 200, body
+
+    day = _today()
+    text = (project["repo"] / "docs" / "VISION.md").read_text(encoding="utf-8")
+    entry = _changelog_entries(text)[0]
+    assert f"owner-ratifications-{day}.md" in entry
+    assert GOOD_USER in entry
+    assert Path(body["recorded"]).name == f"owner-ratifications-{day}.md"
+
+
+def test_the_record_is_not_a_second_heading_or_an_unbalanced_one(client, project) -> None:
+    """The entry is history, not a second status: it must not add an H1, and
+    it must not leave the file's parentheses unbalanced."""
+    sign_in(client)
+    for doc_id, rel in [
+        ("vision", "docs/VISION.md"),
+        ("amended", "contracts/amended.v1.md"),
+        ("prose", "contracts/prose.v1.md"),
+    ]:
+        assert lock(client, doc_id)[0] == 200, doc_id
+        text = (project["repo"] / rel).read_text(encoding="utf-8")
+        assert len([ln for ln in text.splitlines() if ln.startswith("# ")]) == 1, rel
+        assert text.count("(") == text.count(")"), rel
+        assert text.endswith("\n"), rel
+
+
+def test_a_refused_lock_writes_no_changelog_entry_either(client, project) -> None:
+    """The two halves are one write, so a refusal leaves neither of them."""
+    sign_in(client)
+    doc = project["repo"] / "docs" / "VISION.md"
+    before = _digest(doc)
+
+    code, body = lock(client, "vision", FOUR[:2])
+    assert code == 400
+    assert _digest(doc) == before
+    assert "locked (FROZEN" not in doc.read_text(encoding="utf-8")
