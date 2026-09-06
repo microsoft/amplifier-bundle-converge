@@ -1654,7 +1654,38 @@
     afternoon) for each kind of reading separately.
     NO `work` REF: a CONFORMS row must not carry one, and converge-5vz is
     RESOLVED. What is still unmeasured about clause 3 is in `proves`, not in a
-    tracker item: nothing records the work that was available and not launched."
+    tracker item: nothing records the work that was available and not launched.
+    ─────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-05 (converge-fhsf). THE STANDING RECONCILE AFTER WAVE 9
+    CLOSED, AND THE FIRST READING TAKEN AGAINST THE MOVED PLAN RECORD. CONFORMS
+    → CONFORMS. RAN → CLAUSE-3-LIVE-READING-SAYS-THE-WAVE-DID-NOT-GO-IDLE.
+    THE PLAN RECORD MOVED AND THIS ROW NEEDED NO EDIT TO FOLLOW IT, which is
+    the first thing worth recording, because the item that opened this pass
+    expected the opposite. The record left ~/dev/hw-converge for
+    <workspace>/.converge/converge/HIGHWAY.md on 2026-09-05. NO EXECUTABLE REF
+    IN THIS FILE NAMES EITHER PATH — checked mechanically across every row
+    rather than by eye: refs naming hw-converge = NONE; the 8 rows that mention
+    it (CVG-011 · 012 · 013 · 015 · 017 · 018 · 021 · 022) mention it in dated
+    prose recording runs that really happened there, and prose is not a pin.
+    turnkey_clause.py finds the workspace by climbing from the checkout and
+    from every registered worktree, requiring HIGHWAY.md AND manifest.tsv
+    together. Measured from this lane rather than assumed: find_workspace() →
+    /home/bkrabach/dev/vision-focused-team-ci/.converge/converge, how = found
+    above this worktree, old path used = False.
+    THE READING MOVED WITH THE RECORD AND THE PIN HELD. Live on this host,
+    `uv run evaluations/turnkey/run.py --env local --workspace
+    /home/bkrabach/dev/vision-focused-team-ci/.converge/converge --project
+    converge --steps j`, verbatim: Core 3 (CVG-013) PASS: 6 of 7 recorded
+    park(s) name what kept moving beside them (read from the entry's own
+    `Live:` list; fewest at any one park: 1) — the wave did not go idle on the
+    steward's word, which is what this reading can say and not that nothing
+    more could have proceeded.
+    5 of 6 on 2026-09-04 → 6 of 7 today: one more park recorded, and it names
+    what continued beside it. THE COUNT MOVING IS EXACTLY WHY THE FRAGMENT IS
+    COUNT-FREE. This row pins `name what kept moving beside them` and never the
+    numerator, so an ordinary wave adding a park cannot make it red; a park
+    naming nothing continuing still does. The row was not bumped — the run was
+    taken first and this note written from what it said."
 
 - id: CVG-014
   title: feedback is signal, not a ticket
@@ -2214,7 +2245,42 @@
     converge-7stl is the successor for what is actually left: a real lane on this
     host ending with an unchanged branch, so the reading has this host's own
     habit to judge rather than a fixture's. converge-rp7, which asked for exactly
-    this re-derivation, is closed by this pass."
+    this re-derivation, is closed by this pass.
+    ─────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-05 (converge-fhsf). STILL GAP. RAN →
+    CLAUSE-9-READING-ANSWERS-BOTH-WAYS-AND-THIS-HOST-HAS-STILL-NEVER-STALLED.
+    THE PROBE STILL MEETS ITS EXPECT AND THE READING UNDER IT GOT WEAKER, AND
+    THE SECOND HALF OF THAT SENTENCE IS THE ONLY NEWS. Live on this host
+    against the moved plan record, `uv run evaluations/turnkey/run.py --env
+    local --workspace /home/bkrabach/dev/vision-focused-team-ci/.converge/converge
+    --project converge --steps j`, verbatim: Core 9 (CVG-019) SKIP: no lane
+    ended without commits, so no stall exists for this reading to judge — the
+    reading ran and found nothing — read 0 of 114 lane(s) in the manifest; 109
+    could not be read at all (worktree gone and branch not in any checkout
+    reachable from here): engine-surface-contract, ai-context-currency,
+    engine-surface-seed, w1-composition, w1-guard, w1-documents, and 103 more.
+    THE DENOMINATOR IS NOW ZERO. run.py's own docstring records the split it
+    measured on 2026-09-04: 107 lanes in the manifest, 4 with a branch this
+    checkout could resolve. Today it is 0 of 114. So `the reading ran and found
+    nothing` is today a claim about no lanes at all, and not a claim about
+    lanes that were looked at and did not stall. An empty denominator is not a
+    pass — this row's own `proves` says so — and it is now empty for an
+    instrument reason rather than the event reason the row is waiting on.
+    THE CAUSE WAS MEASURED, NOT GUESSED. manifest.tsv came across with the plan
+    record and its paths did not: its first data row still reads
+    /home/bkrabach/dev/hw-converge/lanes/engine-surface-contract/amplifier-bundle-dot-runner,
+    and 109 of the 114 lanes it lists point into the old workspace, whose
+    worktrees are gone.
+    WHY THE PROBE IS LEFT EXACTLY AS IT WAS. The row is GAP — already red — and
+    the fragment it pins is still verbatim what the reading says, so the probe
+    is not lying about anything. Pinning the coverage numbers instead would put
+    an ordinary lane merge into a false alarm, which is the trap CVG-021's
+    notes record and the reason that row's fragment is count-free. A row is not
+    made more honest by making it brittle.
+    NOT REPAIRED HERE BECAUSE IT IS NOT THIS LANE'S FILE. manifest.tsv belongs
+    to the manager workspace; this pass owns ledger/ and docs/work-items.json.
+    Filed as converge-7c52 rather than touched — which is the same rule that
+    moved CVG-013's work ref, applied to a file instead of a row."
   work: converge-7stl
 
 - id: CVG-020
@@ -2508,6 +2574,28 @@
     kept as far as the plan record can show it. What remains unprovable is in
     `proves` above — a call nobody stamped — and that is a limit of any reading
     of a record, not an open task.
+
+    ─────────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-05 (converge-fhsf). CONFORMS → CONFORMS. RAN →
+    CLAUSE-11-EVERY-RECORDED-CALL-IS-ONE-OF-THE-FOUR.
+    Live on this host against the moved plan record, `uv run
+    evaluations/turnkey/run.py --env local --workspace
+    /home/bkrabach/dev/vision-focused-team-ci/.converge/converge --project
+    converge --steps j`, verbatim: Core 11 (CVG-021) PASS: every one of 7
+    call(s) recorded in the plan record is one of the four (ratify: 6,
+    irreversible: 1) — a call stamped as anything else would be the defect this
+    clause names, and none is; a call nobody stamped leaves no trace here
+    either way.
+    6 calls (ratify 5, irreversible 1) on 2026-09-04 → 7 (ratify 6,
+    irreversible 1) today. One new ratify call, classified when it was
+    recorded; unclassified 0 both times; outside the four 0 both times. Had a
+    call been invented or reclassified rather than simply added, the first or
+    the third of those numbers would have moved too.
+    THE COUNT-FREE FRAGMENT EARNED ITS KEEP THIS RUN. The note above says
+    pinning N would make the next ordinary park a false alarm; the next
+    ordinary park is precisely what happened, six days later, and the row did
+    not move. The path under the reading changed and the sentence did not,
+    which is the outcome the auto-discovering probe was built for.
 
 - id: CVG-022
   title: the queue is the shared one, with custody
