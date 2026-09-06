@@ -181,14 +181,6 @@ WORK_QUEUE_RE = re.compile(r"work-tracker")
 # for the first thing an adopter does.
 INSTALL_HEADING_RE = re.compile(r"^(#{1,6})\s+.*\binstall\b.*$", re.I)
 BOLD_LEAD_RE = re.compile(r"^\*\*.+?\*\*")
-#: How a README may name one path as the one to take. Shape, not a command
-#: string, so renaming the command does not silently un-assert the clause.
-NAMED_PATH_RES = [
-    ("names it THE install path", re.compile(r"\bTHE\s+install\s+path\b")),
-    ("names it the path an adopter takes",
-     re.compile(r"\bthe\s+path\s+an\s+adopter\s+takes\b", re.I)),
-    ("says start here", re.compile(r"\bstart\s+here\b", re.I)),
-]
 ADVANCED_RE = re.compile(r"\badvanced\b", re.I)
 #: "saying in one sentence who needs it: a host that supplies neither the
 #: session base nor the mode machinery" — one sentence, about a host, saying
@@ -780,17 +772,22 @@ def install_section(root: Path):
     return (lines[start:end], start), None
 
 
-def install_paths(section):
-    """Every install PATH in the section: a bold lead line, then its commands.
+def install_candidates(section):
+    """Every fenced command block in the install section, with its INTRO.
 
-    A path is a line that begins in bold — the shape every install path in this
-    project's README already uses — followed within three lines by a fenced
-    block. The proximity requirement is what keeps the section's other fenced
-    commands (a check command, a `git config` line) from being read as install
-    paths they are not.
+    A block's intro is every line since the previous block ended (or since the
+    section started). That is where the thing marking a path actually lives, and
+    READMEs put it in three different shapes — a `###` heading, a bold lead line,
+    or an ordinary sentence. Reading only one of the three is how a rule reports
+    "no install command at all" about a README that plainly has one; measured
+    2026-09-06 against a rewritten README that used a heading.
+
+    `in_lead` records whether the block sits in the section's own opening block,
+    before any sub-heading. The clause's "the path an adopter takes" is the
+    command a reader meets first, and that is what `in_lead` means.
     """
     lines, offset = section
-    paths, lead, i = [], None, 0
+    out, prev_end, seen_sub, i = [], 0, False, 0
     while i < len(lines):
         ln = lines[i]
         if ln.lstrip().startswith("```"):
@@ -800,16 +797,40 @@ def install_paths(section):
                 if t and not t.startswith("#"):
                     cmds.append(t)
                 j += 1
-            if lead is not None and cmds and (i - lead[1]) <= 3:
-                paths.append({"lead": lead[0], "line": offset + lead[1] + 1,
-                              "commands": cmds, "prose_from": j + 1})
-            lead = None
+            if cmds:
+                out.append({"intro": lines[prev_end:i], "commands": cmds,
+                            "line": offset + i + 1, "prose_from": j + 1,
+                            # 0-based file index of the first line AFTER the
+                            # closing fence. Slicing from the fence itself would
+                            # start a later fence-scan already inside a fence and
+                            # invert every toggle after it — measured 2026-09-06,
+                            # it silently swallowed the whole rest of the file.
+                            "after_index": offset + j + 1,
+                            "in_lead": not seen_sub,
+                            "lead": _intro_label(lines[prev_end:i])})
+            prev_end = j + 1
             i = j + 1
             continue
-        if BOLD_LEAD_RE.match(ln):
-            lead = (ln.strip(), i)
+        if re.match(r"^#{2,6}\s", ln) and i > 0:
+            seen_sub = True
         i += 1
-    return paths
+    return out
+
+
+def _intro_label(intro):
+    """The most path-like line of an intro, for a human-readable finding.
+
+    A heading beats a bold lead beats the last ordinary sentence — that is the
+    order of how loudly a README announces a path.
+    """
+    heads = [ln.strip() for ln in intro if re.match(r"^#{2,6}\s", ln)]
+    if heads:
+        return heads[-1]
+    bolds = [ln.strip() for ln in intro if BOLD_LEAD_RE.match(ln)]
+    if bolds:
+        return bolds[-1]
+    body = [ln.strip() for ln in intro if ln.strip()]
+    return body[-1] if body else "(no intro)"
 
 
 def _strip_fences(lines):
@@ -840,72 +861,80 @@ def check_one_install_command(root: Path):
     """Core 5: "One install command is the path an adopter takes."
 
     Three promises, judged separately so a failure names which one broke:
-    exactly one path is named as the adopter's path and it is ONE command;
-    every other path is marked advanced and says who needs it; and nothing
-    later in the README recommends against the path it just named.
+    the install section opens with exactly ONE command block, and it is one
+    command; every other install path is marked advanced and says who needs it;
+    and nothing later in the README recommends against the one it just named.
 
-    The rule judges the SHAPE the clause names, not which command is chosen —
-    the clause names the path by shape too, so a rename does not silently
-    un-assert it.
+    "The path an adopter takes" is read as the command a reader meets first —
+    the block before any sub-heading. That is a shape, not a command string, so
+    renaming the command does not silently un-assert the clause; the clause
+    names the path by shape for the same reason.
     """
     section, err = install_section(root)
     if err:
         return _result("5b", "FAIL", err)
-    paths = install_paths(section)
-    if not paths:
+    cands = install_candidates(section)
+    if not cands:
         return _result("5b", "FAIL",
-                       "the README's install section presents no install command at all")
+                       "the README's install section presents no command at all")
 
-    named, unnamed = [], []
-    for p in paths:
-        hits = [label for label, rx in NAMED_PATH_RES if rx.search(p["lead"])]
-        (named if hits else unnamed).append(dict(p, marks=hits))
+    lead_blocks = [c for c in cands if c["in_lead"]]
+    shown = [{"lead": c["lead"], "line": c["line"], "commands": c["commands"],
+              "in_lead": c["in_lead"]} for c in cands]
+    if len(lead_blocks) != 1:
+        return _result(
+            "5b", "FAIL",
+            "the README's install section does not present one command as the adopter's "
+            f"path: its opening presents {len(lead_blocks)} command block(s) and the clause "
+            "asks for exactly one — "
+            + "; ".join(f"{c['lead'][:70]!r} (README.md:{c['line']})" for c in lead_blocks),
+            paths=shown,
+            findings=[f"{len(lead_blocks)} command block(s) before the first sub-heading"])
+
+    named = lead_blocks[0]
+    # Another INSTALL path is a later block invoking the same program as the one
+    # just named. A check command or a `git config` line in the same section is
+    # not a path a reader could have taken instead, and reporting it as one would
+    # be a fabricated finding.
+    tool = named["commands"][0].split()[0]
+    others = [c for c in cands
+              if c is not named and c["commands"][0].split()[0] == tool]
 
     findings = []
-    if len(named) != 1:
+    if len(named["commands"]) != 1:
         findings.append(
-            f"{len(named)} of {len(paths)} install path(s) are named as the path an "
-            f"adopter takes, and the clause asks for exactly one — "
-            + "; ".join(f"{p['lead'][:70]!r} (README.md:{p['line']})" for p in paths))
-    else:
-        the_path = named[0]
-        if len(the_path["commands"]) != 1:
+            f"the named path is {len(named['commands'])} commands, not one: "
+            f"{named['lead'][:70]!r} (README.md:{named['line']})")
+    for p in others:
+        intro = " ".join(p["intro"])
+        if not ADVANCED_RE.search(intro):
             findings.append(
-                f"the named path is {len(the_path['commands'])} commands, not one: "
-                f"{the_path['lead'][:70]!r} (README.md:{the_path['line']})")
-        for p in unnamed:
-            if not ADVANCED_RE.search(p["lead"]):
-                findings.append(
-                    f"a second install path is not marked advanced: {p['lead'][:70]!r} "
-                    f"(README.md:{p['line']})")
-                continue
-            prose = []
-            for ln in section[0][p["prose_from"]:]:
-                if ln.lstrip().startswith("```") or BOLD_LEAD_RE.match(ln) or ln.startswith("#"):
-                    break
-                prose.append(ln)
-            if not any(WHO_NEEDS_HOST_RE.search(s) and WHO_NEEDS_VERB_RE.search(s)
-                       for s in _sentences(" ".join(prose))):
-                findings.append(
-                    f"the advanced path at README.md:{p['line']} does not say who needs "
-                    f"it — no sentence after it names the host it is for")
-        against = _recommends_against(root, the_path, unnamed)
-        findings.extend(against)
+                f"a second install path is not marked advanced: {p['lead'][:70]!r} "
+                f"(README.md:{p['line']})")
+            continue
+        prose = list(p["intro"])
+        for ln in section[0][p["prose_from"]:]:
+            if ln.lstrip().startswith("```") or re.match(r"^#{2,6}\s", ln):
+                break
+            prose.append(ln)
+        if not any(WHO_NEEDS_HOST_RE.search(s) and WHO_NEEDS_VERB_RE.search(s)
+                   for s in _sentences(" ".join(prose))):
+            findings.append(
+                f"the advanced path at README.md:{p['line']} does not say who needs "
+                f"it — no sentence beside it names the host it is for")
+    findings.extend(_recommends_against(root, named, others))
 
     if findings:
         return _result("5b", "FAIL",
                        "the README's install section does not present one command as the "
                        "adopter's path: " + "; ".join(findings),
-                       paths=[{"lead": p["lead"], "line": p["line"],
-                               "commands": p["commands"]} for p in paths],
-                       findings=findings)
+                       paths=shown, findings=findings)
     return _result(
         "5b", "PASS",
-        f"README.md:{named[0]['line']} names exactly one command as the adopter's path "
-        f"({named[0]['lead'][:70]!r}), {len(unnamed)} other path(s) are marked advanced "
-        f"with who needs them, and nothing later recommends against it",
-        paths=[{"lead": p["lead"], "line": p["line"], "commands": p["commands"]}
-               for p in paths],
+        f"README.md:{named['line']} presents exactly one command as the adopter's path "
+        f"({named['lead'][:70]!r}), {len(others)} other install path(s) are marked "
+        f"advanced with who needs them, and nothing later recommends against it",
+        paths=shown,
     )
 
 
@@ -919,7 +948,7 @@ def _recommends_against(root: Path, the_path, others):
     """
     text = (root / "README.md").read_text(encoding="utf-8", errors="replace")
     lines = text.splitlines()
-    after = " ".join(_strip_fences(lines[the_path["line"]:]))
+    after = " ".join(_strip_fences(lines[the_path["after_index"]:]))
     mine = "\n".join(the_path["commands"])
     theirs = "\n".join(c for p in others for c in p["commands"])
     out = []

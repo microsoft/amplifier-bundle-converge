@@ -950,12 +950,27 @@
     by the steward's ratified proposal and now carries TWO promises where it
     carried one. CVG-005 keeps the old one (the queue rides on both paths,
     still CONFORMS). This row carries the new one, and it is not kept.
-    RAN 2026-09-06 → ONE-COMMAND-INSTALL-PATH-FAIL. The kit names both halves:
-    "a second install path is not marked advanced: **Full-workspace path —
-    Converge as the primary bundle:** (README.md:73); a later sentence
-    recommends against the named path: The root path additionally supplies the
-    base — so for end-to-end recipe runs against a target repo, prefer
-    `bundle use converge`."
+    RAN 2026-09-06 → ONE-COMMAND-INSTALL-PATH-FAIL, in THIS working copy: "its
+    opening presents 2 command block(s) and the clause asks for exactly one —
+    ## Install (README.md:61); **Full-workspace path — Converge as the primary
+    bundle:** (README.md:75)". Two paths, side by side, both offered first.
+    AND RUN AGAINST main's README TOO, because the rewrite landed on another
+    branch while this lane worked and a row that only ever saw its own tree
+    would be reporting on a README nobody will read. `git show main:README.md`
+    into a scratch directory, same rule: PASS — "README.md:61 presents exactly
+    one command as the adopter's path (## Install), 1 other install path(s) are
+    marked advanced with who needs them, and nothing later recommends against
+    it". THAT IS EVIDENCE, NOT THIS ROW'S VERDICT. This row is derived from the
+    tree it lives in, and its probe must meet its expect here; the two halves
+    have still never been in one commit. converge-eedi carries the run that
+    settles it, and now carries this measurement too.
+    THE RULE WAS WRONG ONCE AND WAS FIXED BEFORE IT SHIPPED, WHICH IS WORTH
+    RECORDING. Its first form read a path lead as a BOLD line only — the shape
+    this tree's README uses — and reported "no install command at all" about
+    main's rewritten README, which uses a `## Install` sentence and a `###
+    Advanced:` heading. A rule that reports a false red is worse than no rule.
+    It now reads heading, bold lead or ordinary sentence, and separates a second
+    INSTALL path from a check command by whether it invokes the same program.
     THE RULE DID NOT EXIST BEFORE THIS ITEM. The ratified proposal added a kit
     assert — "The README's install section presents exactly one command as the
     path an adopter takes, marks every other path advanced, and nowhere
@@ -976,11 +991,11 @@
     composition kit's NEW Core 5 rule does not exist yet … There was no branch
     to run it from." So one side has a rewritten README nobody checked and the
     other has a rule that has never seen it. converge-eedi is that unrun check,
-    and it is live. ONE SHAPE TO EXPECT AT THAT RUN, named now rather than
-    discovered: xk2u put the advanced path under a `### Advanced: …` HEADING,
-    and rule 5b reads a path lead as a BOLD line. That may be one more shape
-    the rule should read rather than a README defect — decide it with the run
-    in hand, which is what converge-eedi asks for.
+    and it is live. The shape question that item was
+    filed with — xk2u put the advanced path under a `### Advanced: …` HEADING —
+    is answered: the rule reads headings now, and main's README passes it. What
+    converge-eedi still owes is the run on one branch and this row re-derived
+    against it.
     THE OLD RULE ID MOVED, AND IT MOVED ON PURPOSE: clause 5's single rule was
     `5`, and a clause with two promises takes two lettered rules under the kit's
     own convention. It is now `5a` (the queue) and `5b` (the README). No ledger

@@ -18,13 +18,14 @@ silently cannot after the other.
 
 ## Install
 
-**THE install path — the behavior (`--app`):**
+One command, and it composes the capability payload onto whatever bundle is
+already active:
 
 ```
 amplifier bundle add git+https://example.invalid/sample-bad@main#subdirectory=behaviors/sample.yaml --app
 ```
 
-**The full-workspace path:**
+### The full-workspace path
 
 ```
 amplifier bundle add git+https://example.invalid/sample-bad@main
@@ -34,10 +35,15 @@ amplifier bundle use sample-bad
 Both work, and for anything real, prefer `bundle use sample-bad`.
 
 VIOLATES 5b, twice, in the shape the real README was measured in on 2026-09-05:
-one path is named **THE** install path, the second is never marked advanced, and
-a sentence further down sends the reader to that second path for the first thing
-they will actually do. A reader is told which path to take and then told to take
-the other one.
+the second install path sits under a heading that never marks it advanced and
+never says who needs it, and a sentence below sends the reader to it for the
+first thing they will actually do. A reader is told which command to type and
+then told to type the other one.
+
+Note what this fixture also pins: hiding the second path under a sub-heading
+does not hide it from the rule. It is counted because it invokes the same
+program as the named path, which is the difference between another install path
+and the unrelated commands a README keeps in the same section.
 
 VIOLATES 3b: `agents/reader.md` exists on disk and no `agents:` block composes
 it, so a live session on this repository never reaches it — and because

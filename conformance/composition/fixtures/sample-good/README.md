@@ -4,25 +4,36 @@ A fixture repository for the composition.v1 conformance kit. It conforms.
 
 ## Install
 
-**THE install path — the behavior (`--app`):**
+One command. It composes the capability payload onto whatever bundle is already
+active (composition.v1 Core 5, and rule 5b's positive fixture):
 
 ```
 amplifier bundle add git+https://example.invalid/sample-good@main#subdirectory=behaviors/sample.yaml --app
 ```
 
-One command. It composes the capability payload onto whatever bundle is already
-active (composition.v1 Core 5, and rule 5b's positive fixture).
+That is the install.
 
-**Advanced — the full-workspace install:**
+### Advanced: sample-good as the primary bundle
+
+Two commands, for one case: a host that supplies neither the session base nor
+the mode machinery.
 
 ```
 amplifier bundle add git+https://example.invalid/sample-good@main
 amplifier bundle use sample-good
 ```
 
-Two commands, and who needs them: a host that supplies neither the session base
-nor the mode machinery. It composes the root `bundle.md`, which assembles on the
-lean `anchors` base itself rather than taking one from the host.
+This composes the root `bundle.md`, which assembles on the lean `anchors` base
+itself rather than taking one from the host.
+
+### Did the install take?
+
+One command says so, and it is not an install path — rule 5b must not read it as
+one, which is why it invokes a different program from the two above:
+
+```
+uv run https://example.invalid/sample-good/adopt-check.py
+```
 
 > **Host requirement (composition.v1 Core 4, and rule 4's positive fixture).**
 > An automated step resolves its helpers only from the session it runs in, so
