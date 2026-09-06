@@ -1814,7 +1814,48 @@
     COUNT-FREE. This row pins `name what kept moving beside them` and never the
     numerator, so an ordinary wave adding a park cannot make it red; a park
     naming nothing continuing still does. The row was not bumped — the run was
-    taken first and this note written from what it said."
+    taken first and this note written from what it said.
+    ────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-7nn8), the standing reconcile after waves
+    12 and 13 merged. CONFORMS → CONFORMS. RAN 2026-09-06 →
+    CLAUSE-3-LIVE-READING-SAYS-THE-WAVE-DID-NOT-GO-IDLE.
+    Live on this host, `uv run evaluations/turnkey/run.py --env local
+    --workspace /home/bkrabach/dev/vision-focused-team-ci/.converge/converge
+    --project converge --steps j`, verbatim: Core 3 (CVG-013) PASS: 7 of 8
+    recorded park(s) name what kept moving beside them (read from the entry's
+    own `Live:` list; fewest at any one park: 1) — the wave did not go idle on
+    the steward's word, which is what this reading can say and not that nothing
+    more could have proceeded.
+    6 of 7 on 2026-09-05 → 7 of 8 today. The added park is 2026-09-06T03:05:19Z
+    and it names what continued beside it (`Continued: apply + follow-on wave`).
+    NUMERATOR AND DENOMINATOR BOTH ROSE BY ONE, which is the shape an ordinary
+    wave makes and the whole reason this row pins a phrase and never the count.
+    THE FALSITY CONDITION WAS CHECKED, NOT ASSUMED. `proves` fails this row on a
+    park naming nothing continuing and giving no reason for it. Read from step
+    (j)'s own park_events rather than from the sentence: idle = 0,
+    idle_with_a_reason = 0, parks = 8, judged = 7. The one unjudged park is the
+    pre-convention entry 2026-09-03T08:29:04Z (protocol-terms parked on
+    lane/w6-protocol-terms for the steward to ratify.), which carries neither a
+    `Live:` list nor a `Continued:` stamp, so the reading declines to judge it
+    instead of calling it idle. It is the same single entry that has sat outside
+    the numerator at 5 of 6, then 6 of 7, and now 7 of 8 — the gap has not
+    widened.
+    THE ITEM'S PREMISE DID NOT REPRODUCE, AND THAT IS RECORDED RATHER THAN
+    QUIETLY DROPPED. converge-7nn8 was filed saying this row's probe prints
+    CLAUSE-3-STATE-CHANGED-REREAD-THIS-ROW. It does not, from either checkout
+    that can reach the plan record: run from this lane worktree and again from
+    the integration checkout at
+    /home/bkrabach/dev/vision-focused-team-ci/amplifier-bundle-converge, it
+    asserts both times. Two candidate explanations were measured and neither
+    holds: step (j) takes 3.4s against turnkey_clause.py's 150s timeout, so no
+    read timed out; and find_workspace() resolves here to
+    /home/bkrabach/dev/vision-focused-team-ci/.converge/converge (how = found
+    above this worktree), so no reading was taken against the wrong record. What
+    did move is the record itself — HIGHWAY.md was last written 2026-09-06
+    08:46:33Z, sixteen seconds AFTER the item was created at 08:46:17Z — so the
+    state the item describes is not the state on disk and cannot be reconstructed
+    from here. No cause is claimed. The same applies to CVG-019 and CVG-021,
+    whose notes of this date point here rather than repeat it."
 
 - id: CVG-014
   title: feedback is signal, not a ticket
@@ -2409,11 +2450,41 @@
     NOT REPAIRED HERE BECAUSE IT IS NOT THIS LANE'S FILE. manifest.tsv belongs
     to the manager workspace; this pass owns ledger/ and docs/work-items.json.
     Filed as converge-7c52 rather than touched — which is the same rule that
-    moved CVG-013's work ref, applied to a file instead of a row."
+    moved CVG-013's work ref, applied to a file instead of a row.
+    ────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-7nn8), the standing reconcile after waves
+    12 and 13 merged. STILL GAP. RAN 2026-09-06 →
+    CLAUSE-9-READING-ANSWERS-BOTH-WAYS-AND-THIS-HOST-HAS-STILL-NEVER-STALLED.
+    Live on this host, `uv run evaluations/turnkey/run.py --env local
+    --workspace /home/bkrabach/dev/vision-focused-team-ci/.converge/converge
+    --project converge --steps j`, verbatim: Core 9 (CVG-019) SKIP: no lane
+    ended without commits, so no stall exists for this reading to judge — the
+    reading ran and found nothing — read 0 of 123 lane(s) in the manifest; 120
+    could not be read at all (worktree gone and branch not in any checkout
+    reachable from here): engine-surface-contract, ai-context-currency,
+    engine-surface-seed, w1-composition, w1-guard, w1-documents, and 114 more.
+    THE DENOMINATOR IS STILL ZERO AND THE HOLE GOT WIDER, WHICH IS THE ONLY
+    NEWS. 0 of 114 with 109 unreadable on 2026-09-05 → 0 of 123 with 120
+    unreadable today: waves 12 and 13 added nine lanes to the manifest and
+    eleven more became unreadable. Not one lane this host has ever run is
+    readable by this reading. An empty denominator is not a pass — this row's
+    own `proves` says so — and it is empty today for the same instrument reason
+    recorded on 2026-09-05, not for the event reason the row is waiting on.
+    THE PROBE AND THE `work` REF ARE BOTH LEFT EXACTLY AS THEY WERE. The
+    fragment is still verbatim what the reading says, and pinning the coverage
+    numbers would turn an ordinary lane merge into a false alarm — the reasoning
+    recorded on 2026-09-05 and unchanged. converge-7stl is still open and is
+    still the thing that would close this row: a real lane on this host ending
+    with an unchanged branch. manifest.tsv belongs to the manager workspace, not
+    to this pass, and converge-7c52 already carries it.
+    THE ITEM'S PREMISE DID NOT REPRODUCE HERE EITHER: converge-7nn8 was filed
+    saying this probe prints CLAUSE-9-STATE-CHANGED-REREAD-THIS-ROW, and it
+    asserts instead, from both checkouts. What was measured about that is in
+    CVG-013's note of this date and is not repeated."
   work: converge-7stl
 
 - id: CVG-020
-  title: a brief on every return — returns and briefs are countable now, and there are none of either
+  title: a brief on every return — every stamped return in the log carries all five parts
   contract:
     file: contracts/operation.v1.md
     clause: "Core 10"
@@ -2427,11 +2498,11 @@
     ref: 'python3 ledger/checks/return_log_ratio.py'
     expect:
       exit: 0
-      stdout_contains: "CLAUSE-10-STAMPED-RETURNS=1 BRIEFED-RETURNS=1 UNBRIEFED=0"
+      stdout_contains: "CLAUSE-10-STAMPED-RETURNS=2 BRIEFED-RETURNS=2 UNBRIEFED=0"
   proves: >
     That the manager mode still encodes clause 10 AND its stamp instruction, and
-    that every return stamped in the log carries all five parts — one return
-    recorded, one briefed, none unbriefed. The ratio has a denominator now and
+    that every return stamped in the log carries all five parts — two returns
+    recorded, two briefed, none unbriefed. The ratio has a denominator now and
     the two sides agree, which is what this clause asks and what the row was red
     for the absence of.
     IT DOES NOT PROVE A BRIEF ON EVERY RETURN IN THE WORLD, and the reason is
@@ -2555,6 +2626,49 @@
     nobody recorded is invisible to any check that could be written against this
     tree. The clause is kept as far as anything here can see it, and that limit
     is stated rather than dissolved by the disposition.
+    ────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-7nn8), the standing reconcile after waves
+    12 and 13 merged. CONFORMS → CONFORMS, AND THE ROW WENT RED TO GET HERE FOR
+    THE SECOND TIME, WHICH IS THE PINNED COUNT DOING ITS JOB. RAN 2026-09-06 →
+    CLAUSE-10-STAMPED-RETURNS=2 BRIEFED-RETURNS=2 UNBRIEFED=0.
+    Still pinned at 1/1/0, `uv run --with pyyaml ledger/checks/verify.py` exited
+    1 and named this row and nothing else — `CVG-020 expect NOT met (exit=0,
+    stdout='CLAUSE-10-STAMPED-RETURNS=2 BRIEFED-RETURNS=2 UNBRIEFED=0', stderr='')`.
+    The 2026-09-04 note prescribed exactly this outcome word for word — it goes
+    red on the next briefed return too (STAMPED and BRIEFED both rise), which is
+    a re-read and not a regression — so the reading was taken first and the
+    expect re-pinned at 2/2/0 from it.
+    WHAT THE SECOND RETURN IS, read from the log rather than from a report:
+    `docs/workflow/OWNER-RETURN-LOG.md` gained `## 2026-09-06 08:42 - they came
+    back and switched the mode on` (commit 5587519), stamped in the heading and
+    carrying all five parts under it in sentences — **Time away** (about three
+    and a half hours since the steward's `ratified, please continue`),
+    **Finished** (both ratified clauses in their contracts, the adopter proof
+    run, the wave-13 fixes), **Stuck** (nothing), **Needs you** (nothing this
+    turn), **Anything quietly broken** (the watchdog can no longer re-wake the
+    session; four ledger rows read the plan record and say state changed).
+    UNBRIEFED stayed 0, which is the half of the ratio the clause actually
+    promises: of the returns that ARE recorded, every one is briefed.
+    THE READING WAS TAKEN AGAINST THE INTEGRATED TREE, NOT THIS LANE'S BASE, AND
+    THAT DISTINCTION WAS LOAD-BEARING HERE. This lane branched at d4fe95c, which
+    predates commit 5587519, so the probe read 1/1/0 in this worktree and 2/2/0
+    everywhere else — a row re-pinned from the stale side would have met its
+    expect locally and gone red the moment it merged. main was fast-forwarded
+    into this branch first (d4fe95c → ad910cc, one file changed: the return
+    log), and both the probe and verify.py were then re-run from ad910cc.
+    Confirmed independently from the integration checkout at
+    /home/bkrabach/dev/vision-focused-team-ci/amplifier-bundle-converge, which
+    reports the same 2/2/0.
+    THE TITLE IS CORRECTED RATHER THAN LEFT STANDING. It read `returns and
+    briefs are countable now, and there are none of either`, which was true while
+    the denominator was zero and has been false since 2026-09-04, when this row
+    went green on one of each. A row whose own title contradicts its own probe is
+    the kind of quiet record this file exists to catch, and nothing outside this
+    row cites the old string (checked by grep across the tree).
+    NO `work` REF, unchanged: a kept promise owes nobody work, and `verify.py`
+    fails a CONFORMS row that carries one. What is still unprovable is in
+    `proves` above and did not move — a return the manager session never recorded
+    leaves no trace on either side of the ratio.
 
 - id: CVG-021
   title: four calls reach the steward
@@ -2725,6 +2839,33 @@
     ordinary park is precisely what happened, six days later, and the row did
     not move. The path under the reading changed and the sentence did not,
     which is the outcome the auto-discovering probe was built for.
+    ────────────────────────────────────────────────────────────────────────
+    RE-DERIVED 2026-09-06 (converge-7nn8), the standing reconcile after waves
+    12 and 13 merged. CONFORMS → CONFORMS. RAN 2026-09-06 →
+    CLAUSE-11-EVERY-RECORDED-CALL-IS-ONE-OF-THE-FOUR.
+    Live on this host, `uv run evaluations/turnkey/run.py --env local
+    --workspace /home/bkrabach/dev/vision-focused-team-ci/.converge/converge
+    --project converge --steps j`, verbatim: Core 11 (CVG-021) PASS: every one
+    of 8 call(s) recorded in the plan record is one of the four (ratify: 7,
+    irreversible: 1) — a call stamped as anything else would be the defect this
+    clause names, and none is; a call nobody stamped leaves no trace here either
+    way.
+    7 calls (ratify 6, irreversible 1) on 2026-09-05 → 8 (ratify 7, irreversible
+    1) today. The added one is 2026-09-06T03:05:19Z, the steward's answer on both
+    candidates (jyg0 and 279a), classified in the entry that recorded it.
+    unclassified 0 and outside_the_four 0 on both dates: had a call been invented
+    or an existing one reclassified rather than simply added, one of those two
+    numbers would have moved as well.
+    THE COUNT-FREE FRAGMENT HAS NOW EARNED ITS KEEP TWICE, ON CONSECUTIVE WAVES.
+    Each of the last two reconciles found one more call in the record and this
+    row did not move, because it pins the phrase after N and never N. The day an
+    entry records a call naming none of the four the reading drops to SKIP; the
+    day one is stamped as a fifth kind it turns FAIL and this row must move to
+    VIOLATION. Either way the probe misses its expect and verify.py names it.
+    THE ITEM'S PREMISE DID NOT REPRODUCE HERE EITHER: converge-7nn8 was filed
+    saying this probe prints CLAUSE-11-STATE-CHANGED-REREAD-THIS-ROW, and it
+    asserts instead, from both checkouts. What was measured about that is in
+    CVG-013's note of this date and is not repeated.
 
 - id: CVG-022
   title: the queue is the shared one, with custody

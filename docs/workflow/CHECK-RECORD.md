@@ -81,3 +81,11 @@ Merged w13-lock-atomic (converge-p17d: the freeze is one edit — H1 stamp and c
     uv run conformance/documents/run.py . --work-items docs/work-items.json                      -> PASS
     uv run conformance/composition/run.py .                                                        -> PASS
     uv run --with pyyaml ledger/checks/verify.py                                                   -> 4 rows drifted: CVG-013/019/021 read the plan record, which grew; CVG-020 counts one stamped-but-not-yet-briefed return (this turn's, briefed at its end). Re-derive lane filed.
+
+## 2026-09-06 09:29 - wave 14 (first two lanes): reconcile-7 and registration
+Merged w14-reconcile-7 (CVG-013/019/020/021 re-derived live) and w14-registration (converge-eife: manager sessions write registration.toml on every wake; the app discovers them) into main at 9e9ccb8, then re-ran the check myself:
+    uv run --extra app --with pytest --with httpx pytest -q app/tests        -> 2 failed on first run: two tests with hand-written managers saw this host's live registration through discovery's default root. Repaired in place (conftest autouse fixture; one test marked to see the real default). Re-run: 310 passed, 149 skipped.
+    uv run --with pyyaml ledger/checks/verify.py                             -> ALL LEDGER SELF-CHECKS PASS
+    uv run conformance/documents/run.py . --work-items docs/work-items.json -> PASS
+    uv run conformance/composition/run.py .                                  -> PASS
+Correction to the 08:42 brief: it said four ledger rows read "state changed, re-read"; the reconcile lane measured three of the four asserting cleanly and only CVG-020 red (the then-unbriefed return). The sentence was written from a verify.py run whose plan record moved sixteen seconds later; recorded here rather than edited away.

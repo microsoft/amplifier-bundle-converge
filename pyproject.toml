@@ -39,4 +39,5 @@ build-backend = "hatchling.build"
 packages = ["src/amplifier_converge"]
 
 [tool.pytest.ini_options]
+markers = ["real_default_roots: the test is about discovery's default workspace root and must see the real one"]
 testpaths = ["tests"]
