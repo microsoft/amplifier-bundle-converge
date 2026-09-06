@@ -27,8 +27,8 @@ The app does the rest of its own reading.
 ## The earlier page, retired
 
 `web/` held the *first* body: a server-rendered page of the same two places, no
-framework, no client-side script, mobile-first, served by an
-`amplifier-converge web` subcommand on loopback. It was written against
+framework, no client-side script, mobile-first, served on loopback by this
+package's one and only subcommand. It was written against
 `contracts/surface.v1.md`, which the experience family superseded on 2026-09-03,
 and nothing was written against it after that; the five experience kits read the
 app on 8788 instead.
@@ -49,10 +49,20 @@ subcommand at all.
 $ uv run amplifier-converge --version
 amplifier-converge 0.1.0
 
-$ uv run amplifier-converge web
+$ uv run amplifier-converge --help
 usage: amplifier-converge [-h] [--version]
-amplifier-converge: error: unrecognized arguments: web
+
+The readers and writers behind Converge. There is no subcommand: the page this
+command used to serve was retired on 2026-09-06, and the app you open beside a
+project is started with scripts/run-app.sh.
+
+options:
+  -h, --help  show this help message and exit
+  --version   show program's version number and exit
 
 $ uv run --extra web --with pytest --with httpx pytest -q tests
 139 passed in 5.05s
 ```
+
+Asking for the retired subcommand by name now exits 2 with
+`error: unrecognized arguments`.
