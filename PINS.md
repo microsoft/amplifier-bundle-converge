@@ -166,7 +166,9 @@ place, because a fact that has stopped being a fact is not one (converge-x40).
 - Every work item names the contract it serves.
 - **The ledger cites ONE project.** Every `work:` ref in `ledger/rows.yaml` is a
   `converge-*` id, `scripts/export-work-items.py` exports `--project converge`,
-  and `ledger/checks/verify.py` resolves refs against that export. Anything that
+  and `ledger/checks/verify.py` resolves refs against the LIVE queue of the
+  project each ref itself names — through `amplifier-work-tracker`, never
+  through that export (converge-j0u5). Anything that
   runs `seed-reconcile` against this repo — including an e2e harness — passes
   `tracker_project: converge`. A different project is refused at preflight, not
   silently redirected; and an isolated queue would require the export script, the

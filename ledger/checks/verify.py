@@ -25,10 +25,14 @@ It checks, in order:
                cited by. The `work`-ref check above saw nothing wrong, because a
                ref that exists is not the same as a ref that is still live. A
                reader who follows a closed cite lands on finished work and learns
-               nothing about what would close the row. Read against
-               `docs/work-items.json`; an id absent from that export is reported,
-               not failed, because the export is a snapshot and a row may
-               legitimately cite an item filed after it was taken
+               nothing about what would close the row. READ AGAINST THE LIVE
+               QUEUE since 2026-09-05 (converge-j0u5): it read the committed
+               `docs/work-items.json` export until then, which nothing in this
+               gate refreshes, and therefore could not fire — 76 items in the
+               snapshot against 202 live, 28 red rows citing resolved work, and
+               an `[OK]` over all of it. An id the checker cannot resolve is now
+               a FAILURE, not an `[INFO]`. The full account, and what happens
+               when the tracker is unreachable, is in `ledger/checks/live_work.py`
   refs         every executable ref RUNS AND MEETS ITS `expect` — not merely
                resolves. This is the tripwire that matters: on 2026-09-02 the
                ledger passed a resolve-only check while 13 of its ~32 refs
@@ -97,28 +101,18 @@ chk(all(not r.get("work") for r in rows[1:] if r["disposition"] == "CONFORMS"),
     "no CONFORMS row carries a `work` ref (a tracker ref must not imply red)")
 
 # --- a red row may not cite a CLOSED item as the thing that will fix it ---
-# bd's status vocabulary: open / blocked / deferred are live; resolved is not.
-EXPORT = pathlib.Path("docs/work-items.json")
-if EXPORT.is_file():
-    import json
-    status_of = {i["id"]: i.get("status", "") for i in json.loads(EXPORT.read_text())}
-    closed, unknown = [], []
-    for r in red:
-        ref = r.get("work")
-        if ref not in status_of:
-            unknown.append((r["id"], ref))
-        elif status_of[ref] == "resolved":
-            closed.append(f"{r['id']} cites {ref}, which is already resolved")
-    for line in closed:
-        print(f"  [FAIL] {line}")
-    chk(not closed, f"no GAP/VIOLATION row cites a resolved work item "
-                    f"({len(red)} red rows read against {EXPORT})")
-    if unknown:
-        print(f"[INFO] {len(unknown)} red row(s) cite an item not in {EXPORT} — newer than the "
-              f"export, or a typo; re-export to judge: "
-              + ", ".join(f"{rid}→{ref}" for rid, ref in unknown[:8]))
-else:
-    print(f"[INFO] {EXPORT} is absent, so no red row's cite could be checked for being closed")
+# The queue is read LIVE, through the tracker's own CLI. It read a committed
+# export until 2026-09-05, which nothing here refreshed, so the rule could not
+# fire; ledger/checks/live_work.py holds the measurement and the fallback rules
+# — including why this line can never print OK without live data (converge-j0u5).
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import live_work
+
+work_report = live_work.evaluate([(r["id"], r.get("work")) for r in red])
+for line in work_report.detail:
+    print(line)
+print(f"[{work_report.verdict:<4s}] {work_report.summary}")
+fail.extend(work_report.failures)
 
 # --- THE NEW TRIPWIRE: every probe/absence ref must MEET ITS expect ---
 print("\nEXECUTABLE REFS — does each one actually assert its expectation?")
