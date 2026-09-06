@@ -147,3 +147,12 @@ Merged w18-state-word (converge-lsa0) into main; applied documents.v1 Core 4 (H1
     uv run --extra app --with pytest --with httpx pytest -q app/tests        -> 319 passed, 149 skipped
     uv run --with pyyaml ledger/checks/verify.py                             -> one row: CVG-020 counts this turn's stamped-not-yet-briefed return; green when the brief lands.
 Locked today: docs/VISION.md, composition.v1, experience-operation.v1, experience-console.v1, experience-collaboration.v1, experience-direction.v1. Held loosely: documents.v1, operation.v1, platform-web.v1. Not candidates: experience.v1 (umbrella: 4b/6a/12 are the steward's next-work decisions), the four native platforms, surface.v1 (superseded, body retired).
+
+## 2026-09-06 14:23 - the tidy closed: lane w19-tidy merged, residuals closed in place, the queue at zero ready
+Merged w19-tidy (converge-ao32, -9wsl, -0ket, -h2gk, -j696, -i8wb, -nal resolved; -rgs3/-4iu0/-3hew released with the remainder named) into main; closed the remainders in place (pyproject description, deleted-file mentions, AGENTS.md guard line, three SYNC re-pins with the §4 re-review, four 9a items through the tracker). Re-ran the check myself at a9e9190:
+    uv run conformance/documents/run.py . --work-items docs/work-items.json -> PASS
+    uv run conformance/composition/run.py .                                  -> PASS
+    uv run --extra web --with pytest --with httpx pytest -q tests/           -> 139 passed
+    ./.githooks/pre-push origin/main                                         -> clean — no locked contract edited
+    uv run --with pyyaml ledger/checks/verify.py                             -> one row, CVG-020, counting this turn's return until its brief lands (written next, in the same push)
+Queue: 0 ready · 0 held · 29 deferred (each with its reason) · 263 resolved. No lane running; no worktree; no candidate awaiting a word.
