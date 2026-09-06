@@ -36,6 +36,9 @@ repository toward them.
   evidence the contract is wrong, in which case see rule 2.
 - **If no contract covers what you are doing, stop and say so.** Do not invent
   the promise yourself. A missing contract is a decision for the steward.
+- **A repository with *no* contracts at all is the one exception, and it has its
+  own shape** — investigate, then propose: `contracts/operation.v1.md` Core 14,
+  carried out in the clause 14 section of `modes/converge-manager.md`.
 - **Converge is self-hosting.** This repository passes the same participant kit
   it ships in `docs/workspace-template/`. A rule we do not follow here is not a
   rule we may ship.

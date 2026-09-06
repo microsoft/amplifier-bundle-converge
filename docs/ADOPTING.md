@@ -150,16 +150,19 @@ not a delay: lanes against an unagreed direction are work you will throw away.
 first. It begins at the vision: what this will be when it is right, written as
 though already true. Everything after that is identical.
 
-> **What is settled here and what is not.** The five steps above are quoted from
-> a **proposed** clause — `contracts/operation.v1-candidate.md`, Core 14, "The
-> first wake is investigate, then propose" — which is waiting for the steward's
-> word and is **not ratified**. Until it is, this page describes the path the
-> proposal names; it is not yet law, and the manager session's own rules carry
-> no first-wake section, because a section keyed to an unratified clause is
-> exactly what this method refuses to ship. Two things follow for you. The
-> conversation in this step is a conversation — hold it deliberately rather than
-> assuming the session will run it for you. And if you want to know where it
-> stands, the item to read is `converge-njaj`, with `converge-jyg0` behind it.
+> **What is settled here and what is not.** The five steps above are law. They
+> are `contracts/operation.v1.md` Core 14, "The first wake is investigate, then
+> propose", ratified on 2026-09-06 — the steward's word is recorded in
+> [`docs/workflow/owner-ratifications-2026-09-06.md`](workflow/owner-ratifications-2026-09-06.md).
+> The manager session carries the clause too, as the clause 14 section of
+> `modes/converge-manager.md`, so the session you started in step 4 knows this
+> path rather than needing you to run it from memory. What is **not** settled is
+> the proof: no recorded run has taken either kind of project along this path end
+> to end. The harness that asks is `evaluations/adopter/`, and its last recorded
+> result is red, from 2026-09-04 — before any of this was written. So hold the
+> conversation in this step deliberately rather than assuming it will run itself,
+> and if you want to know where the proof stands, the item to read is
+> `converge-njaj`.
 
 ## 6. Take the participant kit into your repository
 
