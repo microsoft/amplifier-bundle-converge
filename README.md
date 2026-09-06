@@ -255,9 +255,33 @@ anything the run started outside that directory — then delete the project's
 - `modes/converge-manager.md` — the manager-session mode: the operating loop,
   keyed clause by clause to `contracts/operation.v1.md`. Where the mode and a
   clause disagree, the clause wins.
-- `src/amplifier_converge/` — the companion web page (the two halves). Run it
-  beside a project with `amplifier-converge web --repo .`; it listens on
-  loopback by default, on purpose.
+- `app/` — **the app you open beside a project**: Home, the two places, and the
+  Manager Console as a pane beside either. One command from a checkout of this
+  repository, `scripts/run-app.sh`, which serves it on
+  <http://127.0.0.1:8788>. This is the body the experience family is written
+  against and the five experience kits read. [Run the app](#run-the-app) above
+  starts it; [`app/README.md`](app/README.md) carries the rest of its operation.
+- `src/amplifier_converge/` — the Python package behind the `amplifier-converge`
+  command. Two things live in it and **neither is the app above**. Its *readers
+  and writers* turn a repository into the words on a page — documents, ledger,
+  work queue, lanes, proposals, and the four writes `surface.v1` named — and
+  `app/` uses one of them
+  (`app/data.py` says whether a promise is kept through
+  `amplifier_converge.reading.kept`). Its `web/` is the *earlier* server-rendered
+  page of the same two halves, still runnable beside a project with `uv run
+  --extra web amplifier-converge web --repo .` on loopback, port 8091 by default.
+  That page was written against `surface.v1`, which the experience family
+  superseded on 2026-09-03, and its kit now sits in
+  `conformance/_superseded/surface/`; it still runs and its suite is still green
+  (measured 2026-09-06 on this tree: HTTP 200 served, and `pytest tests` → 187
+  passed).
+  [`src/amplifier_converge/README.md`](src/amplifier_converge/README.md) says
+  what is used by what.
+
+**One call for the steward, answerable in a word:** the older page in
+`src/amplifier_converge/web/` still runs and is still tested, but nothing is
+written against it any more — *retire* it, or *keep* it as a second body? (The
+readers and writers beside it stay either way, because `app/` uses them.)
 
 ## The participant kit
 
