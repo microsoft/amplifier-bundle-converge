@@ -269,6 +269,10 @@ anything the run started outside that directory — then delete the project's
   [`src/amplifier_converge/README.md`](src/amplifier_converge/README.md) says
   what is used by what.
 
+**Retired:** the earlier server-rendered page in `src/amplifier_converge/web/`,
+and the `amplifier-converge web` subcommand that served it, were removed on
+2026-09-06 on the intent steward's word, in commit `eea3166`.
+
 ## The participant kit
 
 The through-line has to reach a colleague who never installs this bundle, and a
