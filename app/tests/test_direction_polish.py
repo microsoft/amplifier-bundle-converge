@@ -12,6 +12,18 @@ What is proved here, and why it needs a real browser:
   `app/static/sw.js`, carried out by `app/static/js/api.js`). None of that
   exists outside a browser with a service worker in it.
 
+  What this turns on, said plainly, because it was left implicit and cost three
+  false reds (converge-9a56): the mark appears only when the app's own request
+  actually FAILS, because that is when `sw.js` reaches for the stored copy and
+  stamps it. Two things can keep a request from failing while the harness
+  believes the network is gone, and both were measured on 2026-09-06:
+  Chromium's own HTTP cache, which emulated offline does not invalidate; and a
+  browser build on which `set_offline` never reaches the service worker at all.
+  `_go_offline` now empties that cache, proves the worker is really off the
+  network, and checks that the app's own read came back stamped as stored — so
+  a red below means §10 is broken, and a browser that cannot be taken offline
+  is reported as one rather than blamed on the app.
+
 - **converge-3al** — `actions.js`'s `sendAsk` used to catch every failure with
   "this app answers no proposal route yet", which was false twice: the route
   landed with converge-ddt, and offline the real refusal is the worker's own
@@ -79,32 +91,37 @@ Check — the document carries its own sync moment (converge-baz)
   a. While still online, SEE nothing beside the document's title but its state
      badge and "Updated <date>". Nothing claims the copy is stale, because it
      is not.
-  b. Devtools → Network → Offline. Reload.
-  c. SEE, beside the document's title, an amber chip reading
+  b. Devtools → Application → Clear storage → tick ONLY "Cached images and
+     files" and clear it. That is the BROWSER's cache, not the worker's, and
+     leaving it full is how this check quietly passes for the wrong reason:
+     the app's own request is answered out of it and comes back looking live.
+  c. Devtools → Network → Offline. Reload.
+  d. SEE, beside the document's title, an amber chip reading
      "Stored copy · as of <time>".
-  d. SEE the same <time> in the offline banner's chip for that same document.
+  e. SEE the same <time> in the offline banner's chip for that same document.
      Two surfaces, one payload, one moment.
-  e. Repeat at 1280x800 and at 390x844. At 390 the chip sits on its own line
+  f. Repeat at 1280x800 and at 390x844. At 390 the chip sits on its own line
      under "Updated <date>" and the page does not widen.
   FAILS IF: the chip appears while online; or the two times disagree; or the
-     moment is only in the banner.
+     moment is only in the banner; or no chip appears at all AND step b was
+     skipped, which proves nothing either way.
 
 Check — Ask reports its real cause (converge-3al)
-  f. With the network still off, click "Ask…", write anything, press Ask.
-  g. SEE the toast read "Could not ask: you are offline, so nothing was asked —
+  g. With the network still off, click "Ask…", write anything, press Ask.
+  h. SEE the toast read "Could not ask: you are offline, so nothing was asked —
      reconnect and ask again, or tell the manager session directly."
   FAILS IF: the toast says the app answers no proposal route, or names
      converge-ddt, or shows a status code or "Failed to fetch".
-  h. Back online, delete the document file on disk, then Ask again.
-  i. SEE the toast carry the server's own words ("no document … to ask about")
+  i. Back online, delete the document file on disk, then Ask again.
+  j. SEE the toast carry the server's own words ("no document … to ask about")
      and say nothing about a missing route.
 
 Check — History says every snapshot is reachable, and names the one bound
-  j. Open History → Details under the restore panel.
-  k. SEE it say every snapshot in the list can be restored from, that picking a
+  k. Open History → Details under the restore panel.
+  l. SEE it say every snapshot in the list can be restored from, that picking a
      row reads the document back at that commit, and that your own read point
      does not move when you look.
-  l. SEE it also name the one thing a restore cannot reach: a commit that never
+  m. SEE it also name the one thing a restore cannot reach: a commit that never
      touched this document, refused by the server in its own words.
   FAILS IF: the panel says an older snapshot is out of reach (it is not, since
      converge-4pq), or names converge-4pq as an open gap, or stops naming the
@@ -356,6 +373,99 @@ def _installed(browser, server, project, width=1280, height=800):
     return ctx, page, errors
 
 
+def _forget_the_http_cache(page) -> None:
+    """Empty Chromium's own HTTP cache, which is NOT the worker's cache.
+
+    Emulated offline does not invalidate that cache, and §10 is about what the
+    *worker* kept. Without this the two are indistinguishable, and which one
+    answers is decided by the browser rather than by the app.
+
+    Measured 2026-09-06, this file, with this call absent: on Chromium 131
+    (playwright 1.49.0) `readApi`'s own `fetch()` for `/api/managers/<id>` was
+    answered out of that cache with the network emulated off, so the response
+    was a live one — no `X-Converge-Offline`, no `X-Converge-Synced-At` — and
+    the document carried no stored-copy mark. The three tests below then read as
+    though §10's mark had been dropped, when what had actually happened is that
+    the request never failed. On Chromium 151 (playwright 1.62.0) the same tree
+    was green, so the verdict was being decided by which browser build the
+    harness happened to launch. `Network.enable` first, because
+    `Network.clearBrowserCache` is a Network-domain command.
+
+    A steward whose device has been away from the network long enough to matter
+    has no such copy, so neither may this test.
+    """
+    session = page.context.new_cdp_session(page)
+    session.send("Network.enable")
+    session.send("Network.clearBrowserCache")
+    session.detach()
+
+
+#: Is the network gone from the SERVICE WORKER's point of view? That is the
+#: only point of view §10 and §11 are about, and it is not the same question as
+#: `navigator.onLine` in the page.
+#:
+#: A URL nothing has ever asked for cannot be in any cache, so a 200 for it can
+#: only be the worker talking to the live server.
+STILL_ON_THE_NETWORK = """
+async () => {
+  try {
+    const res = await fetch('/api/boot?worker-offline-probe=' + Math.random());
+    return {answered: !!(res && res.ok), status: res ? res.status : 0};
+  } catch (err) { return {answered: false, status: 0, refused: String(err)}; }
+}
+"""
+
+#: Ask for one of the app's own reads and report where the answer came from.
+#: Offline and honest, `sw.js` serves the stored copy and stamps it
+#: `X-Converge-Offline`; an answer WITHOUT that stamp did not come from the
+#: store at all.
+WHERE_THE_ANSWER_CAME_FROM = """
+async () => {
+  try {
+    const res = await fetch('/api/boot');
+    return {answered: !!(res && res.ok), stored: res.headers.get('X-Converge-Offline') === '1',
+            status: res ? res.status : 0};
+  } catch (err) {
+    return {answered: false, stored: false, status: 0, refused: String(err)};
+  }
+}
+"""
+
+
+def _cannot_take_the_network_away(page) -> str:
+    """Why this browser cannot be taken offline, or "" if it can.
+
+    Measured 2026-09-06 (converge-9a56): on Chromium 131 (playwright 1.49.0)
+    `ctx.set_offline(True)` did not reach the service worker at all — a
+    never-seen `/api/boot?<nonce>` came back 200 with live JSON while the page
+    reported `navigator.onLine === false`. Every offline check in this file was
+    then reading a LIVE app: no stored mark, because the response was live; no
+    refusal, because the write was simply written. Three of them failed and one
+    of the two ask checks with them, and all four blamed the app.
+
+    On Chromium 151 (playwright 1.62.0) the same tree is green, so the verdict
+    was being decided by which browser build the harness happened to launch.
+
+    A check that cannot run reports that it cannot run. It does not pass, and it
+    does not fail the app for the harness's shortcoming.
+    """
+    probe = page.evaluate(STILL_ON_THE_NETWORK)
+    if not probe["answered"]:
+        return ""
+    version = ""
+    try:
+        version = page.context.browser.version
+    except Exception:  # pragma: no cover - version is a courtesy, not the point
+        version = "unknown"
+    return (
+        f"this browser does not take the network away from the service worker: a URL "
+        f"nothing has ever fetched still answered {probe['status']} with the network "
+        f"emulated off (chromium {version}). Nothing below would be measuring §10 or "
+        f"§11, so it is not checked here; MANUAL_PROCEDURE in this file is the check "
+        f"that stands in for it"
+    )
+
+
 def _go_offline(ctx, page):
     """Take the network away, and open the app again with it gone.
 
@@ -363,7 +473,12 @@ def _go_offline(ctx, page):
     app: Chromium's emulated offline state does NOT survive a navigation — the
     new document reports `navigator.onLine === true` again while every request
     out of it still dies (measured in `test_offline.py`, 2026-09-04).
+
+    The second assert is the same kind of fact, and it is the one this harness
+    was missing: taking the network away is not enough while the browser still
+    holds its own copy of the app's answers (see `_forget_the_http_cache`).
     """
+    _forget_the_http_cache(page)
     ctx.set_offline(True)
     page.reload(wait_until="load")
     page.wait_for_timeout(2000)
@@ -374,6 +489,18 @@ def _go_offline(ctx, page):
     assert online_here is False, (
         "the harness failed to take the network away; every assertion below would be "
         "measuring the wrong thing"
+    )
+    blocked = _cannot_take_the_network_away(page)
+    if blocked:
+        pytest.skip(blocked)
+    # Past here the worker really is off the network, so anything short of a
+    # stored copy is the app's own doing and is reported as such.
+    came_from = page.evaluate(WHERE_THE_ANSWER_CAME_FROM)
+    print(f"the app's own read, with the network gone: {came_from}")
+    assert came_from["answered"] and came_from["stored"], (
+        "with the network gone the app's own read was not answered by the worker's store: "
+        f"{came_from} — §10 asks for what was last synced, so an unstamped answer here "
+        "means nothing below is measuring §10 at all"
     )
 
 
