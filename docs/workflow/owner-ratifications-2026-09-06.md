@@ -19,3 +19,17 @@ On the lock sheet (docs/workflow/LOCK-SHEET-2026-09-06.md), every card answered 
 2. **Ratified, as written:** `contracts/documents.v1-candidate.md` (Core 4 — an amendment at the 100-line ceiling is recorded by the archived proposal and `amended <date>` in the H1) and `docs/VISION.md-candidate.md` (the 2026-09-06 lock entry becomes a bullet leading the changelog).
 3. **Later:** converge-ism (ten routes beyond the five writes) and converge-slpj (six features no contract names) — the first topic of the next-work discussion.
 4. **Delete it:** `~/dev/hw-converge`, the read-only copy of the old batch directory (irreversible; the steward's word).
+
+## 2026-09-06T07:26:46-07:00 — Ratified: vision (VISION.md-candidate)
+
+- **Decision:** Ratified
+- **Document:** `amplifier-bundle-converge` · `vision`
+- **Proposal:** `VISION.md-candidate`
+- **By:** bkrabach · 2026-09-06T07:26:46-07:00
+
+## 2026-09-06T07:27:24-07:00 — Ratified: vision (VISION.md-candidate)
+
+- **Decision:** Ratified
+- **Document:** `amplifier-bundle-converge` · `vision`
+- **Proposal:** `VISION.md-candidate`
+- **By:** bkrabach · 2026-09-06T07:27:24-07:00
