@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # Converge early-adopter eval -- thin entry point.
 #
+# harness.py launches ONE CONTAINER PER SCENARIO, registering each in the
+# machine-wide infra ledger before it exists and destroying it in a `finally`.
+#
 #   ./evaluations/adopter/run.sh                              # both scenarios
 #   ./evaluations/adopter/run.sh --scenarios new-project      # just one
 #   ./evaluations/adopter/run.sh --sync-mirror                # re-sync first
-#   ./evaluations/adopter/run.sh --keep                       # leave the DTU up
+#   ./evaluations/adopter/run.sh --keep                       # leave the DTUs up
 #
 # Every flag harness.py accepts passes straight through (`harness.py --help`).
 #
