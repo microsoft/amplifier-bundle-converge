@@ -300,7 +300,7 @@
     "id": "converge-3rzz",
     "title": "Post-merge reconcile: CVG-019, CVG-051 and the closed-cite rows after the sweep",
     "status": "resolved",
-    "description": "Contract: documents.v1 §9 (a work item names its contract and defines done in plain words) — the item below was filed without its line. ",
+    "description": "Contract: operation.v1 §8 (after each change lands, every contract is re-checked). Quoted from the report, verbatim: \"CVG-019 cites converge-wb0, which is already resolved\" and \"no GAP/VIOLATION row cites a resolved work item (11 red rows read against docs/work-items.json)\" — verify.py on main e391e38, 2026-09-04.",
     "acceptance": "GIVEN uv run --with pyyaml ledger/checks/verify.py THEN all self-checks pass including the closed-cite tripwire; GIVEN each changed row THEN it carries a RAN 2026-09-04 line and a disposition matching its live probe; GIVEN git diff --stat THEN only ledger/ changed.",
     "design": null,
     "contract_named_on_line_one": true
