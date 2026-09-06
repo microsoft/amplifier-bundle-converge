@@ -1,5 +1,7 @@
 # Proposal — docs/VISION.md (candidate, 2026-09-06)
 
+**RATIFIED 2026-09-06** — owner word "2) ratified" on the tidy card; applied to docs/VISION.md the same day under the guard's ratified-candidate rule.
+
 **Target:** `docs/VISION.md`, which is `(FROZEN 2026-09-06)`. It is the only
 file this proposal changes, and it is unchanged until the steward answers.
 
@@ -140,6 +142,8 @@ was faking one stops.
   file, by matching what this file already does.
 
 ## The steward's word
+
+**Ratified 2026-09-06.**
 
 One of four: *ratified* · *ratified with edits* · *declined* · *later*.
 
