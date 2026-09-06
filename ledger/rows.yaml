@@ -202,7 +202,7 @@
 # the sweep rather than trusting a filing: every `test_\w+` named anywhere in
 # this file was compared against the live suite's 129 function names.
 # ONE CHECK SCRIPT WAS DELETED, WHICH THIS PASS DOES NOT TREAT AS ROUTINE.
-# ledger/checks/surface_clause9.py rendered its subject from the removed module,
+# ledger/checks/surface_clause9.py (deleted 2026-09-06 with the page it rendered) rendered its subject from the removed module,
 # so it could not run at all and could not be repaired without choosing a
 # different body — a decision, not a repair. Two lines outside ledger/ still
 # name it; filed as converge-3hew rather than touched.
@@ -595,9 +595,9 @@
     - file: contracts/composition.v1.md
       sha256: 077451fba18a2baa8f4162bc4af6dd164976d304adad8f193871b120b4203d39
     - file: contracts/documents.v1.md
-      sha256: c51768297460b27f064096feb6f22e999e24695bba688d0d152074068a84bea9
+      sha256: 723f892311333cca098c5d782210359be9c30f7c1d491c5c4d8c07c064ba1e86
     - file: contracts/operation.v1.md
-      sha256: 823a71330fcfe69b016231773a861c221059f6f15f6d26ed6a90e9737cb1deed
+      sha256: 7615b5c1088687126b2bdf09e7f7cafe2df5ee9f4b65de823727a80f8fa139cf
     - file: contracts/surface.v1.md
       sha256: b4d3f3838637ec6d7781735a59db2bf7386ea66c265dce1122a77513e514741d
     # The experience family, ratified DRAFT 2026-09-03. Pinned by converge-pq2.
@@ -612,7 +612,7 @@
     - file: contracts/experience-collaboration.v1.md
       sha256: d76c8e6c61edb1e81d07b10c99c85906fab405d40532e01bb40fa30884e23bbf
     - file: contracts/platform-web.v1.md
-      sha256: a7afe69a5c976ceebee50ed015f673448c5eece19a9986d69c0b5209c73a5e67
+      sha256: 306c88fbf63304a6de062fd1e6710995aabb851e8d9fbe62654fb3c3c1eca94b
     - file: contracts/platform-ios.v1.md
       sha256: 46b3842c18a314997e33bbdccfe14081a2c82d6613cfe54ca9246bc101c7f43a
     - file: contracts/platform-android.v1.md
@@ -628,6 +628,7 @@
       exit: 0
       stdout_contains: "077451fba18a2baa8f4162bc4af6dd164976d304adad8f193871b120b4203d39"
   notes: |
+    RAN 2026-09-06 14:20 → re-pinned after lane w19-tidy stamped 'held loosely 2026-09-06' into the H1 of documents.v1, operation.v1 and platform-web.v1 (the steward's lock-sheet word); re-review: git diff shows line 1 only in each — no clause text moved.
     RAN 2026-09-06 13:35 → re-pinned after round 3: documents.v1 Core 4 applied (H1 amended), four section contracts locked (H1 FROZEN; console also a changelog row). Diff per file: line 1 (+ one changelog row on console); no Core clause text moved except documents.v1 Core 4's ratified line.
     SEEDED 2026-09-02 from `sha256sum contracts/*.md`, run at repo 2543e1c.
     Verified identical on `main` at seed time (`git show main:contracts/<f>` →
@@ -3915,7 +3916,7 @@
     keeps two live readers after this pass — conformance/documents/run.py and
     tests/conftest.py, whose example project is its fixture — so the retirement
     lane's "retire it if nothing else reads it" condition is still not met. The
-    third reader, ledger/checks/surface_clause9.py, is deleted here (CVG-038).
+    third reader, ledger/checks/surface_clause9.py (deleted 2026-09-06 with the page it rendered), is deleted here (CVG-038).
     RETITLED, AS THIS ROW ALREADY WAS ONCE FOR THE MIRROR-IMAGE REASON. It read
     "rule 8c passes on every page"; no page is passing anything. The id is
     unchanged, as ids always are.
@@ -4111,11 +4112,11 @@
     CONFORMS → NOT-ASSERTABLE. RAN 2026-09-06 → NO-SURFACE-PAGE-BODY.
     THE OLD PROBE DID NOT GO RED WITH A READING — IT STOPPED HAVING ONE. Run on
     this tree before it was replaced, `uv run --extra web --with httpx python
-    ledger/checks/surface_clause9.py` exits 1 with empty stdout and, on stderr:
+    ledger/checks/surface_clause9.py (deleted 2026-09-06 with the page it rendered)` exits 1 with empty stdout and, on stderr:
     "ModuleNotFoundError: No module named 'amplifier_converge.web'". That is not
     six-of-eight or two-of-eight; it is no number at all, which is exactly the
     difference between Broken and Can't check.
-    ledger/checks/surface_clause9.py IS DELETED IN THE SAME COMMIT AS THIS ROW.
+    ledger/checks/surface_clause9.py (deleted 2026-09-06 with the page it rendered) IS DELETED IN THE SAME COMMIT AS THIS ROW.
     It is 190 lines whose whole purpose was to render a module that no longer
     exists, nothing else in the tree imports it, and it cannot be repaired
     without choosing a different body — which is a decision, not a repair. Left

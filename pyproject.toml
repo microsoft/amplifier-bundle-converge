@@ -1,7 +1,7 @@
 [project]
 name = "amplifier-converge"
 version = "0.1.0"
-description = "Converge — the companion web page beside your project: Direction and Operation, and the four things you can do."
+description = "Amplifier Converge: vision-first, contract-driven development — the library beside the app (readers, writers, ledger checks)"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
