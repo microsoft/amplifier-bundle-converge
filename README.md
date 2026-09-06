@@ -41,7 +41,7 @@ you have read it and agreed. A locked document changes only by written
 caught. Preference is not evidence. Nobody edits a locked document in place; the
 guard refuses.
 
-## The two halves
+## The two places
 
 **Direction** — the vision and the contracts as one experience: what changed
 since you last read, whether each contract is kept, your questions on any
@@ -172,7 +172,7 @@ itself, and writes you a brief every time you come back.
 ### Run the app
 
 The manager session works whether or not you watch it. The app is where you
-watch it — the two halves above, read from your own repository. From a checkout
+watch it — the two places above, read from your own repository. From a checkout
 of this repository, one command:
 
 ```
@@ -261,27 +261,17 @@ anything the run started outside that directory — then delete the project's
   <http://127.0.0.1:8788>. This is the body the experience family is written
   against and the five experience kits read. [Run the app](#run-the-app) above
   starts it; [`app/README.md`](app/README.md) carries the rest of its operation.
-- `src/amplifier_converge/` — the Python package behind the `amplifier-converge`
-  command. Two things live in it and **neither is the app above**. Its *readers
-  and writers* turn a repository into the words on a page — documents, ledger,
-  work queue, lanes, proposals, and the four writes `surface.v1` named — and
-  `app/` uses one of them
-  (`app/data.py` says whether a promise is kept through
-  `amplifier_converge.reading.kept`). Its `web/` is the *earlier* server-rendered
-  page of the same two halves, still runnable beside a project with `uv run
-  --extra web amplifier-converge web --repo .` on loopback, port 8091 by default.
-  That page was written against `surface.v1`, which the experience family
-  superseded on 2026-09-03, and its kit now sits in
-  `conformance/_superseded/surface/`; it still runs and its suite is still green
-  (measured 2026-09-06 on this tree: HTTP 200 served, and `pytest tests` → 187
-  passed).
+- `src/amplifier_converge/` — the Python package the app reads through, and
+  **it is not the app above**. Its *readers and writers* turn a repository into
+  the words on a page — documents, ledger, work queue, lanes, proposals, and the
+  four writes `surface.v1` named — and `app/` uses one of them (`app/data.py`
+  says whether a promise is kept through `amplifier_converge.reading.kept`).
   [`src/amplifier_converge/README.md`](src/amplifier_converge/README.md) says
   what is used by what.
 
-**One call for the steward, answerable in a word:** the older page in
-`src/amplifier_converge/web/` still runs and is still tested, but nothing is
-written against it any more — *retire* it, or *keep* it as a second body? (The
-readers and writers beside it stay either way, because `app/` uses them.)
+**Retired:** the earlier server-rendered page in `src/amplifier_converge/web/`,
+and the `amplifier-converge web` subcommand that served it, were removed on
+2026-09-06 on the intent steward's word, in commit `eea3166`.
 
 ## The participant kit
 
@@ -319,7 +309,7 @@ is copied under that name and made executable, not copied as it stands.
 | The conformance kits the ledger runs | [`conformance/`](conformance/) |
 | The deck — a six-minute walk-through | [`docs/presentation/amplifier-converge.html`](docs/presentation/amplifier-converge.html) |
 | The explainer — the sit-down companion, about twelve minutes | [`docs/presentation/explainer/index.html`](docs/presentation/explainer/index.html) |
-| The app you open beside a project (the two halves) | [`app/`](app/), started by [`scripts/run-app.sh`](scripts/run-app.sh) and documented in [`app/README.md`](app/README.md) |
+| The app you open beside a project (the two places) | [`app/`](app/), started by [`scripts/run-app.sh`](scripts/run-app.sh) and documented in [`app/README.md`](app/README.md) |
 | Design records — dated snapshots, not current law | [`docs/design/`](docs/design/) |
 | The starter ledger format (a draft convention, not a contract) | [`docs/LEDGER-FORMAT.md`](docs/LEDGER-FORMAT.md) |
 
