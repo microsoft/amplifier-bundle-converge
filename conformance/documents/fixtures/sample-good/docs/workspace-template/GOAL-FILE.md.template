@@ -1,0 +1,13 @@
+<!--
+  GOAL-FILE.md.template - the brief one worker session runs alone.
+  Copy to the lane's goal file, replace every <placeholder>, delete this
+  comment.
+-->
+# Lane <name> - work item <id>
+
+## Outcome
+<What must be true when this lane is finished.>
+
+## Done means exactly one of
+- SUCCESS - <every acceptance line passes, with evidence.>
+- BLOCKED - <a cause the lane cannot clear.>

@@ -409,6 +409,57 @@ def test_rule_12c_catches_a_kit_file_that_exists_but_says_nothing():
         assert "says nothing about" in rules["12c"]["detail"], rules["12c"]
 
 
+# --------------------------------------------------------------------------- #
+# Rule 12b catches drift in BOTH directions (converge-mvq5)                     #
+# --------------------------------------------------------------------------- #
+def _good_copy(dest: Path) -> Path:
+    """sample-good, copied so a test can break one thing about it."""
+    root = dest / "repo"
+    shutil.copytree(GOOD, root)
+    return root
+
+
+def test_12b_names_a_kit_file_that_went_missing():
+    """A fixed list that is short is a check that cannot notice an absence.
+    Deleting any one kit file must name THAT file, not report the kit complete."""
+    import tempfile
+    for victim in ("GOAL-FILE.md.template", "gitignore-addendum.txt",
+                   "VISION.md.template"):
+        with tempfile.TemporaryDirectory() as d:
+            root = _good_copy(Path(d))
+            (root / "docs" / "workspace-template" / victim).unlink()
+            _, report = run_kit(root)
+            row = by_rule(report)["12b"]
+            assert row["status"] == "FAIL", (victim, row)
+            assert victim in row["detail"], (victim, row)
+
+
+def test_12b_sees_a_file_added_with_no_documented_destination():
+    """An explicit list catches deletions only. A file added to the kit
+    directory that nothing accounts for must be visible too."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        root = _good_copy(Path(d))
+        stray = root / "docs" / "workspace-template" / "NOTES.md.template"
+        stray.write_text("# Notes\n\nNobody decided where this goes.\n")
+        _, report = run_kit(root)
+        row = by_rule(report)["12b"]
+        assert row["status"] == "FAIL", row
+        assert "NOTES.md.template" in row["detail"], row
+        assert "no documented destination" in row["detail"], row
+
+
+def test_12b_accepts_a_directory_file_that_is_named_as_not_copied():
+    """The kit's own index lives in that directory and is copied nowhere.
+    Being present is not a violation once it is named as not-a-kit-file."""
+    _, report = run_kit(REPO)
+    row = by_rule(report)["12b"]
+    assert row["status"] == "PASS", row
+    kit_dir = REPO / "docs" / "workspace-template"
+    on_disk = {p.name for p in kit_dir.rglob("*") if p.is_file()}
+    assert "README.md" in on_disk, "the index this test guards is gone"
+
+
 def test_a_changelog_entry_is_not_failed_for_citing_its_evidence_in_prose():
     """CVG-063 asked for entry content to be inspected. Measured, a literal
     evidence test fails this repository's only entry, which does carry its

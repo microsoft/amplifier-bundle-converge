@@ -1,0 +1,5 @@
+# Append to the workspace root's .gitignore when a manager session first runs here.
+#
+# .converge/ is a running operation's state, not the project's content.
+
+.converge/

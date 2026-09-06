@@ -56,21 +56,23 @@ no data of its own.
 
 ## Install
 
-**THE install path — the behavior (`--app`):**
+One command. It composes Converge onto the Amplifier session you already have:
 
 ```
 amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main#subdirectory=behaviors/converge.yaml --app
 ```
 
-This composes Converge's **capability layer** onto whatever bundle is already
-active: the four agents (`protocol-authority`, `reconciler`, `negotiator`,
-`proposal-drafter`), the five procedure skills, the `hooks-candidate-guard` hook
-(the guard that refuses edits to locked documents, on by default), the thin
-awareness context, and — via a behavior-includes-behavior include — the
-`amplifier-work-tracker` behavior that gives `reconciler` its `work_*` filing
-tools. Use this to add Converge to an existing workspace or session.
+That is the install. It brings Converge's **capability layer**: the four agents
+(`protocol-authority`, `reconciler`, `negotiator`, `proposal-drafter`), the five
+procedure skills, the `hooks-candidate-guard` hook (the guard that refuses edits
+to locked documents, on by default), the thin awareness context, and — via a
+behavior-includes-behavior include — the `amplifier-work-tracker` behavior that
+gives `reconciler` its `work_*` filing tools.
 
-**Full-workspace path — Converge as the primary bundle:**
+### Advanced: Converge as the primary bundle
+
+Two commands, for one case: a host that supplies neither the session base nor
+the mode machinery.
 
 ```
 amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-converge@main
@@ -78,32 +80,24 @@ amplifier bundle use converge
 ```
 
 This composes the root `bundle.md`, which assembles on the lean **anchors** base
-and pulls in `amplifier-work-tracker` **and** the same behavior. Use this to run
-the `seed-reconcile` recipe end-to-end against a target repo.
+itself and pulls in `amplifier-work-tracker` **and** the same behavior, so
+nothing about the host can take the manager session away. Everything else is the
+same either way — the four agents, the five skills, the guard hook, the
+awareness context — and the shared work queue rides on both, so the contract
+checker files and reads work whichever command you took.
 
 > **Host requirement.** The `seed-reconcile` recipe declares its own helpers
 > (`schema_version: 2`) and resolves them only from that declared closure, never
 > from the session it runs in, so it needs no particular host, not even the lean
 > `anchors` base the rest of Converge assembles on.
 
-### What differs between the two paths (honestly)
-
-| | `--app` behavior | `bundle use converge` (root) |
-|---|---|---|
-| 4 agents · 5 skills · guard hook · awareness | ✅ | ✅ |
-| Session base + everyday tools | supplied by whatever bundle is already active | ✅ the lean `anchors` base, pulled in by `bundle.md` |
-| `seed-reconcile` recipe runnable | ✅ the recipe declares its own helpers (`schema_version: 2`) and resolves them from that closure, so this path no longer has to supply them | ✅ |
-| `work-tracker` present (reconciler's `work_*` filing) | ✅ the behavior includes the work-tracker **behavior**, so `reconciler` gets `work_*` filing on this path too | ✅ pulled in by `bundle.md` |
-| Agents' "no delegate / no skills / no shell" rules | behavioral — agent body instructions + explicit `tools:` blocks (per-role structural spawn policy is an upstream feature request) | behavioral (same) |
-
-Both paths give the four agents, five skills, guard hook, awareness context, and
-work-tracker filing. The root path additionally supplies the base — so for
-end-to-end recipe runs against a target repo, prefer `bundle use converge`. For
-lightweight composition onto a session that already has its own base, the
-`--app` behavior is the quick path. Neither path imposes any session-wide
-`spawn:` policy: a live probe (2026-09-02) showed a composed `spawn.exclude_tools`
-strips tools from **every** spawned sub-agent in every session — unacceptable
-collateral for a composable bundle, so it is deliberately absent everywhere.
+Neither command imposes any session-wide `spawn:` policy: a live probe
+(2026-09-02) showed a composed `spawn.exclude_tools` strips tools from **every**
+spawned sub-agent in every session — unacceptable collateral for a composable
+bundle, so it is deliberately absent everywhere. The agents' "no delegate / no
+skills / no shell" limits are therefore behavioral — agent body instructions
+plus explicit `tools:` blocks; per-role structural spawn policy is an upstream
+feature request.
 
 ### Did the install take?
 
