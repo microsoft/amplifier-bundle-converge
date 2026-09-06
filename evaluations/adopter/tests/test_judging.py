@@ -312,5 +312,278 @@ def test_overall_is_green_only_when_every_row_passed(tmp_path):
     assert overall == "GREEN"
 
 
+# --------------------------------------------------------------------------
+# Six. The two ORDER rows, added 2026-09-06 (converge-w3nb) for the hole
+# CVG-301 named in as many words: "chain complete and measured, sequence
+# attested and unmeasured". They may claim ordering only where the dating is
+# exact. Where it rests on an mtime -- a LAST write -- anything but PASS is a
+# CAN'T TELL, because that is all the evidence supports.
+# --------------------------------------------------------------------------
+
+
+def _wake_out(
+    *,
+    drafts: int = 2,
+    draft_at: str = "2026-09-06T10:00:00+00:00",
+    draft_src: str = "git",
+    searched: int = 12,
+    pause_lines: int = 1,
+    pause_at: str = "2026-09-06T09:00:00+00:00",
+    pause_order: str = "yes",
+    inv_files: int = 1,
+    inv_at: str = "2026-09-06T09:30:00+00:00",
+    inv_order: str = "yes",
+) -> str:
+    return (
+        "<<<DRAFTS\n(evidence)\nDRAFTS>>>\n"
+        "--- what this measured ---\n"
+        f"DRAFTS-FOUND: {drafts}\n"
+        f"DRAFTS-EARLIEST: {draft_at}\n"
+        f"DRAFTS-EARLIEST-SOURCE: {draft_src}\n"
+        f"RECORDS-SEARCHED: {searched}\n"
+        f"PAUSE-LINES: {pause_lines}\n"
+        f"PAUSE-EARLIEST: {pause_at}\n"
+        f"PAUSE-BEFORE-DRAFT: {pause_order}\n"
+        f"INVESTIGATION-FILES: {inv_files}\n"
+        f"INVESTIGATION-EARLIEST: {inv_at}\n"
+        f"INVESTIGATION-BEFORE-DRAFT: {inv_order}\n"
+    )
+
+
+def test_a_pause_stamped_before_the_first_draft_passes():
+    step = H.pause_verdict("S2", _wake_out(pause_order="yes"))
+    assert step.verdict == H.PASS
+    assert step.id == "S2.7"
+
+
+def test_a_pause_nobody_wrote_down_is_a_real_red():
+    """Core 14's own sentence: say the pause in the plan record. A pause that
+    was never written is indistinguishable from a session that wandered off.
+
+    Falsified by: a CAN'T TELL, which would let an unwritten pause pass as
+    unmeasured rather than absent.
+    """
+    step = H.pause_verdict("S2", _wake_out(pause_lines=0, pause_order="unknown"))
+    assert step.verdict == H.FAIL
+    assert "no line naming a pause" in step.missing
+
+
+def test_a_pause_dated_after_the_drafts_is_red_not_cant_tell():
+    step = H.pause_verdict(
+        "S2", _wake_out(pause_at="2026-09-06T11:00:00+00:00", pause_order="no")
+    )
+    assert step.verdict == H.FAIL
+    assert "dated AFTER the first draft" in step.missing
+
+
+def test_a_pause_that_exists_but_cannot_be_dated_is_cant_tell():
+    """The line is there and nothing orders it. That is not absence, and it is
+    not a pass either.
+
+    Falsified by: a PASS (claims order it never measured) or a FAIL (reports
+    an unmeasurable order as an absent pause).
+    """
+    step = H.pause_verdict("S2", _wake_out(pause_at="-", pause_order="unknown"))
+    assert step.verdict == H.UNPROVEN
+    assert "could not tell" in step.missing
+
+
+def test_a_probe_that_never_reported_is_cant_tell_for_both_order_rows():
+    for verdict_fn in (H.pause_verdict, H.investigation_order_verdict):
+        step = verdict_fn("S2", "the probe blew up before printing anything")
+        assert step.verdict == H.UNPROVEN
+        assert "could not tell" in step.missing
+
+
+def test_investigation_answers_written_before_the_drafts_pass():
+    step = H.investigation_order_verdict("S2", _wake_out(inv_order="yes"))
+    assert step.verdict == H.PASS
+    assert step.id == "S2.8"
+
+
+def test_answers_that_were_never_written_down_are_a_real_red():
+    step = H.investigation_order_verdict(
+        "S2", _wake_out(inv_files=0, inv_at="-", inv_order="unknown")
+    )
+    assert step.verdict == H.FAIL
+    assert "never" in step.missing
+
+
+def test_an_mtime_can_prove_before_but_never_after():
+    """The rule this row lives or dies by. An mtime is a LAST write: a record
+    touched after the drafts may have been written long before them and
+    appended to since. The probe emits `no` only when BOTH sides are git
+    add-dates; anything else is `unknown`, and the row must respect that.
+
+    Falsified by: a FAIL on `unknown`, which would call an appended-to record
+    a reading that happened after the drafting.
+    """
+    late = H.investigation_order_verdict(
+        "S2", _wake_out(inv_at="2026-09-06T12:00:00+00:00", inv_order="unknown")
+    )
+    assert late.verdict == H.UNPROVEN
+    assert "LAST write" in late.missing
+
+    exact = H.investigation_order_verdict(
+        "S2", _wake_out(inv_at="2026-09-06T12:00:00+00:00", inv_order="no")
+    )
+    assert exact.verdict == H.FAIL
+    assert "both dated by git" in exact.missing
+
+
+# --------------------------------------------------------------------------
+# Seven. A run never erases the run before it (converge-w3nb). A file that
+# keeps only the latest verdict cannot show that a RED run went green.
+# --------------------------------------------------------------------------
+
+
+def _one_run(tmp_path, *, sid: str, verdict: str, started: str) -> str:
+    run = H.ScenarioRun(
+        name="Existing project (adopt)",
+        key="existing-project",
+        sid=sid,
+        project_dir="/workspace/existing-project",
+    )
+    run.dtu_id = f"adopter-test-{sid.lower()}"
+    run.steps = [H.Step(f"{sid}.5", "the contract check is seeded", verdict, "seen")]
+    H.write_result(
+        tmp_path / "RESULT.md", scenarios=[run], meta={"started": started}
+    )
+    return (tmp_path / "RESULT.md").read_text(encoding="utf-8")
+
+
+def test_the_earlier_run_survives_the_next_one(tmp_path):
+    _one_run(tmp_path, sid="S2", verdict=H.FAIL, started="2026-09-06T03:50:03+00:00")
+    text = _one_run(
+        tmp_path, sid="S2", verdict=H.PASS, started="2026-09-06T09:00:00+00:00"
+    )
+    assert text.index("2026-09-06T09:00:00+00:00") < text.index(H.ARCHIVE_HEADING)
+    assert "## Run 2026-09-06T03:50:03+00:00" in text
+    assert text.count("2026-09-06T03:50:03+00:00") >= 1
+
+
+def test_three_runs_all_stay_newest_first(tmp_path):
+    _one_run(tmp_path, sid="S2", verdict=H.FAIL, started="2026-09-06T01:00:00+00:00")
+    _one_run(tmp_path, sid="S2", verdict=H.FAIL, started="2026-09-06T03:50:03+00:00")
+    text = _one_run(
+        tmp_path, sid="S2", verdict=H.PASS, started="2026-09-06T09:00:00+00:00"
+    )
+    headings = [ln for ln in text.split("\n") if ln == H.ARCHIVE_HEADING]
+    assert len(headings) == 1, "one archive section, however many runs it holds"
+    assert text.count(H.ARCHIVE_NOTE) == 1, "the note is not copied down per run"
+    first = text.index("## Run 2026-09-06T03:50:03+00:00")
+    second = text.index("## Run 2026-09-06T01:00:00+00:00")
+    assert first < second
+
+
+def test_only_the_current_run_owns_the_third_level_step_headings(tmp_path):
+    """What CVG-302's probe greps. `### S2.5 ... - FAIL` must name a row of the
+    run at the top of the file and nothing else, or an archived red row keeps
+    a ledger row red forever.
+
+    Falsified by: an archived heading still sitting at `###`.
+    """
+    _one_run(tmp_path, sid="S2", verdict=H.FAIL, started="2026-09-06T03:50:03+00:00")
+    text = _one_run(
+        tmp_path, sid="S2", verdict=H.PASS, started="2026-09-06T09:00:00+00:00"
+    )
+    third_level = [ln for ln in text.split("\n") if ln.startswith("### S2.5 ")]
+    assert len(third_level) == 1
+    assert third_level[0].endswith("PASS")
+    assert any(ln.startswith("#### S2.5 ") and ln.endswith("FAIL") for ln in text.split("\n"))
+
+
+def test_a_scenario_this_run_did_not_re_measure_keeps_its_heading(tmp_path):
+    """The defect this rule exists for, caught by `verify.py` on 2026-09-06:
+    archiving a two-scenario run under a scenario-2-only run demoted the S1
+    rows, and CVG-301 -- whose probe greps `### S1.5 ... - PASS` -- went red
+    though nothing about the blank path had changed. An unrepeated measurement
+    is still the latest one there is.
+
+    Falsified by: `### S1.5` disappearing after an S2-only run archives the
+    run that measured it.
+    """
+    both = H.ScenarioRun(name="New project", key="new-project", sid="S1", project_dir="/workspace/n")
+    both.dtu_id = "adopter-test-s1"
+    both.steps = [H.Step("S1.5", "the contract check is seeded", H.PASS, "seen")]
+    adopt = H.ScenarioRun(
+        name="Existing project (adopt)", key="existing-project", sid="S2",
+        project_dir="/workspace/e",
+    )
+    adopt.dtu_id = "adopter-test-s2"
+    adopt.steps = [H.Step("S2.5", "the contract check is seeded", H.FAIL, "absent")]
+    H.write_result(
+        tmp_path / "RESULT.md",
+        scenarios=[both, adopt],
+        meta={"started": "2026-09-06T03:50:03+00:00"},
+    )
+
+    adopt_again = H.ScenarioRun(
+        name="Existing project (adopt)", key="existing-project", sid="S2",
+        project_dir="/workspace/e",
+    )
+    adopt_again.dtu_id = "adopter-test-s2b"
+    adopt_again.steps = [H.Step("S2.5", "the contract check is seeded", H.PASS, "seen")]
+    H.write_result(
+        tmp_path / "RESULT.md",
+        scenarios=[adopt_again],
+        meta={"started": "2026-09-06T08:57:06+00:00"},
+    )
+    lines = (tmp_path / "RESULT.md").read_text(encoding="utf-8").split("\n")
+
+    s1 = [ln for ln in lines if ln.startswith("### S1.5 ")]
+    assert len(s1) == 1 and s1[0].endswith("PASS"), "S1 was not re-measured; it keeps its heading"
+    s2 = [ln for ln in lines if ln.startswith("### S2.5 ")]
+    assert len(s2) == 1 and s2[0].endswith("PASS"), "S2 was re-measured; the new row owns `###`"
+    assert any(ln.startswith("#### S2.5 ") and ln.endswith("FAIL") for ln in lines)
+
+
+def test_older_runs_do_not_sink_a_level_on_every_write(tmp_path):
+    """A run archived once is archived. Re-demoting its `## Run` heading each
+    time would bury the third run's date under six hashes.
+
+    Falsified by: any `### Run ` heading.
+    """
+    for started in ("one", "two", "three", "four"):
+        run = H.ScenarioRun(
+            name="Existing project (adopt)", key="existing-project", sid="S2",
+            project_dir="/workspace/e",
+        )
+        run.dtu_id = f"adopter-test-{started}"
+        run.steps = [H.Step("S2.5", "a", H.PASS, "seen")]
+        H.write_result(tmp_path / "RESULT.md", scenarios=[run], meta={"started": started})
+    lines = (tmp_path / "RESULT.md").read_text(encoding="utf-8").split("\n")
+    assert len([ln for ln in lines if ln.startswith("## Run ")]) == 3
+    assert not [ln for ln in lines if ln.startswith("### Run ")]
+
+
+def test_a_hash_inside_an_evidence_fence_is_left_alone(tmp_path):
+    """A vision's own `# mdstrip - Vision (DRAFT)` lives inside an evidence
+    fence. Demoting it would corrupt the evidence a row was judged from.
+
+    Falsified by: `## mdstrip` appearing anywhere after the archive pass.
+    """
+    run = H.ScenarioRun(
+        name="x", key="existing-project", sid="S2", project_dir="/workspace/x"
+    )
+    run.dtu_id = "adopter-test-s2"
+    run.steps = [H.Step("S2.3", "a vision", H.PASS, "== ./docs/VISION.md\n# mdstrip \u2014 Vision (DRAFT)")]
+    H.write_result(tmp_path / "RESULT.md", scenarios=[run], meta={"started": "one"})
+    H.write_result(tmp_path / "RESULT.md", scenarios=[run], meta={"started": "two"})
+    text = (tmp_path / "RESULT.md").read_text(encoding="utf-8")
+    assert "## mdstrip" not in text
+    # Twice per run -- once flattened into the steps table, once verbatim in
+    # the evidence fence -- and both runs keep both.
+    assert text.count("# mdstrip \u2014 Vision (DRAFT)") == 4
+
+
+def test_a_filtered_run_says_which_scenarios_it_covered(tmp_path):
+    text = _one_run(
+        tmp_path, sid="S2", verdict=H.PASS, started="2026-09-06T09:00:00+00:00"
+    )
+    assert "This run covered: Existing project (adopt)." in text
+    assert "says nothing about the one that did not run" in text
+
+
 if __name__ == "__main__":  # pragma: no cover
     sys.exit(pytest.main([__file__, "-q"]))

@@ -1,12 +1,414 @@
 # Adopter harness — RESULT
 
-**RED** — 17 pass · 2 fail · 0 can't tell · 0 skip, run 2026-09-06T03:50:03+00:00.
+**GREEN** — 12 pass · 0 fail · 0 can't tell · 0 skip, run 2026-09-06T08:57:06+00:00.
+
+**This run covered: Existing project (adopt).** A run may be asked for one scenario (`--scenarios existing-project`), and then the verdict above is that scenario's alone — it says nothing about the one that did not run. Earlier runs are kept below under `# Earlier runs`, newest first, never overwritten; a scenario this run did not re-measure keeps its last result, at its last heading, dated by the run it came from.
 
 What this run asked: can someone holding only `README.md` get a NEW project and an EXISTING project to the point of actually running the Converge way? **Each scenario ran in its own fresh container**, so no row below inherits anything another scenario's adopter did. Every verdict was read out of that container by this harness. The AI user's own account is reported separately, as evidence about the experience — never as evidence about the artifacts.
 
 `CAN'T TELL` is a real verdict here, distinct from `FAIL`: it means the probe could not settle the question. It is never reported as absence and never counted as a pass.
 
 ## Provenance
+
+- **started** — `2026-09-06T08:57:06+00:00`
+- **finished** — `2026-09-06T09:16:45+00:00`
+- **profile** — `/home/bkrabach/dev/vision-focused-team-ci/.converge/converge/lanes/w14-adopt-rerun/amplifier-bundle-converge/evaluations/adopter/profiles/adopter.yaml`
+- **readme_sha256** — `53c2885dabc8a58a7421b118fbb0483aa559d9aa5b5d780b8aee87d173cc9f11`
+- **readme_matches_origin_main** — `True`
+- **bundle_commit** — `4db9f13a58ca11ab73a8eb6faf6f9c1fdda90774`
+- **pane_sample_interval_s** — `30.0`
+- **scenario_budget_s** — `2400.0`
+- **output_dir** — `/home/bkrabach/dev/vision-focused-team-ci/.converge/converge/lanes/w14-adopt-rerun/.amplifier/evaluation/converge-adopter/20260906T085706Z`
+- **Existing project (adopt)** — container `adopter-20260906085706-s2`
+  - registered before launch: `/home/bkrabach/.local/share/uv/tools/amplifier/lib/python3.13/site-packages/amplifier_app_cli/data/skills/ten-lane-highway/scripts/infra_ledger.sh /home/bkrabach/dev/vision-focused-team-ci/.converge/converge add dtu adopter-20260906085706-s2 'amplifier-digital-twin destroy adopter-20260906085706-s2'`
+
+## Steps
+
+| # | What was asked | | What was missing (or, on a pass, what was seen) |
+|---|---|---|---|
+| | **Existing project (adopt)** — `/workspace/existing-project` in `adopter-20260906085706-s2` | **PASS** | |
+| S2.G1 | This scenario's own container comes up with no Converge in it | PASS | launched adopter-20260906085706-s2 from /home/bkrabach/dev/vision-focused-team-ci/.converge/converge/lanes/w14-adopt-rerun/amplifier-bundle-converge/evaluation… |
+| S2.G2 | The README under test is in the container, byte for byte | PASS | 316 /workspace/CONVERGE-README.md 53c2885dabc8a58a7421b118fbb0483aa559d9aa5b5d780b8aee87d173cc9f11 /workspace/CONVERGE-README.md [host] 53c2885dabc8a58a7421b11… |
+| S2.G3 | This scenario's starting repository is seeded | PASS | /workspace/existing-project 273b8962521093ac665fffea65c8dd624ed0708a --- tree --- . .. .git README.md pyproject.toml samples src tests |
+| S2.G4 | The existing project's own tests pass before adoption | PASS | [runner] uv run --with pytest pytest ....... [100%] 7 passed in 0.01s |
+| S2.1 | Converge installed and composed into the CLI | PASS | --- at launch, in this scenario's own container, before the AI user --- Available Bundles ┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━… |
+| S2.2 | A manager session is running against the project | PASS | sampled every 30s through the scenario, 08:58:07Z -> 09:16:41Z: 38 captures, 38 that ran, 37 with a live agent session, 37 with pane content, 9 showing `[conve… |
+| S2.3 | A vision is written down in the project | PASS | ./docs/VISION.md --- first 15 lines of each --- == ./docs/VISION.md # sensorlog — Vision (FROZEN 2026-09-06) *Written for amplified information workers. Terms … |
+| S2.4 | At least one contract is written down | PASS | contracts/sensorlog-cli.v1.md --- headings --- # sensorlog CLI & Report Contract — v1 (FROZEN 2026-09-06) |
+| S2.5 | The project's contract check is seeded | PASS | ./ledger/rows.yaml ./ledger/checks ./ledger/checks/test_ledger_probes.py ./ledger/checks/__init__.py ./ledger/checks/__pycache__ ./ledger/checks/__pycache__/__… |
+| S2.6 | A queue holds work that names the contracts it serves | PASS | --- the queue CLI (a separate fact from whether a queue holds work) --- amplifier-work-tracker on PATH: /root/.local/bin/amplifier-work-tracker --- every queue… |
+| S2.7 | The work in flight paused first, said in the plan record | PASS | <<<DRAFTS 2026-09-06T09:14:09+00:00 [git] /workspace/existing-project/docs/VISION.md 2026-09-06T09:14:09+00:00 [git] /workspace/existing-project/contracts/sens… |
+| S2.8 | The investigation answers are dated before the drafts | PASS | <<<DRAFTS 2026-09-06T09:14:09+00:00 [git] /workspace/existing-project/docs/VISION.md 2026-09-06T09:14:09+00:00 [git] /workspace/existing-project/contracts/sens… |
+
+## What the AI user reported
+
+The AI user read only `CONVERGE-README.md` and drove the Amplifier CLI as a person would. Where it says it could not find something, that is the finding this harness exists to surface.
+
+### Existing project (adopt)
+
+- **verdict** — `success` (after 1114s)
+
+```
+Agent adopted Converge for sensorlog: investigated code, drafted vision and contract, gated on my ratification, locked both after I approved, seeded a ledger with pytest probes, filed a work item naming the contract clause, and committed everything. I verified all artifacts directly.
+```
+
+## Evidence, step by step
+
+Verbatim output of the probe behind each row above. A probe that could not run is recorded as a failure or a `CAN'T TELL`, never as a pass.
+
+### S2.G1 — This scenario's own container comes up with no Converge in it — PASS
+
+```
+launched adopter-20260906085706-s2 from /home/bkrabach/dev/vision-focused-team-ci/.converge/converge/lanes/w14-adopt-rerun/amplifier-bundle-converge/evaluations/adopter/profiles/adopter.yaml in 58s; every readiness gate passed, including `converge-absent` and `queue-cli-absent`
+
+--- read back from the container, before the AI user ---
+<<<BUNDLES
+                               Available Bundles                                
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃ Name            ┃ Location                                          ┃ Status ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│ amplifier-dev   │ git+https://github.com/microsoft/amplifier-found… │        │
+│ anchors         │ git+https://github.com/microsoft/amplifier-found… │        │
+│ anchors-amp-dev │ git+https://github.com/microsoft/amplifier-found… │        │
+│ exp-delegation  │ git+https://github.com/microsoft/amplifier-found… │        │
+│ foundation      │ git+https://github.com/microsoft/amplifier-found… │        │
+└─────────────────┴───────────────────────────────────────────────────┴────────┘
+
+Mode: No bundle active (default)
+Use --all to see all bundles including dependencies and nested bundles.
+BUNDLES>>>
+<<<QUEUECLI
+amplifier-work-tracker: not on PATH
+QUEUECLI>>>
+```
+
+### S2.G2 — The README under test is in the container, byte for byte — PASS
+
+```
+316 /workspace/CONVERGE-README.md
+53c2885dabc8a58a7421b118fbb0483aa559d9aa5b5d780b8aee87d173cc9f11  /workspace/CONVERGE-README.md
+
+[host] 53c2885dabc8a58a7421b118fbb0483aa559d9aa5b5d780b8aee87d173cc9f11  /home/bkrabach/dev/vision-focused-team-ci/.converge/converge/lanes/w14-adopt-rerun/amplifier-bundle-converge/README.md
+```
+
+### S2.G3 — This scenario's starting repository is seeded — PASS
+
+```
+/workspace/existing-project 273b8962521093ac665fffea65c8dd624ed0708a
+--- tree ---
+.
+..
+.git
+README.md
+pyproject.toml
+samples
+src
+tests
+```
+
+### S2.G4 — The existing project's own tests pass before adoption — PASS
+
+```
+[runner] uv run --with pytest pytest
+.......                                                                  [100%]
+7 passed in 0.01s
+```
+
+### S2.1 — Converge installed and composed into the CLI — PASS
+
+```
+--- at launch, in this scenario's own container, before the AI user ---
+Available Bundles                                
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃ Name            ┃ Location                                          ┃ Status ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│ amplifier-dev   │ git+https://github.com/microsoft/amplifier-found… │        │
+│ anchors         │ git+https://github.com/microsoft/amplifier-found… │        │
+│ anchors-amp-dev │ git+https://github.com/microsoft/amplifier-found… │        │
+│ exp-delegation  │ git+https://github.com/microsoft/amplifier-found… │        │
+│ foundation      │ git+https://github.com/microsoft/amplifier-found… │        │
+└─────────────────┴───────────────────────────────────────────────────┴────────┘
+
+Mode: No bundle active (default)
+Use --all to see all bundles including dependencies and nested bundles.
+
+[queue CLI at launch] amplifier-work-tracker: not on PATH
+
+--- after the AI user stopped ---
+--- bundle list ---
+                               Available Bundles                                
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┓
+┃ Name            ┃ Location                                          ┃ Status ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━┩
+│ amplifier-dev   │ git+https://github.com/microsoft/amplifier-found… │        │
+│ anchors         │ git+https://github.com/microsoft/amplifier-found… │        │
+│ anchors-amp-dev │ git+https://github.com/microsoft/amplifier-found… │        │
+│ exp-delegation  │ git+https://github.com/microsoft/amplifier-found… │        │
+│ foundation      │ git+https://github.com/microsoft/amplifier-found… │        │
+│ converge        │ git+https://github.com/microsoft/amplifier-bundl… │ app    │
+└─────────────────┴───────────────────────────────────────────────────┴────────┘
+
+Mode: No bundle active (default)
+Use --all to see all bundles including dependencies and nested bundles.
+--- agents list (converge rows) ---
+  [on]  converge  bundle
+  [on]  converge-behavior  bundle
+```
+
+### S2.2 — A manager session is running against the project — PASS
+
+```
+sampled every 30s through the scenario, 08:58:07Z -> 09:16:41Z: 38 captures, 38 that ran, 37 with a live agent session, 37 with pane content, 9 showing `[converge-manager]>` as the prompt (first at 09:01:09Z), 9 with the string anywhere on screen (first at 09:01:09Z)
+
+--- first capture showing the mode as the prompt, 09:01:09Z ---
+<<<SESSIONS
+agent: 1 windows (created Sun Sep  6 09:00:39 2026)
+wtsvc: 1 windows (created Sun Sep  6 09:00:19 2026)
+error connecting to /tmp/tmux-0/hw (No such file or directory)
+SESSIONS>>>
+<<<PANE
+Bundle 'anchors' prepared successfully
+╭─────────────────────────────────────────────────────────╮
+│ Amplifier Interactive Session                           │
+│ Session ID: 41f82845-6df6-4fd3-a6c1-7169df517279        │
+│ amplifier 2026.09.06-6371a33 | core 1.6.1               │
+│ Bundle: anchors | Provider: Anthropic | claude-sonnet-5 │
+│ Commands: /help | Multi-line: Ctrl-J | Exit: Ctrl-D     │
+╰─────────────────────────────────────────────────────────╯
+
+> /mode converge-manager
+Mode: converge-manager — Run a project's whole operation as a manager session - derive, brief, launch lanes, judge, integrate, brief the steward
+
+[converge-manager]>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PANE>>>
+
+--- timeline (last 14 of 38) ---
+09:10:13Z  session=yes  pane= 8455B  mode=no
+09:10:44Z  session=yes  pane=10088B  mode=no
+09:11:14Z  session=yes  pane= 6486B  mode=no
+09:11:44Z  session=yes  pane= 8085B  mode=no
+09:12:14Z  session=yes  pane= 7765B  mode=no
+09:12:44Z  session=yes  pane= 7297B  mode=no
+09:13:15Z  session=yes  pane= 7827B  mode=no
+09:13:45Z  session=yes  pane= 7115B  mode=no
+09:14:15Z  session=yes  pane= 7374B  mode=no
+09:14:45Z  session=yes  pane= 7033B  mode=PROMPT
+09:15:16Z  session=yes  pane= 7033B  mode=PROMPT
+09:15:46Z  session=yes  pane= 7033B  mode=PROMPT
+09:16:16Z  session=yes  pane= 7033B  mode=PROMPT
+09:16:41Z  session=yes  pane= 7033B  mode=PROMPT
+```
+
+### S2.3 — A vision is written down in the project — PASS
+
+```
+./docs/VISION.md
+--- first 15 lines of each ---
+== ./docs/VISION.md
+# sensorlog — Vision (FROZEN 2026-09-06)
+
+*Written for amplified information workers. Terms of art are defined where they
+first appear; the specific promises live in `contracts/`.*
+
+---
+
+## Where this is going
+
+sensorlog turns a plain-text sensor log into something a person can read in one
+glance. Given a **log** — a text file holding one reading per line, each a
+sensor's name, its value, and an optional unit — the tool prints either a
+**report**, the readings in the order the log recorded them, or a **summary**,
+the counts and the one average a person actually wants before opening the whole
+file.
+```
+
+### S2.4 — At least one contract is written down — PASS
+
+```
+contracts/sensorlog-cli.v1.md
+--- headings ---
+# sensorlog CLI & Report Contract — v1 (FROZEN 2026-09-06)
+```
+
+### S2.5 — The project's contract check is seeded — PASS
+
+```
+./ledger/rows.yaml
+./ledger/checks
+./ledger/checks/test_ledger_probes.py
+./ledger/checks/__init__.py
+./ledger/checks/__pycache__
+./ledger/checks/__pycache__/__init__.cpython-312.pyc
+./ledger/checks/__pycache__/test_ledger_probes.cpython-312-pytest-9.1.1.pyc
+--- first 20 lines of ledger/rows.yaml ---
+- id: SL-000
+  title: SYNC -- pins contracts/sensorlog-cli.v1.md
+  contract:
+    file: contracts/sensorlog-cli.v1.md
+    clause: "SYNC"
+    quote: |
+      sensorlog CLI & Report Contract
+  disposition: CONFORMS
+  assertion:
+    kind: none
+  notes: >
+    Content hash of contracts/sensorlog-cli.v1.md at lock time (2026-09-06):
+    sha256:e6f70f428678948b62c34e5e7cdf5cda787abb4961690e84a2540e06cce9ac2f.
+    A hash mismatch on a future read means a mandatory full-ledger re-review,
+    not a silent bump (LEDGER-FORMAT.md sec 4).
+
+- id: SL-001
+  title: wrong argument count exits 2 with usage
+  contract:
+    file: contracts/sensorlog-cli.v1.md
+```
+
+### S2.6 — A queue holds work that names the contracts it serves — PASS
+
+```
+--- the queue CLI (a separate fact from whether a queue holds work) ---
+amplifier-work-tracker on PATH: /root/.local/bin/amplifier-work-tracker
+
+--- every queue store in this container ---
+work-tracker root: /root/.amplifier-work-tracker (exists: True)
+store: /root/.amplifier-work-tracker/projects/sensorlog
+not a store (a .beads dir with no database in it): /root/.amplifier/cache/amplifier-module-hooks-streaming-ui-e6e48235e2ecca64
+not a store (a .beads dir with no database in it): /root
+
+== project sensorlog (/root/.amplifier-work-tracker/projects/sensorlog)
+read with bd
+1 item(s) (open=1)
+  sensorlog-w43  summary: make unit tie-break deterministic (alphabetical)
+      names a contract: contracts/sensorlog-cli.v1.md
+
+--- what this measured ---
+QUEUE-CLI: present
+QUEUE-STORES: 1
+QUEUE-ITEMS: 1
+QUEUE-CONTRACT-ITEMS: 1
+QUEUE-READ-ERRORS: 0
+```
+
+### S2.7 — The work in flight paused first, said in the plan record — PASS
+
+```
+<<<DRAFTS
+2026-09-06T09:14:09+00:00  [git]  /workspace/existing-project/docs/VISION.md
+2026-09-06T09:14:09+00:00  [git]  /workspace/existing-project/contracts/sensorlog-cli.v1.md
+DRAFTS>>>
+<<<PAUSELINES
+/workspace/existing-project/.converge/sensorlog/HIGHWAY.md
+    `uv.lock`) -> adopting path (clause 14). Work in flight: none to pause -   [no stamp in the line]
+/workspace/existing-project/.converge/sensorlog/HIGHWAY.md
+    Parked: all lane work, ledger seeding, queue seeding. Continued: none - no   [no stamp in the line]
+PAUSELINES>>>
+<<<INVESTIGATION
+2026-09-06T09:12:57+00:00  [mtime]  /workspace/existing-project/.converge/sensorlog/HIGHWAY.md
+    answers seen: what-is-this, who-is-it-for, what-it-promises, what-is-in-flight
+INVESTIGATION>>>
+
+--- what this measured ---
+All moments are UTC. `git` is an add-commit date and is exact; `mtime`
+is a LAST write, which can prove BEFORE but never AFTER.
+DRAFTS-FOUND: 2
+DRAFTS-EARLIEST: 2026-09-06T09:14:09+00:00
+DRAFTS-EARLIEST-SOURCE: git
+RECORDS-SEARCHED: 12
+PAUSE-LINES: 2
+PAUSE-EARLIEST: 2026-09-06T09:12:57+00:00
+PAUSE-BEFORE-DRAFT: yes
+INVESTIGATION-FILES: 1
+INVESTIGATION-EARLIEST: 2026-09-06T09:12:57+00:00
+INVESTIGATION-BEFORE-DRAFT: yes
+```
+
+### S2.8 — The investigation answers are dated before the drafts — PASS
+
+```
+<<<DRAFTS
+2026-09-06T09:14:09+00:00  [git]  /workspace/existing-project/docs/VISION.md
+2026-09-06T09:14:09+00:00  [git]  /workspace/existing-project/contracts/sensorlog-cli.v1.md
+DRAFTS>>>
+<<<PAUSELINES
+/workspace/existing-project/.converge/sensorlog/HIGHWAY.md
+    `uv.lock`) -> adopting path (clause 14). Work in flight: none to pause -   [no stamp in the line]
+/workspace/existing-project/.converge/sensorlog/HIGHWAY.md
+    Parked: all lane work, ledger seeding, queue seeding. Continued: none - no   [no stamp in the line]
+PAUSELINES>>>
+<<<INVESTIGATION
+2026-09-06T09:12:57+00:00  [mtime]  /workspace/existing-project/.converge/sensorlog/HIGHWAY.md
+    answers seen: what-is-this, who-is-it-for, what-it-promises, what-is-in-flight
+INVESTIGATION>>>
+
+--- what this measured ---
+All moments are UTC. `git` is an add-commit date and is exact; `mtime`
+is a LAST write, which can prove BEFORE but never AFTER.
+DRAFTS-FOUND: 2
+DRAFTS-EARLIEST: 2026-09-06T09:14:09+00:00
+DRAFTS-EARLIEST-SOURCE: git
+RECORDS-SEARCHED: 12
+PAUSE-LINES: 2
+PAUSE-EARLIEST: 2026-09-06T09:12:57+00:00
+PAUSE-BEFORE-DRAFT: yes
+INVESTIGATION-FILES: 1
+INVESTIGATION-EARLIEST: 2026-09-06T09:12:57+00:00
+INVESTIGATION-BEFORE-DRAFT: yes
+```
+
+# Earlier runs
+
+Every run this file has ever recorded, newest first. A run is never erased by the next one: a RED run that a later run turns green is the evidence that it moved, and a file that keeps only the latest verdict cannot show that. Each run below is its own record, carrying its own start time in its Provenance block.
+
+**A `### S<step>` heading always names the most recent measurement of that step, wherever in this file it sits.** When a run is archived, its headings drop one level -- except the steps this run did NOT re-measure, which keep theirs, because an unrepeated measurement is still the latest one there is, and the run heading above it says when it was taken. That is what lets a single-scenario run be affordable without quietly unpublishing the other scenario's result. Text inside fenced blocks is left byte for byte as the probe printed it.
+
+## Run 2026-09-06T03:50:03+00:00
+
+## Adopter harness — RESULT
+
+**RED** — 17 pass · 2 fail · 0 can't tell · 0 skip, run 2026-09-06T03:50:03+00:00.
+
+What this run asked: can someone holding only `README.md` get a NEW project and an EXISTING project to the point of actually running the Converge way? **Each scenario ran in its own fresh container**, so no row below inherits anything another scenario's adopter did. Every verdict was read out of that container by this harness. The AI user's own account is reported separately, as evidence about the experience — never as evidence about the artifacts.
+
+`CAN'T TELL` is a real verdict here, distinct from `FAIL`: it means the probe could not settle the question. It is never reported as absence and never counted as a pass.
+
+### Provenance
 
 - **started** — `2026-09-06T03:50:03+00:00`
 - **finished** — `2026-09-06T04:41:06+00:00`
@@ -22,7 +424,7 @@ What this run asked: can someone holding only `README.md` get a NEW project and 
 - **Existing project (adopt)** — container `adopter-20260906035003-s2`
   - registered before launch: `/home/bkrabach/.local/share/uv/tools/amplifier/lib/python3.13/site-packages/amplifier_app_cli/data/skills/ten-lane-highway/scripts/infra_ledger.sh /home/bkrabach/dev/vision-focused-team-ci/.converge/converge add dtu adopter-20260906035003-s2 'amplifier-digital-twin destroy adopter-20260906035003-s2'`
 
-## Steps
+### Steps
 
 | # | What was asked | | What was missing (or, on a pass, what was seen) |
 |---|---|---|---|
@@ -48,11 +450,11 @@ What this run asked: can someone holding only `README.md` get a NEW project and 
 | S2.5 | The project's contract check is seeded | FAIL | no ledger/rows.yaml (or equivalent contract check) in the project |
 | S2.6 | A queue holds work that names the contracts it serves | FAIL | no queue store exists anywhere in the container -- nothing a session's `work_*` tools would have written is on disk (the queue CLI was on PATH) |
 
-## What the AI user reported
+### What the AI user reported
 
 The AI user read only `CONVERGE-README.md` and drove the Amplifier CLI as a person would. Where it says it could not find something, that is the finding this harness exists to surface.
 
-### New project
+#### New project
 
 - **verdict** — `success` (after 1678s)
 
@@ -65,7 +467,7 @@ All five required end-states w
 … [truncated]
 ```
 
-### Existing project (adopt)
+#### Existing project (adopt)
 
 - **verdict** — `failure` (after 1260s)
 
@@ -73,7 +475,7 @@ All five required end-states w
 Acting as the intent-steward persona, I drove a manager session through Converge adoption for the sensorlog project: the README was read, the manager investigated the actual code before drafting docs/VISION.md and a CLI-behavior contract, and I reviewed and explicitly ratified both against what I know of the code. Attempting to then 'lock' the ratified vision, the agent froze VISION.md's heading and only afterward tried to add the matching changelog entry in a separate edit, which its own lock guard rejected — leaving the file half-frozen. The agent recognized this was a self-inflicted sequencing bug and tried to recover via grep/delegation, but the session then hung with no progress for over 20 minutes of continuous polling. The remaining required end-states (AGENTS.md/PINS.md, ledger, HIGHWAY.md, alignment queue, contract-serving work items) were never reached.
 ```
 
-## Evidence, step by step
+### Evidence, step by step
 
 Verbatim output of the probe behind each row above. A probe that could not run is recorded as a failure or a `CAN'T TELL`, never as a pass.
 
@@ -303,7 +705,7 @@ QUEUE-CONTRACT-ITEMS: 1
 QUEUE-READ-ERRORS: 0
 ```
 
-### S2.G1 — This scenario's own container comes up with no Converge in it — PASS
+#### S2.G1 — This scenario's own container comes up with no Converge in it — PASS
 
 ```
 launched adopter-20260906035003-s2 from /home/bkrabach/dev/vision-focused-team-ci/.converge/converge/lanes/w12-adopter-proof/amplifier-bundle-converge/evaluations/adopter/profiles/adopter.yaml in 54s; every readiness gate passed, including `converge-absent` and `queue-cli-absent`
@@ -329,7 +731,7 @@ amplifier-work-tracker: not on PATH
 QUEUECLI>>>
 ```
 
-### S2.G2 — The README under test is in the container, byte for byte — PASS
+#### S2.G2 — The README under test is in the container, byte for byte — PASS
 
 ```
 316 /workspace/CONVERGE-README.md
@@ -338,7 +740,7 @@ QUEUECLI>>>
 [host] 53c2885dabc8a58a7421b118fbb0483aa559d9aa5b5d780b8aee87d173cc9f11  /home/bkrabach/dev/vision-focused-team-ci/.converge/converge/lanes/w12-adopter-proof/amplifier-bundle-converge/README.md
 ```
 
-### S2.G3 — This scenario's starting repository is seeded — PASS
+#### S2.G3 — This scenario's starting repository is seeded — PASS
 
 ```
 /workspace/existing-project 634776a4e6ad811295b18d0eb800059059e9a30d
@@ -353,7 +755,7 @@ src
 tests
 ```
 
-### S2.G4 — The existing project's own tests pass before adoption — PASS
+#### S2.G4 — The existing project's own tests pass before adoption — PASS
 
 ```
 [runner] uv run --with pytest pytest
@@ -361,7 +763,7 @@ tests
 7 passed in 0.01s
 ```
 
-### S2.1 — Converge installed and composed into the CLI — PASS
+#### S2.1 — Converge installed and composed into the CLI — PASS
 
 ```
 --- at launch, in this scenario's own container, before the AI user ---
@@ -402,7 +804,7 @@ Use --all to see all bundles including dependencies and nested bundles.
   [on]  converge-behavior  bundle
 ```
 
-### S2.2 — A manager session is running against the project — PASS
+#### S2.2 — A manager session is running against the project — PASS
 
 ```
 sampled every 30s through the scenario, 04:20:02Z -> 04:41:02Z: 43 captures, 43 that ran, 42 with a live agent session, 42 with pane content, 3 showing `[converge-manager]>` as the prompt (first at 04:26:05Z), 3 with the string anywhere on screen (first at 04:26:05Z)
@@ -447,7 +849,7 @@ proposes a vision + contracts for your ratification before anything is queued. T
 … [truncated]
 ```
 
-### S2.3 — A vision is written down in the project — PASS
+#### S2.3 — A vision is written down in the project — PASS
 
 ```
 ./docs/VISION.md
@@ -470,7 +872,7 @@ call to wait on. The **log** is a plain text file, one **reading** per line
 (`<name> <value> [<unit>]`), written by whatever produced the sensor data;
 ```
 
-### S2.4 — At least one contract is written down — PASS
+#### S2.4 — At least one contract is written down — PASS
 
 ```
 contracts/cli-behavior.v1.md
@@ -478,7 +880,7 @@ contracts/cli-behavior.v1.md
 # CLI Behavior Contract — v1 (DRAFT)
 ```
 
-### S2.5 — The project's contract check is seeded — FAIL
+#### S2.5 — The project's contract check is seeded — FAIL
 
 Missing: no ledger/rows.yaml (or equivalent contract check) in the project
 
@@ -487,7 +889,7 @@ Missing: no ledger/rows.yaml (or equivalent contract check) in the project
 head: cannot open 'ledger/rows.yaml' for reading: No such file or directory
 ```
 
-### S2.6 — A queue holds work that names the contracts it serves — FAIL
+#### S2.6 — A queue holds work that names the contracts it serves — FAIL
 
 Missing: no queue store exists anywhere in the container -- nothing a session's `work_*` tools would have written is on disk (the queue CLI was on PATH)
 
@@ -508,4 +910,3 @@ QUEUE-ITEMS: 0
 QUEUE-CONTRACT-ITEMS: 0
 QUEUE-READ-ERRORS: 0
 ```
-

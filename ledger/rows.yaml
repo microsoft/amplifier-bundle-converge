@@ -3093,75 +3093,100 @@
       first. Both read what is there, then propose a vision and first contracts
       as drafts. On the steward's word the ledger is seeded and the queue
       derived; until it lands, no lane fills.
-  disposition: GAP
-  work: converge-njaj
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'R=evaluations/adopter/RESULT.md; for s in S2.2 S2.3 S2.4; do grep -q "^### $s .*— PASS$" $R || { echo ADOPT-WAKE-EARLY-LINK-MOVED-$s-REREAD-THIS-ROW; exit 0; }; done; for s in S2.5 S2.6; do grep -q "^### $s .*— FAIL$" $R || { echo ADOPT-WAKE-MOVED-$s-REREAD-THIS-ROW; exit 0; }; done; echo ADOPT-WAKE-SESSION-VISION-CONTRACT-SEEN-LEDGER-AND-QUEUE-NOT'
+    ref: 'R=evaluations/adopter/RESULT.md; for s in S2.2 S2.3 S2.4 S2.5 S2.6 S2.7 S2.8; do grep -q "^### $s .*— PASS$" $R || { echo ADOPT-WAKE-LINK-MOVED-$s-REREAD-THIS-ROW; exit 0; }; done; echo ADOPT-WAKE-PAUSE-READ-DRAFTS-LEDGER-QUEUE-ALL-SEEN-IN-ORDER'
     expect:
       exit: 0
-      stdout_contains: "ADOPT-WAKE-SESSION-VISION-CONTRACT-SEEN-LEDGER-AND-QUEUE-NOT"
+      stdout_contains: "ADOPT-WAKE-PAUSE-READ-DRAFTS-LEDGER-QUEUE-ALL-SEEN-IN-ORDER"
   proves: >
     That the adopt path was run on 2026-09-06 against today's tree, in its own
-    container, and reached three links of the clause's chain and not the last
-    two. A live manager session, a vision and a contract were all on disk
-    afterwards. The seeded contract check and the derived queue were measured
-    ABSENT — no ledger/rows.yaml in the project, and no queue store anywhere in
-    the container, with the queue CLI on PATH. That is absence looked for where
-    it would be, not a probe that could not tell.
-    WHAT IS NOW PROVEN THAT WAS NOT BEFORE: the investigate-before-propose half
-    happens on a repository that already holds code, which is the path where it
-    means anything. The manager read `src/sensorlog/` and its tests before
-    drafting, and both documents came back on disk with the steward's word
-    behind them.
-    NOT THAT ADOPTING IS BROKEN AS DESIGNED, and this row reads *Not yet*
-    rather than *Broken* on purpose. The run records why it stopped, and the
-    cause is a defect in the machinery rather than a refusal of the clause: the
-    steward ratified, the session froze the vision's H1, then tried to add the
-    changelog line recording that ratification as a SECOND edit — which its own
-    locked-document guard refused, leaving the file half-frozen — and then made
-    no progress for over twenty minutes. The ledger was never seeded and no item
-    was ever filed. Nothing that exists contradicts the promise; the two steps
-    the promise names simply never ran, which is GAP, not VIOLATION. A reader
-    who holds that "the word was given and the ledger was not seeded" is already
-    a contradiction is reading the same evidence and may widen this to
-    VIOLATION; the argument against is that one wedged session is an absence of
-    implementation on this path, not a competing one. Both defects are filed:
-    converge-p17d (the guard trap) and converge-4vf6 (twenty minutes of polling
-    instead of a declared stuck).
-    THE PAUSE IS STILL THE HALF NOBODY HAS EVER OBSERVED. "the work in flight
-    pauses first" only matters on an existing repository, and the harness has no
-    step that looks for work in flight being stopped before a direction is
-    proposed — so no run can show it either way. That is a gap in the harness as
-    much as in the clause, and converge-njaj is where it lands.
+    container, and reached EVERY link of the clause's chain, in the order the
+    clause names them. A live manager session, a vision, a contract, a seeded
+    ledger with real probes beside it, and a queue item naming the contract it
+    serves were all on disk afterwards — and the two records the order rests on,
+    the pause and the four investigation answers, were both dated before the
+    first draft appeared.
+    WHAT IS NOW PROVEN THAT WAS NOT BEFORE, AND IT IS TWO THINGS. First, the
+    last two links: the previous reading of this row measured them ABSENT after
+    a session wedged on the half-freeze trap, and this run reached both. The
+    documents came back `(FROZEN 2026-09-06)` — the lock happened and the run
+    CONTINUED past it, which is converge-p17d's fix (af987a9, "the freeze is one
+    edit") working on the path where it broke. Second, the SEQUENCE, which no
+    run had ever measured on either path: CVG-301 records the hole in as many
+    words — "chain complete and measured, sequence attested and unmeasured" —
+    and S2.7/S2.8 close it here by dating the records rather than trusting the
+    AI user's account of them.
+    HOW STRONG THE ORDER EVIDENCE ACTUALLY IS, STATED SO NOBODY READS IT AS
+    MORE. The drafts are dated by git add-commit, which is exact. The park line
+    itself carried NO stamp, so S2.7 fell back to the plan record's own mtime
+    (09:12:57Z, against the drafts at 09:14:09Z) — an mtime is a LAST write, so
+    it proves every line in that file preceded the drafts, and it would never
+    have been allowed to prove the reverse. The mode's clause 3/11/14 stamp
+    format asks for an ISO timestamp IN the line; this manager wrote
+    "Parked: all lane work, ledger seeding, queue seeding. Continued: none"
+    without one. The row is Kept on the fallback, not on the stamp.
+    AND WHAT THE FIXTURE COULD NOT SHOW: `sensorlog` has code but no work
+    running against it, so the plan record's honest first line is "Work in
+    flight: none to pause". What S2.7 measured is that the pause was RECORDED
+    before any drafting, not that live work was stopped — no fixture here has
+    live work to stop.
+    NOT that "until it lands, no lane fills" was checked. No probe looks for a
+    lane filling early, so this run cannot speak to that half either way — the
+    same limit CVG-301 carries, and the same reason both rows are Kept on what
+    was measured rather than on a claim that the path is now reliable.
+    WHAT THIS ROW IS JUDGED BY, STATED SO THE NEXT READER DOES NOT WIDEN IT: a
+    RUN, recorded in evaluations/adopter/RESULT.md — not a page describing the
+    path. The file now keeps every run, newest first, and `### S2.x` names a row
+    of the newest one only; an archived run's headings sit one level deeper, so
+    this probe cannot be satisfied by a run that has been superseded.
   notes: >
-    RE-DERIVED 2026-09-06 (converge-himk, lane w12-adopter-proof). The adopt
-    half of Core 14; see CVG-301 for why Core 14 gets two rows and for which
-    tree this run tested.
-    RAN 2026-09-06 → ADOPT-WAKE-SESSION-VISION-CONTRACT-SEEN-LEDGER-AND-QUEUE-NOT.
-    Read out of `evaluations/adopter/RESULT.md`, scenario 2,
-    `/workspace/existing-project` (the `sensorlog` CLI, seven tests passing
-    before adoption), run 2026-09-06T03:50:03Z in its own container
-    adopter-20260906035003-s2:
-      S2.2  a manager session is running        PASS  (43 captures 30s apart, 3 showing `[converge-manager]>` as the prompt, first at 04:26:05Z)
-      S2.3  a vision is written down            PASS  (`# sensorlog — Vision (FROZEN 2026-09-06)` — the half-frozen file below)
-      S2.4  at least one contract is written    PASS  (`# CLI Behavior Contract — v1 (DRAFT)`)
-      S2.5  the contract check is seeded        FAIL  (no ledger/rows.yaml in the project)
-      S2.6  a queue holds work naming contracts FAIL  (no queue store anywhere in the container; the CLI was on PATH)
-    WHAT CHANGED SINCE THE PREVIOUS READING OF THIS ROW. It cited the
-    2026-09-04 run, in which scenario 2 shared a container with scenario 1, so
-    its install row measured the FIRST scenario's adopter and the run was one
-    run rather than two. That is fixed: each scenario now launches and destroys
-    its own container. This reading is scenario 2's own state and nothing
-    else's. The previous reading also called S2.6 red on the CLI-on-PATH probe;
-    this one read the store itself and found none, which is the same verdict
-    reached honestly.
-    THE `work` REF IS converge-njaj, WHICH STAYS OPEN AND NOW NAMES EXACTLY
-    WHAT IS MISSING rather than "no run has been performed": on the adopt path,
-    the seeded contract check and the derived queue. Its other two demands —
-    the code investigated before anything was proposed, and drafts that waited
-    for the steward's word — were both shown by this run. Fixing converge-p17d
-    is what gives the next run a chance to reach S2.5 and S2.6 at all.
+    RE-DERIVED 2026-09-06 (converge-w3nb, lane w14-adopt-rerun) from a SECOND
+    adopt run, asked for after converge-p17d's fix landed in af987a9. The adopt
+    half of Core 14; see CVG-301 for why Core 14 gets two rows.
+    RAN 2026-09-06 → ADOPT-WAKE-PAUSE-READ-DRAFTS-LEDGER-QUEUE-ALL-SEEN-IN-ORDER.
+    Read out of `evaluations/adopter/RESULT.md`, scenario 2 alone
+    (`--scenarios existing-project`), `/workspace/existing-project` (the
+    `sensorlog` CLI, seven tests passing before adoption), run
+    2026-09-06T08:57:06Z in its own container adopter-20260906085706-s2,
+    bundle_commit ad910cc, README sha 53c2885… matching origin/main. GREEN,
+    12 pass · 0 fail · 0 can't tell · 0 skip:
+      S2.2  a manager session is running        PASS  (38 captures 30s apart, 9 showing `[converge-manager]>` as the prompt, first at 09:01:09Z)
+      S2.3  a vision is written down            PASS  (`# sensorlog — Vision (FROZEN 2026-09-06)`)
+      S2.4  at least one contract is written    PASS  (`# sensorlog CLI & Report Contract — v1 (FROZEN 2026-09-06)`)
+      S2.5  the contract check is seeded        PASS  (ledger/rows.yaml with a SYNC row pinning the contract's hash, and ledger/checks/test_ledger_probes.py beside it)
+      S2.6  a queue holds work naming contracts PASS  (sensorlog-w43, "names a contract: contracts/sensorlog-cli.v1.md")
+      S2.7  the work in flight paused first     PASS  (plan record .converge/sensorlog/HIGHWAY.md, last written 09:12:57Z, drafts added 09:14:09Z)
+      S2.8  the answers are dated before drafts PASS  (all four answers in that same record, same dating)
+    WHY THIS MOVED FROM *Not yet* TO *Kept*. The previous reading measured S2.5
+    and S2.6 ABSENT, and named the cause: the session froze the vision's H1,
+    tried to add the changelog line as a SECOND edit, was refused by its own
+    guard, and never reached the ledger or the queue. That defect was fixed
+    (converge-p17d → af987a9, "the freeze is one edit"), and this run — same
+    harness, same fixture, same README — locked BOTH documents and carried on
+    through seeding and filing. The row moved because the machinery moved, and
+    the run is the evidence.
+    WHAT THIS RUN COST, AND WHAT IT DID NOT RE-MEASURE. Scenario 1 did not run.
+    `--scenarios existing-project` was used deliberately: a scenario is about an
+    hour of wall time and a long provider session, CVG-301 already reads Kept on
+    the blank path from the 03:50 run, and re-running it would have bought
+    nothing this row needed. RESULT.md says at its top which scenarios the run
+    covered, and keeps the earlier RED run in full below `# Earlier runs` — so
+    the movement from RED to GREEN is readable in one file rather than asserted
+    from memory.
+    THE TWO ORDER ROWS ARE NEW IN THIS RUN (converge-w3nb). They exist because
+    CVG-301 named the hole and nothing filled it: every other row reads state
+    AFTER the run, and state cannot tell a vision written after reading the code
+    from one written before. What they may claim is bounded in `proves` above
+    and in evaluations/adopter/README.md — exact dating can say AFTER, an mtime
+    can only ever say BEFORE, and absence of either record is a red on its own.
+    THIS ROW NOW CARRIES NO `work` REF, because a green row may not. converge-njaj
+    was resolved on this run: its acceptance asked for an investigated
+    repository, drafts that waited for the steward's word, a seeded ledger and a
+    queue naming its contracts, on both kinds of project — the blank half by
+    CVG-301's run, the adopt half by this one — plus the harness step that can
+    see the pause, which is S2.7.
 
 - id: CVG-024
   title: declared dependencies are verified at install, each absence named with its cost
