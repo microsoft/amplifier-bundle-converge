@@ -923,8 +923,7 @@
       saying in one sentence who needs it: a host that supplies neither the
       session base nor the mode machinery. Nothing later in the README
       recommends against the path it just named.
-  disposition: GAP
-  work: converge-eedi
+  disposition: CONFORMS
   assertion:
     kind: probe
     ref: 'uv run --with pyyaml python -c "import importlib.util, pathlib; s = importlib.util.spec_from_file_location(\"run\", \"conformance/composition/run.py\"); m = importlib.util.module_from_spec(s); s.loader.exec_module(m); print(\"ONE-COMMAND-INSTALL-PATH-\" + m.check_one_install_command(pathlib.Path(\".\"))[\"status\"])"'
