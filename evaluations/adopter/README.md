@@ -24,13 +24,17 @@ question; this is the running half.
 
 ```
 export AMPLIFIER_EVALUATION_SRC=/path/to/amplifier-bundle-evaluation
-./evaluations/adopter/run.sh                          # both scenarios
-./evaluations/adopter/run.sh --scenarios new-project  # just one
-./evaluations/adopter/run.sh --sync-mirror            # re-sync the mirror first
-./evaluations/adopter/run.sh --keep                   # leave the DTUs up to poke at
+./evaluations/adopter/run.sh                               # both scenarios
+./evaluations/adopter/run.sh --scenarios new-project       # just the blank one
+./evaluations/adopter/run.sh --scenarios existing-project  # just the adopt one
+./evaluations/adopter/run.sh --sync-mirror                 # re-sync the mirror first
+./evaluations/adopter/run.sh --keep                        # leave the DTUs up to poke at
 ```
 
-Each scenario gets its own container, so both scenarios cost two launches.
+Each scenario gets its own container, so both scenarios cost two launches — about
+an hour of wall time and a long provider session each. `--scenarios` is what makes
+a re-run of the half that moved affordable; the run then says at the top which
+scenarios it covered, and says nothing about the one that did not run.
 
 Result lands in `RESULT.md` beside this file. The AI user's full transcript
 lands **outside** the repository, under
@@ -99,6 +103,43 @@ Judged per scenario, from that container's own state — three setup rows
    red. `--all` is not decoration: `bd list` alone shows open issues, fifty at
    most, so an adopter who filed one item and then finished it reads back as a
    queue holding nothing.
+
+On the **adopt** scenario only, two more rows ask the half of Core 14 that state
+alone cannot answer — its **order**:
+
+7. The work in flight paused first, said in the plan record.
+8. The investigation answers are dated before the drafts.
+
+Rows 1–6 all read the container *after* the run, so none of them can tell a
+vision written after reading the code from one written before it — `CVG-301`
+records that hole in as many words: *chain complete and measured, sequence
+attested and unmeasured*, the attestation being the AI user's own account, which
+this harness never treats as evidence about artifacts. What can be measured is
+that the first-wake convention asks for two *records* — the pause said in the
+plan record, and the four investigation answers written down — and a record
+carries a date. So these two rows date them, and date the drafts, and compare.
+
+**Where the dating is exact, a wrong order is a real red; where it is not, it is
+a `CAN'T TELL`.** A stamp the plan-record line carries itself, or a git
+add-commit, fixes a moment. An mtime is a *last* write and cannot tell a record
+written after the drafts from one appended to after them, so it can prove BEFORE
+and never AFTER. Absence is still a red on both rows: a pause nobody wrote down
+is indistinguishable from a session that wandered off, and answers nobody wrote
+down are not something a steward can hold against what they already know.
+
+They are asked on the adopt path alone. A blank repository has no work in flight
+to pause and nothing to read, so the same rows there would manufacture a
+question whose only honest answer is "does not apply".
+
+### RESULT.md keeps every run, newest first
+
+A run never erases the run before it. `write_result` moves the previous run under
+`# Earlier runs`, each carrying its own start time, and changes exactly one thing
+about it: **its headings drop one level**, so `### S2.5 …` names a row of the
+current run and nothing else — which is what a ledger row's probe greps. Text
+inside evidence fences is left byte for byte. A file that keeps only the latest
+verdict cannot show that a RED run went green, and that movement is the whole
+point of running this twice.
 
 ### Four verdicts, because three of them lie
 
