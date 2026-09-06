@@ -114,7 +114,7 @@ def test_bad_repo_fails_named_rules():
     assert code == 1
     failed = {r["rule"] for r in report["results"] if r["status"] == "FAIL"}
     assert failed == {
-        "1a", "1b", "2a", "2b", "3a", "3b", "4", "5", "6a", "6b", "7a", "7b",
+        "1a", "1b", "2a", "2b", "3a", "3b", "4", "5a", "5b", "6a", "6b", "7a", "7b",
     }, failed
 
 
@@ -127,7 +127,14 @@ def test_bad_failures_carry_readable_detail():
     assert "stray-step.yaml" in rules["2b"]["detail"]
     assert "rulebook" in rules["3a"]["detail"]
     assert "host requirement" in rules["4"]["detail"].lower()
-    assert "--app" in rules["5"]["detail"]
+    assert "--app" in rules["5a"]["detail"]
+    # 5b names BOTH halves it caught: a second path never marked advanced, and a
+    # later sentence sending the reader to it anyway. This is the shape the real
+    # README was measured in on 2026-09-05, kept as a fixture so the rule cannot
+    # quietly stop catching it.
+    assert "advanced" in rules["5b"]["detail"]
+    assert "prefer" in rules["5b"]["detail"]
+    assert "README.md:" in rules["5b"]["detail"]
     assert "bundle.md" in rules["6a"]["detail"]
     assert "candidate" in rules["7a"]["detail"].lower()
     assert "FROZEN" in rules["7b"]["detail"]

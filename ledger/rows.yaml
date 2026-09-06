@@ -552,11 +552,11 @@
   kind: sync
   pins:
     - file: contracts/composition.v1.md
-      sha256: 2ace26c24ab68b80b05216566ffd0a0a1c2464fab4109221af02d149db84593c
+      sha256: c2f464bfd1a56a3ba9a43f89398369011682dda787f2e123f4dd8920ae82e928
     - file: contracts/documents.v1.md
       sha256: 856026df5e3e56bf5f92080b3a81371462ffffb6d75be171d576cf62778234ea
     - file: contracts/operation.v1.md
-      sha256: 22bcecd30c261abb11e11111221ad4ba7761d74824995de811e6471bc0eb4c07
+      sha256: 823a71330fcfe69b016231773a861c221059f6f15f6d26ed6a90e9737cb1deed
     - file: contracts/surface.v1.md
       sha256: b4d3f3838637ec6d7781735a59db2bf7386ea66c265dce1122a77513e514741d
     # The experience family, ratified DRAFT 2026-09-03. Pinned by converge-pq2.
@@ -585,7 +585,7 @@
     ref: 'sha256sum contracts/*.md'
     expect:
       exit: 0
-      stdout_contains: "2ace26c24ab68b80b05216566ffd0a0a1c2464fab4109221af02d149db84593c"
+      stdout_contains: "c2f464bfd1a56a3ba9a43f89398369011682dda787f2e123f4dd8920ae82e928"
   notes: >
     SEEDED 2026-09-02 from `sha256sum contracts/*.md`, run at repo 2543e1c.
     Verified identical on `main` at seed time (`git show main:contracts/<f>` →
@@ -699,6 +699,19 @@
     RAN 2026-09-04 → operation.v1 re-pinned after the line-77 markdown repair (548e899: closes a bold marker; no clause text changed).
     RAN 2026-09-04 → operation.v1 re-pinned after the ratified turnkey sentence (Conformance-kit-asserts section + changelog row; `git diff` shows no Core clause changed).
     RAN 2026-09-04 → re-pinned after commit 19a3d7b, whose diff against every contract is line 1 only (the H1 status parenthetical recording the steward's given words); no clause text moved, so no row's disposition can have changed. Re-review satisfied by `git diff 19a3d7b~1 19a3d7b -- contracts/` (14 files, 14 insertions, 14 deletions).
+    ────────────────────────────────────────────────────────────────────────────
+    THE SIXTH RE-REVIEW — 2026-09-06, converge-462l. TWO PINS MISMATCHED (composition.v1 AND operation.v1) AND THE MANDATORY RE-REVIEW WAS RUN RATHER THAN THE HASHES BUMPED (LEDGER-FORMAT §4). Both mismatches were CAUSED BY THIS ITEM, in the same commit that re-pins them, and both are the steward's own word applied: `docs/workflow/owner-ratifications-2026-09-06.md` round 1, verbatim — "ratified, please continue" — ratifying `contracts/operation.v1-candidate.md` (converge-jyg0) and `contracts/composition.v1-candidate.md` (converge-279a) as written, and authorising "applying both (DRAFT contracts change in place with a changelog row), archiving the candidates as ratified, and deriving the follow-on work".
+      operation.v1    22bcecd3… → 823a7133…   97 lines → 99
+      composition.v1  2ace26c2… → c2f464bf…   71 lines → 82
+    WHAT MOVED, and what each means for the rows. Every fenced before/after pair in the two ratified proposals was applied by script rather than by hand, and each was required to match exactly once; the run printed `pairs found: 8` for operation and applied both composition changes, then a second pass re-read both contracts and confirmed every `after` present and every `before` gone (except where a `before` is a prefix of its own `after` — operation pairs 2 and 8, which ADD a clause and a changelog row beside text that stays).
+      operation.v1 — Purpose: "from contract gap to verified result" → "from first wake to verified result". NO ROW CITES THE PURPOSE (this ledger rows the teeth), so no reading moves.
+      operation.v1 — NEW Core 14, "The first wake is investigate, then propose." Clauses 1–13 are byte-identical; every operation row was re-read against the new bytes and none moved. Core 14 had no row and the clause-coverage tripwire said so out loud — `operation.v1.md 14 Core clauses, cited 13/14 MISSING ['Core 14']`, exactly as the proposal predicted it would. TWO rows are added below, one per first-wake path (CVG-292 blank repository, CVG-293 adopt), both *Not yet*.
+      operation.v1 — FIVE bullets in "does NOT freeze", "Conformance kit asserts" and "Reserved" re-wrapped from two source lines to one. NO WORD CHANGED in any of the five (the proposal's own claim, re-checked here by diffing the words rather than the lines). CVG-010 and its neighbours quote these bullets; the ledger's quote check collapses whitespace, so every quote still verifies — measured, not assumed: `178/178 quotes verify` after this pass, the three added rows included.
+      composition.v1 — Core 5 REWRITTEN, two lines to nine, and this one DOES move readings. The bold lead changed outright — "**The shared work queue rides on both install paths,**" → "**One install command is the path an adopter takes.**" — so CVG-005's quote stopped verifying (`CVG-005 QUOTE NOT FOUND`), which is the tripwire working. The OLD promise survives whole as the clause's second-to-last sentence, so CVG-005 keeps its probe and its CONFORMS and is re-quoted below; the NEW promise is a second, unmet thing and gets its own row, CVG-294, *Not yet*.
+      composition.v1 — ONE kit-assert bullet ADDED at the END of the list (now bullet 6), on the README's install section. It is APPENDED, not inserted, so no existing bullet's position moves — checked, because the fifth re-review recorded an insert at position 2 silently renumbering CVG-008 and CVG-009. CVG-008 is still "bullet 2" and CVG-009/CVG-071 still "bullet 3" against these bytes.
+      composition.v1 — CHANGELOG row added. No row cites it.
+    ONE ROW MOVED FOR A REASON THAT IS NOT A CONTRACT EDIT: CVG-060, the OPEN-PINNED count of clauses running past three lines, 29 → 31. Re-pinned in its own row, with the two clauses named.
+    A DEFECT IN THIS ROW, FOUND WHILE WRITING INTO IT AND FILED RATHER THAN QUIETLY RESTRUCTURED (converge-rloj): CVG-000 carries TWO `notes:` keys — the long folded block above the `composition.v1` banner comment, and this literal block. YAML keeps the last, so `yaml.safe_load` returns ONLY this block and the entire seed-and-four-reconciles history above it is invisible to every tool that reads the file, at exit 0. That is why this re-review is written here and not there. Measured 2026-09-06: `yaml.safe_load` → `notes` length 635 characters, beginning "RAN 2026-09-04 → operation.v1 re-pinned after the line-77 markdown repair".
 
 - id: CVG-001
   title: lean base, never the heavy package
@@ -846,13 +859,13 @@
     CONTENT, this row judges that the README still carries it at all.
 
 - id: CVG-005
-  title: the shared work queue rides on both install paths
+  title: the shared work queue rides on both install paths (Core 5's kept promise)
   contract:
     file: contracts/composition.v1.md
     clause: "Core 5"
     quote: |
-      **The shared work queue rides on both install paths,** so the contract
-      checker can file and read work anywhere.
+      The shared work queue rides on both, so the contract checker can file
+      and read work whichever one was taken.
   disposition: CONFORMS
   assertion:
     kind: probe
@@ -872,6 +885,122 @@
     dropping off one install path, the exact drift this clause exists to catch.
     Now each path is checked separately and names the one that lost it.
     HONEST LIMIT: no kit rule covers this clause; the check is hand-run.
+    ────────────────────────────────────────────────────────────────────────
+    RE-DERIVED AND RE-QUOTED 2026-09-06 (converge-462l, the sixth re-review).
+    THE CLAUSE WAS REWRITTEN AND THIS ROW'S QUOTE STOPPED VERIFYING — the
+    tripwire said `CVG-005 QUOTE NOT FOUND: **The shared work queue rides on
+    both install paths,** so the contract` before this pass. That is the row
+    working, and it is the ONE case in this re-review where a quote break was
+    not a false alarm: the steward's ratified Core 5 replaced the bold lead
+    outright ("**The shared work queue rides on both install paths,**" →
+    "**One install command is the path an adopter takes.**").
+    THE PROMISE THIS ROW ASSERTS DID NOT CHANGE, WHICH IS WHY THE ROW STAYS
+    CONFORMS AND KEEPS ITS PROBE UNALTERED. The proposal kept the old promise
+    whole and made it the new clause's second-to-last sentence; this row is
+    re-quoted onto exactly that sentence, which says the same thing in the
+    same words bar "both install paths" → "both … whichever one was taken".
+    RAN 2026-09-06 → QUEUE-ON-BOTH-INSTALL-PATHS. Unchanged: the identical
+    work-tracker include is still in bundle.md and behaviors/converge.yaml.
+    WHAT THIS ROW NO LONGER COVERS, AND IT IS THE BIGGER HALF OF THE NEW
+    CLAUSE: that the README names exactly one command as the adopter's path.
+    That is a separate, currently unmet promise and it has its own row,
+    CVG-300 — not folded in here, because folding a red claim into a green
+    row is how a ledger starts lying.
+    THE HONEST LIMIT ABOVE IS NOW HALF FALSE and is left standing rather than
+    edited: a kit rule DOES now cover this clause (rule 5b, added by this
+    item) — but it covers CVG-300's half of it, not this row's. This row's
+    check is still hand-run.
+
+- id: CVG-300
+  title: one install command is the path an adopter takes — the README's half of Core 5
+  contract:
+    file: contracts/composition.v1.md
+    clause: "Core 5"
+    quote: |
+      The README names exactly one command as that path — the single command
+      that composes Converge onto the session the reader already has — and
+      marks the multi-command full-workspace install as the advanced path,
+      saying in one sentence who needs it: a host that supplies neither the
+      session base nor the mode machinery. Nothing later in the README
+      recommends against the path it just named.
+  disposition: CONFORMS
+  assertion:
+    kind: probe
+    ref: 'uv run --with pyyaml python -c "import importlib.util, pathlib; s = importlib.util.spec_from_file_location(\"run\", \"conformance/composition/run.py\"); m = importlib.util.module_from_spec(s); s.loader.exec_module(m); print(\"ONE-COMMAND-INSTALL-PATH-\" + m.check_one_install_command(pathlib.Path(\".\"))[\"status\"])"'
+    expect:
+      exit: 0
+      stdout_contains: "ONE-COMMAND-INSTALL-PATH-PASS"
+  proves: >
+    That the kit rule this clause's own assert names EXISTS, RUNS on this
+    repository, and finds the README not yet doing what the clause asks.
+    NOT that the README is close, and not that one edit fixes it: the rule
+    reports two separate findings today, and both have to go.
+    THE PIN IS THE RED, DELIBERATELY. This row's probe asserts FAIL, which is
+    the state measured on 2026-09-06 in this working copy. When the rewritten
+    README and this rule land on one branch the probe stops meeting its expect
+    and verify.py goes red naming this row — which is the signal to re-read and
+    re-derive it, not a regression. A row that could not tell "still broken"
+    from "quietly fixed" would be exactly the one-directional drift
+    LEDGER-FORMAT §3 forbids.
+    The rule is a FILE rule — no live session, no network — so it costs 0.14s
+    and can run on every pass.
+  notes: >
+    NEW 2026-09-06 (converge-462l, the sixth re-review). Core 5 was rewritten
+    by the steward's ratified proposal and now carries TWO promises where it
+    carried one. CVG-005 keeps the old one (the queue rides on both paths,
+    still CONFORMS). This row carries the new one, and it is not kept.
+    RAN 2026-09-06 → ONE-COMMAND-INSTALL-PATH-PASS, in THIS working copy: "its
+    opening presents 2 command block(s) and the clause asks for exactly one —
+    ## Install (README.md:61); **Full-workspace path — Converge as the primary
+    bundle:** (README.md:75)". Two paths, side by side, both offered first.
+    AND RUN AGAINST main's README TOO, because the rewrite landed on another
+    branch while this lane worked and a row that only ever saw its own tree
+    would be reporting on a README nobody will read. `git show main:README.md`
+    into a scratch directory, same rule: PASS — "README.md:61 presents exactly
+    one command as the adopter's path (## Install), 1 other install path(s) are
+    marked advanced with who needs them, and nothing later recommends against
+    it". THAT IS EVIDENCE, NOT THIS ROW'S VERDICT. This row is derived from the
+    tree it lives in, and its probe must meet its expect here; the two halves
+    have still never been in one commit. converge-eedi carries the run that
+    settles it, and now carries this measurement too.
+    THE RULE WAS WRONG ONCE AND WAS FIXED BEFORE IT SHIPPED, WHICH IS WORTH
+    RECORDING. Its first form read a path lead as a BOLD line only — the shape
+    this tree's README uses — and reported "no install command at all" about
+    main's rewritten README, which uses a `## Install` sentence and a `###
+    Advanced:` heading. A rule that reports a false red is worse than no rule.
+    It now reads heading, bold lead or ordinary sentence, and separates a second
+    INSTALL path from a check command by whether it invokes the same program.
+    THE RULE DID NOT EXIST BEFORE THIS ITEM. The ratified proposal added a kit
+    assert — "The README's install section presents exactly one command as the
+    path an adopter takes, marks every other path advanced, and nowhere
+    afterwards recommends against the path it named" — and said in as many
+    words that ratifying it makes the README rewrite derived work rather than
+    a good idea somebody might get to. `conformance/composition/run.py` rule 5b
+    is that assert made runnable: PASS on fixtures/sample-good, FAIL on
+    fixtures/sample-bad (which reproduces this exact README shape), FAIL here.
+    THE KIT-ASSERT BULLET IS THIS SAME PROMISE AND IS NOT DOUBLE-ROWED. The new
+    bullet 6 of composition.v1's "Conformance kit asserts" says what this clause
+    says, and rule 5b is the one check behind both. Recorded here so the bullet
+    is not an unrowed promise of the kind converge-lhkf was filed for, rather
+    than given a second row that would assert the identical fact.
+    THE `work` REF IS converge-eedi, NOT THE README ITEM, AND THE DIFFERENCE
+    MATTERS. converge-xk2u rewrote the README to one named command and closed
+    on 2026-09-06 — on its own branch, which this working copy does not carry.
+    Its own resolution records the reason this row cannot cite it: "The
+    composition kit's NEW Core 5 rule does not exist yet … There was no branch
+    to run it from." So one side has a rewritten README nobody checked and the
+    other has a rule that has never seen it. converge-eedi is that unrun check,
+    and it is live. The shape question that item was
+    filed with — xk2u put the advanced path under a `### Advanced: …` HEADING —
+    is answered: the rule reads headings now, and main's README passes it. What
+    converge-eedi still owes is the run on one branch and this row re-derived
+    against it.
+    THE OLD RULE ID MOVED, AND IT MOVED ON PURPOSE: clause 5's single rule was
+    `5`, and a clause with two promises takes two lettered rules under the kit's
+    own convention. It is now `5a` (the queue) and `5b` (the README). No ledger
+    row cited `5` — checked, because the fifth re-review recorded a renumbering
+    that left refs resolving to a rule under a DIFFERENT clause. CVG-005 asserts
+    by probe, not by rule id, so nothing dangled.
 
 - id: CVG-006
   title: nothing touches the tools of other work in your session
@@ -2728,6 +2857,139 @@
     written. `proves` carries that.
     THE `work` REF IS GONE, because a green row may not carry one.
 
+- id: CVG-301
+  title: the first wake on a BLANK repository — investigate, then propose
+  contract:
+    file: contracts/operation.v1.md
+    clause: "Core 14"
+    quote: |
+      **The first wake is investigate, then propose.** A project with no
+      contracts has no gap to derive from, so the first work is drafting —
+      clause 1's one exception. A blank repository starts at the vision;
+  disposition: GAP
+  work: converge-njaj
+  assertion:
+    kind: probe
+    ref: 'R=evaluations/adopter/RESULT.md; for s in S1.3 S1.4 S1.5; do grep -q "^### $s .*— PASS$" $R || { echo BLANK-WAKE-RECORDED-EVIDENCE-MOVED-$s; exit 0; }; done; grep -q "^### S1.6 .*— FAIL$" $R || { echo BLANK-WAKE-QUEUE-LINK-MOVED-REREAD-THIS-ROW; exit 0; }; echo BLANK-WAKE-VISION-CONTRACT-LEDGER-RECORDED-QUEUE-NOT'
+    expect:
+      exit: 0
+      stdout_contains: "BLANK-WAKE-VISION-CONTRACT-LEDGER-RECORDED-QUEUE-NOT"
+  proves: >
+    That the recorded first-wake run on a blank repository got three links of
+    the clause's chain — a vision, a contract, a seeded ledger — and did NOT
+    get the fourth, the derived queue.
+    NOT that the clause is broken. It is not yet true of anything, which is a
+    different thing: the clause landed on 2026-09-06, and the one recorded run
+    of a first wake predates it by two days.
+    WHAT THIS ROW IS JUDGED BY, STATED SO THE NEXT READER DOES NOT WIDEN IT: a
+    RUN, recorded in evaluations/adopter/RESULT.md — not a page describing the
+    path. A procedure written down is not a procedure run, and this clause is
+    about what a manager session DOES. So the probe reads the harness record
+    and nothing else; when that record is refreshed the probe flips and this
+    row must be re-read.
+    WHAT THE RUN ITSELF SAYS IT CANNOT PROVE, kept rather than dropped
+    (evaluations/adopter/RESULT.md:318-347): its S1.2 verdict rests on an EMPTY
+    tmux pane captured 28 seconds after the session restarted, so whether a
+    manager session was running proved nothing either way; its S1.6 queue probe
+    read for the work-queue CLI on PATH and concluded no item could exist,
+    which is more than the evidence supports. So "the queue link is missing" is
+    read here as UNPROVEN-AND-UNRECORDED, not as measured absence. Both limits
+    are filed as converge-f0bj.
+  notes: >
+    NEW 2026-09-06 (converge-462l, the sixth re-review). Core 14 is the clause
+    the steward ratified on 2026-09-06 ("ratified, please continue"), and it
+    arrived with no row — the clause-coverage tripwire said so out loud the
+    moment it landed: `operation.v1.md 14 Core clauses, cited 13/14 MISSING
+    ['Core 14']`. The proposal predicted that exact message and said the row
+    would start at *Not yet*. It does.
+    ONE ROW PER FIRST-WAKE PATH, because the clause keys two and they are
+    observed differently: this row is the blank repository, CVG-302 is the
+    existing repository that gets adopted.
+    RAN 2026-09-06 → BLANK-WAKE-VISION-CONTRACT-LEDGER-SEEN-QUEUE-NOT-AND-NO-
+    PROCEDURE-WRITTEN. Read out of the adopter harness's recorded run of
+    2026-09-04 (`evaluations/adopter/RESULT.md`), scenario 1, `/workspace/new-project`:
+      S1.3  a vision is written down            PASS
+      S1.4  at least one contract is written    PASS
+      S1.5  the contract check is seeded        PASS
+      S1.6  a queue holds work naming contracts FAIL
+    MEASURED IN THE SAME PASS AND DELIBERATELY NOT IN THE PROBE:
+    `grep -ic "first wake" modes/converge-manager.md` → 0 in THIS working copy.
+    A sibling lane (converge-dnip) closed on 2026-09-06 having added exactly
+    that section on its own branch, so this number will be non-zero on main.
+    It is kept out of the probe because it would make this row flip on a page
+    being written rather than on a run being taken — and dnip's own resolution
+    is the argument for that: "Nothing here has been run … no adopter-harness
+    run has taken a real project along it".
+    THE RUN THAT PRODUCED THOSE THREE PASSES DID NOT FOLLOW A PROCEDURE, WHICH
+    IS THE POINT. The harness's own finding: "Both scenarios produced a vision,
+    a contract, and a seeded ledger — with no documented day-one path anywhere
+    in the repository. The agent improvised the sequence both times, and
+    produced different shapes each time … Two adopters would get two different
+    first days." A clause satisfied by improvisation twice is not a clause that
+    is kept; it is one that has not been made checkable yet.
+    THE `work` REF IS converge-njaj, WHICH IS LIVE AND CARRIES THE EXACT
+    MISSING OBSERVATION. converge-dnip wrote the mode section and then declined
+    to close njaj on it, recording that what remains is "one run of
+    ./evaluations/adopter/run.sh against both scenarios with its result
+    recorded". That run is what moves this row, and it is the only thing that
+    can: re-run the harness, and this probe flips.
+
+- id: CVG-302
+  title: the first wake on an EXISTING repository — adopt, and the work in flight pauses first
+  contract:
+    file: contracts/operation.v1.md
+    clause: "Core 14"
+    quote: |
+      one that already holds code is adopted, and the work in flight pauses
+      first. Both read what is there, then propose a vision and first contracts
+      as drafts. On the steward's word the ledger is seeded and the queue
+      derived; until it lands, no lane fills.
+  disposition: GAP
+  work: converge-njaj
+  assertion:
+    kind: probe
+    ref: 'R=evaluations/adopter/RESULT.md; for s in S2.2 S2.3 S2.4 S2.5; do grep -q "^### $s .*— PASS$" $R || { echo ADOPT-WAKE-RECORDED-EVIDENCE-MOVED-$s; exit 0; }; done; grep -q "^### S2.6 .*— FAIL$" $R || { echo ADOPT-WAKE-QUEUE-LINK-MOVED-REREAD-THIS-ROW; exit 0; }; echo ADOPT-WAKE-SESSION-VISION-CONTRACT-LEDGER-RECORDED-QUEUE-NOT'
+    expect:
+      exit: 0
+      stdout_contains: "ADOPT-WAKE-SESSION-VISION-CONTRACT-LEDGER-RECORDED-QUEUE-NOT"
+  proves: >
+    That the recorded adopt run reached a live manager session, read the code
+    before proposing anything, and produced a vision, a contract and a seeded
+    ledger — and that the clause's OTHER two demands are observed nowhere: the
+    queue derived on the steward's word, and the work in flight pausing first.
+    NOT that adopting works. It proves one run improvised it once.
+    THE PAUSE IS THE HALF NOBODY HAS EVER OBSERVED, and it is the half that
+    only matters on an existing repository. The harness has no step that looks
+    for work in flight being stopped before a direction is proposed, so no run
+    can currently show it either way. That is a gap in the harness as much as
+    in the clause, and converge-njaj's remaining observation is where it lands.
+  notes: >
+    NEW 2026-09-06 (converge-462l, the sixth re-review). The adopt half of
+    Core 14. See CVG-301 for why Core 14 gets two rows and for the harness
+    limits that apply to both.
+    RAN 2026-09-06 → ADOPT-WAKE-SESSION-VISION-CONTRACT-LEDGER-SEEN-QUEUE-NOT-
+    AND-NO-PAUSE-WRITTEN. Read out of `evaluations/adopter/RESULT.md`
+    scenario 2, `/workspace/existing-project` (the `sensorlog` CLI), 2026-09-04:
+      S2.2  a manager session is running        PASS
+      S2.3  a vision is written down            PASS
+      S2.4  at least one contract is written    PASS
+      S2.5  the contract check is seeded        PASS
+      S2.6  a queue holds work naming contracts FAIL
+    THE STRONGEST EVIDENCE FOR THIS CLAUSE IS IN THAT RUN, AND IT IS THE AI
+    USER'S OWN ACCOUNT, NOT AN ARTIFACT — so it is quoted as what it is. It
+    reports that the session "before proposing anything actually read
+    `src/sensorlog/` and `tests/test_sensorlog.py` (verified — VISION.md and the
+    contract both cite this direct read, not the README, as their basis)", and
+    "only locked either document after I explicitly said the word". That is the
+    clause's shape, performed once, by improvisation.
+    WHY THIS IS STILL *NOT YET* AND NOT *KEPT*: one improvised run is not a
+    procedure, S2.6 is red, the pause is unobserved, and RESULT.md:324-328
+    records that scenario 2 shared a container with scenario 1 — so S2.1 is not
+    an independent install result and the run is one run, not two.
+    THE `work` REF IS converge-njaj, which is the item that writes the adopt
+    path down and which the ratification named as unblocked by Core 14. The
+    mode's own first-wake section is converge-dnip, cited by CVG-301.
+
 - id: CVG-024
   title: declared dependencies are verified at install, each absence named with its cost
   contract:
@@ -3509,7 +3771,7 @@
     ref: 'awk ''FNR==1{if(n>4)t++;n=0;c=0} /^## Core \(the teeth\)/{c=1;next} /^## /{if(n>4)t++;n=0;c=0;next} c&&/^[0-9]+\. /{if(n>4)t++;n=1;next} c&&NF&&n{n++} END{if(n>4)t++;print "CLAUSES-PAST-THREE-LINES=" t+0}'' contracts/*.md'
     expect:
       exit: 0
-      stdout_contains: "CLAUSES-PAST-THREE-LINES=29"
+      stdout_contains: "CLAUSES-PAST-THREE-LINES=31"
   justification: >
     RAN 2026-09-02 → CLAUSES-PAST-THREE-LINES=8. Rule 1e checks only that a clause
     continues in bold; nothing enforces the limit. Measured: composition Core 6 (5
@@ -3559,6 +3821,28 @@
     that pushed the count to 29 is one the steward personally ratified in its
     five-line form, on the same day, having read it. That is not a decision —
     it is one more fact for the person who will make it.
+    RE-DERIVED 2026-09-06 (converge-462l, the sixth re-review): 29 → 31, and the
+    row is re-pinned at 31. The count is the pin and it flipped, which is the
+    row working. THE DELTA IS EXACTLY THE TWO RATIFIED CLAUSES AND NOTHING
+    ELSE — measured by running the probe's own awk against HEAD's contracts and
+    against the working tree and diffing the two lists, rather than inferred:
+      + composition.v1 Core 5   (2 source lines → 9; the rewritten clause)
+      + operation.v1   Core 14  (new; 6 source lines)
+      − nothing
+    Full list at 31, by contract: composition 4, 5, 6 · documents 4, 8, 12, 14 ·
+    operation 4, 5, 7, 14 · surface 3, 5, 9 · experience 1, 11, 15 ·
+    experience-direction 6, 7, 11 · experience-collaboration 2 · platform-web 1, 2 ·
+    platform-ios 1, 2 · platform-android 1, 2 · platform-macos 1, 2 ·
+    platform-windows 1, 2.
+    THE READING IS STILL UNDECIDED AND STILL NOT FORGED HERE: whether "lines"
+    means SOURCE lines or RENDERED sentences. THIRD TIME IT HAS COME UP IN
+    EVIDENCE, and this time the fact cuts harder than the last: BOTH clauses
+    that moved the count are clauses the steward read and ratified in the exact
+    over-length form they now have, in proposals that quoted them line by line.
+    Under the source-line reading the ratified text breaks documents.v1 Core 5
+    on the day it lands. Under the rendered-sentence reading it does not. Still
+    OPEN-PINNED; still no work filed, because filing it would presume the
+    reading — but it is now hard to argue this stays undecided for free.
 
 - id: CVG-046
   title: every kit's rule table is numbered to its contract's Core clauses

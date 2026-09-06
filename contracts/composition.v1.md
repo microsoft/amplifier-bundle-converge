@@ -26,8 +26,15 @@ the helpers they need.
    and needs Converge's own full setup or a host on the same lean base; a step
    that declares its helpers resolves them from that closure instead, and asks
    nothing of its host.
-5. **The shared work queue rides on both install paths,** so the contract
-   checker can file and read work anywhere.
+5. **One install command is the path an adopter takes.** The README names
+   exactly one command as that path — the single command that composes Converge
+   onto the session the reader already has — and marks the multi-command
+   full-workspace install as the advanced path, saying in one sentence who
+   needs it: a host that supplies neither the session base nor the mode
+   machinery. Nothing later in the README recommends against the path it just
+   named. The shared work queue rides on both, so the contract checker can file
+   and read work whichever one was taken. *For you:* you type one line, and
+   nothing afterwards tells you that you should have typed the other.
 6. **Nothing touches the tools of other work in your session.** A setting that
    stripped tools from every helper in every session was measured in isolation
    on 2026-09-02, confirmed with a control, and removed. Converge's helpers keep
@@ -58,6 +65,9 @@ the helpers they need.
 - A step that declares its own helpers resolves them from that closure, not
   from the calling session: the recipe validates at `schema_version: 2` and its
   plan names every helper against the dependency that supplies it.
+- The README's install section presents exactly one command as the path an
+  adopter takes, marks every other path advanced, and nowhere afterwards
+  recommends against the path it named.
 
 ## Reserved / open questions (NOT frozen)
 
@@ -69,3 +79,4 @@ the helpers they need.
 | Date | Change | Evidence |
 |---|---|---|
 | 2026-09-04 | Amended (still v1, DRAFT): clause 4's second sentence names the two cases — a step that declares no helpers uses the session's; a step that declares its helpers resolves them from that closure; the "when the engine supports it" item leaves the not-frozen list (condition met); a new not-frozen item tracks a tagged lean-base release; one kit assert added. Proposal: `contracts/composition.v1-candidate.md` (converge-qwk), kept as `docs/workflow/composition.v1-candidate.ratified.md`. Steward's word, verbatim: `ratified, and go ahead w/ that PR, merge it` (PR #25, converge-may). | The recipe failed on a non-anchors host with "Agent 'anchors:explorer' not found in configuration" (2026-09-04); the engine now supports declared helpers — `recipe-runner validate` → schema_version 2, ok; `plan` names both helpers against their suppliers |
+| 2026-09-06 | Amended (still v1, DRAFT): Core 5 rewritten — "One install command is the path an adopter takes"; the old promise (the queue rides on both paths) is kept whole as the clause's own second-to-last sentence; one kit assert added, on the README's install section. Proposal: `contracts/composition.v1-candidate.md` (converge-279a), kept as `docs/workflow/composition.v1-candidate.2026-09-06.ratified.md` — dated, because `docs/workflow/composition.v1-candidate.ratified.md` is already the Core 4 archive and overwriting it would erase that record. Steward's word, verbatim: `ratified, please continue` (`docs/workflow/owner-ratifications-2026-09-06.md` round 1). | The README names the `--app` behavior **THE** install path at `:53` and prefers the other path for end-to-end runs at `:93–96`; the stated reason for that preference was made moot by the same commit that wrote it (`49534d6`). One command was measured producing a working manager session with no bundle active — `evaluations/adopter/RESULT.md` S1.1 PASS, S2.2 PASS |

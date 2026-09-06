@@ -1,0 +1,7 @@
+# What this directory is
+
+`.converge/` is where a manager session keeps the state of a running operation
+on this workspace. Copy this file to `<workspace>/.converge/README.md` when you
+create the directory.
+
+Delete the whole directory to close an operation. The project is untouched.
