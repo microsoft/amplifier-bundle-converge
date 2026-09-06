@@ -107,3 +107,9 @@ Merged w14-reconcile-8 (CVG-012/014/016/023 moved off the pasted block onto the 
     uv run conformance/composition/run.py .                                  -> PASS
     uv run --with pyyaml ledger/checks/verify.py                             -> nine live-route rows red for ONE cause: the reader walked ancestors for the plan record and the clause-5 layout puts it beside the repository. Taught it the layout in place (ledger/checks/turnkey_clause.py); re-run below.
 Step 4 of the steward's order is complete: manager sessions register themselves, the app discovers them, and one command runs the app, told in README and the agent context.
+
+## 2026-09-06 10:30 - wave 15 (first two lanes): lock sheet and "What ships"
+Merged w15-lock-sheet (converge-1pah: docs/workflow/LOCK-SHEET-2026-09-06.md) and w15-what-ships (converge-er00: README "What ships" names app/ as the app and says what src/amplifier_converge/ is for; retire-or-keep left as the steward's one-sentence call) into main at 9fb818c, then re-ran the check myself:
+    uv run conformance/documents/run.py . --work-items docs/work-items.json -> PASS
+    uv run conformance/composition/run.py .                                  -> PASS
+    uv run --with pyyaml ledger/checks/verify.py                             -> one row red: CVG-019 (Core 9 stall reading) drifts each time the manifest grows; re-derives at the next reconcile.
