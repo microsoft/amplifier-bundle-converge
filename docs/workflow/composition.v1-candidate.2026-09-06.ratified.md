@@ -267,6 +267,27 @@ this case.
 `docs/workflow/owner-ratifications-<date>.md`. Until then `composition.v1` Core 5
 is the law, and `README.md` says two paths because the contract says two paths.
 
+### The steward's word
+
+```
+Word: ratified, please continue
+Date: 2026-09-06
+Edits (if "ratified with edits"): none — ratified as written
+```
+
+Recorded in `docs/workflow/owner-ratifications-2026-09-06.md`, round 1. Applied
+to `contracts/composition.v1.md` on 2026-09-06 by `converge-462l`: Core 5
+replaced verbatim with the fenced replacement above, and the one new kit-assert
+line added directly after the last bullet, verbatim. 71 lines → 82.
+
+**Why this file is dated and the earlier one is not.** The Core 4 archive
+already holds the name `docs/workflow/composition.v1-candidate.ratified.md`
+(ratified 2026-09-04, converge-qwk), and `contracts/composition.v1.md`'s
+changelog cites it by that name. Overwriting it would erase that record, so this
+second composition proposal is archived under its ratification date instead. The
+convention for a contract's *second* ratified proposal is not written down
+anywhere; filed rather than decided here.
+
 The decision is carried in the queue as `converge-279a`, so it stays visible
 after the lane that wrote this proposal is gone. Its acceptance is written against
 `README.md`, which means it cannot close on this file alone: ratifying it makes

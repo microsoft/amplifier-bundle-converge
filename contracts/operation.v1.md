@@ -7,9 +7,9 @@ and the turnkey run in `evaluations/` is this contract's conformance kit.
 
 ## Purpose
 
-The manager session carries a project from contract gap to verified result so
-that the steward's attention is spent only where a person is irreplaceable.
-Waiting on the steward is never the bottleneck.
+The manager session carries a project from first wake to verified result so that
+the steward's attention is spent only where a person is irreplaceable. Waiting
+on the steward is never the bottleneck.
 
 ## Core (the teeth)
 
@@ -54,6 +54,12 @@ Waiting on the steward is never the bottleneck.
     held, resolution written for whoever asked.
 13. **Hand off when done.** A manager session that has lost its footing says so,
     writes a hand-off a fresh session can resume from, and stops.
+14. **The first wake is investigate, then propose.** A project with no contracts
+    has no gap to derive from, so the first work is drafting — clause 1's one
+    exception. A blank repository starts at the vision; one that already holds
+    code is adopted, and the work in flight pauses first. Both read what is
+    there, then propose a vision and first contracts as drafts. On the steward's
+    word the ledger is seeded and the queue derived; until it lands, no lane fills.
 
 ## Declared dependencies (checked at install)
 
@@ -66,8 +72,7 @@ service for provenance. One install verifies each and names what is missing.
 ## What v1 deliberately does NOT freeze
 
 - Lanes on a remote service — promoted when a service offers brief-in, evidence-out.
-- Manager sessions coordinating directly — promoted the second time one message
-  must reach several.
+- Manager sessions coordinating directly — promoted the second time one message must reach several.
 - Enforced per-role tool limits — promoted when upstream #388 lands.
 
 ## Conformance kit asserts
@@ -75,23 +80,20 @@ service for provenance. One install verifies each and names what is missing.
 - **Turnkey:** fresh environment → one install → start a project, derive from a
   sample gap, run two lanes, tend, judge, integrate, re-check, brief → green.
   **First green 2026-09-04** — nine of nine steps, twice, in fresh containers, with a manager session that was not the integrator (`evaluations/turnkey/RESULT.md`); it re-runs on every merge.
-- Every lane has a terminal session and working copy on disk; in-session
-  sub-agents never hold work items.
+- Every lane has a terminal session and working copy on disk; in-session sub-agents never hold work items.
 - Lanes are filled only with disjoint items; adjacent items appear as one lane.
-- A marker on an unchanged branch is recorded stuck; a post-merge gate runs for
-  multi-lane merges; every done has evidence the manager session re-ran.
+- A marker on an unchanged branch is recorded stuck; a post-merge gate runs for multi-lane merges; every done has evidence the manager session re-ran.
 - No raw feedback becomes work without a quoted source and enrichment.
-- A stall is declared stuck; a brief exists for every return; a hand-off exists
-  for every manager session that ended by choice.
+- A stall is declared stuck; a brief exists for every return; a hand-off exists for every manager session that ended by choice.
 
 ## Reserved / open questions (NOT frozen)
 
 - The remote-lane interface shape.
-- A namespace for Converge's own worker helpers, should the standard ones prove
-  insufficient.
+- A namespace for Converge's own worker helpers, should the standard ones prove insufficient.
 
 ## Changelog
 
 | Date | Change | Evidence |
 |---|---|---|
 | 2026-09-04 | Turnkey sentence: red → first green recorded (owner word "ratified") | evaluations/turnkey/RESULT.md GREEN 9·0·0 ×2; docs/workflow/owner-ratifications-2026-09-03.md round 4 |
+| 2026-09-05 | New Core clause 14 (the first wake); Purpose starts at first wake; five bullets re-wrapped to stay inside the 100-line bound | docs/workflow/ONBOARDING-AUDIT-2026-09-04.md c-3, c-4, "Two things no contract covers" 2; modes/converge-manager.md:348 |
