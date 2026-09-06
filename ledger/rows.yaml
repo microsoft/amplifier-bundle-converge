@@ -2866,73 +2866,81 @@
       **The first wake is investigate, then propose.** A project with no
       contracts has no gap to derive from, so the first work is drafting —
       clause 1's one exception. A blank repository starts at the vision;
-  disposition: GAP
-  work: converge-njaj
+  disposition: CONFORMS
   assertion:
     kind: probe
-    ref: 'R=evaluations/adopter/RESULT.md; for s in S1.3 S1.4 S1.5; do grep -q "^### $s .*— PASS$" $R || { echo BLANK-WAKE-RECORDED-EVIDENCE-MOVED-$s; exit 0; }; done; grep -q "^### S1.6 .*— FAIL$" $R || { echo BLANK-WAKE-QUEUE-LINK-MOVED-REREAD-THIS-ROW; exit 0; }; echo BLANK-WAKE-VISION-CONTRACT-LEDGER-RECORDED-QUEUE-NOT'
+    ref: 'R=evaluations/adopter/RESULT.md; for s in S1.2 S1.3 S1.4 S1.5 S1.6; do grep -q "^### $s .*— PASS$" $R || { echo BLANK-WAKE-CHAIN-BROKEN-AT-$s; exit 0; }; done; echo BLANK-WAKE-SESSION-VISION-CONTRACT-LEDGER-QUEUE-ALL-SEEN'
     expect:
       exit: 0
-      stdout_contains: "BLANK-WAKE-VISION-CONTRACT-LEDGER-RECORDED-QUEUE-NOT"
+      stdout_contains: "BLANK-WAKE-SESSION-VISION-CONTRACT-LEDGER-QUEUE-ALL-SEEN"
   proves: >
-    That the recorded first-wake run on a blank repository got three links of
-    the clause's chain — a vision, a contract, a seeded ledger — and did NOT
-    get the fourth, the derived queue.
-    NOT that the clause is broken. It is not yet true of anything, which is a
-    different thing: the clause landed on 2026-09-06, and the one recorded run
-    of a first wake predates it by two days.
+    That the first wake on a blank repository was run end to end on 2026-09-06
+    against the tree an early adopter meets today, and every link of the
+    clause's chain was found in that container afterwards: a live manager
+    session, a vision, a contract, a seeded contract check, and a queue item
+    naming the contract it serves. The last link is the one no earlier run ever
+    reached.
+    NOT that the ORDER the clause names was checked. The clause says the drafts
+    are proposed first, and the ledger seeded and the queue derived on the
+    steward's word. This harness reads container state AFTER the run; it has no
+    probe for "this happened after that". Two facts sit either side of that
+    hole and neither closes it. The artifacts came back carrying their status in
+    the H1 — `# mdstrip — Vision (DRAFT)` and `# Markdown-to-Text Conversion
+    Contract — v1 (DRAFT)` — which is the drafts half, read off disk. The
+    ordering half rests only on the AI user's own account, which this harness
+    treats as evidence about the EXPERIENCE and never about the artifacts. So:
+    chain complete and measured, sequence attested and unmeasured.
+    NOT that "until it lands, no lane fills" was checked. No probe looks for a
+    lane filling early, so the run cannot speak to that half either way.
+    DELIBERATELY NOT ASSERTED: that the two documents still say (DRAFT) at the
+    end of a run. A document the steward locks during the run is the clause
+    working, not drift — scenario 2's vision came back FROZEN — so a probe
+    keyed on the word DRAFT would go red for the wrong reason.
     WHAT THIS ROW IS JUDGED BY, STATED SO THE NEXT READER DOES NOT WIDEN IT: a
     RUN, recorded in evaluations/adopter/RESULT.md — not a page describing the
     path. A procedure written down is not a procedure run, and this clause is
-    about what a manager session DOES. So the probe reads the harness record
-    and nothing else; when that record is refreshed the probe flips and this
-    row must be re-read.
-    WHAT THE RUN ITSELF SAYS IT CANNOT PROVE, kept rather than dropped
-    (evaluations/adopter/RESULT.md:318-347): its S1.2 verdict rests on an EMPTY
-    tmux pane captured 28 seconds after the session restarted, so whether a
-    manager session was running proved nothing either way; its S1.6 queue probe
-    read for the work-queue CLI on PATH and concluded no item could exist,
-    which is more than the evidence supports. So "the queue link is missing" is
-    read here as UNPROVEN-AND-UNRECORDED, not as measured absence. Both limits
-    are filed as converge-f0bj.
+    about what a manager session DOES. When that record is refreshed the probe
+    flips and this row must be re-read.
   notes: >
-    NEW 2026-09-06 (converge-462l, the sixth re-review). Core 14 is the clause
-    the steward ratified on 2026-09-06 ("ratified, please continue"), and it
-    arrived with no row — the clause-coverage tripwire said so out loud the
-    moment it landed: `operation.v1.md 14 Core clauses, cited 13/14 MISSING
-    ['Core 14']`. The proposal predicted that exact message and said the row
-    would start at *Not yet*. It does.
-    ONE ROW PER FIRST-WAKE PATH, because the clause keys two and they are
-    observed differently: this row is the blank repository, CVG-302 is the
-    existing repository that gets adopted.
-    RAN 2026-09-06 → BLANK-WAKE-VISION-CONTRACT-LEDGER-SEEN-QUEUE-NOT-AND-NO-
-    PROCEDURE-WRITTEN. Read out of the adopter harness's recorded run of
-    2026-09-04 (`evaluations/adopter/RESULT.md`), scenario 1, `/workspace/new-project`:
-      S1.3  a vision is written down            PASS
-      S1.4  at least one contract is written    PASS
-      S1.5  the contract check is seeded        PASS
-      S1.6  a queue holds work naming contracts FAIL
-    MEASURED IN THE SAME PASS AND DELIBERATELY NOT IN THE PROBE:
-    `grep -ic "first wake" modes/converge-manager.md` → 0 in THIS working copy.
-    A sibling lane (converge-dnip) closed on 2026-09-06 having added exactly
-    that section on its own branch, so this number will be non-zero on main.
-    It is kept out of the probe because it would make this row flip on a page
-    being written rather than on a run being taken — and dnip's own resolution
-    is the argument for that: "Nothing here has been run … no adopter-harness
-    run has taken a real project along it".
-    THE RUN THAT PRODUCED THOSE THREE PASSES DID NOT FOLLOW A PROCEDURE, WHICH
-    IS THE POINT. The harness's own finding: "Both scenarios produced a vision,
-    a contract, and a seeded ledger — with no documented day-one path anywhere
-    in the repository. The agent improvised the sequence both times, and
-    produced different shapes each time … Two adopters would get two different
-    first days." A clause satisfied by improvisation twice is not a clause that
-    is kept; it is one that has not been made checkable yet.
-    THE `work` REF IS converge-njaj, WHICH IS LIVE AND CARRIES THE EXACT
-    MISSING OBSERVATION. converge-dnip wrote the mode section and then declined
-    to close njaj on it, recording that what remains is "one run of
-    ./evaluations/adopter/run.sh against both scenarios with its result
-    recorded". That run is what moves this row, and it is the only thing that
-    can: re-run the harness, and this probe flips.
+    RE-DERIVED 2026-09-06 (converge-himk, lane w12-adopter-proof) from the run
+    the item asked for: the FIRST run against the tree that carries the
+    rewritten README (sha 53c2885…, `readme_matches_origin_main` True),
+    docs/ADOPTING.md, scripts/adopt-check.py and the mode's Clause 14 first-wake
+    section — bundle_commit f6b5e30. The run before it (2026-09-06T02:07:34Z)
+    tested the pre-rewrite README, sha 1be929…; the two before that predate the
+    clause entirely. That is why this row is re-read rather than left alone.
+    RAN 2026-09-06 → BLANK-WAKE-SESSION-VISION-CONTRACT-LEDGER-QUEUE-ALL-SEEN.
+    Read out of `evaluations/adopter/RESULT.md`, scenario 1,
+    `/workspace/new-project` (the `mdstrip` CLI), run 2026-09-06T03:50:03Z in
+    its own container adopter-20260906035003-s1:
+      S1.2  a manager session is running        PASS  (57 captures 30s apart, 11 showing `[converge-manager]>` as the prompt, first at 03:58:03Z)
+      S1.3  a vision is written down            PASS  (`# mdstrip — Vision (DRAFT)`)
+      S1.4  at least one contract is written    PASS  (`# Markdown-to-Text Conversion Contract — v1 (DRAFT)`)
+      S1.5  the contract check is seeded        PASS  (ledger/rows.yaml and ledger/checks/test_conversion.py)
+      S1.6  a queue holds work naming contracts PASS  (mdstrip-c9t, "names a contract: conversion.v1")
+    WHY THIS MOVED FROM *Not yet* TO *Kept*, AND WHAT IT COST TO SAY SO. This
+    row's own prior text named the one thing that could move it: "re-run the
+    harness, and this probe flips". It was re-run and it flipped. The prior
+    reading also held S1.6 red on a probe that only looked for the queue CLI on
+    PATH and concluded from its absence that no item could exist — more than the
+    evidence supported. That defect was fixed under converge-f0bj, and this run
+    reads the store a session's `work_*` tools actually write, so the queue link
+    is now measured rather than inferred in either direction.
+    WHAT THE RUN DOES NOT SETTLE, KEPT RATHER THAN DROPPED: the sequence (see
+    `proves`), and that this is ONE run. A second blank-repo run producing the
+    same five links is what would turn one improvised success into a procedure
+    held. The row is *Kept* on what was measured, not on a claim that the path
+    is now reliable.
+    FOUND INSIDE THIS GREEN SCENARIO AND FILED, because a green row that
+    swallows a real defect is a ledger that lies: converge-8gb2 — the manager
+    session's post-merge re-run passed against a stale editable install bound to
+    the lane's worktree rather than to main, so Core 7's "the installed thing
+    showing the change" was false while the check said done. It surfaced only
+    because the person watching ran the check themselves. That is Core 7's
+    business, not this clause's.
+    THE ADOPT HALF OF Core 14 IS CVG-302, and it is red. converge-njaj stays
+    open on that half. This row carries no `work` ref because a green row may
+    not carry one.
 
 - id: CVG-302
   title: the first wake on an EXISTING repository — adopt, and the work in flight pauses first
@@ -2948,47 +2956,71 @@
   work: converge-njaj
   assertion:
     kind: probe
-    ref: 'R=evaluations/adopter/RESULT.md; for s in S2.2 S2.3 S2.4 S2.5; do grep -q "^### $s .*— PASS$" $R || { echo ADOPT-WAKE-RECORDED-EVIDENCE-MOVED-$s; exit 0; }; done; grep -q "^### S2.6 .*— FAIL$" $R || { echo ADOPT-WAKE-QUEUE-LINK-MOVED-REREAD-THIS-ROW; exit 0; }; echo ADOPT-WAKE-SESSION-VISION-CONTRACT-LEDGER-RECORDED-QUEUE-NOT'
+    ref: 'R=evaluations/adopter/RESULT.md; for s in S2.2 S2.3 S2.4; do grep -q "^### $s .*— PASS$" $R || { echo ADOPT-WAKE-EARLY-LINK-MOVED-$s-REREAD-THIS-ROW; exit 0; }; done; for s in S2.5 S2.6; do grep -q "^### $s .*— FAIL$" $R || { echo ADOPT-WAKE-MOVED-$s-REREAD-THIS-ROW; exit 0; }; done; echo ADOPT-WAKE-SESSION-VISION-CONTRACT-SEEN-LEDGER-AND-QUEUE-NOT'
     expect:
       exit: 0
-      stdout_contains: "ADOPT-WAKE-SESSION-VISION-CONTRACT-LEDGER-RECORDED-QUEUE-NOT"
+      stdout_contains: "ADOPT-WAKE-SESSION-VISION-CONTRACT-SEEN-LEDGER-AND-QUEUE-NOT"
   proves: >
-    That the recorded adopt run reached a live manager session, read the code
-    before proposing anything, and produced a vision, a contract and a seeded
-    ledger — and that the clause's OTHER two demands are observed nowhere: the
-    queue derived on the steward's word, and the work in flight pausing first.
-    NOT that adopting works. It proves one run improvised it once.
-    THE PAUSE IS THE HALF NOBODY HAS EVER OBSERVED, and it is the half that
-    only matters on an existing repository. The harness has no step that looks
-    for work in flight being stopped before a direction is proposed, so no run
-    can currently show it either way. That is a gap in the harness as much as
-    in the clause, and converge-njaj's remaining observation is where it lands.
+    That the adopt path was run on 2026-09-06 against today's tree, in its own
+    container, and reached three links of the clause's chain and not the last
+    two. A live manager session, a vision and a contract were all on disk
+    afterwards. The seeded contract check and the derived queue were measured
+    ABSENT — no ledger/rows.yaml in the project, and no queue store anywhere in
+    the container, with the queue CLI on PATH. That is absence looked for where
+    it would be, not a probe that could not tell.
+    WHAT IS NOW PROVEN THAT WAS NOT BEFORE: the investigate-before-propose half
+    happens on a repository that already holds code, which is the path where it
+    means anything. The manager read `src/sensorlog/` and its tests before
+    drafting, and both documents came back on disk with the steward's word
+    behind them.
+    NOT THAT ADOPTING IS BROKEN AS DESIGNED, and this row reads *Not yet*
+    rather than *Broken* on purpose. The run records why it stopped, and the
+    cause is a defect in the machinery rather than a refusal of the clause: the
+    steward ratified, the session froze the vision's H1, then tried to add the
+    changelog line recording that ratification as a SECOND edit — which its own
+    locked-document guard refused, leaving the file half-frozen — and then made
+    no progress for over twenty minutes. The ledger was never seeded and no item
+    was ever filed. Nothing that exists contradicts the promise; the two steps
+    the promise names simply never ran, which is GAP, not VIOLATION. A reader
+    who holds that "the word was given and the ledger was not seeded" is already
+    a contradiction is reading the same evidence and may widen this to
+    VIOLATION; the argument against is that one wedged session is an absence of
+    implementation on this path, not a competing one. Both defects are filed:
+    converge-p17d (the guard trap) and converge-4vf6 (twenty minutes of polling
+    instead of a declared stuck).
+    THE PAUSE IS STILL THE HALF NOBODY HAS EVER OBSERVED. "the work in flight
+    pauses first" only matters on an existing repository, and the harness has no
+    step that looks for work in flight being stopped before a direction is
+    proposed — so no run can show it either way. That is a gap in the harness as
+    much as in the clause, and converge-njaj is where it lands.
   notes: >
-    NEW 2026-09-06 (converge-462l, the sixth re-review). The adopt half of
-    Core 14. See CVG-301 for why Core 14 gets two rows and for the harness
-    limits that apply to both.
-    RAN 2026-09-06 → ADOPT-WAKE-SESSION-VISION-CONTRACT-LEDGER-SEEN-QUEUE-NOT-
-    AND-NO-PAUSE-WRITTEN. Read out of `evaluations/adopter/RESULT.md`
-    scenario 2, `/workspace/existing-project` (the `sensorlog` CLI), 2026-09-04:
-      S2.2  a manager session is running        PASS
-      S2.3  a vision is written down            PASS
-      S2.4  at least one contract is written    PASS
-      S2.5  the contract check is seeded        PASS
-      S2.6  a queue holds work naming contracts FAIL
-    THE STRONGEST EVIDENCE FOR THIS CLAUSE IS IN THAT RUN, AND IT IS THE AI
-    USER'S OWN ACCOUNT, NOT AN ARTIFACT — so it is quoted as what it is. It
-    reports that the session "before proposing anything actually read
-    `src/sensorlog/` and `tests/test_sensorlog.py` (verified — VISION.md and the
-    contract both cite this direct read, not the README, as their basis)", and
-    "only locked either document after I explicitly said the word". That is the
-    clause's shape, performed once, by improvisation.
-    WHY THIS IS STILL *NOT YET* AND NOT *KEPT*: one improvised run is not a
-    procedure, S2.6 is red, the pause is unobserved, and RESULT.md:324-328
-    records that scenario 2 shared a container with scenario 1 — so S2.1 is not
-    an independent install result and the run is one run, not two.
-    THE `work` REF IS converge-njaj, which is the item that writes the adopt
-    path down and which the ratification named as unblocked by Core 14. The
-    mode's own first-wake section is converge-dnip, cited by CVG-301.
+    RE-DERIVED 2026-09-06 (converge-himk, lane w12-adopter-proof). The adopt
+    half of Core 14; see CVG-301 for why Core 14 gets two rows and for which
+    tree this run tested.
+    RAN 2026-09-06 → ADOPT-WAKE-SESSION-VISION-CONTRACT-SEEN-LEDGER-AND-QUEUE-NOT.
+    Read out of `evaluations/adopter/RESULT.md`, scenario 2,
+    `/workspace/existing-project` (the `sensorlog` CLI, seven tests passing
+    before adoption), run 2026-09-06T03:50:03Z in its own container
+    adopter-20260906035003-s2:
+      S2.2  a manager session is running        PASS  (43 captures 30s apart, 3 showing `[converge-manager]>` as the prompt, first at 04:26:05Z)
+      S2.3  a vision is written down            PASS  (`# sensorlog — Vision (FROZEN 2026-09-06)` — the half-frozen file below)
+      S2.4  at least one contract is written    PASS  (`# CLI Behavior Contract — v1 (DRAFT)`)
+      S2.5  the contract check is seeded        FAIL  (no ledger/rows.yaml in the project)
+      S2.6  a queue holds work naming contracts FAIL  (no queue store anywhere in the container; the CLI was on PATH)
+    WHAT CHANGED SINCE THE PREVIOUS READING OF THIS ROW. It cited the
+    2026-09-04 run, in which scenario 2 shared a container with scenario 1, so
+    its install row measured the FIRST scenario's adopter and the run was one
+    run rather than two. That is fixed: each scenario now launches and destroys
+    its own container. This reading is scenario 2's own state and nothing
+    else's. The previous reading also called S2.6 red on the CLI-on-PATH probe;
+    this one read the store itself and found none, which is the same verdict
+    reached honestly.
+    THE `work` REF IS converge-njaj, WHICH STAYS OPEN AND NOW NAMES EXACTLY
+    WHAT IS MISSING rather than "no run has been performed": on the adopt path,
+    the seeded contract check and the derived queue. Its other two demands —
+    the code investigated before anything was proposed, and drafts that waited
+    for the steward's word — were both shown by this run. Fixing converge-p17d
+    is what gives the next run a chance to reach S2.5 and S2.6 at all.
 
 - id: CVG-024
   title: declared dependencies are verified at install, each absence named with its cost
