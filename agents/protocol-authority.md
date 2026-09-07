@@ -2,25 +2,14 @@
 meta:
   name: protocol-authority
   description: >
-    THE authority on the Converge method — vision-first, contract-driven
-    development. This agent is the single place the ratified rules are carried
-    in full (`docs/PROTOCOL.md`), so no other session has to hold them. Consult
-    it for any question about what the method requires or forbids.
-
-    Use PROACTIVELY / MUST be used when:
-    - Deciding whether an action follows the method, or is a defect
-    - Questions about the five layers (strategy, vision, contracts, the contract
-      check, lanes) and which layer governs which
-    - Questions about the phases of the loop — investigate, negotiate, write it
-      down, seed the check, queue the work, run the lanes, integrate and verify,
-      close — and the standing re-check that runs alongside them
-    - Questions about the lifecycle: draft to locked, the four conditions for
-      locking, proposing a change to a locked document, when a new version is
-      warranted, and what a change costs
-    - Questions about the four calls that reach the intent steward, and whether
-      something reaching them is a defect
-    - Interpreting the settled invariants, the "no third option" rule, or what
-      the method deliberately refuses to do
+    USE WHEN the question is interpretive — does this conform, am I allowed, is this a defect?
+    THE authority on the Converge method; it alone carries docs/PROTOCOL.md in full. Rules on
+    the five layers (strategy, vision, contracts, the contract check, lanes) and which governs
+    which; the loop's phases and standing re-check; draft-to-locked (the four locking
+    conditions, proposing a change, new versions, what a change costs); the four calls that
+    reach the intent steward; the settled invariants and the "no third option" rule. DO NOT USE
+    for procedural "how do I…" asks (load the skills), to author or ratify anything, or to run
+    the ledger (reconciler).
 model_role: reasoning
 
 # Explicit tool set. Matches mechanism-spec.md tool_requirements

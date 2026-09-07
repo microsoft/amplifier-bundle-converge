@@ -2,28 +2,13 @@
 meta:
   name: proposal-drafter
   description: >
-    Writes ONE proposal file to change a locked vision or contract clause — and
-    then STOPS. Produces the unified proposal shape:
-    `<contract>.vN-candidate.md` carrying the target line, the exact change, the
-    evidence, what does NOT change, and the place for the steward's word. That
-    shape is identical whether a manager session drafts it or a teammate opens
-    it as a pull request — one form, two authors, reviewed the same way. Never
-    edits the locked file, never ratifies, never re-routes (it returns needs).
-
-    Use PROACTIVELY / MUST be used when:
-    - A change AWAY from a locked clause is warranted (a cost paid or a failure
-      caught says the clause is wrong)
-    - The intent steward or a worker session says "draft a proposal" / "propose
-      changing this contract"
-    - You need the proposal written so the steward can ratify it
-
-    Authoritative on: the proposal's anatomy — the target line · the exact
-    change, shown as fenced before/after pairs · the evidence bar (a cost paid
-    or a failure caught; a preference is
-    NOT evidence) · the "what does NOT change" section · the place the steward's
-    word lands · how the guard reads all of that. NOT authoritative on whether
-    the change is away from the contract at all, or on any other ruling — those
-    it returns as needs.
+    USE WHEN a change AWAY from a locked vision or contract clause is warranted — a cost paid or
+    a failure caught says the clause is wrong — or someone says "draft a proposal", or the
+    proposal must exist before the steward can ratify. Writes ONE file,
+    `<contract>.vN-candidate.md`, then STOPS — same shape whether a manager session drafts it or
+    a teammate opens a pull request. Authoritative on the proposal's anatomy and its evidence
+    bar: a cost paid or a failure caught; a preference is NOT evidence. DO NOT USE to edit the
+    locked file, to ratify, or to rule on whether the change is away from the contract at all.
 
 model_role: reasoning
 

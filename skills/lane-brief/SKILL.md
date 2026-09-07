@@ -1,19 +1,11 @@
 ---
 name: lane-brief
 description: >
-  Write a lane brief a worker session can run alone, and judge honestly whether
-  a lane is done. Carries the proven charter: an honesty gate, acceptance whose
-  evidence a reader can still see afterwards — a file on disk or printed command
-  output, never a tool call's arguments — a stated falsity condition on every
-  criterion whose evidence the lane itself authors, an explicit file-ownership
-  split, two exits and no third — with a criterion outside the lane's own
-  ownership recorded as a residual rather than a blocker, so the outcome stays
-  A — the terminal marker outside the worktree, and
-  completion credited from commits rather than from liveness or self-report. Use
-  when briefing a worker session, when deciding whether a lane is actually done,
-  or when a run looks successful but may have produced nothing or produced
-  something false. Applies operation.v1 §5 (lanes are real sessions) and §7
-  (done means the manager session re-ran the check).
+  Use when briefing a worker session, when judging whether a lane is actually done, or when a
+  run looks successful but may have produced nothing — or something false. Carries the proven
+  charter: the honesty gate, acceptance whose evidence a reader can still see, a falsity
+  condition on self-authored evidence, the file-ownership split, two exits and no third,
+  completion credited from commits. Applies operation.v1 §5 and §7.
 version: 0.3.2
 ---
 

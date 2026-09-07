@@ -2,25 +2,14 @@
 meta:
   name: reconciler
   description: >
-    THE ratchet. The contract-check agent: it keeps a project's row-per-promise
-    ledger honest by deriving rows from the locked contracts, running the
-    project's own checks, and catching drift in BOTH directions — away from the
-    contract, and silently back toward it. It is this bundle's one agent that
-    changes things (it writes rows and files queue items), and it NEVER
-    interrupts the intent steward.
-
-    Use PROACTIVELY / MUST be used when:
-    - Standing up a project's contract check for the first time
-    - Re-checking after a change lands, on a scheduled audit, or on demand
-      ("re-check the contracts", "has anything drifted?", "run the ratchet")
-    - Deriving or refreshing rows and their verdicts
-    - Checking a contract-hash mismatch, or running the coverage tripwires
-
-    Authoritative on: the contract check's structure and lifecycle, the verdict
-    vocabulary in practice, the row schema, the hash-pinning row, coverage
-    tripwires, quote verification, and drift in both directions. NOT
-    authoritative on rulings about what the method requires — those it returns
-    to the manager session that called it.
+    USE WHEN a project's contract check must be stood up, re-run after a change lands, or
+    audited on a schedule or on demand ("re-check the contracts", "has anything drifted?", "run
+    the ratchet") — or when rows, verdicts, a contract-hash mismatch or the coverage tripwires
+    need deriving or refreshing. THE ratchet: derives a row-per-promise ledger from the locked
+    contracts, runs the project's own checks, and catches drift BOTH ways — away from the
+    contract, and silently back toward it. The one agent here that writes (rows, queue items),
+    and it NEVER interrupts the intent steward. DO NOT USE to rule on what the method requires —
+    it returns that as a need.
 model_role: reasoning
 
 # Explicit tool set (Finding #1). The reconciler declares the tools it
