@@ -1,0 +1,28 @@
+BEFORE whole delegate tool description: 54,668 B
+AFTER  whole delegate tool description: 52,732 B
+DELTA: -1,936 B
+
+PER-BUNDLE SLICE OF THE RENDERED AGENT CATALOG (bytes)
+bundle                         before    after    delta
+amplifier-online                4,068    4,068       +0
+amplifier-tester                2,986    2,986       +0
+anchors                         1,454    1,454       +0
+android-tester                  1,911    1,911       +0
+app-cli                         2,694    2,694       +0
+attractor                       2,133    2,133       +0
+browser-tester                  1,781    1,781       +0
+context-intelligence            1,237    1,237       +0
+converge                        4,640    2,704   -1,936
+digital-twin-universe           1,520    1,520       +0
+dot-graph                       7,044    7,044       +0
+infographic-builder             1,693    1,693       +0
+ios-tester                      7,671    7,671       +0
+notify                          1,856    1,856       +0
+reality-check                   3,068    3,068       +0
+recipes                         1,198    1,198       +0
+stories                         1,857    1,857       +0
+terminal-tester                 3,740    3,740       +0
+work-tracker                    1,159    1,159       +0
+
+CONTROL: bundles with non-zero delta = ['converge']  (expected exactly ['converge'])
+Bundles with delta 0: 18 of 19

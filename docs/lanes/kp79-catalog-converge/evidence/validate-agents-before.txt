@@ -1,0 +1,35 @@
+=== validate-agents v1.7.0 (own steps, run directly) ===
+DISCOVERY: candidates_scanned=6 agents_found=6 non_agents=0
+AGENTS: negotiator, proposal-drafter, protocol-authority, reader, reader, reconciler
+STRUCTURAL: errors=0 warnings=0
+QUALITY VERDICT: {
+  "phase": "classification",
+  "summary": {
+    "total": 6,
+    "good": 3,
+    "polish": 1,
+    "needs_work": 2,
+    "critical": 0
+  },
+  "quality_level": "needs_work",
+  "requires_llm_analysis": true,
+  "model_role_stats": {
+    "with_model_role": 4,
+    "without_model_role": 2,
+    "role_distribution": {
+      "reasoning": 4
+    },
+    "agents_without_model_role": [
+      "reader",
+      "reader"
+    ]
+  },
+  "message": "\u26a0\ufe0f 3/6 agents need attention. Running detailed analysis."
+}
+   negotiator             good       desc=1031 tok=None examples=False commentary=None tools=True :: Meets all quality thresholds
+   proposal-drafter       polish     desc=1245 tok=None examples=False commentary=None tools=True :: Description is 311 tokens (>300 threshold -- consider trimming)
+   protocol-authority     good       desc=1135 tok=None examples=False commentary=None tools=True :: Meets all quality thresholds
+   reconciler             good       desc=1082 tok=None examples=False commentary=None tools=True :: Meets all quality thresholds
+   reader                 needs_work desc=45 tok=None examples=False commentary=None tools=False :: Missing explicit tools section
+   reader                 needs_work desc=36 tok=None examples=False commentary=None tools=False :: Missing explicit tools section
+(work dir: /tmp/tmp.Pv1tROc68I)
