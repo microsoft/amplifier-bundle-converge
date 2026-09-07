@@ -74,7 +74,11 @@ Route by the *shape* of the ask:
   this session does not have to.
 - **"How do I author / perform X?"** (procedural) → load the matching skill:
   `seam-test`, `proposing-a-change`, `freeze-bar`, `ledger-disposition`,
-  `lane-brief`.
+  `lane-brief`. **These five arrive with the `converge-manager` mode**, which
+  contributes them; they are mid-operation manager procedures, so a session
+  that is not running the operation does not carry them and `load_skill` will
+  not find them. Turn the mode on (`/mode converge-manager`) and they are
+  there, by those same names.
 - **Worker agents return needs; they do not re-route.** When `reconciler`,
   `negotiator`, or `proposal-drafter` reports it needs a ruling or a seam
   judgment, *you* make the call and feed the answer back.

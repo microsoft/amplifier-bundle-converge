@@ -18,6 +18,33 @@ mode:
       - delegate
 
   contributes:
+    # The five procedure skills. They are MID-OPERATION procedures — write a
+    # lane brief, propose a change to a locked contract, decide whether a
+    # surface warrants a contract, give a ledger row its verdict, judge a lock
+    # bar — so the only session that ever reaches for one is a manager session,
+    # and that is this mode. Contributed here rather than registered always-on
+    # (the `tools: - module: tool-skills` block this replaced in
+    # `behaviors/converge.yaml`), they cost a host session zero tokens in the
+    # always-on skills-visibility catalog while the mode is off, and appear —
+    # loadable by name — the moment it is on.
+    #
+    # `load_skill` reachability, which §5.5 of the mode schema requires for a
+    # non-empty `contributes.skills`, is satisfied by `default_action: allow`
+    # above.
+    #
+    # HONEST DEPENDENCY, stated the same way the `modes:` block in
+    # behaviors/converge.yaml states its own: the skills MACHINERY (tool-skills,
+    # so `load_skill` exists at all) comes from the HOST, exactly as the mode
+    # machinery and the delegation tool do. On the root path the lean anchors
+    # base ships it; on the `--app` path the host session supplies it. A host
+    # with no skills tool reaches none of these — and would reach none of the
+    # host's own skills either, so nothing here is a converge-specific gap.
+    skills:
+      - "@converge:skills/freeze-bar"
+      - "@converge:skills/lane-brief"
+      - "@converge:skills/ledger-disposition"
+      - "@converge:skills/proposing-a-change"
+      - "@converge:skills/seam-test"
     context:
       - "@converge:context/manager/feedback-intake.md"
       - "@converge:context/manager/first-wake.md"

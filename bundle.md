@@ -90,7 +90,8 @@ honest between waves and refuses silent drift in either direction.
   the intent steward must make. Returns needs; never re-routes; read-only.
 - **`converge:proposal-drafter`** — authors a proposal beside a locked contract
   and stops. Never edits the locked file, never self-ratifies.
-- **Skills** (load on demand for a *procedural* "how do I…" ask):
+- **Skills** (contributed by the `converge-manager` mode — present only while
+  that mode is active; load on demand for a *procedural* "how do I…" ask):
   - `seam-test` — is this a seam? does it warrant a contract?
   - `proposing-a-change` — how to author a proposal beside a locked contract
   - `freeze-bar` — the four-condition DRAFT → locked checklist
