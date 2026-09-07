@@ -424,7 +424,7 @@ def check_section_order(root: Path):
         found = [h for h, _ in sections_of(text)]
         # Required sections, matched by prefix so "Reserved / open questions
         # (NOT frozen)" counts as "Reserved / open questions".
-        idx, missing, order_ok, last = 0, [], True, -1
+        missing, order_ok, last = [], True, -1
         for want in REQUIRED_SECTIONS:
             hit = next((i for i, h in enumerate(found) if h.startswith(want)), None)
             if hit is None:

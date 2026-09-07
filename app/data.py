@@ -742,7 +742,7 @@ def changes_for(repo: Path, path: Path, since: str = "", limit: int = 40) -> lis
 
 def history_for(repo: Path, path: Path, limit: int = 8) -> list[dict]:
     rel = Path(path).relative_to(repo).as_posix()
-    log = git(repo, "log", "--follow", f"--format=%H%x1f%ad%x1f%s", "--date=format:%b %-d · %H:%M", "-n", str(limit), "--", rel)
+    log = git(repo, "log", "--follow", "--format=%H%x1f%ad%x1f%s", "--date=format:%b %-d · %H:%M", "-n", str(limit), "--", rel)
     made: list[dict] = []
     for index, line in enumerate(log.splitlines()):
         parts = line.split("\x1f")

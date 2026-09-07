@@ -1184,7 +1184,7 @@ def check_proposals_look_the_same(pages):
             if order != sorted(order):
                 problems.append(
                     f"{p.route} lays the three parts out in the wrong order "
-                    f"({[l for l, _ in PROPOSAL_PARTS]} at {order})"
+                    f"({[label for label, _ in PROPOSAL_PARTS]} at {order})"
                 )
         checked.append(row)
     if problems:

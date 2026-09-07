@@ -7,6 +7,11 @@ def _git(repo, *args):
     return subprocess.run(["git", *args], cwd=str(repo), capture_output=True, text=True)
 
 
+def entry(word, proposal_id):
+    """The line this ratification adds to today's record."""
+    return f"{proposal_id}: {word}\n"
+
+
 def record_decision(repo, *, word, proposal_id, day):
     """Append the steward word to today ratification record, and commit it."""
     path = repo / "docs" / "workflow" / f"owner-ratifications-{day}.md"
