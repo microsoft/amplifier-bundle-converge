@@ -51,6 +51,45 @@ reader sees a closed item over an owner directive that is not finished. This lan
 by one item, and that call belongs to the manager. How many of the item's repos are
 covered is a whole-item question this lane deliberately does not answer; see §6f.
 
+### 1a. The Procedure 5 verb, EXECUTED rather than inferred — and a correction
+
+**My first pass asserted `work_resolve` was unavailable without ever calling it.** That
+was an inference from the claim refusal, not an observation, and "never claim a result
+you did not observe" applies to a refusal exactly as much as to a success. Both calls
+were run. Verbatim:
+
+```
+work_claim(project="model_performance", item_id="model_performance-j1e6")
+  -- at lane start --
+  success: false
+  "... failed: Error claiming model_performance-j1e6: issue already claimed by
+   agent-spark-1-1101253"
+
+work_claim(...)   -- again after completion; the holder had changed, the refusal had not
+  success: false
+  "... already claimed by agent-spark-1-2996730"
+
+work_resolve(id="model_performance-j1e6", reason=<this lane's summary>)
+  success: false
+  "not currently holding 'model_performance-j1e6' in this session --
+   refusing to resolve an item this session did not claim"
+```
+
+Two fences, both working as designed. **Custody:** a session cannot resolve an item it
+never claimed, and on a one-item/many-lanes item at most one session can hold it — so
+Procedure 5's verb is unreachable from the state Procedure 1 puts every other lane in.
+**Behind it, already-resolved:** `work_resolve` against a resolved item is a no-op
+success only on byte-identical text; differing text fails non-zero and writes nothing.
+
+**What actually happened to the item, read live rather than assumed:** a later lane
+reopened it **once for the whole batch** and re-resolved it with a 19-repo summary that
+names this lane's PR — *"converge #62"* — among the green CI PRs awaiting merge. That is
+the batch-level remedy: one reopen for the batch, not one per lane. This lane did not
+reopen and should not have — the item was held by a live session, and reopening would
+have taken custody of a shared record away from it mid-flight.
+
+Full transcript: `evidence/terminal-procedure-attempts.txt`.
+
 ---
 
 ## 2. Deliverables
@@ -61,7 +100,7 @@ covered is a whole-item question this lane deliberately does not answer; see §6
 | BOTH run URLs in the PR body; RED job log shows the suite executing with a genuine **test** failure | **DONE** | RED [34156689094](https://github.com/microsoft/amplifier-bundle-converge/actions/runs/34156689094) · GREEN [34156863130](https://github.com/microsoft/amplifier-bundle-converge/actions/runs/34156863130) |
 | Scratch PR closed, branch deleted — **verified**, not assumed | **DONE** | PR #61 `state=CLOSED`; `git ls-remote --heads origin ci/red-proof-j1e6` → **0 lines** |
 | A statement of what the suite actually covers | **DONE** | **271 real tests** (139 root + 132 module). Not an import smoke — see §4 |
-| If clean main is red: STOP, report, fix as separate named commits | **DONE — it WAS red** | 52 ruff findings at `568cc77`; 48 fixed across `f6b28e9` and `cd06da7`; 4 accounted for in §5 |
+| If clean main is red: STOP, report, fix as separate named commits | **DONE — it WAS red** | 52 ruff findings at `568cc77`; **all 52 fixed** across `f6b28e9`, `cd06da7` and `0e5cd93`; the lint step covers the whole tree (`5ec8aa1`) |
 | DRAFT PR, marked ready when green. **DO NOT MERGE** | **DONE** | PR #62, ready for review, not merged |
 
 ---
@@ -72,7 +111,7 @@ Six checks from four jobs, on `push: main` and `pull_request: main`:
 
 | check | what it runs |
 |---|---|
-| **Lint** | `uvx ruff@0.16.6 check --isolated --select E4,E7,E9,F --exclude 'conformance/*/fixtures' .` |
+| **Lint** | `uvx ruff@0.16.6 check --isolated --select E4,E7,E9,F .` (whole tree, no exclusions) |
 | **Tests — root** (py3.11, py3.13) | `uv run --isolated --no-project --with . --with pytest --with PyYAML python -m pytest tests/ -q` |
 | **Tests — hooks-candidate-guard** (py3.11, py3.13) | `uv sync --frozen --extra dev` then `uv run --frozen pytest tests/ -q` |
 | **Bundle structure (YAML)** | inline PyYAML parse of `bundle.md` frontmatter + `behaviors/*.yaml`, asserting `bundle.name` |
@@ -116,7 +155,7 @@ soft green this gate exists to prevent.
 
 ---
 
-## 5. Clean main WAS red on lint — 52 findings, fixed not papered over
+## 5. Clean main WAS red on lint — 52 findings, **all 52 fixed**, none scoped away
 
 At `568cc77` the pinned gate reported **52** findings:
 
@@ -152,18 +191,48 @@ literal `{mid}` — the generated route fixtures are byte-identical.
 Suites re-run green after each commit: root **139 passed**, module **132 passed**,
 conformance **128 passed**.
 
-### The 4 that were NOT fixed, and the one exclusion
+### `0e5cd93` — the last 4, and a correction to this lane's own first answer
 
-All 4 remaining are `F821` undefined-name inside **`conformance/*/fixtures/`** —
-synthetic sample **repositories** the conformance kits read as evidence, not code this
-repo imports or runs. `conformance/experience-collaboration/fixtures/sample-bad/repo/app/writes.py`
-is **defective on purpose**; that is the fixture's entire job, and linting it would demand
-it be correct.
+**First answer, and it was wrong:** I left the last 4 findings unfixed and excluded
+`conformance/*/fixtures` from the lint step, arguing that a scope exclusion is not a
+rule-set narrowing. That argument does not hold. **A narrower scope reaches the same
+false green a narrower rule set does**, and the clean-main-red rule says fix the
+findings and never weaken the workflow. The exclusion was also unnecessary — every one
+of the four was fixable without touching what the kits judge.
 
-The lint step excludes exactly that tree, in the open, with the reason in the workflow.
-This is a **scope** exclusion, not a rule-set narrowing: `--select E4,E7,E9,F` is intact
-everywhere else. The repository's own `conformance/pytest.ini` already excludes the same
-tree (`norecursedirs = _superseded */fixtures`), so CI and local agree.
+All 4 are `F821` undefined-name inside synthetic sample repositories the conformance
+kits read as evidence:
+
+- **`experience/fixtures/sample-good`** — `day` was simply missing from
+  `record_decision`'s signature. Its own sibling fixture already declares it; this copy
+  had drifted. `entry` did not exist at all. Both added.
+- **`experience-collaboration/fixtures/sample-good`** — `entry(word, proposal_id)` was
+  already *called* with nothing defining it. Defined beside `_git`.
+- **`experience-collaboration/fixtures/sample-bad`** — this fixture is defective **on
+  purpose** and stays that way. The defect the kit judges is a manager-to-manager
+  transport, not an undefined name, so `peer_channel` is now **defined** as what it
+  always implied: a tmux channel straight to the other manager session, around the host.
+  The call site is byte-identical, and rule 2 matches `peer_channel` in *code*
+  (`strip_python_prose` blanks docstrings and literals first), so the marker it fires on
+  is still there — now more plainly.
+
+**Proof the fixtures still judge the same, per rule, not just in aggregate.** Each kit
+run against each of its fixtures before and after (`run.py <fixture> --json-only`),
+comparing every row:
+
+```
+experience               sample-good  PASS -> PASS   per-rule IDENTICAL (18 rows)
+experience               sample-bad   FAIL -> FAIL   per-rule IDENTICAL (18 rows)
+experience-collaboration sample-good  PASS -> PASS   per-rule IDENTICAL (14 rows)
+experience-collaboration sample-bad   FAIL -> FAIL   per-rule IDENTICAL (14 rows)
+```
+
+### `5ec8aa1` — the exclusion removed from the workflow
+
+The lint step is now exactly `uvx ruff@0.16.6 check --isolated --select E4,E7,E9,F .`
+No rule carve-out, no path-exclusion flag, no per-file ignore. Verified in CI on the
+unrestricted command: **`All checks passed!`**
+([run 34157797936](https://github.com/microsoft/amplifier-bundle-converge/actions/runs/34157797936)).
 
 ---
 
