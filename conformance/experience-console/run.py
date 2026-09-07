@@ -203,7 +203,6 @@ def check_carries_the_session(snapshot):
 
 
 def check_typing_reaches_the_session(snapshot):
-    shell = snapshot.html("/")
     console = console_node(snapshot)
     if console is None:
         return KIT.bad("3", "the served shell carries no console")
@@ -242,7 +241,6 @@ def check_pane_when_wide_tray_when_small(snapshot):
     if not css.strip():
         return KIT.skip("4", "the target served no stylesheet, so neither the pane nor the "
                              "tray can be read; point the kit at the running app")
-    small = re.search(r"@media[^{]*max-width:\s*(\d+)px[^{]*\{(.*?)\n\}", css, re.S)
     tray_rules = re.findall(r"@media[^{]*max-width[^{]*\{[^@]*?\.manager-console\s*\{([^}]*)\}",
                             css, re.S)
     tray = any(re.search(r"position:\s*fixed|transform:\s*translate", block)
@@ -395,8 +393,8 @@ def check_reaches_nothing_else(snapshot):
     manager = snapshot.manager() or {}
     op = snapshot.operation() or {}
     own = {str(manager.get("managerTmux") or manager.get("tmux") or "")}
-    own |= {f"{(l.get('tmux') or {}).get('socket')}:{(l.get('tmux') or {}).get('session')}"
-            for l in (op.get("lanes") or []) if l.get("tmux")}
+    own |= {f"{(lane.get('tmux') or {}).get('socket')}:{(lane.get('tmux') or {}).get('session')}"
+            for lane in (op.get("lanes") or []) if lane.get("tmux")}
     own.discard(":")
     enumerating = sorted(p for p in snapshot.api_routes()
                          if re.search(r"/tmux/sessions|/sessions$", p))

@@ -259,7 +259,9 @@ def test_a_checkout_fresh_mtime_cannot_launder_an_old_snapshot(tmp_path):
         "GIT_COMMITTER_NAME": "t",
         "GIT_COMMITTER_EMAIL": "t@example.com",
     }
-    run = lambda *a: subprocess.run(a, cwd=repo, env=env, capture_output=True, check=True)
+    def run(*a):
+        return subprocess.run(a, cwd=repo, env=env, capture_output=True, check=True)
+
     run("git", "init", "-q")
     snap = repo / "work-items.json"
     snap.write_text(json.dumps([{"id": "converge-ism", "status": "open"}]), encoding="utf-8")

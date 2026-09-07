@@ -215,7 +215,6 @@ def test_a_sort_comparators_own_parentheses_do_not_hide_the_sort():
     `.sort((a, b) => b.needs - a.needs || …)`. A `\\.sort\\([^)]*needs` probe stops
     at the comparator's OWN closing parenthesis — it never reaches `needs` — and
     reported a correctly-sorted body as unsorted. A fabricated finding."""
-    kit = kit_module()
     home = "const s = [...list].sort((a, b) => b.needs - a.needs || 0);"
     hits = [m for m in re.finditer(r"\.sort\(", home)]
     assert any("needs" in home[m.end():m.end() + 160] for m in hits)

@@ -71,7 +71,8 @@ rows = yaml.safe_load(open("ledger/rows.yaml"))
 fail = []
 def chk(ok, msg):
     print(f"[{'OK  ' if ok else 'FAIL'}] {msg}")
-    if not ok: fail.append(msg)
+    if not ok:
+        fail.append(msg)
 
 chk(isinstance(rows, list), f"parses as YAML; top-level LIST of {len(rows)} rows")
 chk(rows[0]["id"] == "CVG-000" and rows[0].get("kind") == "sync", "first row is the SYNC row (CVG-000)")
@@ -87,8 +88,10 @@ ctext = {f"contracts/{p.name}": collapse(p.read_text()) for p in ROOT.glob("cont
 q_ok = 0
 for r in rows[1:]:
     c = r["contract"]
-    if collapse(c["quote"]) in ctext[c["file"]]: q_ok += 1
-    else: fail.append(f"{r['id']} QUOTE NOT FOUND: {collapse(c['quote'])[:70]}")
+    if collapse(c["quote"]) in ctext[c["file"]]:
+        q_ok += 1
+    else:
+        fail.append(f"{r['id']} QUOTE NOT FOUND: {collapse(c['quote'])[:70]}")
 chk(q_ok == len(rows)-1, f"{q_ok}/{len(rows)-1} quotes verify byte-for-byte (whitespace-collapsed) against contract bytes")
 
 chk(all("(" not in r["contract"]["clause"] for r in rows[1:]),
@@ -111,7 +114,10 @@ chk(all(not r.get("work") for r in rows[1:] if r["disposition"] == "CONFORMS"),
 # fire; ledger/checks/live_work.py holds the measurement and the fallback rules
 # — including why this line can never print OK without live data (converge-j0u5).
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import live_work
+# E402 is unavoidable and correct here: live_work lives beside this file and is
+# only importable after the sys.path.insert above. Suppressed on this one line
+# rather than by narrowing the rule set.
+import live_work  # noqa: E402
 
 work_report = live_work.evaluate([(r["id"], r.get("work")) for r in red])
 for line in work_report.detail:
@@ -124,12 +130,14 @@ print("\nEXECUTABLE REFS — does each one actually assert its expectation?")
 n_exec = 0
 for r in rows:
     a = r.get("assertion", {})
-    if a.get("kind") not in ("probe", "absence"): continue
+    if a.get("kind") not in ("probe", "absence"):
+        continue
     n_exec += 1
     exp = a.get("expect")
     if not isinstance(exp, dict) or "stdout_contains" not in exp:
         fail.append(f"{r['id']} executable ref with no usable expect: — a command, not an assertion")
-        print(f"  [FAIL] {r['id']:8s} no usable expect: (needs stdout_contains)"); continue
+        print(f"  [FAIL] {r['id']:8s} no usable expect: (needs stdout_contains)")
+        continue
     p = subprocess.run(["bash","-c",a["ref"]], capture_output=True, text=True, timeout=180)
     okx = p.returncode == exp.get("exit", 0)
     oks = exp["stdout_contains"] in p.stdout
@@ -142,9 +150,11 @@ print(f"[{'OK  ' if not any('expect' in f for f in fail) else 'FAIL'}] {n_exec} 
 missing = []
 for r in rows[1:]:
     a = r["assertion"]
-    if a.get("kind") != "indexed": continue
+    if a.get("kind") != "indexed":
+        continue
     for path in re.findall(r"[\w./-]+\.(?:py|md|yaml)", a["ref"]):
-        if not pathlib.Path(path).exists(): missing.append((r["id"], path))
+        if not pathlib.Path(path).exists():
+            missing.append((r["id"], path))
 chk(not missing, f"every indexed ref path exists on disk ({missing or 'all resolve'})")
 
 # indexed refs that name a KIT RULE name a rule that kit's README actually lists.
@@ -171,7 +181,8 @@ def kit_rules(kit):
 n_rule_refs = 0
 for r in rows[1:]:
     a = r["assertion"]
-    if a.get("kind") != "indexed": continue
+    if a.get("kind") != "indexed":
+        continue
     for kit, idlist in RULE_REF.findall(a["ref"]):
         named = [s.strip() for s in idlist.split(",") if s.strip()]
         have = kit_rules(kit)
@@ -179,7 +190,8 @@ for r in rows[1:]:
         n_rule_refs += len(named)
         print(f"  [{'OK  ' if not absent else 'FAIL'}] {r['id']:8s} {kit:12s} rule(s) {', '.join(named)}"
               + (f"  NOT IN {kit}/README.md: {absent}" if absent else ""))
-        if absent: fail.append(f"{r['id']} names {kit} rule(s) {absent}, absent from conformance/{kit}/README.md")
+        if absent:
+            fail.append(f"{r['id']} names {kit} rule(s) {absent}, absent from conformance/{kit}/README.md")
 chk(not any("names" in f and "absent from" in f for f in fail),
     f"{n_rule_refs} named kit rule ids, each present in its kit's README rule table")
 
@@ -197,10 +209,12 @@ for r in rows[1:]:
 
 print("\nROW COUNT PER CONTRACT")
 per = {}
-for r in rows[1:]: per.setdefault(r["contract"]["file"], Counter())[r["disposition"]] += 1
+for r in rows[1:]:
+    per.setdefault(r["contract"]["file"], Counter())[r["disposition"]] += 1
 tot = Counter()
 for f in sorted(per):
-    c = per[f]; tot += c
+    c = per[f]
+    tot += c
     print(f"  {f:34s} {sum(c.values()):3d} rows  " + "  ".join(f"{k}={v}" for k,v in sorted(c.items())))
 print(f"  {'TOTAL (non-SYNC)':34s} {sum(tot.values()):3d} rows  " + "  ".join(f"{k}={v}" for k,v in sorted(tot.items())))
 print(f"  {'TOTAL (with SYNC)':34s} {len(rows):3d}")
@@ -219,9 +233,13 @@ for p in [pathlib.Path(pin["file"]) for pin in rows[0]["pins"]]:
     cited = {r["contract"]["clause"] for r in rows[1:] if r["contract"]["file"] == f"contracts/{p.name}"}
     miss = [f"Core {i}" for i in range(1, n+1) if f"Core {i}" not in cited]
     print(f"  {p.name:24s} {n:2d} Core clauses, cited {n-len(miss)}/{n}" + (f"  MISSING {miss}" if miss else "  OK"))
-    if miss: fail.append(f"{p.name} missing {miss}")
+    if miss:
+        fail.append(f"{p.name} missing {miss}")
 
 print()
 if fail:
-    print("FAILURES:"); [print("  -", f) for f in fail]; sys.exit(1)
+    print("FAILURES:")
+    for f in fail:
+        print("  -", f)
+    sys.exit(1)
 print("ALL LEDGER SELF-CHECKS PASS")
