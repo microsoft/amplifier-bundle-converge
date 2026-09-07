@@ -588,8 +588,8 @@ def check_watch_session(snapshot):
         return KIT.bad("9", "; ".join(problems), lanes_without_session=len(without_session),
                        reported_watch_offered=reported_control,
                        reported_watch_reaches_its_lane=reported_reaches)
-    reach = (f"; the same control on a lane that has reported back reaches that lane's own "
-             f"session too" if reported_control else
+    reach = ("; the same control on a lane that has reported back reaches that lane's own "
+             "session too" if reported_control else
              "; no lane that has reported back is offered it, which the clause does not ask for")
     return KIT.ok("9",
                   f"Watch session opens the lane's own live view; {len(lanes) - len(without_session)}"

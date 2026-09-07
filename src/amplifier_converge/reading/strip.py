@@ -65,8 +65,8 @@ def _document_decisions(snapshot: Snapshot) -> list[Decision]:
                 what=f"Put your word on “{doc.title}”.",
                 subject=doc.title,
                 why_now=(
-                    f"It is a draft, and three of the four conditions for locking it are already green. "
-                    f"Yours is the one that is missing."
+                    "It is a draft, and three of the four conditions for locking it are already green. "
+                    "Yours is the one that is missing."
                 ),
                 recommendation="Read it, then answer ratified — or ratified with edits if you want a change first.",
                 trade_offs=(

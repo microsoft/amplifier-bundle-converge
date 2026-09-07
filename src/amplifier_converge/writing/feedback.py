@@ -11,7 +11,6 @@ session must be able to read the same drop.
 
 from __future__ import annotations
 
-import base64
 import re
 from datetime import datetime, timezone
 from pathlib import Path

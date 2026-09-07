@@ -58,7 +58,12 @@ that it still asserts this row's clause. Those need the re-review the SYNC row
 triggers.
 """
 
-import hashlib, pathlib, re, subprocess, sys, yaml
+import hashlib
+import pathlib
+import re
+import subprocess
+import sys
+import yaml
 from collections import Counter
 
 ROOT = pathlib.Path(".").resolve()
