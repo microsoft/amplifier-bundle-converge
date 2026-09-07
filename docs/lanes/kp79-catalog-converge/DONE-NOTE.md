@@ -271,6 +271,8 @@ is in this push.
 ## FINDINGS WORTH THEIR OWN ITEMS (not fixed here — both live in other repos)
 
 1. **`validate-agents` v1.7.0 crashes on any repo whose agent descriptions are YAML `>`/`|` scalars.**
+   **Filed as `model_performance-tnwd`**, linked `follow-up-of` `model_performance-kp79`, with a
+   fail-before/pass-after acceptance criterion.
    Root-caused above: `json.loads('''{{structural_results}}''')` in `quality-classification` (and the
    same shape for `{{discovery_results}}` in `structural-validation`). Two-character `\n` in the JSON
    becomes a real newline inside a JSON string. **It exits non-zero and loudly, which is the good
