@@ -242,7 +242,11 @@ anything the run started outside that directory — then delete the project's
   `proposing-a-change` (how to write a proposal), `freeze-bar` (the four
   conditions for locking a document — PROTOCOL.md §5 calls this the Freeze Bar),
   `ledger-disposition` (the contract-check vocabulary and row shape),
-  `lane-brief` (briefing a worker session honestly).
+  `lane-brief` (briefing a worker session honestly). All five are **contributed
+  by the `converge-manager` mode**, not registered always-on: they are
+  mid-operation manager procedures, so they appear in a session's skill catalog
+  only while that mode is active, and cost an unrelated session nothing while
+  it is off.
 - `modules/hooks-candidate-guard/` — the guard. A `tool:pre` hook, on by default,
   that structurally denies a direct write, edit, patch, or shell-laundered write
   to a locked contract or `VISION.md`. Changes land only via a ratified proposal

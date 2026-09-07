@@ -4,7 +4,8 @@ bundle:
   description: >-
     Vision-first, contract-driven development — the composable capability
     package. Adds converge's four agents (protocol-authority, reconciler,
-    negotiator, proposal-drafter), its five procedure skills (via tool-skills),
+    negotiator, proposal-drafter), its five procedure skills (contributed by
+    the converge-manager MODE, so they cost an unrelated session nothing),
     the hooks-candidate-guard tool:pre hook (structural PROTOCOL.md §5
     enforcement, on by default), and the thin always-on awareness context. THE
     install path:
@@ -33,18 +34,31 @@ includes:
 # root name). This behavior is deliberately named `converge-behavior` (distinct
 # from the root `converge`) so it does not shadow the root namespace.
 
-tools:
-  # Register converge's five skills with tool-skills so load_skill() finds them
-  # in a composed session. A host base ships the tool-skills MODULE (so load_skill
-  # exists) but points config.skills only at its own skills dirs — without this
-  # block converge's skills are DISCOVERABLE but not COMPOSED (the same
-  # discovery != composition trap as agents). A top-level `skills:` key is
-  # silently ignored; this tool-skills config.skills list is the sanctioned wiring.
-  - module: tool-skills
-    source: git+https://github.com/microsoft/amplifier-bundle-skills@main#subdirectory=modules/tool-skills
-    config:
-      skills:
-        - "@converge:skills"
+# NO top-level `tools:` block — deliberately. Converge's five skills used to be
+# registered here, always-on, with `- module: tool-skills` + `config.skills:
+# ["@converge:skills"]`. They are not any more: `modes/converge-manager.md`
+# contributes them through its `contributes.skills` block, so they mount only
+# while that mode is active.
+#
+# WHY THE MOVE (converge catalog reduction, 2026-09-07). The always-on
+# registration put all five into the skills-visibility catalog that is rendered
+# into EVERY session this behavior composes onto — including sessions doing
+# entirely unrelated work, which is precisely what a composable behavior must
+# not tax (contracts/composition.v1.md: "sit lightly on a host"). All five are
+# mid-operation manager procedures; a session that is not a manager session has
+# no use for any of them. Measured on this repository the same day, with the
+# shipped renderer on a real session (docs/lanes/qtwo-converge-catalog-
+# reduction/): 50 skills in the always-on catalog before, 45 after, all five
+# still loadable by name the moment the mode is on.
+#
+# WHAT THIS DEPENDS ON, stated rather than assumed: the tool-skills MODULE
+# itself now comes entirely from the host (the lean anchors base on the root
+# path; the host session on the `--app` path), exactly as the mode machinery
+# and the delegation tool already do. This file no longer mounts it. Do NOT
+# re-add a `- module: tool-skills` entry with an empty or partial
+# `config.skills` to "make sure it exists": module configs deep-merge, and a
+# list written here replaces the host's own skills dirs rather than adding to
+# them.
 
 hooks:
   # The ratchet's teeth (mechanism-spec §6.1 DECIDED: BUILD). Structural

@@ -1,0 +1,176 @@
+{
+  "bundle": "file:///home/bkrabach/dev/hw-model-performance/lanes/qtwo-converge-catalog-reduction/amplifier-bundle-converge/bundle.md",
+  "skills_tool": "load_skill",
+  "mode": "converge-manager",
+  "inactive": {
+    "count": 50,
+    "names": [
+      "adapt-skill",
+      "amplifier-tool-leverage-patterns",
+      "auth-tls-patterns",
+      "bet-sizer",
+      "bundle-to-dot",
+      "claiming-work-safely",
+      "cli-packaging-patterns",
+      "code-review",
+      "config-state-patterns",
+      "container-orchestration-patterns",
+      "context-intelligence-session-navigation",
+      "council",
+      "council-here",
+      "councilify",
+      "cranky-old-sam",
+      "creating-amplifier-modules",
+      "crusty-old-engineer",
+      "file-ipc-patterns",
+      "freeze-bar",
+      "http-service-patterns",
+      "image-vision",
+      "instance-storage-patterns",
+      "intent-keeper",
+      "lane-brief",
+      "ledger-disposition",
+      "mass-change",
+      "monitor",
+      "msgraph-integration-patterns",
+      "one-line-installer-patterns",
+      "outcome-cartographer",
+      "outcomist",
+      "per-repo-conventions",
+      "personafy",
+      "plugin-discovery-patterns",
+      "positioning-critic",
+      "product-council",
+      "product-council-here",
+      "proposing-a-change",
+      "react-microfrontend-patterns",
+      "restless-old-brian",
+      "role-definitions",
+      "seam-test",
+      "self-managing-tool-patterns",
+      "session-debug",
+      "skillify",
+      "skills-assist",
+      "tester-breaker",
+      "user-advocate",
+      "verification-discipline",
+      "work-tracker-operations"
+    ],
+    "converge_skills_present": [
+      "freeze-bar",
+      "lane-brief",
+      "ledger-disposition",
+      "proposing-a-change",
+      "seam-test"
+    ],
+    "block": "<system-reminder source=\"hooks-skills-visibility\">\nAvailable skills (use load_skill tool):\n\n- **tester-breaker**: Adversarial breaker that reviews code by trying to make it fail, not by confirming it\u2026 Use at any checkpoint \u2014 brainstorm, design, plan, implement, debug, review \u2014 when the\u2026\n- **adapt-skill**: Adapt a skill written for another AI assistant (Claude Code, Cursor, etc.) into a proper\u2026 Use when the user wants to adapt a skill, port a skill, convert a skill to amplifier,\u2026\n- **amplifier-tool-leverage-patterns**: Use when deciding how to expose an Amplifier workflow or automation tool \u2014 .dot attractor pipeline, Python lib, tool module, or CLI.\n- **auth-tls-patterns**: Use when a service needs auth that stays frictionless locally but secures remote access, or automatic TLS.\n- **bet-sizer**: Delivery-risk reviewer that sizes a plan's investment against the team's real\u2026 Use at any product checkpoint \u2014 plan, roadmap, investment/sequencing decision \u2014 when a\u2026\n- **bundle-to-dot**: Convention for the v3 bundle documentation system: a single bundle.dot + bundle.png per repo,\u2026 Use when generating, validating, or interpreting bundle documentation files.\n- **claiming-work-safely**: Use when claiming, holding, declaring state on, resolving, or losing custody of a work-tracker item -- or in doubt about those mechanics.\n- **cli-packaging-patterns**: Use when building a new CLI tool that needs one-line install, subcommand dispatch, or layered config.\n- **config-state-patterns**: Use when a tool needs config and state that survive crashes and live in the right place.\n- **container-orchestration-patterns**: Use when running tasks in Docker containers with safety limits and resource enforcement.\n- **context-intelligence-session-navigation**: Use when extracting session data directly from JSONL files \u2014 the fallback when the graph server is unavailable or outside graph-analyst.\n- **councilify**: Build a NEW complete \"council\" for a domain \u2014 a panel of orthogonal review lenses that fan out\u2026 Use when creating a council, standing up a review panel for a domain (product,\u2026\n- **cranky-old-sam**: Simplicity-obsessed reviewer that interrogates complexity and insists on the minimal viable\u2026 Use at any checkpoint \u2014 brainstorm, design, plan, implement, debug, review \u2014 when\u2026\n- **creating-amplifier-modules**: Use when creating a new Amplifier module (tool, hook, orchestrator, context, or provider).\n- **crusty-old-engineer**: Curmudgeonly engineering advisor: grounded skepticism and evidence-linked judgment on\u2026 Use at any checkpoint \u2014 brainstorm, design, plan, implement, debug, review \u2014 when\u2026\n- **file-ipc-patterns**: Use when processes must communicate through the filesystem with no message broker.\n- **freeze-bar**: Check whether a draft vision or contract is ready to be locked, and write the lock correctly once it is.\n- **http-service-patterns**: Use when building an HTTP service with FastAPI.\n- **image-vision**: Analyze images using LLM vision APIs (Anthropic Claude, OpenAI GPT-4, Google Gemini, Azure\u2026 Use when a task requires understanding image content, describing visual elements,\u2026\n- **instance-storage-patterns**: Use when a system manages multiple concurrent instances or sessions that each need isolated storage.\n- **intent-keeper**: Goal-clarity reviewer that refuses to judge a solution until the intent behind it is\u2026 Use at any checkpoint \u2014 brainstorm, design, plan, implement, debug, review \u2014 when the\u2026\n- **lane-brief**: Write a lane brief a worker session can run alone, and judge honestly whether a lane is\u2026 Use when briefing a worker session, when deciding whether a lane is actually done, or\u2026\n- **ledger-disposition**: Give a contract-check row the right verdict, and report it in the five plain words a\u2026 Use when populating or reviewing the ledger, when a row's check flips, when choosing\u2026\n- **monitor**: Run a bounded, self-checking polling loop (sleep -> check -> decide, repeat) WITHOUT ENDING THE TURN.\n- **msgraph-integration-patterns**: Hard-won patterns for probing, building, and debugging Microsoft Graph integrations,\u2026 Use when integrating with Microsoft Graph, Teams APIs, MSAL.js, or EasyAuth; when\u2026\n- **one-line-installer-patterns**: Use when designing a curl-piped install script for a project that cannot use uv tool install or npm publish.\n- **outcome-cartographer**: Outcome-validity reviewer that refuses to count shipped work as progress until it maps to\u2026 Use at any product checkpoint \u2014 plan, roadmap, PRD, ship review \u2014 when deliverables\u2026\n- **outcomist**: Outcome-clarity reviewer that asks whether you have defined what you're trying to\u2026 Use when a build is starting without a validated problem or a plain-language definition\u2026\n- **per-repo-conventions**: Use when starting work in any repository, and again at each work-phase transition (design, coding, debugging, verification, opening a PR).\n- **personafy**: Build a new opinionated advisor-persona skill \u2014 a reviewer \"lens\" like crusty-old-engineer,\u2026 Use when creating or authoring a persona/advisor skill, adding a sibling to the\u2026\n- **plugin-discovery-patterns**: Use when making a system extensible at runtime.\n- **positioning-critic**: Competitive-differentiation reviewer that refuses to accept \"the user wants this\" as\u2026 Use at any product checkpoint \u2014 plan, roadmap, go-to-market framing \u2014 when nobody can\u2026\n- **proposing-a-change**: How to propose a change to a locked vision or contract \u2014 a sibling proposal file named <contract>.vN-candidate.md, never a direct edit.\n- **react-microfrontend-patterns**: Use when building a React frontend that dynamically loads independent bundles sharing a single React instance.\n- **restless-old-brian**: Momentum-driven engineering reviewer holding one uncompromising gate: is it REAL,\u2026 Use at any checkpoint \u2014 brainstorm, design, plan, implement, debug, ship \u2014 when testing\u2026\n- **role-definitions**: Detailed model routing role definitions, decision flowchart, model tier grid, and fallback chain best practices. Load when authoring agents or debugging model routing.\n- **seam-test**: Decide whether a surface is a seam \u2014 something outside this project depends on it, so\u2026 Use when scoping contracts, when someone proposes writing one, when deciding whether a\u2026\n- **self-managing-tool-patterns**: Use when a CLI tool needs to manage itself.\n- **skillify**: Capture a repeatable process from the current session into a reusable Amplifier SKILL.md\u2026 Use when the user wants to create a skill, save a workflow as a skill, turn a process\u2026\n- **skills-assist**: Authoritative consultant for all skills-related questions. \u2026 Use when creating or modifying skills, understanding the Agent Skills spec, troubleshooting skill loading or\u2026\n- **user-advocate**: User-need reviewer that speaks for the person who isn't in the room \u2014 the one who will\u2026 Use at any checkpoint \u2014 brainstorm, design, plan, implement, debug, review \u2014 when a\u2026\n- **verification-discipline**: Use when verifying that completed work actually works. Auto-surface during /verify mode, post-implementation review, or before claiming a task is done.\n- **work-tracker-operations**: Use when running `doctor`, upgrading bd, standing up a project, scheduling reap/notify timers, or diagnosing why something that should be automatic isn't happening.\n\nUser-invoked skills (available via /command):\n\n- **code-review**: Review changed code for reuse, quality, and efficiency, then fix any issues found.\n- **council**: Convene the persona panel \u2014 six orthogonal review lenses \u2014 on a target.\n- **council-here**: Convene the persona panel on the CURRENT conversation \u2014 the plan, design, or decision built in this\u2026 Use when you want the council to critique what we're working on right now.\n- **mass-change**: Research and plan a large-scale change, then execute it in parallel across isolated agents that each open a PR.\n- **product-council**: Convene the Product Development Council \u2014 six orthogonal product-delivery lenses anchored by a mandatory problem-validation gate.\n- **product-council-here**: Convene the Product Development Council on the CURRENT conversation \u2014 the plan, roadmap, or scope\u2026 Use when you want the council to critique what we're working on right now.\n- **session-debug**: Diagnose issues in the current Amplifier session \u2014 misconfigured tools, failing operations, unexpected behavior. Use when something isn't working right.\n</system-reminder>",
+    "load_skill": {
+      "freeze-bar": {
+        "loaded": true,
+        "detail": ""
+      },
+      "lane-brief": {
+        "loaded": true,
+        "detail": ""
+      },
+      "ledger-disposition": {
+        "loaded": true,
+        "detail": ""
+      },
+      "proposing-a-change": {
+        "loaded": true,
+        "detail": ""
+      },
+      "seam-test": {
+        "loaded": true,
+        "detail": ""
+      }
+    }
+  },
+  "active": {
+    "count": 50,
+    "names": [
+      "adapt-skill",
+      "amplifier-tool-leverage-patterns",
+      "auth-tls-patterns",
+      "bet-sizer",
+      "bundle-to-dot",
+      "claiming-work-safely",
+      "cli-packaging-patterns",
+      "code-review",
+      "config-state-patterns",
+      "container-orchestration-patterns",
+      "context-intelligence-session-navigation",
+      "council",
+      "council-here",
+      "councilify",
+      "cranky-old-sam",
+      "creating-amplifier-modules",
+      "crusty-old-engineer",
+      "file-ipc-patterns",
+      "freeze-bar",
+      "http-service-patterns",
+      "image-vision",
+      "instance-storage-patterns",
+      "intent-keeper",
+      "lane-brief",
+      "ledger-disposition",
+      "mass-change",
+      "monitor",
+      "msgraph-integration-patterns",
+      "one-line-installer-patterns",
+      "outcome-cartographer",
+      "outcomist",
+      "per-repo-conventions",
+      "personafy",
+      "plugin-discovery-patterns",
+      "positioning-critic",
+      "product-council",
+      "product-council-here",
+      "proposing-a-change",
+      "react-microfrontend-patterns",
+      "restless-old-brian",
+      "role-definitions",
+      "seam-test",
+      "self-managing-tool-patterns",
+      "session-debug",
+      "skillify",
+      "skills-assist",
+      "tester-breaker",
+      "user-advocate",
+      "verification-discipline",
+      "work-tracker-operations"
+    ],
+    "converge_skills_present": [
+      "freeze-bar",
+      "lane-brief",
+      "ledger-disposition",
+      "proposing-a-change",
+      "seam-test"
+    ],
+    "block": "<system-reminder source=\"hooks-skills-visibility\">\nAvailable skills (use load_skill tool):\n\n- **tester-breaker**: Adversarial breaker that reviews code by trying to make it fail, not by confirming it\u2026 Use at any checkpoint \u2014 brainstorm, design, plan, implement, debug, review \u2014 when the\u2026\n- **adapt-skill**: Adapt a skill written for another AI assistant (Claude Code, Cursor, etc.) into a proper\u2026 Use when the user wants to adapt a skill, port a skill, convert a skill to amplifier,\u2026\n- **amplifier-tool-leverage-patterns**: Use when deciding how to expose an Amplifier workflow or automation tool \u2014 .dot attractor pipeline, Python lib, tool module, or CLI.\n- **auth-tls-patterns**: Use when a service needs auth that stays frictionless locally but secures remote access, or automatic TLS.\n- **bet-sizer**: Delivery-risk reviewer that sizes a plan's investment against the team's real\u2026 Use at any product checkpoint \u2014 plan, roadmap, investment/sequencing decision \u2014 when a\u2026\n- **bundle-to-dot**: Convention for the v3 bundle documentation system: a single bundle.dot + bundle.png per repo,\u2026 Use when generating, validating, or interpreting bundle documentation files.\n- **claiming-work-safely**: Use when claiming, holding, declaring state on, resolving, or losing custody of a work-tracker item -- or in doubt about those mechanics.\n- **cli-packaging-patterns**: Use when building a new CLI tool that needs one-line install, subcommand dispatch, or layered config.\n- **config-state-patterns**: Use when a tool needs config and state that survive crashes and live in the right place.\n- **container-orchestration-patterns**: Use when running tasks in Docker containers with safety limits and resource enforcement.\n- **context-intelligence-session-navigation**: Use when extracting session data directly from JSONL files \u2014 the fallback when the graph server is unavailable or outside graph-analyst.\n- **councilify**: Build a NEW complete \"council\" for a domain \u2014 a panel of orthogonal review lenses that fan out\u2026 Use when creating a council, standing up a review panel for a domain (product,\u2026\n- **cranky-old-sam**: Simplicity-obsessed reviewer that interrogates complexity and insists on the minimal viable\u2026 Use at any checkpoint \u2014 brainstorm, design, plan, implement, debug, review \u2014 when\u2026\n- **creating-amplifier-modules**: Use when creating a new Amplifier module (tool, hook, orchestrator, context, or provider).\n- **crusty-old-engineer**: Curmudgeonly engineering advisor: grounded skepticism and evidence-linked judgment on\u2026 Use at any checkpoint \u2014 brainstorm, design, plan, implement, debug, review \u2014 when\u2026\n- **file-ipc-patterns**: Use when processes must communicate through the filesystem with no message broker.\n- **freeze-bar**: Check whether a draft vision or contract is ready to be locked, and write the lock correctly once it is.\n- **http-service-patterns**: Use when building an HTTP service with FastAPI.\n- **image-vision**: Analyze images using LLM vision APIs (Anthropic Claude, OpenAI GPT-4, Google Gemini, Azure\u2026 Use when a task requires understanding image content, describing visual elements,\u2026\n- **instance-storage-patterns**: Use when a system manages multiple concurrent instances or sessions that each need isolated storage.\n- **intent-keeper**: Goal-clarity reviewer that refuses to judge a solution until the intent behind it is\u2026 Use at any checkpoint \u2014 brainstorm, design, plan, implement, debug, review \u2014 when the\u2026\n- **lane-brief**: Write a lane brief a worker session can run alone, and judge honestly whether a lane is\u2026 Use when briefing a worker session, when deciding whether a lane is actually done, or\u2026\n- **ledger-disposition**: Give a contract-check row the right verdict, and report it in the five plain words a\u2026 Use when populating or reviewing the ledger, when a row's check flips, when choosing\u2026\n- **monitor**: Run a bounded, self-checking polling loop (sleep -> check -> decide, repeat) WITHOUT ENDING THE TURN.\n- **msgraph-integration-patterns**: Hard-won patterns for probing, building, and debugging Microsoft Graph integrations,\u2026 Use when integrating with Microsoft Graph, Teams APIs, MSAL.js, or EasyAuth; when\u2026\n- **one-line-installer-patterns**: Use when designing a curl-piped install script for a project that cannot use uv tool install or npm publish.\n- **outcome-cartographer**: Outcome-validity reviewer that refuses to count shipped work as progress until it maps to\u2026 Use at any product checkpoint \u2014 plan, roadmap, PRD, ship review \u2014 when deliverables\u2026\n- **outcomist**: Outcome-clarity reviewer that asks whether you have defined what you're trying to\u2026 Use when a build is starting without a validated problem or a plain-language definition\u2026\n- **per-repo-conventions**: Use when starting work in any repository, and again at each work-phase transition (design, coding, debugging, verification, opening a PR).\n- **personafy**: Build a new opinionated advisor-persona skill \u2014 a reviewer \"lens\" like crusty-old-engineer,\u2026 Use when creating or authoring a persona/advisor skill, adding a sibling to the\u2026\n- **plugin-discovery-patterns**: Use when making a system extensible at runtime.\n- **positioning-critic**: Competitive-differentiation reviewer that refuses to accept \"the user wants this\" as\u2026 Use at any product checkpoint \u2014 plan, roadmap, go-to-market framing \u2014 when nobody can\u2026\n- **proposing-a-change**: How to propose a change to a locked vision or contract \u2014 a sibling proposal file named <contract>.vN-candidate.md, never a direct edit.\n- **react-microfrontend-patterns**: Use when building a React frontend that dynamically loads independent bundles sharing a single React instance.\n- **restless-old-brian**: Momentum-driven engineering reviewer holding one uncompromising gate: is it REAL,\u2026 Use at any checkpoint \u2014 brainstorm, design, plan, implement, debug, ship \u2014 when testing\u2026\n- **role-definitions**: Detailed model routing role definitions, decision flowchart, model tier grid, and fallback chain best practices. Load when authoring agents or debugging model routing.\n- **seam-test**: Decide whether a surface is a seam \u2014 something outside this project depends on it, so\u2026 Use when scoping contracts, when someone proposes writing one, when deciding whether a\u2026\n- **self-managing-tool-patterns**: Use when a CLI tool needs to manage itself.\n- **skillify**: Capture a repeatable process from the current session into a reusable Amplifier SKILL.md\u2026 Use when the user wants to create a skill, save a workflow as a skill, turn a process\u2026\n- **skills-assist**: Authoritative consultant for all skills-related questions. \u2026 Use when creating or modifying skills, understanding the Agent Skills spec, troubleshooting skill loading or\u2026\n- **user-advocate**: User-need reviewer that speaks for the person who isn't in the room \u2014 the one who will\u2026 Use at any checkpoint \u2014 brainstorm, design, plan, implement, debug, review \u2014 when a\u2026\n- **verification-discipline**: Use when verifying that completed work actually works. Auto-surface during /verify mode, post-implementation review, or before claiming a task is done.\n- **work-tracker-operations**: Use when running `doctor`, upgrading bd, standing up a project, scheduling reap/notify timers, or diagnosing why something that should be automatic isn't happening.\n\nUser-invoked skills (available via /command):\n\n- **code-review**: Review changed code for reuse, quality, and efficiency, then fix any issues found.\n- **council**: Convene the persona panel \u2014 six orthogonal review lenses \u2014 on a target.\n- **council-here**: Convene the persona panel on the CURRENT conversation \u2014 the plan, design, or decision built in this\u2026 Use when you want the council to critique what we're working on right now.\n- **mass-change**: Research and plan a large-scale change, then execute it in parallel across isolated agents that each open a PR.\n- **product-council**: Convene the Product Development Council \u2014 six orthogonal product-delivery lenses anchored by a mandatory problem-validation gate.\n- **product-council-here**: Convene the Product Development Council on the CURRENT conversation \u2014 the plan, roadmap, or scope\u2026 Use when you want the council to critique what we're working on right now.\n- **session-debug**: Diagnose issues in the current Amplifier session \u2014 misconfigured tools, failing operations, unexpected behavior. Use when something isn't working right.\n</system-reminder>",
+    "load_skill": {
+      "freeze-bar": {
+        "loaded": true,
+        "detail": ""
+      },
+      "lane-brief": {
+        "loaded": true,
+        "detail": ""
+      },
+      "ledger-disposition": {
+        "loaded": true,
+        "detail": ""
+      },
+      "proposing-a-change": {
+        "loaded": true,
+        "detail": ""
+      },
+      "seam-test": {
+        "loaded": true,
+        "detail": ""
+      }
+    }
+  },
+  "delta": 0
+}
