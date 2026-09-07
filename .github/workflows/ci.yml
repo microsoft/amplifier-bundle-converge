@@ -59,19 +59,20 @@ jobs:
   #                      -- ruff's own classic default tier: pycodestyle
   #                         errors plus pyflakes (undefined names, unused
   #                         imports, f-string bugs). Real breakage, not style.
-  #                         The rule set is NOT narrowed: this repo's main was
-  #                         red with 52 findings at 568cc77 and 48 of them
-  #                         were fixed, as two named commits on this branch,
-  #                         rather than selected away.
   #
-  # The one scope exclusion, in the open: conformance/*/fixtures. Those are
-  # synthetic sample REPOSITORIES the conformance kits read as evidence, not
-  # code this repo imports or runs -- and sample-bad/repo/app/writes.py is
-  # defective on purpose, which is the fixture's entire job. Linting them
-  # would demand they be correct, which would destroy what they are for. The
-  # repo's own conformance/pytest.ini already excludes the same tree
-  # (`norecursedirs = _superseded */fixtures`). Exactly 4 findings live there,
-  # all F821 undefined-name, all in a fixture repo's app/writes.py.
+  # NEITHER THE RULE SET NOR THE SCOPE IS NARROWED. No rule carve-out, no
+  # path-exclusion flag, no per-file ignore: the whole repository is linted,
+  # fixtures included. This repo's main was RED with 52 findings at 568cc77 and all 52
+  # were fixed, as three named commits on this branch, rather than selected or
+  # scoped away.
+  #
+  # The last four were F821 undefined-name inside conformance/*/fixtures --
+  # synthetic sample repositories the kits read as evidence, one of them
+  # defective on purpose. Excluding that tree was tried and REVERTED: an
+  # exclusion is a narrowed scope, and it turned out to be unnecessary. Each was
+  # fixed at its site with the fixture's judged behaviour left intact, proven by
+  # running each kit against each fixture before and after and comparing every
+  # row (good PASS -> PASS, bad FAIL -> FAIL, per-rule identical).
   #
   # `ruff format --check` is deliberately NOT run: at this commit it reports
   # 122 of 305 files would be reformatted. Reformatting the repository is a
@@ -94,7 +95,7 @@ jobs:
       - uses: astral-sh/setup-uv@v4
 
       - name: Lint (ruff 0.16.6, pinned)
-        run: uvx ruff@0.16.6 check --isolated --select E4,E7,E9,F --exclude 'conformance/*/fixtures' .
+        run: uvx ruff@0.16.6 check --isolated --select E4,E7,E9,F .
 
   # ────────────────────────────────────────────────────────────────────────
   # Tests -- root package. 139 real tests under tests/, exercising
