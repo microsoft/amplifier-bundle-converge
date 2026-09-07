@@ -45,10 +45,11 @@ every deliverable, and record per-repo completion with `work_erratum`, which is
 append-only and requires no claim.
 
 **Note on the item's status:** it already reads `resolved` (closed 2026-09-07T18:14:01Z),
-over a resolution covering **1 of its 19 repos** (wayfinder). A later reader sees a closed
-item over an owner directive that is a small fraction done. This lane did **not**
-`work_reopen` it — reopening clears `closed_at` and moves every throughput roll-up by one
-item, and that call belongs to the manager. Flagged here and in the erratum.
+over a resolution that covers a different repo (wayfinder) and says so itself. A later
+reader sees a closed item over an owner directive that is not finished. This lane did
+**not** `work_reopen` it — reopening clears `closed_at` and moves every throughput roll-up
+by one item, and that call belongs to the manager. How many of the item's repos are
+covered is a whole-item question this lane deliberately does not answer; see §6f.
 
 ---
 
@@ -220,6 +221,21 @@ inside a CI PR would bury the CI in it.
   `Invalid # noqa directive ... expected a comma-separated list of codes` and reported the
   `F401` anyway. Useful both ways: a prose `noqa` is not a silent suppression.
 
+### 6f. A per-lane erratum must carry no cross-lane ordinal and no whole-item tally
+
+Recorded because this lane got it wrong and had to correct itself.
+
+The first erratum filed here said the goal defect was being "filed a SECOND time" and
+tallied how many of the item's repos were covered. Both were computed from a read of the
+errata list taken at lane start. On an item with this many concurrent lanes, **the window
+between composing an erratum and writing it is long enough to invalidate any count taken
+at the start** — by the time mine landed, several lanes had filed the same observation and
+one had already published the structural remedy, which mine then violated anyway.
+
+So "re-read the errata before filing" is not a workable remedy. The structural one is:
+**state only what your own lane observed, and let the reader of the finished list do the
+counting.** A correction erratum was filed; it adds no count of its own.
+
 ### 6e. Goal defect, same one the browser-tester lane filed
 
 This item's per-lane goal template applies a **single-lane** claim/resolve procedure to a
@@ -285,9 +301,10 @@ authority's arithmetic closes trivially and OUTCOME branch B never applied.
 1. **Merge PR #62**, then confirm `main` HEAD reports a successful check-run
    (`gh api repos/microsoft/amplifier-bundle-converge/commits/main/check-runs`) —
    *configured is not installed*.
-2. **Decide the item's disposition.** `model_performance-j1e6` reads `resolved` over 1 of
-   19 repos. This lane recorded converge via `work_erratum` (append-only, no claim
-   needed). If the remaining repos should be tracked, the `work_reopen` call is yours.
+2. **Decide the item's disposition.** `model_performance-j1e6` reads `resolved` while
+   lanes are still landing repos against it. This lane recorded converge via
+   `work_erratum` (append-only, no claim needed) and took no whole-item tally. If the
+   remaining repos should be tracked, the `work_reopen` call is yours.
 3. **File §6a** (`conformance/composition/run.py` needs ≥3.12 vs a declared ≥3.11 floor)
    as its own work item against `converge`. It is a genuine version-floor contradiction,
    not a CI problem.
