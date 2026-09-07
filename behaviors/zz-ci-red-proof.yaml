@@ -1,0 +1,3 @@
+bundle:
+  name: [ this bracket is never closed
+  version: 0.0.0
