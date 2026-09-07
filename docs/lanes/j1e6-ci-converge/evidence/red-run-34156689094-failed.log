@@ -1,0 +1,207 @@
+Lint	Lint (ruff 0.16.6, pinned)	﻿2026-09-07T19:44:11.4945364Z ##[group]Run uvx ruff@0.16.6 check --isolated --select E4,E7,E9,F --exclude 'conformance/*/fixtures' .
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.4946247Z [36;1muvx ruff@0.16.6 check --isolated --select E4,E7,E9,F --exclude 'conformance/*/fixtures' .[0m
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.4990643Z shell: /usr/bin/bash -e {0}
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.4990993Z env:
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.4991304Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.4991679Z ##[endgroup]
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.6916583Z Downloading ruff (9.8MiB)
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.7624435Z  Downloaded ruff
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.7645580Z Installed 1 package in 1ms
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8246377Z warning: Invalid `# noqa` directive on tests/test_ci_red_proof.py:17: expected a comma-separated list of codes (e.g., `# noqa: F401, F841`).
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8414449Z F401 [*] `json` imported but unused
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8415298Z   --> tests/test_ci_red_proof.py:17:8
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8415663Z    |
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8415939Z 15 | from __future__ import annotations
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8416518Z 16 |
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8417184Z 17 | import json  # noqa: intentionally unused -- the planted F401 for the lint gate
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8417818Z    |        ^^^^
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8418419Z help: Remove unused import: `json`
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8418714Z    |
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8418938Z 16 |
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8419329Z    - import json  # noqa: intentionally unused -- the planted F401 for the lint gate
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8419770Z 17 |
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8420016Z    |
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8420138Z 
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8420251Z Found 1 error.
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8420560Z [*] 1 fixable with the `--fix` option.
+Lint	Lint (ruff 0.16.6, pinned)	2026-09-07T19:44:11.8456366Z ##[error]Process completed with exit code 1.
+Tests -- root (py3.13)	Run the root suite	﻿2026-09-07T19:44:12.5209847Z ##[group]Run uv run --isolated --no-project --python 3.13 --with . --with 'pytest>=8.0' --with 'PyYAML>=6.0' python -m pytest tests/ -q --tb=short
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:12.5210904Z [36;1muv run --isolated --no-project --python 3.13 --with . --with 'pytest>=8.0' --with 'PyYAML>=6.0' python -m pytest tests/ -q --tb=short[0m
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:12.5253429Z shell: /usr/bin/bash -e {0}
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:12.5253701Z env:
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:12.5253958Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:12.5254278Z ##[endgroup]
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:12.7134215Z Downloading cpython-3.13.15-linux-x86_64-gnu (download) (33.2MiB)
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:13.5400986Z  Downloaded cpython-3.13.15-linux-x86_64-gnu (download)
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:13.7309639Z    Building amplifier-converge @ file:///home/runner/work/amplifier-bundle-converge/amplifier-bundle-converge
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:13.7400813Z Downloading pygments (1.2MiB)
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:13.7772728Z  Downloaded pygments
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:14.2970000Z       Built amplifier-converge @ file:///home/runner/work/amplifier-bundle-converge/amplifier-bundle-converge
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:14.3076564Z Installed 7 packages in 7ms
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:15.9115713Z .....F.................................................................. [ 51%]
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:16.5420932Z ....................................................................     [100%]
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:16.5421670Z =================================== FAILURES ===================================
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:16.5422358Z ____________________ test_ci_red_proof_root_suite_can_fail _____________________
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:16.5423104Z tests/test_ci_red_proof.py:21: in test_ci_red_proof_root_suite_can_fail
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:16.5423963Z     assert 1 == 2, "planted failure: the root test job is really executing this suite"
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:16.5424969Z E   AssertionError: planted failure: the root test job is really executing this suite
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:16.5425829Z E   assert 1 == 2
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:16.5426304Z =========================== short test summary info ============================
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:16.5427939Z FAILED tests/test_ci_red_proof.py::test_ci_red_proof_root_suite_can_fail - AssertionError: planted failure: the root test job is really executing this suite
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:16.5429110Z assert 1 == 2
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:16.5429498Z 1 failed, 139 passed in 1.71s
+Tests -- root (py3.13)	Run the root suite	2026-09-07T19:44:16.5805089Z ##[error]Process completed with exit code 1.
+Tests -- root (py3.11)	Run the root suite	﻿2026-09-07T19:44:13.7281162Z ##[group]Run uv run --isolated --no-project --python 3.11 --with . --with 'pytest>=8.0' --with 'PyYAML>=6.0' python -m pytest tests/ -q --tb=short
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:13.7282605Z [36;1muv run --isolated --no-project --python 3.11 --with . --with 'pytest>=8.0' --with 'PyYAML>=6.0' python -m pytest tests/ -q --tb=short[0m
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:13.7325077Z shell: /usr/bin/bash -e {0}
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:13.7325369Z env:
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:13.7325632Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:13.7325957Z ##[endgroup]
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:13.9543669Z Downloading cpython-3.11.16-linux-x86_64-gnu (download) (29.4MiB)
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:39.4812861Z  Downloaded cpython-3.11.16-linux-x86_64-gnu (download)
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:39.6864074Z    Building amplifier-converge @ file:///home/runner/work/amplifier-bundle-converge/amplifier-bundle-converge
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:39.7128887Z Downloading pygments (1.2MiB)
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:39.7618259Z  Downloaded pygments
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:40.2285489Z       Built amplifier-converge @ file:///home/runner/work/amplifier-bundle-converge/amplifier-bundle-converge
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:40.2392921Z Installed 7 packages in 8ms
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.7108468Z .....F.................................................................. [ 51%]
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.8574151Z ....................................................................     [100%]
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.8575502Z =================================== FAILURES ===================================
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.8576754Z ____________________ test_ci_red_proof_root_suite_can_fail _____________________
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.8578232Z tests/test_ci_red_proof.py:21: in test_ci_red_proof_root_suite_can_fail
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.8579818Z     assert 1 == 2, "planted failure: the root test job is really executing this suite"
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.8581963Z E   AssertionError: planted failure: the root test job is really executing this suite
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.8583384Z E   assert 1 == 2
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.8584172Z =========================== short test summary info ============================
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.8586185Z FAILED tests/test_ci_red_proof.py::test_ci_red_proof_root_suite_can_fail - AssertionError: planted failure: the root test job is really executing this suite
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.8587635Z assert 1 == 2
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.8588107Z 1 failed, 139 passed in 1.16s
+Tests -- root (py3.11)	Run the root suite	2026-09-07T19:44:41.8907904Z ##[error]Process completed with exit code 1.
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	﻿2026-09-07T19:44:11.8541143Z ##[group]Run python - <<'PY'
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8541620Z [36;1mpython - <<'PY'[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8541955Z [36;1mimport pathlib[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8542251Z [36;1mimport sys[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8542515Z [36;1m[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8542768Z [36;1mimport yaml[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8543034Z [36;1m[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8543297Z [36;1mroot = pathlib.Path.cwd()[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8543628Z [36;1mfailures: list[str] = [][0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8543953Z [36;1mchecked = 0[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8544225Z [36;1m[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8544492Z [36;1mbundle_md = root / "bundle.md"[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8544840Z [36;1mif not bundle_md.is_file():[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8545207Z [36;1m    failures.append("bundle.md is missing")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8545561Z [36;1melse:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8546080Z [36;1m    text = bundle_md.read_text(encoding="utf-8")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8546715Z [36;1m    if not text.startswith("---\n"):[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8547234Z [36;1m        failures.append("bundle.md: no YAML frontmatter (file does not open with '---')")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8547780Z [36;1m    else:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8548074Z [36;1m        end = text.find("\n---", 3)[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8548415Z [36;1m        if end == -1:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8548833Z [36;1m            failures.append("bundle.md: frontmatter opened but never closed")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8549271Z [36;1m        else:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8549574Z [36;1m            data = None[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8549886Z [36;1m            try:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8550208Z [36;1m                data = yaml.safe_load(text[4 : end + 1])[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8550596Z [36;1m                checked += 1[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8550934Z [36;1m            except yaml.YAMLError as exc:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8551365Z [36;1m                failures.append("bundle.md frontmatter: " + str(exc))[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8551838Z [36;1m            if data is not None:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8552360Z [36;1m                name = data.get("bundle", {}).get("name") if isinstance(data, dict) else None[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8552827Z [36;1m                if not name:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8553267Z [36;1m                    failures.append("bundle.md frontmatter: missing bundle.name")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8553731Z [36;1m                else:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8554118Z [36;1m                    print("OK  bundle.md  (bundle.name=" + str(name) + ")")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8554524Z [36;1m[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8554851Z [36;1mbehaviors = sorted((root / "behaviors").glob("*.yaml"))[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8555249Z [36;1mif not behaviors:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8555548Z [36;1m    failures.append([0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8556156Z [36;1m        "behaviors/*.yaml matched NOTHING -- a structure gate that checks zero files is decoration"[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8556679Z [36;1m    )[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8556949Z [36;1mfor path in behaviors:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8557331Z [36;1m    # .as_posix(), not str(): str() emits OS-native separators.[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8557771Z [36;1m    rel = path.relative_to(root).as_posix()[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8558115Z [36;1m    try:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8558452Z [36;1m        data = yaml.safe_load(path.read_text(encoding="utf-8"))[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8558850Z [36;1m        checked += 1[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8559167Z [36;1m    except yaml.YAMLError as exc:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8559535Z [36;1m        failures.append(rel + ": " + str(exc))[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8559892Z [36;1m        continue[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8560296Z [36;1m    name = data.get("bundle", {}).get("name") if isinstance(data, dict) else None[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8560735Z [36;1m    if not name:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8561076Z [36;1m        failures.append(rel + ": missing bundle.name")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8561457Z [36;1m    else:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8561795Z [36;1m        print("OK  " + rel + "  (bundle.name=" + str(name) + ")")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8562414Z [36;1m[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8562667Z [36;1mprint("")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8562999Z [36;1mprint(str(checked) + " YAML document(s) parsed.")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8563379Z [36;1mif failures:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8563661Z [36;1m    print("")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8563947Z [36;1m    print("FAILURES:")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8564255Z [36;1m    for item in failures:[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8564577Z [36;1m        print("  - " + item)[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8564888Z [36;1m    sys.exit(1)[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8565185Z [36;1mprint("Bundle structure OK.")[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8565532Z [36;1mPY[0m
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8607451Z shell: /usr/bin/bash -e {0}
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8607791Z env:
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8608130Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.15/x64
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8608811Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib/pkgconfig
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8609790Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8610508Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8610992Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8611453Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.8611836Z ##[endgroup]
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9182633Z OK  bundle.md  (bundle.name=converge)
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9183332Z OK  behaviors/converge.yaml  (bundle.name=converge-behavior)
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9183636Z 
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9183789Z 2 YAML document(s) parsed.
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9184009Z 
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9184141Z FAILURES:
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9184532Z   - behaviors/zz-ci-red-proof.yaml: while parsing a flow sequence
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9185018Z   in "<unicode string>", line 2, column 9:
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9185379Z       name: [ this bracket is never closed
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9185777Z             ^
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9186225Z expected ',' or ']', but got ':'
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9186560Z   in "<unicode string>", line 3, column 10:
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9186930Z       version: 0.0.0
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9187207Z              ^
+Bundle structure (YAML)	Parse bundle.md frontmatter and behaviors/*.yaml	2026-09-07T19:44:11.9253551Z ##[error]Process completed with exit code 1.
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	﻿2026-09-07T19:44:13.7309712Z ##[group]Run uv run --frozen --python 3.13 pytest tests/ -q --tb=short
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:13.7310261Z [36;1muv run --frozen --python 3.13 pytest tests/ -q --tb=short[0m
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:13.7347279Z shell: /usr/bin/bash -e {0}
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:13.7347533Z env:
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:13.7347784Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:13.7348098Z ##[endgroup]
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:14.8732401Z F....................................................................... [ 54%]
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:15.0197452Z .............................................................            [100%]
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:15.0198411Z =================================== FAILURES ===================================
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:15.0199326Z ___________________ test_ci_red_proof_module_suite_can_fail ____________________
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:15.0200236Z tests/test_ci_red_proof.py:11: in test_ci_red_proof_module_suite_can_fail
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:15.0201243Z     assert 1 == 2, "planted failure: the module test job is really executing this suite"
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:15.0202343Z E   AssertionError: planted failure: the module test job is really executing this suite
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:15.0203153Z E   assert 1 == 2
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:15.0203644Z =========================== short test summary info ============================
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:15.0205013Z FAILED tests/test_ci_red_proof.py::test_ci_red_proof_module_suite_can_fail - AssertionError: planted failure: the module test job is really executing this suite
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:15.0206159Z assert 1 == 2
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:15.0641408Z 1 failed, 132 passed in 0.35s
+Tests -- hooks-candidate-guard (py3.13)	Run the module suite	2026-09-07T19:44:15.0652377Z ##[error]Process completed with exit code 1.
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	﻿2026-09-07T19:44:16.4195469Z ##[group]Run uv run --frozen --python 3.11 pytest tests/ -q --tb=short
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:16.4195993Z [36;1muv run --frozen --python 3.11 pytest tests/ -q --tb=short[0m
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:16.4237387Z shell: /usr/bin/bash -e {0}
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:16.4237682Z env:
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:16.4237951Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:16.4238268Z ##[endgroup]
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.5222781Z F....................................................................... [ 54%]
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.6741972Z .............................................................            [100%]
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.6742765Z =================================== FAILURES ===================================
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.6743650Z ___________________ test_ci_red_proof_module_suite_can_fail ____________________
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.6744896Z tests/test_ci_red_proof.py:11: in test_ci_red_proof_module_suite_can_fail
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.6745491Z     assert 1 == 2, "planted failure: the module test job is really executing this suite"
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.6746141Z E   AssertionError: planted failure: the module test job is really executing this suite
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.6746554Z E   assert 1 == 2
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.6746834Z =========================== short test summary info ============================
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.6747686Z FAILED tests/test_ci_red_proof.py::test_ci_red_proof_module_suite_can_fail - AssertionError: planted failure: the module test job is really executing this suite
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.6748336Z assert 1 == 2
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.6748583Z 1 failed, 132 passed in 0.36s
+Tests -- hooks-candidate-guard (py3.11)	Run the module suite	2026-09-07T19:44:17.7302560Z ##[error]Process completed with exit code 1.
