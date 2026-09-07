@@ -1,0 +1,40 @@
+PROVENANCE
+==========
+This is the resolution text that was stored on model_performance-kp79 immediately BEFORE lane
+kp79-catalog-converge reopened and replaced it on 2026-09-07.
+
+It is reproduced verbatim from the `previous_resolution` field that the work_reopen tool ITSELF
+returned to this session -- a system-returned value, not typed from memory. Its previous closed_at
+was 2026-09-07T18:24:23+00:00.
+
+WHY THIS FILE EXISTS
+====================
+work_reopen documents that it files the previous resolution verbatim into the item's attributed
+comment history. THIS LANE COULD NOT INDEPENDENTLY READ THAT ARCHIVE BACK -- a read-only probe of
+the item returned no comment field -- so preservation rested on documented behaviour rather than a
+verified read.
+
+That is an unacceptable single point of failure for a nine-repo record belonging to other lanes.
+This file is the recoverable copy, kept inside the only paths this lane owns. If the comment-history
+archive exists, this is redundant. If it does not, this is the record.
+
+TO RESTORE IT: the owner of the sweep record (NOT this lane -- see Patch 5 in
+proposed-goal-template-patch.md) can work_reopen kp79 and work_resolve with the text below.
+Note that the replacement written over it was a SUPERSET: it added ios-tester #3, which this text
+still lists as outstanding. A restore should probably re-add that line rather than lose it.
+
+--- BEGIN VERBATIM previous_resolution -------------------------------------------------------
+RESULT: Stage 1 catalog hygiene is DONE and published for NINE repos, each a PR, none merged by us: android-tester #4, browser-tester #8, dot-graph #7, reality-check #15, context-intelligence #109 (under kv98), infographic-builder singh2/#32, converge #60, attractor #348, stories #14. This supersedes the previous 4-repo resolution, which is preserved verbatim in this item's comment history; all four of its repos and its findings are carried forward below, and all eight errata survive untouched.
+
+TOP FINDING, AND IT IS NOT THE ONE THIS ITEM SET OUT TO PROVE: the programme is a ROUTING-QUALITY change with a byte column, NOT a byte-reduction programme. Where stock shipped <example>-stuffed descriptions the saving is large and real -- dot-graph 15,221 -> 7,044 B (-8,177, -53.7%, the largest single catalog cost in the ecosystem, as predicted); reality-check 7,771 -> 3,067 (-4,704); android-tester 6,258 -> 1,911 (-4,347); converge 4,640 -> 2,704 (-1,936); attractor 2,133 -> 632 (-1,501); context-intelligence 5,099 -> 2,502 (-2,597); infographic-builder 1,692 -> 686 (-1,006); browser-tester 2,574 -> 1,781 (-793). But stories INVERTED it: 12 descriptions averaging 124 chars, 79% UNDER budget, ZERO example blocks -- nothing to strip -- so meeting the standard COST +3,019 B (1,857 -> 4,876, +162.6%). The change was still right: data-analyst was MIS-ROUTING on main (it advertised "visual dashboards", which reads as HTML and collides with evaluation-visualizer, while its body produces Excel/PowerPoint/CSV only), but it is a ROUTING-QUALITY win, not a byte win. CONSEQUENCE FOR THE REMAINING REPOS: work-tracker is already flagged as length/shape rather than an example strip and should be expected to cost bytes too. Price each repo's stock SHAPE before promising a saving; do not extend a headline saving across repos not yet measured.
+
+METHOD, uniform across all nine: the delegate agent catalog rendered from a scratch session BEFORE and AFTER, no LLM call, with the whole-catalog delta quoted as the CONTROL -- in every case it matched the per-bundle slice to the byte and every other bundle moved exactly 0, proving nothing else moved. Fidelity audited fact by fact INCLUDING facts that lived only inside <commentary>; four absences found and restored with byte deltas (dot-graph: "architecture diagram" +35, "seam" +12; converge +36; stories: content-adapter "preserving core message" +33). Bodies byte-identical everywhere. Net the lean descriptions carry MORE routing information than stock, because almost none previously said when NOT to use the agent.
+
+FIVE CROSS-CUTTING FINDINGS THE SWEEP BOUGHT: (1) CHECK THE TESTS FIRST -- dot-graph shipped 11 tests asserting <example> must be PRESENT, the mechanism by which it drifted; stories has none, so check rather than assume. (2) validate-agents measures PRESENCE of the tools: key, not VALIDITY of its contents -- it false-PASSes an invalid declaration (reality-check), false-FAILs a valid behavior-level one (infographic-builder), and lets an orthogonal NO_TOOLS_SECTION warning drive a "12/12 agents need attention" summary on a repo with zero description defects (stories). (3) The "must stay PASS" gate has a false premise BOTH WAYS: where stock carries examples the honest claim is FAIL -> PASS; where it does not (stories, converge) the verdict does NOT move and claiming it did is the same error inverted. Run validate-agents on the MERGE-BASE as well as the branch. (4) Render both A/B sides back-to-back on this shared host, or better, from immutable bundle aliases -- infographic-builder folded +49 B of a sibling's concurrent edit into its delta before catching it. (5) WORK-TRACKER HOLDER IDS EMBED THE MACHINE HOSTNAME (agent-<hostname>-<pid>). Two lanes published one into a public repo; attractor's repo caught it pre-commit, stories' did not and redacted after the fact. Never quote a holder id in a shipped file.
+
+ROOT CAUSE, diagnosed independently by five lanes: this ONE single-holder id was launched into 5+ per-repo lanes whose processes started within one second of each other. Only one could hold it; the rest were refused BY CONSTRUCTION, and for a non-holder none of the template's three "exhaustive" outcome branches is executable (A and B need work_resolve, C needs work_release). The measured cost of that one defect: 5 lanes refused, 5 independent re-diagnoses, 2 lanes reaching OPPOSITE classifications on identical facts, one lane's marker moving A -> C -> A -> invented-fourth -> A across four reviews with ZERO measurement changes, 9 errata spent repairing classification rather than content, and TWO reopens of this record (each clearing closed_at and moving every throughput roll-up by one item). FIX BEFORE THE NEXT BATCH, in priority order: (a) ONE CHILD ITEM PER REPO so every lane claims an id it can hold -- this kills the whole class; (b) say outright that an outcome branch is a STATE, not a verb the lane must personally call; (c) make branch C executable by a non-holder -- drop work_release, name work_erratum; (d) resolve Procedure 1's "stop after a refused claim" against branch A's "state already holds". Concrete patches are on two lane branches: docs/lanes/kp79-catalog-converge/proposed-goal-template-patch.md and lanes/kp79-catalog-stories/GOAL-TEMPLATE-PATCH.md.
+
+WHY THIS RECORD WAS REOPENED A SECOND TIME: the owner instructed the stories lane, across four exchanges, to perform work_resolve on THIS item rather than on a per-repo child. The lane recommended against it twice and was overruled. The cost is real and is reported rather than hidden -- closed_at cleared again, this item re-lands on 2026-09-07, throughput roll-ups move by one more item. It bought a materially more accurate record: the stored resolution said 4 repos when 9 were done, and predated the negative-savings finding entirely.
+
+WHAT REMAINS OPEN: model_performance-slee carries the remainder -- ios-tester, work-tracker (length/shape, expect NEGATIVE savings), digital-twin-universe and amplifier-tester (queued behind zc6t), notify and amplifier-online (third-party, PR only, never merged by us). design-council is still NOT FOUND under microsoft/ -- search personal forks first, as infographic-builder turned out to be one. Also open: model_performance-tnwd (validate-agents crashes on any repo whose descriptions are YAML folded/literal scalars), model_performance-yd8m (browser-tester loses tool-delegate at spawn), and the per-repo children md4i (stories) and ycxo (attractor). Spend across the whole sweep: $0.00.
+--- END VERBATIM previous_resolution ---------------------------------------------------------

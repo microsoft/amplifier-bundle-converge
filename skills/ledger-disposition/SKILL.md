@@ -1,14 +1,11 @@
 ---
 name: ledger-disposition
 description: >
-  Give a contract-check row the right verdict, and report it in the five plain
-  words a person reads — Kept · Not yet · Broken · Pinned open · Can't check —
-  alongside the ledger's own internal words. Use when populating or reviewing
-  the ledger, when a row's check flips, when choosing between CONFORMS, GAP,
-  VIOLATION, OPEN-PINNED, NOT-ASSERTABLE and EXCLUDED (or DIVERGED for a
-  contract someone else owns), or when a red row must point at a queue item.
-  Applies documents.v1 §10 and PROTOCOL.md §3.3; full syntax in
-  docs/LEDGER-FORMAT.md.
+  Use when populating or reviewing the contract-check ledger, when a row's check flips, when
+  choosing among CONFORMS, GAP, VIOLATION, OPEN-PINNED, NOT-ASSERTABLE, EXCLUDED (or DIVERGED,
+  for someone else's contract), or when a red row must point at a queue item. Reports each row
+  in the five plain words a person reads — Kept · Not yet · Broken · Pinned open · Can't check.
+  Applies documents.v1 §10 and PROTOCOL.md §3.3; full syntax in docs/LEDGER-FORMAT.md.
 version: 0.2.0
 ---
 

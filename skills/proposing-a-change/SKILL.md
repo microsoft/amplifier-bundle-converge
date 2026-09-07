@@ -1,13 +1,11 @@
 ---
 name: proposing-a-change
 description: >
-  How to propose a change to a locked vision or contract — a sibling proposal
-  file named <contract>.vN-candidate.md, never a direct edit. Load this for
-  procedural asks: "how do I propose a contract change?", "how do I write a
-  candidate?", "this locked clause is wrong, now what?" — or when a cost paid or
-  a failure caught says a locked clause needs to change. NOT for permission
-  questions ("am I allowed to edit this?", "does this conform?") — those go to
-  converge:protocol-authority. Applies documents.v1 §8 and PROTOCOL.md §5.
+  Use for procedural asks — "how do I propose a contract change?", "how do I write a
+  candidate?", "this locked clause is wrong, now what?" — or when a cost paid or a failure
+  caught says a locked clause must change. Covers the sibling proposal file
+  <contract>.vN-candidate.md, never a direct edit. NOT for permission questions ("am I
+  allowed?", "does this conform?") — those go to converge:protocol-authority.
 version: 0.3.0
 ---
 

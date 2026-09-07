@@ -1,13 +1,11 @@
 ---
 name: freeze-bar
 description: >
-  Check whether a draft vision or contract is ready to be locked, and write the
-  lock correctly once it is. Use before proposing that something be locked, when
-  reviewing the checks behind it, when someone says a document is "done", or at
-  the moment of actually stamping one. Covers the four conditions for locking,
-  the steward-only decision, the hold-loosely state — a document that meets the
-  bar but is deliberately left unlocked — and the one-edit rule that keeps a
-  freeze from half-landing. Applies VISION principle 2 and PROTOCOL.md §5.
+  Use before proposing that a draft vision or contract be locked, when reviewing the checks
+  behind a lock, when someone calls a document "done", or at the moment of stamping one. Covers
+  the four locking conditions, the steward-only decision, the hold-loosely state (meets the bar,
+  deliberately left unlocked) and the one-edit rule that keeps a freeze from half-landing.
+  Applies VISION principle 2 and PROTOCOL.md §5.
 version: 0.3.0
 ---
 
