@@ -13,6 +13,15 @@ that would be surprised by a silent change to this text. Name roles, not job
 titles. Name the reference implementation if there is one, and say what serves
 as its check.>
 
+## What it looks like
+
+<A brief plain-language introduction to the ordinary case and why it matters to
+the affected person.>
+
+```
+<a small, representative artifact>
+```
+
 ## Purpose
 
 <A short paragraph. What goes wrong without this contract, and what is true
@@ -21,15 +30,19 @@ exists. Three or four sentences.>
 
 ## Core (the teeth)
 
-<Numbered clauses, each one a rule someone could break. Lead with the rule as a
-fact, in bold, then one to three plain lines of why or of what it means for the
-reader. Keep the numbering stable: the conformance kit's rule table matches
-these numbers, so renumbering breaks the check.>
+<Numbered clauses, each one a short declarative promise someone could break.
+Lead with the observable rule as a fact, in bold. Say what broken looks like and
+who it affects, then give a short focused explanation of why or what it means
+for the reader. Keep the numbering stable: the conformance kit's rule table
+matches these numbers, so renumbering breaks the check. Never put a fenced
+artifact in Purpose or Core.>
 
-1. **<The rule, stated as a fact.>** <One to three plain lines: why this is the
-   rule, or what it means for the person reading.>
-2. **<The next rule.>** <Why.>
-3. **<The next rule.>** <Why.>
+1. **<The observable rule, stated as a fact.>** <What broken looks like, who it
+   affects, and why this is the rule.>
+2. **<The next observable rule.>** <What broken looks like, who it affects, and
+   why.>
+3. **<The next observable rule.>** <What broken looks like, who it affects, and
+   why.>
 
 ## What v1 deliberately does NOT freeze
 

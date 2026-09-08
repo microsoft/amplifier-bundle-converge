@@ -14,7 +14,7 @@ first appear; the specific promises live in `contracts/`.*
 
 ---
 
-## Where this is going
+## What <project> is
 
 <Three to six paragraphs describing the project as it is when it is right.
 Present tense. Say what a person experiences, not what a system does. Define
@@ -30,21 +30,29 @@ why that mattering is the point.>
 
 ## Principles
 
-<Numbered. Each principle leads with a bold sentence that could be quoted alone
-and still mean something, then a few plain lines. A principle is something you
-could violate; if you cannot imagine violating it, it is a description, not a
-principle. Five to ten is the useful range.>
+<Numbered subsections. Each principle has a bold sentence that could be quoted
+alone and still mean something, followed by a short focused explanation. A
+principle is something you could violate; if you cannot imagine violating it,
+it is a description, not a principle. Five to ten is the useful range.>
 
-1. **<The principle, stated as a fact.>** <Two to five plain lines of what it
-   means in practice, and what it rules out.>
+### 1. **<The principle, stated as a fact.>**
 
-2. **<The next principle.>** <What it means, what it rules out.>
+<A short focused explanation of what it means in practice and what it rules
+out.>
 
-3. **<The next principle.>** <What it means, what it rules out.>
+### 2. **<The next principle.>**
+
+<A short focused explanation of what it means in practice and what it rules
+out.>
+
+### 3. **<The next principle.>**
+
+<A short focused explanation of what it means in practice and what it rules
+out.>
 
 ---
 
-## What this is not
+## What this deliberately resists
 
 <The boundary. Three to six bullets naming things a reader might reasonably
 assume are in scope and that are not. This section prevents more work than any
@@ -57,11 +65,14 @@ other part of the document.>
 
 ## How you can tell it is working
 
-<Observable signs, written as things a person notices, not metrics a dashboard
-reports. If a sign cannot be observed by someone using the project, cut it.>
+<Observable signs, each naming the person or role who notices and what they
+observe. Use a number only when it makes the outcome more meaningful, not
+because every sign needs a metric. If a sign cannot be observed by someone using
+the project, cut it.>
 
-- <The observable sign.>
-- <The observable sign.>
+- <Person or role> notices <the observable outcome>.
+- <Person or role> notices <the observable outcome>; <a meaningful number, if
+  one helps>.
 
 ---
 
