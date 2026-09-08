@@ -12,14 +12,25 @@ documents themselves — copy the blocks and fill them in.
 ## The new contract, from the template
 
 One file, one contract, about one screen — fifty to a hundred lines (clause 2).
-The skeleton, sections fixed in order (clause 4):
+The skeleton, required sections fixed in order (clause 4), with an optional
+illustration before Purpose:
 
-```markdown
+````markdown
 # Retention Contract — v1 (DRAFT)
 
 **Who builds against this:** everyone who stores anything a person later
 asks to have removed — the intake steps, the queue, and whoever
 answers it.
+
+## What it looks like
+
+An intake worker can see why this retention record exists and when to review it;
+the illustration freezes no field names or storage format.
+
+```
+reason: answer a removal request
+review: when the request is complete
+```
 
 ## Purpose
 
@@ -43,7 +54,7 @@ answers it.
 ## Reserved / open questions
 
 - Whether backups are in scope.
-```
+````
 
 Four things most often got wrong:
 
@@ -63,14 +74,24 @@ Nothing edits a locked contract in place. You write a sibling file named
 `<contract>.vN-candidate.md` — here `contracts/retention.v2-candidate.md` —
 three parts, in order (clause 8):
 
-```markdown
+````markdown
 # Retention Contract — v2 (candidate)
 
 ## 1 · The exact change
 
-Clause 1, sentence 2. Today: "…the date that reason expires."
-Proposed:                     "…the date that reason expires, or the word
-                               `indefinite` with a named approver."
+### Change 1 — clause 1, sentence 2
+
+Current text:
+
+```
+…the date that reason expires.
+```
+
+Replacement:
+
+```
+…the date that reason expires, or the word `indefinite` with a named approver.
+```
 
 ## 2 · The evidence
 
@@ -82,7 +103,7 @@ restore; two agreements were unrecoverable.
 
 The reason itself stays mandatory. Records without one are still refused.
 The removal-request path is untouched.
-```
+````
 
 Preference is not evidence. The original stays law until the intent steward
 answers with one word.

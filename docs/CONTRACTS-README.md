@@ -58,6 +58,10 @@ sections, same order, every time:
    `documents.v1` gives the exact form). Status lives here and nowhere else.
 2. **Line 3: `**Who builds against this:**`** — two to six lines naming the
    people and systems that would be surprised by a silent change.
+   An optional **What it looks like** section may come before Purpose. It uses
+   a brief plain-language introduction and a small fenced artifact to make an
+   ordinary case concrete; the artifact illustrates the promise and adds no
+   requirement.
 3. **Purpose** — why this contract exists, in a short paragraph.
 4. **Core (the teeth)** — numbered clauses. Each leads with the rule as a fact,
    in bold, then one to three plain lines of why.
