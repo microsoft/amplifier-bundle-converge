@@ -58,7 +58,6 @@ import hashlib
 import shutil
 import socket as socketlib
 import subprocess
-import sys
 import threading
 import time
 from pathlib import Path

@@ -293,7 +293,7 @@ def test_start_actually_serves_https_from_an_installed_wheel(installed_wheel_ven
             conn = http.client.HTTPSConnection("127.0.0.1", port, timeout=5.0, context=ctx)
             conn.request("GET", path)
             r = conn.getresponse()
-            body = r.read().decode("utf-8", "replace")
+            r.read()
             print(f"[wheel-venv] GET {path} -> {r.status}")
             assert r.status == 200, f"{path} did not render from the installed wheel: {r.status}"
             conn.close()

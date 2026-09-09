@@ -47,7 +47,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from app import auth, serve  # noqa: E402
+from app import serve  # noqa: E402
 
 # Reuse the journey test's own proven driving primitives rather than
 # reimplementing the hit-test/click/boot/screenshot machinery a second time
@@ -327,10 +327,6 @@ def _records(repo: Path) -> set[Path]:
 @pytest.mark.parametrize("manager_id,width,height,tag", WIDTHS, ids=[w[3] for w in WIDTHS])
 def test_review_and_changes_content_and_authority(server, project, browser, manager_id, width, height, tag):
     repo: Path = project["repos"][tag]
-    structured_candidate = repo / "contracts" / "demo.v1-candidate.md"
-    unstructured_candidate = repo / "contracts" / "plain.v1-candidate.md"
-    structured_text = structured_candidate.read_text(encoding="utf-8")
-    unstructured_text = unstructured_candidate.read_text(encoding="utf-8")
     print(f"\n=== {width}x{height} - manager {manager_id} - {repo} ===")
 
     def _enter(page):

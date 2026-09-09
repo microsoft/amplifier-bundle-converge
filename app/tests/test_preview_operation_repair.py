@@ -33,7 +33,6 @@ real manager's files -- everything is built fresh under `tmp_path`.
 
 from __future__ import annotations
 
-import json
 import shutil
 import socket as socketlib
 import subprocess

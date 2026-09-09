@@ -181,7 +181,7 @@ def test_a_teammate_who_is_not_the_steward_may_edit_a_draft(project) -> None:
     log = _git(project["repo"], "log", "-1", "--format=%s%n%an")
     print(f"the app answered {answer.status_code}: {said.get('said') or said}")
     print(f"brook's wording is in the file: {'brook works in every day' in after}")
-    print(f"last commit:\n  " + "\n  ".join(log.strip().splitlines()))
+    print("last commit:\n  " + "\n  ".join(log.strip().splitlines()))
 
     assert answer.status_code == 200, answer.text
     assert said["ok"] and said["mode"] == "commit"

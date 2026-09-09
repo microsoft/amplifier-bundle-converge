@@ -1690,7 +1690,7 @@ def test_a_stale_authority_and_list_read_cannot_paint_over_a_manager_the_steward
     """
     mgr_a, mgr_b = two_manager_project["managers"]
     repo_a, repo_b = two_manager_project["repos"]
-    key_a, key_b = str(Path(repo_a).resolve()), str(Path(repo_b).resolve())
+    _key_a, key_b = str(Path(repo_a).resolve()), str(Path(repo_b).resolve())
     multi_repo_host["set_by_cwd"]({
         repo_a: {"pulls": [_pull_fixture(1, "A's own open pull request", "Body belonging to manager A.")]},
         repo_b: {"pulls": [_pull_fixture(2, "B's own open pull request", "Body belonging to manager B.")]},
