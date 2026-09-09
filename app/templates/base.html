@@ -11,17 +11,25 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/branding/favicons/apple-touch-icon.png" />
   <link rel="manifest" href="/manifest.webmanifest" />
 
-  <link rel="stylesheet" href="/static/css/tokens.css" />
-  <link rel="stylesheet" href="/static/css/shell.css" />
-  <link rel="stylesheet" href="/static/css/direction.css" />
-  <link rel="stylesheet" href="/static/css/operation.css" />
-  <link rel="stylesheet" href="/static/css/console.css" />
-  <link rel="stylesheet" href="/static/css/dialogs.css" />
+  <link rel="stylesheet" href="{{ static_url('css/tokens.css') }}" />
+  <link rel="stylesheet" href="{{ static_url('css/shell.css') }}" />
+  <link rel="stylesheet" href="{{ static_url('css/direction.css') }}" />
+  <link rel="stylesheet" href="{{ static_url('css/operation.css') }}" />
+  <link rel="stylesheet" href="{{ static_url('css/console.css') }}" />
+  <link rel="stylesheet" href="{{ static_url('css/dialogs.css') }}" />
+  <link rel="stylesheet" href="{{ static_url('css/pwa.css') }}" />
   {% block head_extra %}{% endblock %}
-  <script src="/static/js/offline.js" defer></script>
+  <script src="{{ static_url('js/offline.js') }}" defer></script>
 </head>
 <body>
 <div id="offlineBanner" class="offline-banner" role="status" aria-live="polite" hidden></div>
+<div id="pwaInstallBanner" class="pwa-install-banner" role="status" aria-live="polite" hidden>
+  <p class="pwa-install-text"></p>
+  <div class="pwa-install-actions">
+    <button id="pwaInstallAction" type="button" class="pwa-install-button" hidden>Install</button>
+    <button id="pwaInstallDismiss" type="button" class="pwa-install-dismiss">Not now</button>
+  </div>
+</div>
 {% block body %}{% endblock %}
 {% block scripts %}{% endblock %}
 </body>

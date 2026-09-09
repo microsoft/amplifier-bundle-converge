@@ -824,19 +824,36 @@ def changed_files(env: Env, repo: str, base: str, branch: str,
     return None
 
 
-def read_plan_record(env: Env, workspace: str) -> tuple[str | None, str | None]:
-    """The manager session's own plan record, and where it was found.
+def read_plan_record(env: Env, workspace: str, explicit: str | None = None,
+                     ) -> tuple[str | None, str | None, str]:
+    """The manager session's own plan record, its text, and where it came from.
 
     Clause 2 says the plan is VISIBLE — which means visible to somebody who was
     not in the session. The only place that can be true is a file, and the
-    launcher's workspace is where this system's manager sessions keep one.
+    launcher's workspace is where this system's manager sessions keep one --
+    *unless* the manager session's actual registration names a different plan
+    record living outside its lane workspace (an operation's own PLAN.md, say,
+    kept beside a nested batch directory rather than inside it). `explicit`
+    carries that registered path when one was given (`--plan-record` /
+    `CONVERGE_PLAN_RECORD`).
+
+    An explicit record is read VERBATIM and never mixed with the legacy
+    search below: silently trying the workspace's own HIGHWAY/PLAN/WAVE-LOG
+    when the registered plan cannot be read would misreport a targeting
+    defect as an empty plan. `source` tells the caller which path was taken --
+    `"explicit"` (read clean), `"explicit_unreadable"` (named but unreadable --
+    still never falls back), or `"legacy_fallback"` (no explicit record given).
     """
+    if explicit:
+        text = env.read(explicit)
+        return (explicit, text, "explicit") if text is not None \
+            else (explicit, None, "explicit_unreadable")
     for name in PLAN_RECORDS:
         path = f"{workspace}/{name}"
         text = env.read(path)
         if text:
-            return path, text
-    return None, None
+            return path, text, "legacy_fallback"
+    return None, None, "legacy_fallback"
 
 
 def parse_plan_entries(text: str) -> list[dict]:
@@ -1556,7 +1573,8 @@ def _clause(number: int, verdict: str, why: str, **extra) -> dict:
 
 
 def assert_plan_is_visible(briefs: list[dict], entries: list[dict],
-                           where: str | None, looked_in: str = "") -> dict:
+                           where: str | None, looked_in: str = "",
+                           source: str | None = None) -> dict:
     """Clause 2 — order, dependencies, collisions and picks, shown with reasons.
 
     "Visible" means visible to somebody who was not in the session, so this
@@ -1575,6 +1593,8 @@ def assert_plan_is_visible(briefs: list[dict], entries: list[dict],
     facts = {"briefs": len(briefs), "briefs_declaring_ownership": len(briefs) - len(undeclared),
              "plan_record": where, "plan_entries": len(entries),
              "entries_with_a_reason": len(reasoned)}
+    if source:
+        facts["plan_record_source"] = source
     if not briefs and not entries:
         return _clause(2, SKIP, "no lane brief and no plan record could be read, so "
                                 "there is nothing to judge", awaits=looked_in, **facts)
@@ -2277,6 +2297,11 @@ class Context:
     project: str
     integration_branch: str
     answer_key: dict
+    # An explicit, registered plan record for step (j) to read instead of
+    # searching `wave_workspace` for HIGHWAY.md/PLAN.md/WAVE-LOG.md -- for a
+    # manager registration whose plan record lives outside its lane workspace.
+    # None (the default) keeps the legacy search unchanged.
+    plan_record: str | None = None
     fixture_repo: str | None = None
     install_command: str | None = None
     amplifier_home: str | None = None
@@ -3113,9 +3138,31 @@ def step_clauses(ctx: Context) -> Result:
     panes = read_tmux_panes(ctx.env)
     worktrees = read_worktrees(ctx.env, repo)
     lanes = read_manifest(ctx.env, workspace) or lanes_from_worktrees(worktrees, panes)
-    where, plan_text = read_plan_record(ctx.env, workspace)
+    where, plan_text, plan_source = read_plan_record(ctx.env, workspace, ctx.plan_record)
+    if plan_source == "explicit_unreadable":
+        # A registered plan record that cannot be read is a targeting defect
+        # to report, never a reason to quietly try the workspace's own
+        # HIGHWAY/PLAN/WAVE-LOG instead -- that silent substitution is exactly
+        # the bug converge-51oq exists to fix.
+        return Result(
+            FAIL,
+            f"the explicit plan record at {ctx.plan_record} (--plan-record / "
+            "CONVERGE_PLAN_RECORD) could not be read.",
+            reason=(
+                f"{ctx.plan_record} does not exist, is not a regular file, or "
+                "could not be read from this environment; an explicit plan-"
+                "record override that cannot be read must fail clearly, not "
+                f"fall back to searching {workspace} for "
+                f"{', '.join(PLAN_RECORDS)}"
+            ),
+            evidence={"repo_read": repo, "workspace_read": workspace,
+                      "plan_record": ctx.plan_record,
+                      "plan_record_source": plan_source},
+        )
     entries = parse_plan_entries(plan_text or "")
-    looked_in = "a plan record in " + workspace + " (" + ", ".join(PLAN_RECORDS) + ")"
+    looked_in = (f"the explicit plan record at {where} (--plan-record / "
+                 "CONVERGE_PLAN_RECORD)") if plan_source == "explicit" else (
+        "a plan record in " + workspace + " (" + ", ".join(PLAN_RECORDS) + ")")
 
     # --- the lanes that ran at once, with what they were told to own and what
     # --- they actually changed
@@ -3174,7 +3221,7 @@ def step_clauses(ctx: Context) -> Result:
 
     parks = parse_park_events(entries)
     readings = [
-        assert_plan_is_visible(briefs, entries, where, looked_in),
+        assert_plan_is_visible(briefs, entries, where, looked_in, source=plan_source),
         assert_parks_kept_the_wave_moving(parks),
         assert_feedback_was_enriched(pairings),
         assert_lanes_touch_different_files(measured_lanes),
@@ -3185,7 +3232,8 @@ def step_clauses(ctx: Context) -> Result:
 
     evidence = {
         "repo_read": repo, "workspace_read": workspace,
-        "plan_record": where, "plan_entries": len(entries),
+        "plan_record": where, "plan_record_source": plan_source,
+        "plan_entries": len(entries),
         "lanes_running_at_once": [ln.name for ln in concurrent],
         "concurrency_source": concurrency_source,
         "briefs": briefs, "stalled_lanes": stalls,
@@ -4303,6 +4351,16 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--workspace", default=None,
                     help="the manager workspace root (holds manifest.tsv); "
                          "defaults to the parent of this bundle checkout")
+    ap.add_argument("--plan-record", default=None,
+                    help="an explicit plan record file for step (j) to read, "
+                         "instead of searching --workspace for HIGHWAY.md/"
+                         "PLAN.md/WAVE-LOG.md -- for a manager registration "
+                         "whose actual plan record lives outside its lane "
+                         "workspace (e.g. an operation's own PLAN.md kept "
+                         "beside a nested batch directory). Must be an "
+                         "existing regular file; --workspace is untouched and "
+                         "still supplies manifest/briefs/worktrees. Omit to "
+                         "keep the legacy HIGHWAY/PLAN/WAVE-LOG search")
     ap.add_argument("--repo", default=None,
                     help="the repository the lanes work in (default: this checkout)")
     ap.add_argument("--project", default="converge", help="work-tracker project name")
@@ -4381,6 +4439,19 @@ def main(argv: list[str] | None = None) -> int:
         else str(Path(repo).parent)
     notes: list[str] = []
 
+    plan_record: str | None = None
+    if args.plan_record:
+        candidate = Path(args.plan_record).expanduser()
+        if not candidate.is_file():
+            sys.stderr.write(
+                f"error: --plan-record {args.plan_record} does not exist or "
+                "is not a regular file -- an explicit plan record must be "
+                "readable; omit the flag to use the legacy HIGHWAY/PLAN/"
+                "WAVE-LOG search in --workspace instead\n"
+            )
+            return 3
+        plan_record = str(candidate.resolve())
+
     ledger_root = str(Path(args.ledger_root).resolve()) if args.ledger_root else workspace
 
     variables = {k: v for k, _, v in (pair.partition("=") for pair in args.var) if k}
@@ -4439,6 +4510,7 @@ def main(argv: list[str] | None = None) -> int:
         project=args.project, integration_branch=args.integration_branch,
         answer_key=answer_key, fixture_repo=fixture_repo, amplifier_home=home,
         timeout=args.timeout, notes=notes, width=args.width,
+        plan_record=plan_record,
     )
 
     # The wave runs between (d) and (e): the project must exist before a

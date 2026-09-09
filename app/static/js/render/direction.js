@@ -13,7 +13,7 @@
 // the server, never guessed here. Ask reaches a route the app answers
 // (converge-ddt landed); when it fails, actions.js reports what refused, in
 // that refuser's own words, and asserts no cause of its own.
-import { $, qsa, state, data, escapeHtml, currentRepo, currentDoc, readBookmark } from '../state.js';
+import { $, qsa, state, data, escapeHtml, currentRepo, currentDoc, currentManager, readBookmark } from '../state.js';
 import { hooks } from '../refresh.js';
 import { handleDecision, keepChange, saveChangeEdit, restoreChange, restoreScope, markAllRead, editDoc, reconcile, openAsk, copyText, confirmLock, openSnapshot, restoreReading, selectSnapshot } from '../actions.js';
 import { startPresence, holdSection, paintPresence, presenceLineHtml, presenceStanding } from '../presence.js';
@@ -25,6 +25,42 @@ const DECISION_BUTTONS = [
   ['later', 'Later', 'outline-button'],
 ];
 
+// converge-8crs: whose word counts is decided the same way `app/serve.py`'s
+// `_steward_denied` decides it server-side -- the signed-in user against
+// THIS manager's own registered steward, never inferred from who happens
+// to be looking. Missing identity, or a manager with no steward registered
+// yet, reads as UNAUTHORIZED, never as "anyone may decide" -- the same
+// fail-closed rule `_steward_denied` applies. Computed fresh inside
+// `renderReview`/`renderChanges` on every call (never cached at module
+// load), so switching manager sessions or a principal refresh can never
+// leave a stale steward's permission enabled on screen -- the next render
+// reads `currentManager()`/`state.user` as they stand right now.
+function stewardAuthority() {
+  const manager = currentManager();
+  const steward = (manager && manager.steward) || '';
+  const user = state.user || '';
+  return { steward, isSteward: Boolean(steward) && Boolean(user) && user === steward };
+}
+
+//: One button, gated the same way everywhere it appears (Review's decision
+//: stack, Changes' "Answer with these choices"). Disabled natively blocks
+//: the click (the `[data-decision]` listener in `wireDocTools` never fires
+//: for a disabled button), so this is belt-and-suspenders over the real
+//: guard, which is `app/serve.py`'s own 403 -- this is guidance, not
+//: security, and never the only thing standing between a teammate and a
+//: ratification.
+function decisionButtonHtml(value, label, cls, authority) {
+  const disabled = !authority.isSteward;
+  return `<button class="${cls}"${disabled ? ' disabled aria-disabled="true"' : ''} data-decision="${escapeHtml(value)}" data-decision-label="${escapeHtml(label)}" type="button">${escapeHtml(label)}</button>`;
+}
+
+function stewardGateNote(authority) {
+  const said = authority.steward
+    ? `Only the registered steward (${authority.steward}) may decide.`
+    : 'No steward is registered for this manager session yet, so nobody may decide.';
+  return `<p class="muted steward-gate-note">${escapeHtml(said)} You can still read, comment, and propose.</p>`;
+}
+
 // The three choices experience-direction.v1 §10 names when two writes collide.
 // They are offered together or not at all: a steward who is only allowed to
 // keep their own wording has not been offered a choice.
@@ -34,9 +70,89 @@ const RECONCILE_CHOICES = [
   ['review-both', 'Review both', 'outline-button'],
 ];
 
-const STATE_LABEL = { kept: 'Kept', gap: 'Not yet', draft: 'Draft' };
-
 function plural(n, word) { return `${n} ${word}${n === 1 ? '' : 's'}`; }
+
+// --------------------------------------------------------------------------
+// converge-43uv — two named dimensions, never conflated
+// --------------------------------------------------------------------------
+//
+// experience-direction.v1 asks a steward to be able to tell apart AGREEMENT —
+// is this document itself locked, and by what word? — from CONFORMANCE — has
+// the project's ledger actually checked the promise it makes, and what does
+// it say? A single "DRAFT" badge sitting beside a FROZEN document conflated
+// the two: a locked (agreed) document with nothing measuring it read as
+// "still a draft", which is not what either dimension actually said.
+//
+// The common brief names an additive shape data.py will grow: `docLock`
+// ({locked, label, source}) and `conformance` ({state, label, sentence,
+// clauses, measured}). Until that lands, both are derived here from the
+// fields app/data.py already serves on every doc — `locked` for agreement,
+// `standing`/`standingSentence`/`clauses` for conformance — so nothing here
+// regresses when the real producer shape arrives; these two functions simply
+// stop deriving and start reading straight through.
+function docLockOf(doc) {
+  if (doc && doc.docLock && typeof doc.docLock === 'object') {
+    const dl = doc.docLock;
+    return { locked: !!dl.locked, label: String(dl.label || ''), source: dl.source || 'document-h1' };
+  }
+  const word = (doc && doc.locked) || '';
+  return { locked: !!word, label: word, source: 'document-h1' };
+}
+
+//: The ledger's own words (kept.py's SEVERITY + "Kept"), mapped to the CSS
+//: modifiers the badge and the nav dot both use. A word not in this map — a
+//: term nobody has translated yet — reads as `unchecked` rather than guessing.
+const CONFORMANCE_CLASS = { Kept: 'kept', 'Not yet': 'notyet', Broken: 'broken', 'Pinned open': 'pinned' };
+
+//: Never labels unmeasured content Draft or Kept (converge-43uv's acceptance,
+//: in the common brief's own words). `measured` is the honest question —
+//: "did anything actually check this?" — and only a `true` answer earns one
+//: of the ledger's real verdict words; everything else says plainly that
+//: nothing has checked yet, in words that cannot be mistaken for a verdict.
+function conformanceOf(doc) {
+  if (doc && doc.conformance && typeof doc.conformance === 'object') {
+    const c = doc.conformance;
+    const measured = !!c.measured;
+    return {
+      label: String(c.label || (measured ? c.state : 'Not checked')),
+      sentence: String(c.sentence || ''),
+      clauses: Number(c.clauses) || 0,
+      measured,
+    };
+  }
+  const clauses = Number((doc && doc.clauses) || 0);
+  const word = (doc && doc.standing) || '';
+  const stateWord = (doc && doc.state) || '';
+  // `measured` asks only "does anything watch this promise at all?" —
+  // `kept.py` sets clauses to 0 exactly when nothing does. Something CAN
+  // watch it and still answer "Can't check" (rows nobody has translated
+  // yet); that is a real, preserved ledger verdict per the common brief
+  // ("preserve Broken/Pinned open/Can't check"), never rewritten to
+  // "Not checked" — which is reserved for the different fact that nothing
+  // watches this promise in the first place.
+  //
+  // `clauses` alone is not reliable here: the repo-tree summary shape
+  // (repositories_payload()) carries it, but data.py's single-document
+  // shape (doc_payload(), what `data.doc` actually is once a document is
+  // open) does not — measured against the real server: a ledger-watched
+  // "Demo" contract read back `clauses: undefined` once opened, silently
+  // flooring the count to 0, so a locked-and-watched document read as
+  // unmeasured. `state` IS present on both shapes, and doc_state() sets it
+  // to "draft" in exactly the cases clauses is 0 (see data.py) — an
+  // equally honest, always-present second signal. Trust either.
+  const measured = clauses > 0 || (!!word && !!stateWord && stateWord !== 'draft');
+  return {
+    label: measured ? word : 'Not checked',
+    sentence: (doc && doc.standingSentence) || '',
+    clauses,
+    measured,
+  };
+}
+
+function conformanceClassOf(conf) {
+  if (!conf.measured) return 'unchecked';
+  return CONFORMANCE_CLASS[conf.label] || 'unchecked';
+}
 
 export function rawTextForDoc() {
   return data.doc && data.doc.raw ? data.doc.raw : '';
@@ -228,20 +344,21 @@ function answersHere() {
   return stewardAnswers;
 }
 
-//: Which conditions are met right now, and what says so. `reality` is the
-//: ledger's word about this document (`draft` means no row watches it, which
-//: is exactly "cannot be checked against reality yet").
+//: Which conditions are met right now, and what says so. `reality` reads
+//: through the same `conformanceOf` the badges use, so the gate's third
+//: condition and the CONFORMANCE badge can never disagree about whether this
+//: document has actually been measured.
 function lockState(doc) {
   const answers = answersHere();
-  const watched = !!(doc && doc.state && doc.state !== 'draft');
-  const standing = (doc && doc.standingSentence)
+  const conf = conformanceOf(doc);
+  const standing = conf.sentence
     || 'This project keeps no record yet of whether this is being kept.';
   return {
-    met: { means: answers.means, example: answers.example, reality: watched, steward: answers.steward },
+    met: { means: answers.means, example: answers.example, reality: conf.measured, steward: answers.steward },
     evidence: {
       means: 'Your word — only a reader can say whether the wording means one thing.',
       example: 'Your word — the document has to carry the example, not the promise of one.',
-      reality: `${(doc && doc.standing) || "Can't check"} — ${standing}`,
+      reality: `${conf.label} — ${standing}`,
       steward: 'Your word, and it is the last one. Nothing locks on its own.',
     },
   };
@@ -359,9 +476,19 @@ export function renderRepoTree() {
   $('repoTree').innerHTML = visible.map((repo) => `
       <div class="repo-group">
         <div class="repo-name"><span>${escapeHtml(repo.name)}</span><span>⌄</span></div>
-        ${repo.docs.map((doc) => `<button class="repo-doc ${doc.id === state.docId && repo.id === state.repoId ? 'active' : ''}" type="button" data-repo="${escapeHtml(repo.id)}" data-doc="${escapeHtml(doc.id)}"><span>${escapeHtml(doc.title)}</span><span class="doc-state-mini ${doc.state === 'kept' ? '' : 'gap'}"></span></button>`).join('')}
+        ${repo.docs.map((doc) => `<button class="repo-doc ${doc.id === state.docId && repo.id === state.repoId ? 'active' : ''}" type="button" data-repo="${escapeHtml(repo.id)}" data-doc="${escapeHtml(doc.id)}"><span>${escapeHtml(doc.title)}</span><span class="doc-state-mini ${conformanceClassOf(conformanceOf(doc))}"></span></button>`).join('')}
       </div>`).join('');
   qsa('[data-doc]', $('repoTree')).forEach((btn) => btn.addEventListener('click', () => {
+    // converge-43uv: a real, honest "loading" moment for the one case that
+    // actually has one — a document already read is on screen, and a
+    // different one has been asked for. Written directly rather than through
+    // a full renderDirection(), so `data.doc` (still the OLD document) is
+    // never disturbed: if the fetch below fails, main.js's own renderDirection
+    // call replaces this with the distinct fetch-error state in renderRead(),
+    // never a "Loading…" left standing after loading is actually done.
+    if (btn.dataset.repo === state.repoId && btn.dataset.doc === state.docId) return;
+    const content = $('documentModeContent');
+    if (content) content.innerHTML = '<p class="muted state-note" role="status">Loading this document\u2026</p>';
     hooks.selectDoc(btn.dataset.repo, btn.dataset.doc);
   }));
 }
@@ -427,9 +554,50 @@ function sectionFooter(doc, title, mine) {
     </div>`;
 }
 
+//: converge-43uv, experience-direction.v1: no document ever pretends to be
+//: "Loading" once loading is actually over. The real interim loading message
+//: is written directly by the nav click handler above, before this ever runs
+//: again; by the time renderRead() is asked to answer "why is there nothing
+//: to read", the fetch has already settled one way or another, and the
+//: reason said here is the honest one for the way it settled.
+function noDocumentHtml() {
+  if (!data.repoList.length) {
+    return '<p class="muted state-note">No repositories are configured for this manager session yet.</p>';
+  }
+  // converge-43uv repair: #repoFilter's own change handler lives in main.js
+  // (owned by Shell) and only re-renders \u2014 it never clears `data.doc` or
+  // `state.repoId`/`docId`. Left alone, switching the filter to a repo that
+  // holds nothing kept showing whichever document happened to be open
+  // before the filter changed, which is exactly the dishonest-loading shape
+  // this lane exists to remove. So the *filtered* repo's own reason is asked
+  // for first, ahead of the currently-open document's own repo.
+  if (state.repoFilter !== 'all') {
+    const filtered = data.repoList.find((r) => r.id === state.repoFilter);
+    if (filtered && !(filtered.docs || []).length) {
+      return `<p class="muted state-note">${escapeHtml(filtered.name)} has no vision or contracts to read yet.</p>`;
+    }
+  }
+  const repo = currentRepo();
+  if (repo && !(repo.docs || []).length) {
+    return `<p class="muted state-note">${escapeHtml(repo.name)} has no vision or contracts to read yet.</p>`;
+  }
+  if (state.repoId && state.docId) {
+    return '<p class="muted state-note">This document could not be read from the server.'
+      + '<button class="text-button" type="button" data-doc-retry>Try again</button></p>';
+  }
+  return '<p class="muted state-note">Select a document from the list on the left to start reading.</p>';
+}
+
 export function renderRead() {
   const doc = data.doc;
-  if (!doc) return '<p class="muted">Loading document…</p>';
+  // The document on screen belongs to `state.repoId`, not to whatever repo
+  // #repoFilter is currently narrowed to \u2014 those are two different pieces
+  // of state (see noDocumentHtml() above). A filter that excludes the open
+  // document's own repo means nothing in the current view actually shows
+  // this document any more, so the pane should say so rather than keep
+  // rendering a document the nav no longer even lists.
+  const filteredAwayFromOpenDoc = state.repoFilter !== 'all' && state.repoId && state.repoFilter !== state.repoId;
+  if (!doc || filteredAwayFromOpenDoc) return noDocumentHtml();
   if (state.raw) return `<pre class="raw-view">${escapeHtml(doc.raw || '')}</pre>`;
   const cards = doc.changes || [];
   const changedSections = new Set(cards.map(sectionHead));
@@ -489,7 +657,12 @@ function answerFromChoices(doc) {
   if (!open.length) {
     return '<span class="muted">Your keeping is remembered for you, and goes into the record with your word when a proposal is open.</span>';
   }
-  return `<button class="outline-button" data-decision="ratified-with-edits" data-decision-label="Ratify with edits" type="button">Answer with these choices</button>`;
+  // converge-8crs: this reaches the same `/decision` write Review's own
+  // buttons do, so it is gated the same way -- a non-steward sees it
+  // disabled, with the same inline explanation, before any attempt.
+  const authority = stewardAuthority();
+  return decisionButtonHtml('ratified-with-edits', 'Answer with these choices', 'outline-button', authority)
+    + (authority.isSteward ? '' : stewardGateNote(authority));
 }
 
 export function renderChanges() {
@@ -540,26 +713,70 @@ export function renderChanges() {
       </article>`).join('')}</div>`;
 }
 
+// converge-neu6: a proposal's `title` is its headline, not its content --
+// showing it under "What changes" told a steward the headline was the
+// diff. `change`/`changeRecognized` (from `app/data.py`'s `proposals_for`)
+// are the real "the exact change" section, rendered through the same safe
+// server-side Markdown as the document body itself -- never truncated to a
+// guessed first sentence, never substituted with the title. A proposal
+// that never labelled its change at all says so ("unrecognized", not a
+// fabricated diff), and its complete original text stays one disclosure
+// away via `proposalBodyHtml`, so nothing is lost, only relabelled
+// honestly. When NOTHING is recognized (an unstructured proposal), the full
+// body becomes the primary reading instead of a row of falsely-empty
+// sections -- the same shape `render/collab.js` already gives an
+// unstructured pull request.
+function proposalBodyHtml(p) {
+  if (p.bodyHtml) return `<div class="review-body-render">${p.bodyHtml}</div>`;
+  if (p.body) return `<pre class="review-body-raw">${escapeHtml(p.body)}</pre>`;
+  return '<p class="muted">This proposal\u2019s file could not be read.</p>';
+}
+
+function changeSectionHtml(p) {
+  if (!p.changeRecognized) {
+    return '<p class="muted">This proposal did not label its exact change \u2014 unrecognized, not absent. Read the complete proposal below.</p>';
+  }
+  if (p.changeHtml) return `<div class="review-change-render">${p.changeHtml}</div>`;
+  return '<p class="muted">This section was written, and left empty.</p>';
+}
+
+function whySectionHtml(p) {
+  if (p.whyHtml) return `<div class="review-why-render">${p.whyHtml}</div>`;
+  if (p.why) return `<p>${escapeHtml(p.why)}</p>`;
+  return '';
+}
+
 export function renderReview() {
-  const activeProposal = (data.doc && (data.doc.proposals || [])[0]) || null;
-  if (!activeProposal) return '<p class="muted">No proposal is waiting on your word for this document.</p>';
+  const p = (data.doc && (data.doc.proposals || [])[0]) || null;
+  if (!p) return '<p class="muted">No proposal is waiting on your word for this document.</p>';
   const decided = state.proposalDecision;
+  const anyRecognized = p.changeRecognized || p.evidenceRecognized || p.unchangedRecognized;
+  const why = whySectionHtml(p);
+  const authority = stewardAuthority();
+  const quickView = anyRecognized ? `
+      <div class="review-section"><h3>What changes</h3>${changeSectionHtml(p)}</div>
+      ${why ? `<div class="review-section"><h3>Why now</h3>${why}</div>` : ''}
+      ${p.unchangedRecognized ? `<div class="review-section"><h3>What does not change</h3><p>${escapeHtml(p.unchanged)}</p></div>` : ''}
+      <div class="review-section"><h3>Evidence</h3><div class="evidence-list">${p.evidenceRecognized
+        ? ((p.evidence || []).map((x) => `<div class="evidence-item">✓ <span>${escapeHtml(x)}</span></div>`).join('') || '<p class="muted">This section was written, and left empty.</p>')
+        : '<p class="muted">No evidence was attached to this proposal.</p>'}</div></div>
+      <details class="review-fullbody"><summary class="muted">Full proposal, unedited</summary>${proposalBodyHtml(p)}</details>` : `
+      <div class="review-section"><h3>Full proposal</h3>${proposalBodyHtml(p)}</div>
+      <p class="muted">This proposal does not use headings this reader recognizes as a structured decision sheet (the exact change · evidence · what does not change). Its complete, unedited text is shown above -- that is not the same as having no content.</p>`;
   return `<article class="review-sheet">
-      <div class="review-hero"><span class="eyebrow">Proposal ${escapeHtml(activeProposal.id)} · ${escapeHtml(activeProposal.source)}</span><h2>${escapeHtml(activeProposal.title)}</h2><p>One worked-out decision instead of a raw diff.</p></div>
+      <div class="review-hero"><span class="eyebrow">Proposal ${escapeHtml(p.id)} · ${escapeHtml(p.source)}</span><h2>${escapeHtml(p.title)}</h2><p>One worked-out decision instead of a raw diff.</p></div>
       <div class="review-grid">
         <div class="review-main">
-          <div class="review-section"><h3>What changes</h3><p>${escapeHtml(activeProposal.title)}</p></div>
-          ${activeProposal.why ? `<div class="review-section"><h3>Why now</h3><p>${escapeHtml(activeProposal.why)}</p></div>` : ''}
-          ${activeProposal.unchanged ? `<div class="review-section"><h3>What does not change</h3><p>${escapeHtml(activeProposal.unchanged)}</p></div>` : ''}
-          <div class="review-section"><h3>Evidence</h3><div class="evidence-list">${(activeProposal.evidence || []).map((x) => `<div class="evidence-item">✓ <span>${escapeHtml(x)}</span></div>`).join('') || '<p class="muted">No evidence was attached to this proposal.</p>'}</div></div>
-          ${activeProposal.file ? `<details><summary class="muted">Details</summary><p><code>${escapeHtml(activeProposal.file)}</code></p></details>` : ''}
+          ${quickView}
+          ${p.file ? `<details><summary class="muted">Details</summary><p><code>${escapeHtml(p.file)}</code></p></details>` : ''}
         </div>
         <div class="review-side">
-          ${activeProposal.recommendation ? `<div class="review-section"><h3>Recommendation</h3><p><strong>${escapeHtml(activeProposal.recommendation)}</strong></p></div>` : ''}
-          ${(activeProposal.tradeoffs || []).length ? `<div class="review-section"><h3>Trade-offs</h3><ul>${activeProposal.tradeoffs.map((x) => `<li>${escapeHtml(x)}</li>`).join('')}</ul></div>` : ''}
+          ${p.recommendation ? `<div class="review-section"><h3>Recommendation</h3><p><strong>${escapeHtml(p.recommendation)}</strong></p></div>` : ''}
+          ${(p.tradeoffs || []).length ? `<div class="review-section"><h3>Trade-offs</h3><ul>${p.tradeoffs.map((x) => `<li>${escapeHtml(x)}</li>`).join('')}</ul></div>` : ''}
           <div class="decision-stack">
-            ${DECISION_BUTTONS.map(([value, label, cls]) => `<button class="${cls}" data-decision="${value}" data-decision-label="${label}" type="button">${label}</button>`).join('')}
+            ${DECISION_BUTTONS.map(([value, label, cls]) => decisionButtonHtml(value, label, cls, authority)).join('')}
           </div>
+          ${authority.isSteward ? '' : stewardGateNote(authority)}
           ${decided ? `<div class="decision-status">Recorded: ${escapeHtml(decided)}</div>` : ''}
         </div>
       </div>
@@ -649,7 +866,12 @@ export function renderProposalMini() {
     $('proposalCard').innerHTML = '<div class="proposal-mini"><span class="eyebrow">Proposals</span><h3>Nothing waiting on you</h3><span class="proposal-source">This document has no open proposal.</span></div>';
     return;
   }
-  $('proposalCard').innerHTML = `<div class="proposal-mini"><span class="eyebrow">Active proposal ${escapeHtml(activeProposal.id)}</span><h3>${escapeHtml(activeProposal.title)}</h3><span class="proposal-source">${escapeHtml(activeProposal.source)}</span><dl>${activeProposal.why ? `<dt>Why now</dt><dd>${escapeHtml(activeProposal.why)}</dd>` : ''}${activeProposal.recommendation ? `<dt>Recommendation</dt><dd><strong>${escapeHtml(activeProposal.recommendation)}</strong></dd>` : ''}</dl><button id="reviewProposalMini" class="primary-button" type="button">Review proposal</button></div>`;
+  // converge-neu6: the mini card is a glance, not the review -- `why` may now
+  // be a whole preamble's worth of rationale, so it is shortened for this
+  // summary line rather than dumped in full (the complete text is one click
+  // away in Review, via `whySectionHtml`).
+  const miniWhy = activeProposal.why ? shorten(activeProposal.why, 120) : '';
+  $('proposalCard').innerHTML = `<div class="proposal-mini"><span class="eyebrow">Active proposal ${escapeHtml(activeProposal.id)}</span><h3>${escapeHtml(activeProposal.title)}</h3><span class="proposal-source">${escapeHtml(activeProposal.source)}</span><dl>${miniWhy ? `<dt>Why now</dt><dd>${escapeHtml(miniWhy)}</dd>` : ''}${activeProposal.recommendation ? `<dt>Recommendation</dt><dd><strong>${escapeHtml(activeProposal.recommendation)}</strong></dd>` : ''}</dl><button id="reviewProposalMini" class="primary-button" type="button">Review proposal</button></div>`;
   $('reviewProposalMini').addEventListener('click', () => { state.docMode = 'review'; renderDirection(); });
 }
 
@@ -666,13 +888,22 @@ export function renderDirection() {
   $('docTitle').textContent = doc ? doc.title : (navDoc ? navDoc.fullTitle : '');
   $('docUpdated').textContent = doc ? doc.updated : '';
   renderStoredMark(doc);
-  const docState = doc ? doc.state : (navDoc ? navDoc.state : 'draft');
-  $('docStateBadge').textContent = STATE_LABEL[docState] || 'Draft';
-  $('docStateBadge').className = `state-badge ${docState}`;
+  // converge-43uv: two badges, two questions, neither one guessing at the
+  // other's answer. `doc` carries the real `locked` field; the repo-tree
+  // summary (`navDoc`) does not, so agreement is only ever read off a loaded
+  // document — a document not yet open says "Draft" rather than asserting a
+  // lock state nothing has confirmed. Conformance falls back to the summary's
+  // own standing when the full document has not loaded yet, so the badge
+  // still says something honest before a click.
+  const agreement = docLockOf(doc);
+  $('docStateBadge').textContent = agreement.locked ? agreement.label : 'Draft';
+  $('docStateBadge').className = `state-badge ${agreement.locked ? 'locked' : 'draft'}`;
+  const conf = conformanceOf(doc || navDoc);
+  $('docConformanceBadge').textContent = conf.label;
+  $('docConformanceBadge').className = `conformance-badge ${conformanceClassOf(conf)}`;
+  $('docConformanceBadge').title = conf.sentence || 'Whether the project\u2019s ledger has checked this promise.';
   $('changesCountChip').textContent = changeCount;
   $('reviewCountChip').textContent = proposalCount;
-  $('allChangesCount').textContent = changeCount;
-  $('proposalCountNav').textContent = proposalCount;
   $('sinceSummary').textContent = `${plural(changeCount, 'sentence')} changed`;
   $('sinceDetail').textContent = `${plural(proposalCount, 'proposal')} open`;
   $('rawToggle').setAttribute('aria-pressed', state.raw ? 'true' : 'false');
@@ -716,6 +947,10 @@ export function attachDocumentModeHandlers() {
     state.docMode = btn.dataset.inlineMode;
     renderDirection();
   }));
+  // converge-43uv: the fetch-error state's next action \u2014 the same reload the
+  // rest of the app already uses, wired through the shared hook rather than a
+  // second reload path of this file's own.
+  qsa('[data-doc-retry]').forEach((btn) => btn.addEventListener('click', () => hooks.reloadDoc()));
   qsa('[data-change-all]').forEach((btn) => btn.addEventListener('click', markAllRead));
   // §6: one wiring for all four restore scopes. Nothing is staged and nothing
   // is decided here — the scope names which sentences, and actions.js makes

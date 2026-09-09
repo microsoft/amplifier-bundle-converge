@@ -204,7 +204,7 @@ def project(tmp_path_factory) -> dict:
     conf = tmp_path / "converge-app.toml"
     conf.write_text("".join(blocks), encoding="utf-8")
     # Never the real ~/.amplifier: a test must not move a steward's read point.
-    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json",
+    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
             "repos": repos}
 
 
@@ -227,7 +227,7 @@ def server(project):
     patch.setattr(data, "tracker_counts", lambda mc: dict(COUNTS))
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -261,13 +261,31 @@ def browser():
 
 #: Everything drawn that reaches past the viewport's right edge, named. An
 #: empty list is the only passing answer.
+#:
+#: An element inside a deliberately clipped container (the console pane
+#: collapsed to a 0px grid column when closed -- converge-t30q's default,
+#: `console.css`'s own `.manager-console { overflow:hidden }`) cannot push
+#: the PAGE sideways: its `getBoundingClientRect()` can still report a
+#: right edge past the viewport even though an ancestor clips it from view
+#: and from `document.scrollWidth`. `test_console_overflow_rendered.py`
+#: already draws this line for the resize handle; this probe draws it for
+#: every element, the same way, so a genuinely clipped console does not
+#: read as a widened page.
 MEASURE = """
 () => {
   const de = document.documentElement;
   const past = [];
+  const clipped = (el) => {
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      const ox = getComputedStyle(p).overflowX;
+      if (ox === 'auto' || ox === 'scroll' || ox === 'hidden') return true;
+    }
+    return false;
+  };
   document.querySelectorAll('body, body *').forEach(el => {
     const s = getComputedStyle(el);
     if (s.display === 'none' || s.visibility === 'hidden') return;
+    if (clipped(el)) return;
     const r = el.getBoundingClientRect();
     if (r.right > de.clientWidth + 0.01) {
       past.push(((el.id ? '#' + el.id : '') + '.' + String(el.className || el.tagName)).slice(0, 50)
@@ -314,7 +332,9 @@ def _open(browser, server, project, width: int, height: int, errors: list[str]):
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
     page.goto(server, wait_until="networkidle")
     page.wait_for_selector("#brandHome", timeout=15000)
-    # Boot lands on the workspace; the shell is the same chrome on both screens.
+    # Boot lands on Home, not an auto-picked manager (experience.v1 Core 1,
+    # converge-t30q acceptance 1); the topbar's Feedback/Console controls are
+    # the same chrome on both screens, so they are present here too.
     page.wait_for_selector("#feedbackButton", timeout=15000)
     return ctx, page
 
@@ -322,6 +342,13 @@ def _open(browser, server, project, width: int, height: int, errors: list[str]):
 def _home(page) -> None:
     page.click("#brandHome")
     page.wait_for_selector(".home-manager-card", timeout=15000)
+
+
+def _workspace(page) -> None:
+    """Open the first listed manager session -- boot no longer does this."""
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
+    page.wait_for_selector("#managerCrumb:not(.hidden)", timeout=15000)
 
 
 def _push_the_console_sheet_down(page, width: int) -> bool:
@@ -369,8 +396,8 @@ def test_the_feedback_control_is_drawn_whole_and_in_its_own_word(
 ) -> None:
     errors: list[str] = []
     ctx, page = _open(browser, server, project, width, height, errors)
-    if screen == "home":
-        _home(page)
+    if screen == "workspace":
+        _workspace(page)
 
     feedback = page.evaluate(CONTROL, "feedbackButton")
     console = page.evaluate(CONTROL, "consoleToggle")
@@ -408,8 +435,8 @@ def test_the_feedback_control_opens_the_feedback_dialog(
 ) -> None:
     errors: list[str] = []
     ctx, page = _open(browser, server, project, width, height, errors)
-    if screen == "home":
-        _home(page)
+    if screen == "workspace":
+        _workspace(page)
 
     # Playwright's own actionability checks are the point of this click: it
     # refuses a control that is invisible, unstable, disabled, or covered by
@@ -426,7 +453,13 @@ def test_the_feedback_control_opens_the_feedback_dialog(
 
 @needs_browser
 def test_the_feedback_write_finishes_from_the_phone(server, project, browser) -> None:
-    """converge-nng's acceptance, carried through to the file on disk."""
+    """converge-nng's acceptance, carried through to the file on disk.
+
+    Boot lands on Home with no manager open (converge-t30q), so per manager
+    correction 4 the dialog now asks explicitly which manager session this is
+    about -- it no longer guesses the first one listed. This test picks
+    MANAGERS[0] through that chooser rather than relying on a silent default.
+    """
     errors: list[str] = []
     ctx, page = _open(browser, server, project, 390, 844, errors)
     repo = project["repos"][MANAGERS[0]]
@@ -435,6 +468,7 @@ def test_the_feedback_write_finishes_from_the_phone(server, project, browser) ->
     said = "the lane words on this page do not match the contract"
     page.click("#feedbackButton", timeout=5000)
     page.wait_for_selector("#feedbackText", timeout=5000)
+    page.select_option("#feedbackTarget", value=MANAGERS[0])
     page.fill("#feedbackText", said)
     page.click("#dialogActions button:has-text('Send feedback')", timeout=5000)
 
@@ -532,8 +566,8 @@ def test_home_tells_every_listed_manager_session_at_once(
 def test_nothing_widens_the_page(server, project, browser, width, height, screen) -> None:
     errors: list[str] = []
     ctx, page = _open(browser, server, project, width, height, errors)
-    if screen == "home":
-        _home(page)
+    if screen == "workspace":
+        _workspace(page)
 
     measured = page.evaluate(MEASURE)
     print(f"\n[{width} · {screen}] {measured}")

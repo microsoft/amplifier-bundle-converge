@@ -41,7 +41,7 @@ from fastapi.testclient import TestClient
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from app import auth, collab, serve  # noqa: E402
+from app import assets, auth, collab, serve  # noqa: E402
 
 GOOD_USER = "tester"
 GOOD_PASSWORD = "correct horse"
@@ -162,11 +162,12 @@ def project(tmp_path: Path) -> dict:
         'name = "Demo manager"\n'
         f'batch_dir = "{batch}"\n'
         f'repos = ["{repo}"]\n'
-        'tmux_socket = "collab-socket-that-does-not-exist"\n',
+        'tmux_socket = "collab-socket-that-does-not-exist"\n'
+        f'steward = "{GOOD_USER}"\n',
         encoding="utf-8",
     )
     return {"repo": repo, "batch": batch, "config": conf,
-            "secret": tmp_path / "secret", "state": tmp_path / "state.json"}
+            "secret": tmp_path / "secret", "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json"}
 
 
 class _FakePam:
@@ -177,7 +178,7 @@ class _FakePam:
 def build_app(project: dict):
     """The app, plus the one line `app/serve.py` gains at integration."""
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     made.include_router(collab.router)
     return made
@@ -237,13 +238,41 @@ def test_the_reading_really_ran_the_hosts_own_command_line(client, host) -> None
     assert calls(host)[0][:2] == ["pr", "list"], calls(host)
 
 
+def test_a_relative_path_host_cli_is_anchored_before_repo_cwd_changes(tmp_path, monkeypatch) -> None:
+    """A relative $PATH entry must still work after `_run` enters a repository.
+
+    Before the repair `shutil.which("gh")` returned ``bin/gh`` here.  `_run`
+    then changed cwd to ``repo`` and subprocess could no longer find that
+    relative path.  This uses a real executable and a different real cwd,
+    rather than mocking either path lookup or subprocess.
+    """
+    launcher = tmp_path / "launcher"
+    binaries = launcher / "bin"
+    binaries.mkdir(parents=True)
+    tool = binaries / "gh"
+    tool.write_text("#!/bin/sh\npwd\n", encoding="utf-8")
+    tool.chmod(0o755)
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    monkeypatch.chdir(launcher)
+    monkeypatch.setenv("PATH", "bin")
+
+    found = collab.host_cli()
+    assert Path(found).is_absolute(), f"host_cli returned cwd-relative executable: {found!r}"
+    ok, out, why = collab._run(repo, ["pr", "list"])
+    assert ok, why
+    assert Path(out.strip()) == repo
+
+
 # --------------------------------------------------------------------------
 # clause 4 -- a question asked here arrives on the host
 # --------------------------------------------------------------------------
 def test_a_question_asked_in_converge_is_posted_as_a_comment(client, host) -> None:
+    # No repoId: a manager steering exactly one repository is unambiguous
+    # (converge-xet9) -- ordinary single-repo operation needs no identifier.
     answer = client.post(
         f"/api/collab/{MANAGER}/pulls/7/comments",
-        json={"repoId": "demo-repo", "text": "Which sentence in Core 4 does this replace?"},
+        json={"text": "Which sentence in Core 4 does this replace?"},
     )
     assert answer.status_code == 200, answer.text
     assert answer.json()["ok"] is True
@@ -267,7 +296,8 @@ def test_the_conversation_on_the_host_is_read_back_into_the_review(client, host,
     monkeypatch.setenv("FAKE_GH_COMMENTS", json.dumps([
         {"author": {"login": "wren"}, "createdAt": "2026-09-04T10:00:00Z", "body": "The second one."},
     ]))
-    answer = client.get(f"/api/collab/{MANAGER}/pulls/7?repoId=demo-repo")
+    # No repoId: single-repo manager, unambiguous (converge-xet9).
+    answer = client.get(f"/api/collab/{MANAGER}/pulls/7")
     assert answer.status_code == 200, answer.text
     said = answer.json()["proposal"]["comments"]
     assert said == [{"author": "wren", "when": "2026-09-04T10:00:00Z", "body": "The second one."}]
@@ -277,9 +307,10 @@ def test_the_conversation_on_the_host_is_read_back_into_the_review(client, host,
 # clause 5 -- the answer lands in the record AND goes back to its origin
 # --------------------------------------------------------------------------
 def test_an_answer_is_recorded_and_posted_back_where_it_came_from(client, host, project) -> None:
+    # No repoId: single-repo manager, unambiguous (converge-xet9).
     answer = client.post(
         f"/api/collab/{MANAGER}/pulls/7/answer",
-        json={"repoId": "demo-repo", "decision": "ratified-with-edits",
+        json={"decision": "ratified-with-edits",
               "note": "Keep the first sentence, drop the second."},
     )
     assert answer.status_code == 200, answer.text
@@ -306,7 +337,7 @@ def test_an_answer_is_recorded_and_posted_back_where_it_came_from(client, host, 
 
 def test_a_word_outside_the_four_is_refused_and_nothing_is_written(client, host, project) -> None:
     answer = client.post(
-        f"/api/collab/{MANAGER}/pulls/7/answer", json={"repoId": "demo-repo", "decision": "approved"}
+        f"/api/collab/{MANAGER}/pulls/7/answer", json={"decision": "approved"}
     )
     assert answer.status_code == 400
     assert list((project["repo"] / "docs" / "workflow").glob("owner-ratifications-*.md")) == []
@@ -329,7 +360,7 @@ def test_a_host_that_refuses_the_comment_does_not_hide_that_the_record_was_writt
     monkeypatch.setenv("PATH", f"{binaries}{os.pathsep}{os.environ['PATH']}")
 
     answer = client.post(
-        f"/api/collab/{MANAGER}/pulls/7/answer", json={"repoId": "demo-repo", "decision": "declined"}
+        f"/api/collab/{MANAGER}/pulls/7/answer", json={"decision": "declined"}
     )
     body = answer.json()
     assert body["ok"] is True, "the record was written, and the answer says so"
@@ -343,6 +374,62 @@ def test_with_no_host_command_line_the_refusal_says_so_in_plain_words(client, tm
     answer = client.get(f"/api/collab/{MANAGER}/pulls")
     said = answer.json()["unreadable"]
     assert said and "gh` is not installed" in said[0]["reason"], said
+
+
+# --------------------------------------------------------------------------
+# converge-xet9 -- a stale, unknown, or ambiguous repository key is refused,
+# never silently remapped to the first configured repository
+# --------------------------------------------------------------------------
+def test_a_stale_pre_fix_repo_identifier_is_refused_even_in_a_single_repo_manager(client, host, project) -> None:
+    """`data.repo_id` (a bare basename, e.g. "demo-repo") used to BE the
+    identifier this route matched. It no longer is -- `_repo_key` is an
+    opaque, canonical-path-derived key -- so a caller still holding the old
+    basename now names nothing, and must be refused rather than silently
+    accepted as if it matched the (only) configured repository. Read the
+    route -- never fall back to a default read -- as the acceptance for this
+    lane demands: an unknown key must fail WITHOUT ever invoking `gh`.
+    """
+    before = calls(host)
+    answer = client.get(f"/api/collab/{MANAGER}/pulls/7?repoId=demo-repo")
+    assert answer.status_code == 400, answer.text
+    assert calls(host) == before, "an unknown repoId must never reach the host command line"
+
+
+def test_an_unknown_repo_identifier_is_refused_on_every_write_route(client, host, project) -> None:
+    before = calls(host)
+    comment = client.post(
+        f"/api/collab/{MANAGER}/pulls/7/comments",
+        json={"repoId": "not-a-real-key", "text": "Should never post."},
+    )
+    assert comment.status_code == 400, comment.text
+    answer = client.post(
+        f"/api/collab/{MANAGER}/pulls/7/answer",
+        json={"repoId": "not-a-real-key", "decision": "ratified"},
+    )
+    assert answer.status_code == 400, answer.text
+    assert list((project["repo"] / "docs" / "workflow").glob("owner-ratifications-*.md")) == [], (
+        "an unknown repoId must never reach the write path"
+    )
+    assert calls(host) == before, "an unknown repoId must never reach the host command line"
+
+
+def test_the_real_opaque_key_still_works_once_a_caller_reads_it_from_the_list(client, host) -> None:
+    """The identifier a caller is actually meant to use: read it from the
+    list response (as the real browser does), then use it on the detail and
+    write routes -- proving the new key format is not merely a refusal, it
+    is a working identifier end to end."""
+    listed = client.get(f"/api/collab/{MANAGER}/pulls").json()
+    real_key = listed["proposals"][0]["origin"]["repoId"]
+    assert real_key and real_key != "demo-repo", real_key
+
+    detail = client.get(f"/api/collab/{MANAGER}/pulls/7?repoId={real_key}")
+    assert detail.status_code == 200, detail.text
+
+    posted = client.post(
+        f"/api/collab/{MANAGER}/pulls/7/comments",
+        json={"repoId": real_key, "text": "Using the real key."},
+    )
+    assert posted.status_code == 200, posted.text
 
 
 # --------------------------------------------------------------------------
@@ -402,6 +489,60 @@ def test_the_partial_says_how_it_stays_fresh_without_waiting_for_a_script() -> N
     assert "checked every 60 seconds" in said
     assert "webhook" in said
     assert "polling" in said.lower()
+
+
+# --------------------------------------------------------------------------
+# converge-vtkw -- reachable from Direction's main area, not the hidden rail
+# --------------------------------------------------------------------------
+def _direct_templates():
+    """A Jinja Environment built the same way this file always has -- a
+    direct loader over `app/templates`, bypassing `app/serve.py`'s
+    `create_app()` -- but with the ONE thing `base.html` now needs from its
+    caller that a bare `Environment()` does not supply on its own:
+    `static_url` (converge-moe4, `app/assets.py`). Without this global,
+    rendering `shell.html` (which extends `base.html`) raises
+    `UndefinedError: 'static_url' is undefined` -- this file is exactly the
+    "direct-template test caller" `app/assets.py`'s own docstring names.
+    """
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+    templates = Environment(
+        loader=FileSystemLoader(str(REPO_ROOT / "app" / "templates")),
+        autoescape=select_autoescape(["html", "xml"]),
+    )
+    revision = assets.compute_revision(REPO_ROOT / "app" / "static")
+    templates.globals["static_url"] = lambda relpath: assets.static_url(revision, relpath)
+    return templates
+
+
+def test_the_served_shell_carries_exactly_one_set_of_collab_ids() -> None:
+    """The real served page, not a second copy spliced in for the test.
+
+    Regression pin for the duplicate-id defect `_snapshot`'s old helper had:
+    two `collabPanel` elements in one page is not what any steward's browser
+    ever renders, and a test that produces one proves nothing about the app.
+    """
+    served = _direct_templates().get_template("shell.html").render(user=GOOD_USER)
+    for one_id in ("collabPanel", "collabList", "collabReview", "collabCount", "collabFreshness"):
+        assert served.count(f'id="{one_id}"') == 1, f"{one_id!r} appears {served.count(chr(34)+one_id+chr(34))} times"
+
+
+def test_the_collab_panel_sits_in_the_document_surface_not_the_hidden_rail() -> None:
+    """direction.css hides `.context-rail` outright at <=1320 CSS px. A panel
+
+    that only lived there had no entry point at all below that width --
+    measured on the steward's own Mac PWA at 1280 and 390, 2026-09-09. Moved
+    into `.document-surface`, which carries no such rule, the panel is
+    reachable at every width this app supports.
+    """
+    direction_html = (REPO_ROOT / "app" / "templates" / "direction.html").read_text(encoding="utf-8")
+    surface_start = direction_html.index('class="document-surface"')
+    rail_start = direction_html.index('class="context-rail"')
+    include_at = direction_html.index('{% include "collab.html" %}')
+    assert surface_start < include_at < rail_start, (
+        "the collab include is not between the document surface's opening tag and the "
+        "context rail's -- it may still be inside the rail direction.css hides at 1320px"
+    )
 
 
 # --------------------------------------------------------------------------
@@ -476,30 +617,25 @@ def _kit():
 def _snapshot(client, tmp_path: Path, extra_boot: dict | None = None):
     """This app, captured the way the kit's own reader captures one.
 
-    The `/` body is the shell with the partial included, which is the second of
-    the two integration lines. Rendering it here rather than asserting against
-    the un-included shell is deliberate: the kit judges *what a steward is
-    served*, and until `app/templates/shell.html` carries the include line this
-    is the only place that page exists.
-    """
-    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    The `/` body is the real, whole shell -- `shell.html` includes
+    `direction.html`, which includes `collab.html` (converge-vtkw), so
+    rendering `shell.html` through the ordinary Jinja loader is already the
+    exact markup a steward is served. Nothing is spliced in after the fact.
 
+    An earlier version of this helper rendered `collab.html` a second time and
+    string-replaced it in beside `#managerMenu`, on the belief that the shell
+    did not yet include the partial for real. That belief had gone stale: the
+    include was already live, so that second copy left TWO `collabPanel`
+    elements (and every id inside them) in one page -- exactly the "duplicate
+    IDs" defect converge-vtkw's acceptance forbids, and not what any real
+    steward's browser ever renders. `test_the_served_shell_carries_exactly_
+    one_set_of_collab_ids` below is the regression pin for this.
+    """
     _kit()  # puts conformance/ on sys.path
     import appsnapshot  # the kit's own reader
 
-    templates = Environment(
-        loader=FileSystemLoader(str(REPO_ROOT / "app" / "templates")),
-        autoescape=select_autoescape(["html", "xml"]),
-    )
-    shell = templates.get_template("shell.html").render(user=GOOD_USER)
-    partial = templates.get_template("collab.html").render()
-    # Where the include line goes: below `.body-grid`, beside the dialogs -- not
-    # inside `<main class="workspace">`, which is `overflow:hidden` and draws the
-    # foot of this panel underneath the console pane. Measured 2026-09-04.
-    anchor = '<div id="managerMenu"'
-    assert anchor in shell, "the shell no longer includes dialogs.html where this expects"
-    served = shell.replace(anchor, partial + "\n" + anchor, 1)
-    assert partial.strip() and partial in served, "the partial was not included in the shell"
+    served = _direct_templates().get_template("shell.html").render(user=GOOD_USER)
+    assert 'id="collabPanel"' in served, "the served shell no longer carries the collab partial at all"
 
     boot = client.get("/api/boot").json()
     if extra_boot:

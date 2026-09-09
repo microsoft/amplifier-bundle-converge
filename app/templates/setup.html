@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Set up this browser — Converge{% endblock %}
+{% block body %}
+  <div class="login-shell">
+    <div class="login-card" style="max-width:34rem">
+      <span class="eyebrow">Amplifier</span>
+      <h1>Verify and trust this server</h1>
+      <p class="muted">
+        This preview serves itself over HTTPS with a certificate signed by a
+        small local certificate authority it created on this machine — not
+        one any browser already trusts. Encryption alone does not prove
+        that you reached the right server.
+      </p>
+
+      <h2>Option A — read setup information only</h2>
+      <p>
+        If you click through the certificate warning to reach this public
+        setup page, do not enter your machine password. An untrusted
+        certificate can belong to an impersonator. Use this page only to
+        obtain the public CA certificate, then verify its fingerprint through
+        a trusted channel before installing it.
+      </p>
+
+      <h2>Option B — trust the CA once, no more warnings</h2>
+      <p>
+        Download the CA's public certificate and add it to your browser or
+        operating system's trust store. This is the same certificate every
+        connection to this server is ultimately signed by, so trusting it
+        once covers every future renewal — you will not need to repeat this
+        when the leaf certificate is reissued.
+      </p>
+      {% if ca_present %}
+        <p><a class="primary-button login-submit" href="/ca.crt" style="display:inline-block;width:auto;text-decoration:none;text-align:center">Download converge-preview-ca.crt</a></p>
+        {% if fingerprint %}
+          <p class="muted">
+            CA SHA-256 fingerprint — compare the downloaded certificate against
+            the fingerprint supplied by the person running this preview through
+            a trusted channel; matching this page alone is not sufficient:<br />
+            <code style="word-break:break-all">{{ fingerprint }}</code>
+          </p>
+        {% endif %}
+        <p class="muted">
+          <strong>Chrome / Edge (Linux/Windows):</strong> Settings → Privacy
+          and security → Security → Manage certificates → Authorities →
+          Import, and check "Trust this certificate for identifying
+          websites."<br />
+          <strong>Firefox:</strong> Settings → Privacy &amp; Security →
+          Certificates → View Certificates → Authorities → Import, and check
+          the same box.<br />
+          <strong>macOS:</strong> open the downloaded file in Keychain
+          Access, then set it to "Always Trust" under the Trust section.<br />
+          <strong>A phone or another device on the network</strong> installs
+          it the same way its OS installs any CA certificate — Settings →
+          general/security → install a certificate, on most platforms.
+        </p>
+      {% else %}
+        <p class="login-error" role="alert">
+          No CA certificate has been generated on this server yet. Start the
+          app once (<code>scripts/run-app.sh</code>) and reload this page.
+        </p>
+      {% endif %}
+
+      <h2>Browsing after the warning, vs. an installed app</h2>
+      <p class="muted">
+        Clicking through the warning is only for this public setup information,
+        not for signing in with a machine password. It is <strong>not</strong> enough for installing
+        this app as its own icon (a PWA): most browsers refuse to install a
+        site as an app while its certificate is untrusted. If you want the
+        installed-app experience, trust the CA first (Option B above), then
+        install.
+      </p>
+
+      {% if leaf_present %}
+        <h2>What this server is currently presenting</h2>
+        <p class="muted">
+          Expires: <code>{{ leaf_expires }}</code><br />
+          Covers: {% for s in leaf_sans %}<code>{{ s }}</code>{{ ", " if not loop.last }}{% endfor %}
+        </p>
+      {% endif %}
+
+      {% if problems %}
+        <p class="login-error" role="alert">
+          {% for p in problems %}{{ p }}<br />{% endfor %}
+        </p>
+      {% endif %}
+
+      <p class="muted">This page never asks for a password, and never shows a private key.</p>
+      <p><a href="/login">After verifying and trusting the CA, continue to sign-in</a>.</p>
+    </div>
+  </div>
+{% endblock %}

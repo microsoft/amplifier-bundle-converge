@@ -103,14 +103,18 @@ jobs:
   # the four writes, the whatchanged differ, the plain-words surface rule, and
   # the live-queue tripwire. Not an import smoke.
   #
-  # `--no-project --with .` rather than `uv sync`: the root commits no
+  # `--no-project --with-editable '.[app]'` rather than `uv sync`: the root commits no
   # lockfile on purpose, so there is nothing to sync and `--frozen` has
-  # nothing to be frozen against. `--with .` builds and installs this
-  # checkout, which is what the tests import.
+  # nothing to be frozen against. Source-resolution tests must import this
+  # checkout, not an already-cached wheel module. Dedicated packaging tests
+  # still build and exercise a real wheel in their own isolated environment.
   #
   # pyyaml is named explicitly. Without it the suite reports
   # "137 passed, 1 skipped" instead of 139 -- a test that quietly opts out is
   # exactly the kind of soft green this gate exists to prevent.
+  # The app extra supplies the real authentication/TLS modules exercised by
+  # test_project_state_probe (including PAM, itsdangerous and cryptography).
+  # These dependencies remain optional for library users.
   #
   # The matrix is the floor and a current minor of the repo's declared
   # requires-python = ">=3.11", so the claim is checked at both ends rather
@@ -133,7 +137,7 @@ jobs:
         run: >
           uv run --isolated --no-project
           --python ${{ matrix.python-version }}
-          --with .
+          --with-editable '.[app]'
           --with 'pytest>=8.0'
           --with 'PyYAML>=6.0'
           python -m pytest tests/ -q --tb=short

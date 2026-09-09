@@ -1,7 +1,7 @@
 {
   "path": "AMPLIFIER-CORE / docs/VISION.md",
   "title": "Amplifier Core Vision",
-  "updated": "Updated Sep 3, 2026 by bkrabach",
+  "updated": "Updated Sep 3, 2026 by the project steward",
   "state": "kept",
   "sections": [
     ["Purpose", "<p>Amplifier Core is the thin runtime that lets teams build powerful agentic systems without making the kernel own application policy.</p>"],

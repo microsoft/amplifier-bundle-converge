@@ -19,7 +19,7 @@
     {
       "id": "core",
       "name": "AMPLIFIER-CORE",
-      "path": "/home/bkrabach/dev/vision-focused-team-ci/amplifier-bundle-converge",
+      "path": "/workspace/amplifier-bundle-converge",
       "docs": [
         { "id": "vision", "title": "Vision", "fullTitle": "Amplifier Core Vision", "state": "kept" },
         { "id": "kernel", "title": "Kernel Contract", "fullTitle": "Kernel Contract", "state": "kept" }
@@ -28,7 +28,7 @@
     {
       "id": "web",
       "name": "AMPLIFIER-APP-WEB",
-      "path": "/home/bkrabach/dev/vision-focused-team-ci/amplifier-app-web",
+      "path": "/workspace/amplifier-app-web",
       "docs": [
         { "id": "surface", "title": "Surface Contract", "fullTitle": "Surface Contract", "state": "kept" },
         { "id": "ux", "title": "UX Contract", "fullTitle": "UX Contract", "state": "gap" }

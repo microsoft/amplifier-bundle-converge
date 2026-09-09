@@ -8,8 +8,9 @@ import { renderHome } from './render/home.js';
 import { renderDirection } from './render/direction.js';
 import { renderOperation } from './render/operation.js';
 import { renderConsole, showManagerConsole } from './render/console.js';
+import { refreshCollab } from './render/collab.js';
 import {
-  openFeedback, openSteer, fillLanes, closeDialog, downloadCurrentDoc, copyText, toggleBookmark,
+  openFeedback, openSteer, fillLanes, closeDialog, downloadCurrentDoc, copyText, toggleBookmark, openNeeds,
 } from './actions.js';
 
 // Which screen the shell is on, said once on the shell's own root so a
@@ -105,24 +106,41 @@ async function loadDoc() {
 }
 
 export async function selectManager(id) {
-  state.managerId = id;
-  state.screen = 'workspace';
-  state.consoleContext = 'manager';
-  state.consoleTarget = null;
-  state.proposalDecision = null;
-  state.historyId = 'now';
+  // A failed fetch below must never leave the screen showing manager B's
+  // chrome (the new `id` is already in the title) over manager A's content
+  // (the old `data.manager`/`data.doc`) -- acceptance 1's "failed fetch never
+  // mixes old content with new title" (converge-t30q). So the previous
+  // screen is kept until the reads actually land, and restored, unchanged, on
+  // failure -- nothing above this line is committed to `state` yet.
+  let manager;
+  let operation;
   try {
-    const [manager, operation] = await Promise.all([api.manager(id), api.operation(id)]);
-    data.manager = manager;
-    data.repoList = manager.repositories || [];
-    data.operation = operation;
+    [manager, operation] = await Promise.all([api.manager(id), api.operation(id)]);
   } catch (err) {
     toast(`Could not open that manager: ${err.message}`);
     return;
   }
+  state.managerId = id;
+  state.screen = 'workspace';
+  // `experience.v1` Core 1/2: opening a manager session is opening its
+  // Operation -- the manager at work -- with Direction an obvious peer tab
+  // away, never the other way around (converge-t30q, acceptance 1).
+  state.workspace = 'operation';
+  state.consoleContext = 'manager';
+  state.consoleTarget = null;
+  state.proposalDecision = null;
+  state.historyId = 'now';
+  data.manager = manager;
+  data.repoList = manager.repositories || [];
+  data.operation = operation;
   pickDoc();
-  await loadDoc();
+  await loadDoc(); // toasts and leaves data.doc null on its own failure; never throws
   renderAll();
+  // `collab.js`'s singleton mount starts while no manager is selected, so its
+  // first read can belong to a different manager. Refresh the committed
+  // selection without awaiting the host: navigation remains responsive while
+  // the existing module's own guarded refresh updates its panel.
+  void refreshCollab();
   toast(`Opened ${data.manager.name}`);
 }
 
@@ -166,25 +184,31 @@ function showHome() {
   renderAll();
 }
 
+// A listener wired against an element another lane's markup may remove.
+// `experience.v1` acceptance 5 (converge-t30q) asks that a reader-owned
+// element's removal not throw here: `$(id)` already answers `null` for a
+// missing element, so this is the one place that has to check before calling
+// `addEventListener` on it. A removed element used to be a boot-time
+// TypeError that took every other listener in `wire()` down with it.
+function on(id, event, handler) {
+  const el = $(id);
+  if (el) el.addEventListener(event, handler);
+}
+
 function wire() {
-  $('brandHome').addEventListener('click', showHome);
-  $('allSessionsButton').addEventListener('click', showHome);
-  $('directionTab').addEventListener('click', () => { state.screen = 'workspace'; state.workspace = 'direction'; renderAll(); });
-  $('operationTab').addEventListener('click', () => { state.screen = 'workspace'; state.workspace = 'operation'; renderAll(); });
-  $('needsYouButton').addEventListener('click', async () => {
-    // Take the steward to the thing that actually needs their word, not just to a tab.
-    state.screen = 'workspace';
-    state.workspace = 'direction';
-    try {
-      data.needList = (await api.needs(state.managerId)) || [];
-      const first = data.needList.find((n) => n.where && n.where.repoId && n.where.docId);
-      if (first) await selectDoc(first.where.repoId, first.where.docId);
-    } catch { /* no needs endpoint answer: fall back to the open document */ }
-    state.docMode = 'review';
-    renderAll();
-  });
-  $('feedbackButton').addEventListener('click', openFeedback);
-  $('consoleToggle').addEventListener('click', () => {
+  on('brandHome', 'click', showHome);
+  on('allSessionsButton', 'click', showHome);
+  on('directionTab', 'click', () => { state.screen = 'workspace'; state.workspace = 'direction'; renderAll(); });
+  on('operationTab', 'click', () => { state.screen = 'workspace'; state.workspace = 'operation'; renderAll(); });
+  // The needs pill opens the decision inbox dialog -- up to five named
+  // choices, each with where it applies and what answering it does -- rather
+  // than jumping straight to the first document and guessing the rest
+  // (`experience.v1` Core 5, converge-t30q acceptance 4). `openNeeds` is
+  // shell's own dialog code, in `actions.js`, beside every other write and
+  // dialog this file owns.
+  on('needsYouButton', 'click', openNeeds);
+  on('feedbackButton', 'click', openFeedback);
+  on('consoleToggle', 'click', () => {
     // The gesture `platform-web.v1` §6 names -- pull it up, push it down -- is
     // untouched: the state flips wherever the steward taps, so the pane is as
     // they left it when they next open a manager session.
@@ -200,19 +224,20 @@ function wire() {
       toast(`${CONSOLE_IS_ELSEWHERE} It is now ${state.consoleOpen ? 'open' : 'closed'} there.`);
     }
   });
-  $('consoleClose').addEventListener('click', () => { state.consoleOpen = false; renderConsole(); reflectConsoleControl(); });
-  $('managerSelectButton').addEventListener('click', () => $('managerMenu').classList.toggle('hidden'));
+  on('consoleClose', 'click', () => { state.consoleOpen = false; renderConsole(); reflectConsoleControl(); });
+  on('managerSelectButton', 'click', () => { const menu = $('managerMenu'); if (menu) menu.classList.toggle('hidden'); });
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('#managerMenu') && !e.target.closest('#managerSelectButton')) $('managerMenu').classList.add('hidden');
+    const menu = $('managerMenu');
+    if (menu && !e.target.closest('#managerMenu') && !e.target.closest('#managerSelectButton')) menu.classList.add('hidden');
   });
-  $('repoFilter').addEventListener('change', (e) => { state.repoFilter = e.target.value; renderDirection(); });
+  on('repoFilter', 'change', (e) => { state.repoFilter = e.target.value; renderDirection(); });
   qsa('[data-doc-mode]').forEach((btn) => btn.addEventListener('click', () => { state.docMode = btn.dataset.docMode; renderDirection(); }));
-  $('showChangesShortcut').addEventListener('click', () => { state.docMode = 'changes'; renderDirection(); });
-  $('wideToggle').addEventListener('click', () => { state.wide = !state.wide; renderDirection(); });
-  $('rawToggle').addEventListener('click', () => { state.raw = !state.raw; state.docMode = 'read'; renderDirection(); });
-  $('copyRendered').addEventListener('click', () => copyText(data.doc ? data.doc.raw || '' : ''));
-  $('downloadDoc').addEventListener('click', downloadCurrentDoc);
-  $('bookmarkButton').addEventListener('click', toggleBookmark);
+  on('showChangesShortcut', 'click', () => { state.docMode = 'changes'; renderDirection(); });
+  on('wideToggle', 'click', () => { state.wide = !state.wide; renderDirection(); });
+  on('rawToggle', 'click', () => { state.raw = !state.raw; state.docMode = 'read'; renderDirection(); });
+  on('copyRendered', 'click', () => copyText(data.doc ? data.doc.raw || '' : ''));
+  on('downloadDoc', 'click', downloadCurrentDoc);
+  on('bookmarkButton', 'click', toggleBookmark);
   qsa('[data-nav-special]').forEach((btn) => btn.addEventListener('click', () => {
     const kind = btn.dataset.navSpecial;
     if (kind === 'changes') state.docMode = 'changes';
@@ -220,10 +245,10 @@ function wire() {
     if (kind === 'decisions') state.docMode = 'history';
     renderDirection();
   }));
-  $('steerButton').addEventListener('click', openSteer);
-  $('timelineButton').addEventListener('click', () => $('timelineCard').classList.remove('hidden'));
-  $('closeTimelineButton').addEventListener('click', () => $('timelineCard').classList.add('hidden'));
-  $('fillLanesButton').addEventListener('click', fillLanes);
+  on('steerButton', 'click', openSteer);
+  on('timelineButton', 'click', () => { const card = $('timelineCard'); if (card) card.classList.remove('hidden'); });
+  on('closeTimelineButton', 'click', () => { const card = $('timelineCard'); if (card) card.classList.add('hidden'); });
+  on('fillLanesButton', 'click', fillLanes);
   qsa('[data-console-tab]').forEach((btn) => btn.addEventListener('click', () => { state.consoleTab = btn.dataset.consoleTab; renderConsole(); }));
   // No submit handler for #consoleForm here, on purpose (converge-gf0). The one
   // that used to sit on this line toasted that the console could not be typed
@@ -234,9 +259,9 @@ function wire() {
   // The toast was unreachable only by that accident of event ordering; a second,
   // differently-behaved submit path is exactly what would have made it misfire,
   // so the fix is to have no second path rather than a truer one.
-  $('modalBackdrop').addEventListener('click', closeDialog);
-  $('appDialog').addEventListener('close', () => $('modalBackdrop').classList.add('hidden'));
-  $('consoleContextTitle').addEventListener('click', showManagerConsole);
+  on('modalBackdrop', 'click', closeDialog);
+  on('appDialog', 'close', () => { const b = $('modalBackdrop'); if (b) b.classList.add('hidden'); });
+  on('consoleContextTitle', 'click', showManagerConsole);
 }
 
 async function boot() {
@@ -260,17 +285,62 @@ async function boot() {
     return;
   }
   state.user = bootData.user || '';
-  data.managerList = bootData.managers || [];
-  if (!data.managerList.length) {
-    state.screen = 'home';
-    renderAll();
-    return;
+  // preview-common.md, Shared interfaces section: PWA owns
+  // `window.ConvergePWA.setPrincipal(user)` and shell awaits it, when
+  // present, after `/api/boot` and before any manager or document read --
+  // PWA validates identity against this authenticated boot response, not an
+  // untrusted claim, so it has to run before this session reads anything
+  // that principal might gate. Absent in a build without the PWA lane's
+  // code, which is a normal shape, not a defect.
+  if (window.ConvergePWA && typeof window.ConvergePWA.setPrincipal === 'function') {
+    try {
+      await window.ConvergePWA.setPrincipal(state.user);
+    } catch (err) {
+      // Manager correction 3 (converge-t30q): a rejection here means the
+      // identity check itself failed, not some unrelated lane's hiccup --
+      // continuing past it used to read manager/document data with an
+      // unverified principal, a fail-OPEN path into sensitive cached reads.
+      // Fail closed instead: clear anything already loaded, stay on Home
+      // (never a screen that assumes a verified identity), and give a real
+      // recovery action rather than a dead-end toast that vanishes in 2.8s.
+      data.managerList = [];
+      data.manager = null;
+      data.repoList = [];
+      data.doc = null;
+      data.operation = null;
+      data.config = null;
+      data.identityError = err && err.message ? err.message : 'Identity check failed.';
+      state.managerId = null;
+      state.screen = 'home';
+      renderAll();
+      return;
+    }
   }
-  await selectManager(data.managerList[0].id);
+  data.identityError = null;
+  data.managerList = bootData.managers || [];
+  data.config = bootData.config || null;
+  // `experience.v1` Core 1 (converge-t30q, acceptance 1): boot lands on
+  // Home, the list of manager sessions sorted by which needs you -- never an
+  // arbitrarily first-picked manager. Zero, one, or many managers all draw
+  // the same screen; `render/home.js` is what tells them apart, with an
+  // honest setup state when the list is empty.
+  state.screen = 'home';
+  renderAll();
 }
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => { /* http LAN: no secure context, fine */ });
+  // Publish the registration's OUTCOME, not merely fire it. `offline.js` cannot
+  // otherwise tell "this browser will never give us a worker" (blocked by
+  // policy, no secure context) from "a worker is on its way, or exists and is
+  // not answering" -- and the difference decides whether an ordinary online
+  // boot may proceed or must fail closed. Resolving to `null` on failure keeps
+  // this a SETTLED observation rather than an unhandled rejection; the promise
+  // is deliberately not awaited, so boot() is never delayed by it.
+  window.ConvergePWA = window.ConvergePWA || {};
+  window.ConvergePWA.registration = navigator.serviceWorker
+    .register('/sw.js')
+    .then((reg) => reg || null)
+    .catch(() => null); // http LAN: no secure context, fine
 }
 
 boot();

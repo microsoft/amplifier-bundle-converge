@@ -153,10 +153,26 @@ def render_markdown(text: str) -> str:
 # --------------------------------------------------------------------------
 
 
+def plan_record_path(mc: ManagerConfig) -> Path | None:
+    """The plan record file itself \u2014 named explicitly, or the old convention.
+
+    A registration or a hand-written block may name `plan_record` outright, and
+    when it does that file IS the plan record, whatever it is called.
+    `<batch_dir>/HIGHWAY.md` is the fallback for a manager that never named
+    one \u2014 the old convention this app always assumed \u2014 never a name this
+    reads past an explicit answer to reach.
+    """
+    if mc.plan_record:
+        return Path(mc.plan_record)
+    if mc.batch_dir:
+        return Path(mc.batch_dir) / "HIGHWAY.md"
+    return None
+
+
 def highway_text(mc: ManagerConfig) -> str:
-    if not mc.batch_dir:
+    path = plan_record_path(mc)
+    if not path:
         return ""
-    path = Path(mc.batch_dir) / "HIGHWAY.md"
     try:
         return path.read_text(encoding="utf-8")
     except OSError:
@@ -201,6 +217,79 @@ class LaneRow:
     launched_at: str = ""
 
 
+#: Manifest header names this reader recognizes, keyed by the field they
+#: fill. Two conventions write this file and they disagree on column COUNT
+#: and ORDER \u2014 the ten-lane-highway batch's `manifest.tsv` carries a `base`
+#: column between branch and tmux; the goal-batch skill's does not, so its
+#: `tmux` sits one column earlier (`lane \u00b7 worktree \u00b7 branch \u00b7 tmux \u00b7 goal \u00b7
+#: log \u00b7 session_id`). Reading by the header's own names, never by a fixed
+#: position, is what keeps `tmux` reading `tmux` under either one; a positional
+#: reader given the goal-batch shape would read a lane's own goal-file path
+#: into the `tmux` field instead.
+_MANIFEST_COLUMNS: dict[str, tuple[str, ...]] = {
+    "name": ("lane", "name"),
+    "worktree": ("worktree",),
+    "branch": ("branch",),
+    "tmux": ("tmux",),
+    "goal": ("goal",),
+    "log": ("log",),
+    "launched_at": ("launched_at", "started", "session_id"),
+}
+
+
+def _manifest_index(header: list[str]) -> dict[str, int] | None:
+    """Field name \u2192 column index, read from the manifest's own header row.
+
+    None when the header names nothing this reader recognizes at all, so the
+    caller can fall back to the old fixed layout rather than reading every
+    field as empty for a manifest whose header this app has simply never seen.
+    """
+    lower = [cell.strip().lower() for cell in header]
+    index: dict[str, int] = {}
+    for field, names in _MANIFEST_COLUMNS.items():
+        for name in names:
+            if name in lower:
+                index[field] = lower.index(name)
+                break
+    return index if "name" in index else None
+
+
+def _manifest_rows(lines: list[str]) -> list[dict[str, str]]:
+    """One dict per lane row \u2014 `name`, `worktree`, `branch`, `tmux`, `goal`,
+    `log`, `launched_at` \u2014 read by the header's own column names.
+
+    A manifest whose header names none of these falls back to the fixed
+    8-column layout this app has always assumed (`name, worktree, branch,
+    <unused>, tmux, goal, log, launched_at`), so a manifest nobody can name
+    still reads exactly as it always has. Only a header this reader
+    recognizes changes which column answers which field.
+    """
+    if not lines:
+        return []
+    header = lines[0].split("\t")
+    index = _manifest_index(header)
+    made: list[dict[str, str]] = []
+    for line in lines[1:]:
+        cells = line.split("\t")
+        if index is not None:
+            row = {field: (cells[i].strip() if i < len(cells) else "") for field, i in index.items()}
+            for field in _MANIFEST_COLUMNS:
+                row.setdefault(field, "")
+        else:
+            padded = (cells + [""] * 8)[:8]
+            row = {
+                "name": padded[0].strip(),
+                "worktree": padded[1].strip(),
+                "branch": padded[2].strip(),
+                "tmux": padded[4].strip(),
+                "goal": padded[5].strip(),
+                "log": padded[6].strip(),
+                "launched_at": padded[7].strip(),
+            }
+        made.append(row)
+    return made
+
+
 def manifest_lanes(mc: ManagerConfig) -> list[LaneRow]:
     """Every lane this batch launched, in launch order, plus any on disk."""
     if not mc.batch_dir:
@@ -214,21 +303,20 @@ def manifest_lanes(mc: ManagerConfig) -> list[LaneRow]:
             lines = manifest.read_text(encoding="utf-8").splitlines()
         except OSError:
             lines = []
-        for line in lines[1:]:
-            parts = (line.split("\t") + [""] * 8)[:8]
-            name = parts[0].strip()
+        for row in _manifest_rows(lines):
+            name = row["name"]
             if not name or name in seen:
                 continue
             seen.add(name)
             rows.append(
                 LaneRow(
                     name=name,
-                    worktree=parts[1].strip(),
-                    branch=parts[2].strip(),
-                    tmux=parts[4].strip(),
-                    goal=parts[5].strip(),
-                    log=parts[6].strip(),
-                    launched_at=parts[7].strip(),
+                    worktree=row["worktree"],
+                    branch=row["branch"],
+                    tmux=row["tmux"],
+                    goal=row["goal"],
+                    log=row["log"],
+                    launched_at=row["launched_at"],
                 )
             )
     lanes_dir = batch / "lanes"
@@ -596,6 +684,63 @@ def doc_title(path: Path) -> tuple[str, str]:
     return short, (full or short)
 
 
+#: The H1's own trailing parenthetical \u2014 `(FROZEN 2026-09-06)`, `(DRAFT)`, or
+#: a held-loosely form. `documents.v1` Core 6: status lives there and nowhere
+#: else, so this is read from the line itself rather than inferred from
+#: anything the conformance ledger says.
+_H1_STATUS = re.compile(r"\(([^()]*)\)\s*$")
+
+
+def doc_lock(path: Path) -> dict:
+    """Whether this document's own H1 calls it locked, in the H1's own words.
+
+    Additive: docLock.locked is a fact about the DOCUMENT (has it been
+    ratified?), kept apart from doc_conformance below, a fact about whether
+    the LEDGER happens to measure it. The two have been shown conflated: the
+    legacy state field calls a locked contract the ledger has not yet
+    measured "draft", the same word an unratified document gets, and a
+    steward reading that word cannot tell which one they are looking at.
+    """
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except OSError:
+        return {"locked": False, "label": "", "source": "document-h1"}
+    for line in text.splitlines():
+        if line.startswith("# "):
+            found = _H1_STATUS.search(line.strip())
+            label = found.group(1).strip() if found else ""
+            return {"locked": label.upper().startswith("FROZEN"), "label": label, "source": "document-h1"}
+    return {"locked": False, "label": "", "source": "document-h1"}
+
+
+def doc_conformance(state: dict) -> dict:
+    """The document's own measured check, additive, beside doc_lock above.
+
+    state is doc_state's existing reading, read here rather than recomputed,
+    so a caller that already has one pays no second ledger read. Its clauses
+    count is the one honest measure of whether anything watches this document
+    at all; measured is that fact named plainly, so a reader no longer has to
+    infer it from the legacy state word, which uses "draft" for two different
+    silences (never ratified; not yet measured).
+
+    An unmeasured document's label is "Not checked", never "Draft" (a LOCK
+    status, doc_lock's business) and never "Kept" either, which would assert
+    a pass nothing actually checked. A measured document's label is the
+    ledger's own word - Kept, Not yet, Broken, Pinned open, or Can't check -
+    passed through exactly as the ledger wrote it.
+    """
+    clauses = int(state.get("clauses") or 0)
+    measured = clauses > 0
+    label = state.get("standing") or "" if measured else "Not checked"
+    return {
+        "state": state.get("state", "draft"),
+        "label": label or "Not checked",
+        "sentence": state.get("standingSentence", ""),
+        "clauses": clauses,
+        "measured": measured,
+    }
+
+
 def confidence(repo: Path) -> dict:
     """How much of what this project promises is being kept, clause by clause."""
     rows_path = Path(repo) / "ledger" / "rows.yaml"
@@ -641,21 +786,52 @@ def confidence(repo: Path) -> dict:
 # --------------------------------------------------------------------------
 
 
-def _headed(text: str) -> dict[str, str]:
+#: Simple `key: value` metadata lines a candidate file's own preamble may
+#: carry (author/source attribution, or a CANDIDATE-*.md's `target:` line);
+#: these are consumed elsewhere (`proposals_for`'s source match, and
+#: `candidate_files`' own target match) and are noise in a rationale reading.
+_LEAD_METADATA = re.compile(r"^(?:author|source|proposed-by|target):\s*\S", re.I)
+
+
+def _headed(text: str) -> tuple[str, dict[str, str]]:
+    """`(lead, {heading lowercased: body})` for a `## `-sectioned document.
+
+    `lead` is the real prose between the H1 title and the first `## `
+    heading -- the author's own account of why the proposal exists, when
+    they wrote one (converge-neu6: this repository's own candidate template
+    puts that account there, e.g. "**What this asks for:** ... **Which
+    promise it serves:** ..." -- there is no separate `## Why` heading to
+    find). The H1 line itself and simple metadata lines are dropped from it;
+    everything else the author actually wrote is kept verbatim, never
+    invented. Empty when the file opens straight into its first heading.
+    """
+    lines = (text or "").splitlines()
     out: dict[str, str] = {}
     key = ""
     body: list[str] = []
-    for line in (text or "").splitlines():
+    lead: list[str] = []
+    in_lead = True
+    seen_h1 = False
+    for line in lines:
         if line.startswith("## "):
             if key:
                 out[key] = "\n".join(body).strip()
+            in_lead = False
             key = line[3:].strip().lower()
             body = []
+            continue
+        if in_lead:
+            if not seen_h1 and line.startswith("# "):
+                seen_h1 = True
+                continue
+            if _LEAD_METADATA.match(line.strip()):
+                continue
+            lead.append(line)
             continue
         body.append(line)
     if key:
         out[key] = "\n".join(body).strip()
-    return out
+    return "\n".join(lead).strip(), out
 
 
 def _bullets(text: str) -> list[str]:
@@ -688,13 +864,29 @@ def candidate_files(path: Path) -> list[Path]:
 
 
 def proposals_for(path: Path, repo: Path) -> list[dict]:
+    """Every open proposal against this document, read faithfully.
+
+    converge-neu6: this used to put the exact-change section's first
+    sentence into `why` and let the renderer put the proposal's own title
+    under "What changes" -- so a steward read the candidate's headline as
+    the change, and the change itself as the reason for it. Now `change` /
+    `changeRecognized` carry the real "the exact change" section (rendered
+    safely, never truncated to a first sentence, never substituted with the
+    title), `why` carries the file's own lead prose -- its real rationale,
+    when the author wrote one, never invented from the title -- and
+    `evidenceRecognized` / `unchangedRecognized` say which headings this
+    reader actually found, so a missing section reads "missing", not
+    "empty" and not silently absorbed into another label. `body` / `bodyHtml`
+    carry the complete original proposal, untruncated, so it stays reachable
+    even when every heading here goes unrecognized.
+    """
     made: list[dict] = []
     for one in candidate_files(path):
         try:
             text = one.read_text(encoding="utf-8")
         except OSError:
             continue
-        heads = _headed(text)
+        lead, heads = _headed(text)
         title = ""
         for line in text.splitlines():
             if line.startswith("# "):
@@ -707,17 +899,26 @@ def proposals_for(path: Path, repo: Path) -> list[dict]:
         match = re.search(r"^(?:author|source|proposed-by):\s*(.+)$", text[:1500], re.M)
         if match:
             source = match.group(1).strip()
+        change_text = heads.get(change_key, "") if change_key else ""
         made.append(
             {
                 "id": one.stem,
                 "title": title or one.stem,
                 "source": source,
-                "why": first_sentence(heads.get(change_key, "")) if change_key else "",
+                "change": change_text,
+                "changeHtml": render_markdown(change_text) if change_text.strip() else "",
+                "changeRecognized": bool(change_key),
+                "why": lead,
+                "whyHtml": render_markdown(lead) if lead.strip() else "",
                 "recommendation": "",
                 "tradeoffs": [],
                 "evidence": _bullets(heads.get(evidence_key, "")) if evidence_key else [],
+                "evidenceRecognized": bool(evidence_key),
                 "unchanged": heads.get(unchanged_key, "") if unchanged_key else "",
+                "unchangedRecognized": bool(unchanged_key),
                 "file": Path(one).relative_to(repo).as_posix(),
+                "body": text,
+                "bodyHtml": render_markdown(text) if text.strip() else "",
             }
         )
     return made
@@ -909,6 +1110,19 @@ BRIEF_PARTS = (
 )
 
 
+#: What is left of a labelled line once its own label has been matched off
+#: the front (`BRIEF_PARTS`' own `rx`, via `rx.match(text).end()`): the
+#: closing half of the label's own punctuation, in whichever shape a manager
+#: session wrote it — `**Label**:` (bold closes before the colon), `**Label.**`
+#: (the period sits inside the bold), or a plain `Label:` / `Label.` / `Label `
+#: with no bold at all. Matching from the label's own end, not a fixed-width
+#: character class guessing where the label stops, is what makes all four
+#: shapes strip the same way: `**Finished**: text` stopped short here before —
+#: the bold closed on the far side of the colon this class never looked past —
+#: and left `**Finished**:` sitting in the value a steward reads.
+_LABEL_TAIL = re.compile(r"^\**[.:]?\**\s*")
+
+
 def brief_parts(body: str) -> list[dict]:
     """The labelled parts of one return-brief entry, in the clause's order.
 
@@ -923,10 +1137,15 @@ def brief_parts(body: str) -> list[dict]:
         text = line.strip()
         if not text or text.startswith(("#", "|", "```", "<!--")):
             continue
-        opened = next((part for part, _label, rx in BRIEF_PARTS if rx.match(text)), "")
+        opened, label_match = "", None
+        for part, _label, rx in BRIEF_PARTS:
+            match = rx.match(text)
+            if match:
+                opened, label_match = part, match
+                break
         if opened:
             holding = opened
-            text = re.sub(r"^\**\s*[^*.:]{0,32}[.:]\**\s*", "", text, count=1).strip()
+            text = _LABEL_TAIL.sub("", text[label_match.end():]).strip()
         if holding and text:
             found.setdefault(holding, []).append(text)
     return [
@@ -983,6 +1202,37 @@ def brief_reading(entries: list[tuple[str, str, str]]) -> dict:
             for part, label, _rx in BRIEF_PARTS
         ],
     }
+
+
+def latest_summary(entries: list[tuple[str, str, str]]) -> str:
+    """One meaningful line for "where this project stands," from the newest brief.
+
+    The reading this replaces took the LAST sentence of the newest entry's
+    whole body — whichever part happened to be written last, "Anything
+    quietly changed" more often than not, so the manager card showed an
+    incidental footer as if it were the state of the project. What actually
+    answers "where does it stand" is the brief's own "Finished" part: what
+    most recently landed and was checked. That is preferred; a brief written
+    before the return-brief convention (no labelled parts to read) has no
+    "Finished" part, so the entry's own heading stands in instead — the few
+    words the manager session wrote to describe the project's state at that
+    return — never a sentence assembled from parts that were never labelled.
+
+    When neither exists — no "Finished" part AND no heading — this says so
+    with an honest empty string. Reaching into the raw body for its first
+    sentence, as an unlabelled entry with no heading, would hand back an
+    arbitrary fragment (an entry can open on anything: a date, a caveat, an
+    aside) dressed up as the project's own account of itself; that is the
+    same "unsupported claim" this file exists to stop making, just moved from
+    the flow card to the brief.
+    """
+    if not entries:
+        return ""
+    _date, heading, body = entries[-1]
+    parts = {one["part"]: one["text"] for one in brief_parts(body)}
+    if parts.get("finished"):
+        return parts["finished"]
+    return heading
 
 
 # --------------------------------------------------------------------------
@@ -1177,7 +1427,8 @@ def manager_payload(mc: ManagerConfig) -> dict:
     needs = _needs_items(mc)
 
     ages = [a for a in (mtime_age(lane_paths(mc, one)[1]) for one in lanes) if a is not None]
-    youngest = min(ages) if ages else (mtime_age(Path(mc.batch_dir) / "HIGHWAY.md") if mc.batch_dir else None)
+    plan_path = plan_record_path(mc)
+    youngest = min(ages) if ages else (mtime_age(plan_path) if plan_path else None)
 
     if needs:
         status, label = "waiting", "Waiting on you"
@@ -1198,10 +1449,7 @@ def manager_payload(mc: ManagerConfig) -> dict:
             break
 
     entries = _owner_log_entries(mc.repo)
-    summary = ""
-    if entries:
-        last = sentences(entries[-1][2])
-        summary = last[-1] if last else ""
+    summary = latest_summary(entries)
 
     return {
         "id": mc.id,
@@ -1222,6 +1470,19 @@ def manager_payload(mc: ManagerConfig) -> dict:
         "batchDir": str(mc.batch_dir or ""),
         "tmuxSocket": mc.tmux_socket,
         "managerTmux": mc.manager_tmux,
+        # The ONE canonical resolved target -- {socket, session} or null --
+        # for this manager's own console, computed the same way
+        # `config.AppConfig.manager_for_tmux` resolves it for the send-
+        # authorization guard (`config.ManagerConfig.console_target`).
+        # `console.js`'s `managerTarget()` reads this first, so viewing and
+        # the write guard can never disagree about what one registration
+        # names -- `tmuxSocket`/`managerTmux` above stay for any consumer
+        # that read the separate legacy fields directly (converge-c6cv).
+        "managerConsole": (
+            {"socket": target[0], "session": target[1]}
+            if (target := mc.console_target()) is not None
+            else None
+        ),
         # Whose word counts here, as the registration settled it. Always
         # present, and empty when the registration did not name anybody —
         # never the signed-in reader's name, which is a fact about who is
@@ -1263,6 +1524,11 @@ def repositories_payload(mc: ManagerConfig) -> list[dict]:
                     "standing": state["standing"],
                     "standingSentence": state["standingSentence"],
                     "clauses": state["clauses"],
+                    # Additive \u2014 preview-common.md's data-lane contract. Legacy
+                    # fields above are untouched, so a reader that has never
+                    # heard of these two still reads exactly as before.
+                    "docLock": doc_lock(one),
+                    "conformance": doc_conformance(state),
                     "path": one.relative_to(repo).as_posix(),
                 }
             )
@@ -1311,6 +1577,11 @@ def doc_payload(repo: Path, path: Path, *, since: str = "", kept: set[str] | Non
         "state": state["state"],
         "standing": state["standing"],
         "standingSentence": state["standingSentence"],
+        # Additive \u2014 preview-common.md's data-lane contract. `locked`/`editable`
+        # below are untouched legacy fields; a reader that falls back to them
+        # still reads exactly as before.
+        "docLock": doc_lock(path),
+        "conformance": doc_conformance(state),
         "locked": lock,
         "editable": not lock,
         "sections": sections_of(raw),
@@ -1353,13 +1624,21 @@ def throughput(counts: dict, merged: int, reopened: int) -> dict:
     blocked count: work that has stopped moving. It says nothing about whether
     reality is moving toward the agreement, which is a separate reading and the
     one that counts (Core 5 again) — the two are never summed.
+
+    `derived`, `resolved` and `stuck` come only from the work queue; when it
+    is not configured or does not answer, those three are `None` rather than
+    `0` — an unavailable tracker is not the same claim as a tracker that
+    counted zero items, and serving `0` there reads as the second when the
+    truth is the first. `verified` and `reopened` are read from git and the
+    plan record directly, so they stay real counts whether or not a tracker
+    answers.
     """
     made = {
-        "derived": 0,
-        "resolved": 0,
+        "derived": None,
+        "resolved": None,
         "verified": merged,
         "reopened": reopened,
-        "stuck": 0,
+        "stuck": None,
         "spark": [],
         "available": False,
     }
@@ -1643,18 +1922,22 @@ __all__ = [
     "changes_for",
     "confidence",
     "confidence_timeline",
+    "doc_conformance",
     "doc_id",
+    "doc_lock",
     "doc_payload",
     "doc_state",
     "find_doc",
     "git",
     "history_for",
     "lane_state",
+    "latest_summary",
     "manager_payload",
     "manager_presence",
     "manifest_lanes",
     "operation_payload",
     "owner_log_commits",
+    "plan_record_path",
     "plan_redraws",
     "priority_calls",
     "proposals_for",

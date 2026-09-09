@@ -295,7 +295,8 @@ def project(tmp_path_factory) -> dict:
         f'batch_dir = "{batch}"\n'
         f'repos = ["{repo}"]\n'
         'tracker_project = ""\n'
-        'tmux_socket = "test-socket-that-does-not-exist"\n',
+        'tmux_socket = "test-socket-that-does-not-exist"\n'
+        f'steward = "{USER}"\n',
         encoding="utf-8",
     )
     # Never the real ~/.amplifier: a test must not move a steward's read point
@@ -303,7 +304,7 @@ def project(tmp_path_factory) -> dict:
     return {
         "config": conf,
         "secret": tmp_path / "secret",
-        "state": tmp_path / "state.json",
+        "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
         "repo": repo,
         "vision": repo / "docs" / "VISION.md",
         "locked": repo / "contracts" / "demo.v1.md",
@@ -323,7 +324,7 @@ def server(project):
     import uvicorn
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -361,6 +362,18 @@ MEASURE = """
   document.querySelectorAll('body, body *').forEach(el => {
     const s = getComputedStyle(el);
     if (s.display === 'none' || s.visibility === 'hidden') return;
+    // A closed Manager Console is a real, 0px grid column (converge-t30q,
+    // console.css: ".body-grid.console-closed .manager-console { opacity:0;
+    // pointer-events:none }"). getBoundingClientRect() reports a clipped
+    // descendant's un-clipped natural box regardless of the ancestor's own
+    // overflow:hidden, so the pane's header/resize-handle read as "past the
+    // right edge" even though nothing there is visible or reachable. That is
+    // the documented, intentional shape of a closed pane, not a defect this
+    // check exists to catch -- skip anything inside a pane that is itself
+    // inert (pointer-events:none), the same signal main.js's own
+    // consoleIsStowedHere() reads.
+    const pane = el.closest('.manager-console');
+    if (pane && getComputedStyle(pane).pointerEvents === 'none') return;
     const r = el.getBoundingClientRect();
     if (r.right > de.clientWidth + 0.01) {
       past.push(((el.id ? '#' + el.id : '') + '.' + String(el.className || el.tagName)).slice(0, 50)
@@ -382,11 +395,28 @@ def _boot(browser, server, project, width=1280, height=800):
     page.on("console", lambda m: errors.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
     page.goto(server, wait_until="networkidle")
-    page.wait_for_selector("#documentModeContent", timeout=15000)
+    # Boot always lands on Home first, never an auto-picked manager
+    # (experience.v1 Core 1, converge-t30q) -- opening a manager and its
+    # Direction tab is now deliberate navigation, same as every other
+    # rendered suite in this lane (converge-e2c3).
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
     if width < 980:
-        # Below the breakpoint the Manager Console is a sheet over the page, so
-        # it sits on top of the document tree. Closing it is what a steward
-        # reading on a phone does.
+        # Below the breakpoint opening a manager shows the Manager Console as
+        # a sheet OVER the page, intercepting clicks on the tabs underneath
+        # it -- close it before trying to reach #directionTab, not after.
+        page.wait_for_selector("#consoleToggle", timeout=15000)
+        page.click("#consoleToggle")
+        page.wait_for_timeout(500)
+    page.wait_for_selector("#directionTab", timeout=15000)
+    page.click("#directionTab")
+    page.wait_for_selector("#documentModeContent", timeout=15000)
+    if width < 980 and page.evaluate(
+        "() => { const c = document.getElementById('managerConsole'); "
+        "return !!(c && c.getBoundingClientRect().width > 0 && !c.classList.contains('hidden')); }"
+    ):
+        # Switching to the Direction tab can reopen the console sheet at this
+        # width; close it again before anything below tries to click through it.
         page.click("#consoleToggle")
         page.wait_for_timeout(500)
     return ctx, page, errors
@@ -629,6 +659,13 @@ def test_a_kept_mark_survives_a_reload_and_a_second_browser(server, project, bro
     assert marked == 1, "keeping a change did not mark it on the screen"
 
     page.reload(wait_until="networkidle")
+    # A reload runs boot() again, which always lands on Home first
+    # (experience.v1 Core 1, converge-t30q) -- re-open the same manager and
+    # its Direction tab exactly as the initial boot did.
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
+    page.wait_for_selector("#directionTab", timeout=15000)
+    page.click("#directionTab")
     page.wait_for_selector("#documentModeContent", timeout=15000)
     _open_doc(page, "Vision")
     _mode(page, "changes")

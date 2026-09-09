@@ -32,7 +32,7 @@
 // `MediaRecorder` and `navigator.mediaDevices` are two different absences and
 // they are said differently. `mediaDevices` is undefined outside a secure
 // context, which on this app is the ordinary LAN case — served over plain
-// http from `spark-1:8788`, no browser will hand over a microphone. That is
+// http from `your-hostname:8788`, no browser will hand over a microphone. That is
 // not a defect to hide behind a dead button: the field says so in a plain
 // sentence and offers the file input, which works everywhere and always has.
 // `experience.v1` Core 14 asks a body to say what it cannot do; this says it

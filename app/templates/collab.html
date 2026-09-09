@@ -7,7 +7,7 @@
   Converge keeps no collaboration surface of its own, so nothing below stores
   anything -- every row is the host's own pull request, read fresh.
 
-  It wires with one line in `app/templates/shell.html`:
+  It wires with one line in `app/templates/direction.html`:
 
       {% raw %}{% include "collab.html" %}{% endraw %}
 
@@ -15,18 +15,16 @@
   to be edited to make it work. Collapsed it is a single summary line; the
   panel only costs room when a steward opens it.
 
-  **Where that line goes, and why it is not obvious.** Put it inside `#app`,
-  after the `.body-grid` div and beside `{% raw %}{% include "dialogs.html" %}{% endraw %}` -- not
-  inside `<main class="workspace">`. Measured at 1280x800 on 2026-09-04 with
-  the partial inside `<main>`: `.workspace` is `overflow:hidden` and the
-  console is the grid's third column, so the foot of this panel was drawn
-  underneath the console pane and its last paragraph could not be read or
-  clicked. Below the grid it is in the page's own flow and scrolls into view.
-
-  On screens narrower than 980px the console becomes a fixed sheet over the
-  bottom of the viewport (`console.css`), so it covers this panel there as it
-  covers everything else; closing the console shows it. That is the shell's
-  behaviour, not this partial's.
+  **Where that line goes, and why it is not obvious (converge-vtkw).** It sits
+  inside `<article class="document-surface">`, right after the title row and
+  before the mode tabs -- not inside `<aside class="context-rail">`, where an
+  earlier version of this partial lived. `direction.css` hides the rail
+  outright at 1320 CSS px and narrower (`.context-rail { display:none }`), so
+  a panel that only lived there had no entry point at all at 1280 or 390 --
+  measured on the steward's own Mac PWA, 2026-09-09. `.document-surface`
+  carries no such rule at any width, and placing the include above the
+  document's own body (rather than after `#documentModeContent`) means
+  reaching it never requires scrolling past a long document first.
 
   The sentence under the summary is deliberately written into the markup rather
   than left for the script to fill in. Clause 6 asks for the freshness
@@ -35,7 +33,7 @@
   script replaces it with the live wording; the words below are what is true
   when nothing has been told to us yet.
 #}
-<link rel="stylesheet" href="/static/css/collab.css" />
+<link rel="stylesheet" href="{{ static_url('css/collab.css') }}" />
 
 <details class="collab-panel" id="collabPanel">
   <summary class="collab-summary">
@@ -73,4 +71,4 @@
   </div>
 </details>
 
-<script type="module" src="/static/js/render/collab.js"></script>
+<script type="module" src="{{ static_url('js/render/collab.js') }}"></script>

@@ -126,3 +126,30 @@ or three options with their consequences, and say which you recommend.
   lane that says so is worth more than a green one that guessed.
 - **Stay in your lane.** Edit only the files your brief names. If another file
   needs a change, write that fact down for its owner rather than making it.
+- **Keep evidence within permitted paths.** A worker can return artifacts from
+  its own ignored worktree directory for the manager session to read and report.
+  A filesystem access denial is never permission to retry the write through
+  bash, Python, or a different tool.
+
+## 6. App verification lessons
+
+- A browser test must enter Home, select its explicitly configured manager,
+  and wait for the workspace before testing a surface or closing its console.
+  Hidden DOM nodes and an intentionally invisible console's child boxes are
+  not rendered UI; keep whole-page width and visible-console assertions.
+  Initial hosted-PR discovery must follow normal manager selection, not a
+  test-only refresh hook that can conceal missing production wiring.
+- `page.route()` does not intercept a service worker's own fetches. Prove that
+  fault injection happened, using a server-side fault or an explicitly
+  worker-free context. A failed read's Retry must actually restore the document.
+- A missing controller alone is not proof that service workers are unavailable:
+  first registration may still be pending. Preserve fail-closed confirmation
+  for existing/in-flight workers. Draft collaboration must use two distinct
+  authenticated people while decisions, locking, priority, steering and terminal
+  control remain restricted to the registered steward.
+- Check every asynchronous continuation that can change the selected review:
+  authority, list, detail, POST completion and its awaited read-back. A guard
+  before the first await does not protect an outcome painted after a second one.
+- An installed-child test claiming "no configuration" needs an isolated HOME
+  and configuration environment, not merely a stripped PYTHONPATH. Keep real
+  production precedence and exact workspace-discovery assertions intact.

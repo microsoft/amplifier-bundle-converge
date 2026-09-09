@@ -1,12 +1,47 @@
 // Fetch wrappers for every endpoint in the app contract. A 401 sends the browser
 // to /login: the cookie gate is the backend's, this only obeys it.
 
+// The double-submit CSRF cookie (`app/auth.py`'s CSRF_COOKIE) is deliberately
+// readable by JS, unlike the session cookie -- this is the one place that
+// reads it back out, so every unsafe request echoes it as a header. A
+// cross-site page can make the browser SEND the cookie but cannot READ its
+// value to forge this header, which is the whole of what the check proves.
+//
+// The cookie's NAME is not always `cv_csrf`: a preview started with its own
+// `--instance-dir` gets a namespaced name instead, so that two preview
+// instances on one host (cookies are never scoped by port) never read or
+// clobber each other's CSRF cookie (converge-b2ak https-repair item 1).
+// `app/serve.py` names its own actual cookie on every single response, in
+// the `X-Converge-Csrf-Cookie` header -- read and cached here, on the same
+// `window` global `tmux.js` also reads, so both files learn the same name
+// without one importing the other. `cv_csrf` remains the correct fallback
+// for the default/no-namespace case (unchanged for every existing
+// deployment and test that never passes `--instance-dir`), and for the
+// very first request of a page load, before any response has been seen.
+function csrfCookieName() {
+  return (typeof window !== 'undefined' && window.__convergeCsrfCookieName) || 'cv_csrf';
+}
+
+function csrfToken() {
+  const name = csrfCookieName();
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
 async function request(url, options = {}) {
+  const method = (options.method || 'GET').toUpperCase();
+  const headers = options.body ? { 'Content-Type': 'application/json' } : {};
+  if (method !== 'GET' && method !== 'HEAD') {
+    const token = csrfToken();
+    if (token) headers['X-CSRF-Token'] = token;
+  }
   const res = await fetch(url, {
     credentials: 'same-origin',
-    headers: options.body ? { 'Content-Type': 'application/json' } : undefined,
     ...options,
+    headers: { ...headers, ...(options.headers || {}) },
   });
+  const namedCookie = res.headers.get('X-Converge-Csrf-Cookie');
+  if (namedCookie && typeof window !== 'undefined') window.__convergeCsrfCookieName = namedCookie;
   if (res.status === 401) {
     location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
     throw new Error('unauthenticated');

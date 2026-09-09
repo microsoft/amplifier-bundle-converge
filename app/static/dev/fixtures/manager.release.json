@@ -19,7 +19,7 @@
     {
       "id": "pkg",
       "name": "AMPLIFIER-PACKAGING",
-      "path": "/home/bkrabach/dev/amplifier-packaging",
+      "path": "/workspace/amplifier-packaging",
       "docs": [
         { "id": "release-contract", "title": "Release Contract", "fullTitle": "Release Contract", "state": "gap" }
       ]

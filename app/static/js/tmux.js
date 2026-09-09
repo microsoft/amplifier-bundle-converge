@@ -182,15 +182,44 @@
     var url =
       API_BASE + "/" + encodeURIComponent(socket) + "/" + encodeURIComponent(session) + "/keys";
     this.sends += 1;
+    var csrfHeaders = { "Content-Type": "application/json" };
+    // The CSRF cookie's name is namespaced per preview instance (see
+    // `api.js`'s `csrfCookieName` for why); both files read the same
+    // `window.__convergeCsrfCookieName` global, learned from the
+    // `X-Converge-Csrf-Cookie` response header `app/serve.py` sends on
+    // every response, so neither file has to import the other
+    // (converge-b2ak https-repair item 1). `cv_csrf` is the correct
+    // fallback for the default/no-namespace case and the very first
+    // request of a page load.
+    var csrfCookieName = (typeof window !== "undefined" && window.__convergeCsrfCookieName) || "cv_csrf";
+    var csrfMatch = document.cookie.match(new RegExp("(?:^|; )" + csrfCookieName + "=([^;]*)"));
+    if (csrfMatch) csrfHeaders["X-CSRF-Token"] = decodeURIComponent(csrfMatch[1]);
     return fetch(url, {
       method: "POST",
       credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
+      headers: csrfHeaders,
       body: JSON.stringify({ keys: String(text || ""), enter: !!enter }),
     })
       .then(function (r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return r.json();
+        // A non-2xx answer still carries a body worth reading: the gate's
+        // own refusal (`app/serve.py`'s `_steward_denied`, the tmux-ownership
+        // 403, a CSRF/cross-origin refusal) is real information about WHY
+        // the keystroke did not arrive, never collapsed into a bare "HTTP
+        // 403" -- doing that upstream is what a steward saw as "no session
+        // attached" for a delivery the guard had actually refused by name
+        // (converge-c6cv). "no session attached" stays reserved for when
+        // there is truly nothing attached (see the module-level `send`
+        // below), never used as a stand-in for a reason we simply discarded.
+        return r
+          .json()
+          .catch(function () {
+            return null;
+          })
+          .then(function (body) {
+            if (r.ok) return body;
+            var detail = (body && body.error) || "HTTP " + r.status;
+            return { sent: false, state: "failed", detail: detail, socket: socket, session: session };
+          });
       })
       .then(function (answer) {
         // Identity gate on the WAY BACK too: an answer about another session
@@ -217,9 +246,12 @@
       })
       .catch(function (err) {
         if (self.stopped) return null;
-        self.dom.mode.textContent =
-          "not delivered — " + String(err && err.message ? err.message : err);
-        return null;
+        var detail = String(err && err.message ? err.message : err);
+        self.dom.mode.textContent = "not delivered — " + detail;
+        // A real reason to carry back too (a network failure, not the "no
+        // target" case) -- "no session is attached" must never stand in for
+        // this either (converge-c6cv).
+        return { sent: false, state: "failed", detail: detail, socket: socket, session: session };
       });
   };
 

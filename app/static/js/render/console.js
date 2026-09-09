@@ -28,7 +28,16 @@ let furnitureWired = false;
 function managerTarget() {
   const m = data.manager || currentManager();
   if (!m) return null;
-  return normalizeTmux(m.tmux || m.managerTmux || m.manager_tmux);
+  // `managerConsole` is the ONE canonical target `app/data.py` resolves the
+  // same way the send-authorization guard does (`config.py`'s
+  // `console_target`) -- viewing and writing can never disagree about what
+  // one registration names. The raw fields are read only when it is absent
+  // (an older cached payload, or a caller that built `data.manager` by
+  // hand): `m.tmuxSocket` is passed as the default socket so a BARE
+  // `managerTmux` (the ordinary same-socket case) still resolves, not only
+  // the combined `socket:session` form (converge-c6cv).
+  if (m.managerConsole) return normalizeTmux(m.managerConsole);
+  return normalizeTmux(m.tmux || m.managerTmux || m.manager_tmux, m.tmuxSocket);
 }
 
 function activeTarget() {
@@ -218,7 +227,11 @@ export function renderConsole() {
   applyWidth();
 
   const isManager = state.consoleContext === 'manager';
-  const label = isManager ? `manager-${state.managerId}` : state.consoleContext;
+  // A human destination, not the machine's id (`experience.v1` Core 6,
+  // converge-t30q acceptance 3): the manager's own name when it is known,
+  // falling back to its id only when nothing named it yet (e.g. mid-boot).
+  const managerName = (data.manager && data.manager.name) || currentManager()?.name || state.managerId || '\u2014';
+  const label = isManager ? managerName : state.consoleContext;
   const target = activeTarget();
   // The keyboard belongs to the manager's own session, and only while its
   // terminal is the thing on screen.
@@ -261,6 +274,24 @@ export function renderConsole() {
     detach();
     body.innerHTML = notice('terminal viewer not loaded', `Session ${target.socket}:${target.session} is running; the terminal viewer is not available in this build.`);
     attachedKey = 'no-viewer';
+    return;
+  }
+
+  // A closed pane is a real element at a 0px grid column (console.css), not
+  // absent -- but it has no usable geometry to attach a live view into.
+  // Attaching here anyway is how a manager got picked from a calm Home
+  // (consoleOpen defaults false, converge-t30q) while a view was already
+  // being built against a stowed, zero-width pane; the key below is keyed on
+  // the target and never changes across an open/close toggle, so the stale
+  // view was then never rebuilt once the pane actually opened. Skip the
+  // attach entirely while closed, and mark the pane as needing a fresh one
+  // the moment it does open.
+  if (!state.consoleOpen) {
+    detach();
+    if (attachedKey !== 'closed') {
+      body.innerHTML = '';
+      attachedKey = 'closed';
+    }
     return;
   }
 

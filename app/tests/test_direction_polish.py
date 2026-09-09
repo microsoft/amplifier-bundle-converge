@@ -243,14 +243,15 @@ def project(tmp_path_factory) -> dict:
         f'batch_dir = "{batch}"\n'
         f'repos = ["{repo}"]\n'
         'tracker_project = ""\n'
-        'tmux_socket = "test-socket-that-does-not-exist"\n',
+        'tmux_socket = "test-socket-that-does-not-exist"\n'
+        f'steward = "{USER}"\n',
         encoding="utf-8",
     )
     # Never the real ~/.amplifier: a test must not move a steward's read point.
     return {
         "config": conf,
         "secret": tmp_path / "secret",
-        "state": tmp_path / "state.json",
+        "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
         "repo": repo,
         "vision": repo / "docs" / "VISION.md",
         "contract": repo / "contracts" / "demo.v1.md",
@@ -270,7 +271,7 @@ def server(project):
     import uvicorn
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -357,10 +358,22 @@ def _installed(browser, server, project, width=1280, height=800):
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
 
     page.goto(server, wait_until="networkidle")
+    # Boot always lands on Home first, never an auto-picked manager
+    # (experience.v1 Core 1, converge-t30q) -- open the one manager session
+    # this project registers, then its Direction tab.
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
+    page.wait_for_selector("#directionTab", timeout=15000)
+    page.click("#directionTab")
     page.wait_for_selector("#documentModeContent", timeout=15000)
     page.evaluate("async () => { await navigator.serviceWorker.ready; }")
 
     page.reload(wait_until="networkidle")
+    # A reload runs boot() again, which always lands on Home first.
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
+    page.wait_for_selector("#directionTab", timeout=15000)
+    page.click("#directionTab")
     page.wait_for_selector("#documentModeContent", timeout=15000)
     page.wait_for_function("() => !!navigator.serviceWorker.controller", timeout=15000)
     page.wait_for_timeout(1200)
@@ -493,6 +506,15 @@ def _go_offline(ctx, page):
     blocked = _cannot_take_the_network_away(page)
     if blocked:
         pytest.skip(blocked)
+    # A reload runs boot() again, which always lands on Home first
+    # (experience.v1 Core 1, converge-t30q) -- re-open the same manager and
+    # its Direction tab from the offline-cached API responses this project's
+    # own document read already stored, exactly as the online boot did.
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
+    page.wait_for_selector("#directionTab", timeout=15000)
+    page.click("#directionTab")
+    page.wait_for_selector("#documentModeContent", timeout=15000)
     # Past here the worker really is off the network, so anything short of a
     # stored copy is the app's own doing and is reported as such.
     came_from = page.evaluate(WHERE_THE_ANSWER_CAME_FROM)
@@ -602,6 +624,11 @@ def test_back_online_the_document_stops_claiming_it_is_a_stored_copy(server, pro
 
     ctx.set_offline(False)
     page.reload(wait_until="networkidle")
+    # A reload runs boot() again, which always lands on Home first.
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
+    page.wait_for_selector("#directionTab", timeout=15000)
+    page.click("#directionTab")
     page.wait_for_selector("#documentModeContent", timeout=15000)
     page.wait_for_timeout(1500)
 

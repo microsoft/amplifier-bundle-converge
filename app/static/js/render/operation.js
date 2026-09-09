@@ -481,10 +481,21 @@ export function renderOperation() {
   // page never labels a sentence the manager session did not label itself.
   renderBriefParts(op.briefReading);
 
+  // `resolved` and `reopened` come back `null`/unavailable from an
+  // unconfigured or unreachable tracker (data.py's `throughput`) -- a claim
+  // of "unknown" that must never read as "zero". Coercing a null resolved to
+  // 0 with `Number(x) || 0` used to produce a real-looking "+0 net" in
+  // positive-text: an unsupported claim that work is moving when the truth
+  // is that this page cannot say. Net is only ever computed when BOTH
+  // measures it is built from are real numbers; otherwise it is shown
+  // unavailable, in neutral text, same as any other unread measure here.
   const flow = op.throughput || {};
-  const net = (Number(flow.resolved) || 0) - (Number(flow.reopened) || 0);
-  $('throughputNet').textContent = `${net >= 0 ? '+' : ''}${net} net`;
-  $('throughputNet').className = net >= 0 ? 'positive-text' : 'danger-text';
+  const netKnown = typeof flow.resolved === 'number' && typeof flow.reopened === 'number';
+  const net = netKnown ? flow.resolved - flow.reopened : null;
+  $('throughputNet').textContent = netKnown ? `${net >= 0 ? '+' : ''}${net} net` : '—';
+  $('throughputNet').className = !netKnown ? 'muted' : (net >= 0 ? 'positive-text' : 'danger-text');
+  const flowHeadline = $('throughputHeadline');
+  if (flowHeadline) flowHeadline.textContent = flow.available ? 'Work is moving' : 'Flow unknown';
   $('throughputDerived').textContent = flow.derived ?? '—';
   $('throughputResolved').textContent = flow.resolved ?? '—';
   $('throughputVerified').textContent = flow.verified ?? '—';

@@ -194,7 +194,12 @@ def project(tmp_path: Path) -> dict:
         f'batch_dir = "{batch}"\n'
         f'repos = ["{repo}"]\n'
         'tracker_project = ""\n'
-        'tmux_socket = "test-socket-that-does-not-exist"\n',
+        'tmux_socket = "test-socket-that-does-not-exist"\n'
+        # converge-b2ak https-repair item 3: decision/priority/steer/lock
+        # are steward-only now. `client` signs in as GOOD_USER, so it has
+        # to be the registered steward for those existing calls to still
+        # land.
+        f'steward = "{GOOD_USER}"\n',
         encoding="utf-8",
     )
     return {
@@ -204,7 +209,7 @@ def project(tmp_path: Path) -> dict:
         "secret": tmp_path / "secret",
         # Never the real ~/.amplifier: a test must not move a steward's own
         # read point or drop their kept marks.
-        "state": tmp_path / "state.json",
+        "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
     }
 
 
@@ -220,7 +225,7 @@ class _FakePam:
 def client(project, monkeypatch) -> TestClient:
     monkeypatch.setattr(auth.pam_module, "pam", _FakePam)
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     return TestClient(made, follow_redirects=False)
 
@@ -291,7 +296,7 @@ def test_boot_lists_the_configured_manager(client: TestClient) -> None:
     assert manager["lanesActive"] == 0  # no session on that socket
     assert manager["objective"].startswith("Have a convincing demo ready")
     assert manager["deadline"] == "Today, 12:00 PM"
-    assert manager["summary"] == "Nothing else needs you."  # last sentence of the newest brief
+    assert manager["summary"] == "the run closed"  # heading when this legacy brief has no Finished part
     assert manager["needs"] == 1  # the candidate beside the contract
     assert manager["status"] == "waiting"
 

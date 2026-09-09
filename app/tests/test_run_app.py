@@ -3,16 +3,22 @@
 `converge-sf1u`: `composition.v1` Core 5's shape, applied to the app rather than
 to the install -- one command, nothing else to know. The command is
 `scripts/run-app.sh`, and what it promises a reader is not "a server starts"
-but three specific things:
+but four specific things:
 
-* it serves on the URL it prints, and that URL answers;
+* it serves HTTPS on the URL it prints, and that URL answers, with a
+  certificate the printed CA verifies (converge-b2ak: no plain-HTTP fallback);
 * the sign-in it names is the sign-in the page actually asks for;
-* it stays on loopback unless asked for the network, because putting the page
-  on a network is a decision.
+* it binds every interface by default, because the whole point of this app is
+  a phone or a teammate's machine reaching it on the LAN -- `--host 127.0.0.1`
+  is the explicit, named way back to loopback-only (the SSH-tunnel case);
+* trust instructions are one hop away at `/setup`, and never ask for a
+  password over the connection they are helping a reader verify.
 
-Every check below is against a real server this file starts and stops. There is
-no fixture of the answer anywhere here: a wrapper that printed a URL nothing
-was listening on would pass a mock and fails this.
+Every check below is against a real server this file starts and stops, over
+real TLS, verified against the real CA the server generated -- never
+`verify=False`. There is no fixture of the answer anywhere here: a wrapper
+that printed a URL nothing was listening on, or a URL a generic client could
+not actually verify, would pass a mock and fails this.
 
 Two of them read documents instead, because two of `converge-sf1u`'s acceptance
 lines are about where a reader finds the command at all -- `README.md` and the
@@ -26,6 +32,7 @@ import os
 import re
 import signal
 import socket as socketlib
+import ssl
 import subprocess
 import sys
 import time
@@ -38,7 +45,7 @@ SCRIPT = REPO / "scripts" / "run-app.sh"
 
 sys.path.insert(0, str(REPO))
 
-from app import auth  # noqa: E402
+from app import auth, tls  # noqa: E402
 
 #: How long to wait for a real server to answer. `uv run` resolves first, and a
 #: cold resolve is slower than a warm one; a bare sleep would either flake or
@@ -75,13 +82,21 @@ def _lan_address() -> str:
     return "" if addr.startswith("127.") else addr
 
 
-def _get(host: str, port: int, path: str, timeout: float = 5.0):
+def _ssl_context(ca_path: Path) -> ssl.SSLContext:
+    """A real verifying context against the server's own generated CA --
+    never `ssl._create_unverified_context()`. A test that trusted anything
+    would not be testing that the certificate is actually right."""
+    ctx = ssl.create_default_context(cafile=str(ca_path))
+    return ctx
+
+
+def _get(host: str, port: int, path: str, ca_path: Path, timeout: float = 5.0):
     """(status, location, body) for one request, redirects NOT followed.
 
     Following them would hide the gate: `/` answering 200 after a redirect to
     `/login` reads exactly like `/` answering 200 because there is no gate.
     """
-    conn = http.client.HTTPConnection(host, port, timeout=timeout)
+    conn = http.client.HTTPSConnection(host, port, timeout=timeout, context=_ssl_context(ca_path))
     try:
         conn.request("GET", path)
         r = conn.getresponse()
@@ -91,10 +106,10 @@ def _get(host: str, port: int, path: str, timeout: float = 5.0):
         conn.close()
 
 
-def _post(host: str, port: int, path: str, form: dict[str, str], timeout: float = 5.0):
+def _post(host: str, port: int, path: str, form: dict[str, str], ca_path: Path, timeout: float = 5.0):
     """(status, location) for one form post, redirects NOT followed."""
     body = "&".join(f"{k}={v}" for k, v in form.items())
-    conn = http.client.HTTPConnection(host, port, timeout=timeout)
+    conn = http.client.HTTPSConnection(host, port, timeout=timeout, context=_ssl_context(ca_path))
     try:
         conn.request(
             "POST", path, body=body, headers={"Content-Type": "application/x-www-form-urlencoded"}
@@ -106,8 +121,8 @@ def _post(host: str, port: int, path: str, form: dict[str, str], timeout: float 
         conn.close()
 
 
-def _get_with_cookie(host: str, port: int, path: str, cookie: str, timeout: float = 5.0):
-    conn = http.client.HTTPConnection(host, port, timeout=timeout)
+def _get_with_cookie(host: str, port: int, path: str, cookie: str, ca_path: Path, timeout: float = 5.0):
+    conn = http.client.HTTPSConnection(host, port, timeout=timeout, context=_ssl_context(ca_path))
     try:
         conn.request("GET", path, headers={"Cookie": f"{auth.COOKIE}={cookie}"})
         r = conn.getresponse()
@@ -117,12 +132,23 @@ def _get_with_cookie(host: str, port: int, path: str, cookie: str, timeout: floa
 
 
 class Server:
-    """`scripts/run-app.sh` running for real, and stopped when we are done."""
+    """`scripts/run-app.sh` running for real, and stopped when we are done.
 
-    def __init__(self, *args: str) -> None:
+    Each instance gets its OWN `--tls-dir` (a fresh temp directory) via
+    `$CONVERGE_TLS_DIR` -- a real CA, generated fresh, never the machine's own
+    `~/.amplifier/converge-app-tls`. `ca_path` is only valid once the server
+    has actually written it, which `wait_until_answering` waits for.
+    """
+
+    def __init__(self, *args: str, tls_dir: Path) -> None:
         self.args = args
+        self.tls_dir = tls_dir
         self.proc: subprocess.Popen | None = None
         self.out = ""
+
+    @property
+    def ca_path(self) -> Path:
+        return self.tls_dir / tls.CA_CERT_NAME
 
     def __enter__(self) -> "Server":
         self.log = open(  # noqa: SIM115 - closed in __exit__
@@ -130,11 +156,14 @@ class Server:
             "w+",
             encoding="utf-8",
         )
+        env = dict(os.environ)
+        env["CONVERGE_TLS_DIR"] = str(self.tls_dir)
         self.proc = subprocess.Popen(
             [str(SCRIPT), *self.args],
             cwd=str(REPO),
             stdout=self.log,
             stderr=subprocess.STDOUT,
+            env=env,
             # Its own process group: the script `exec`s uv, which starts python.
             # Killing only the pid we hold leaves the server behind, listening.
             start_new_session=True,
@@ -149,15 +178,18 @@ class Server:
 
     def wait_until_answering(self, host: str, port: int) -> bool:
         deadline = time.time() + BOOT_TIMEOUT
+        self.last_error = None
         while time.time() < deadline:
             if self.proc is not None and self.proc.poll() is not None:
                 return False
-            try:
-                status, _, _ = _get(host, port, "/healthz", timeout=2.0)
-                if status == 200:
-                    return True
-            except OSError:
-                time.sleep(0.25)
+            if self.ca_path.is_file():
+                try:
+                    status, _, _ = _get(host, port, "/healthz", self.ca_path, timeout=5.0)
+                    if status == 200:
+                        return True
+                except (OSError, ssl.SSLError) as exc:
+                    self.last_error = f"{type(exc).__name__}: {exc}"
+            time.sleep(0.25)
         return False
 
     def __exit__(self, *exc) -> None:
@@ -186,12 +218,14 @@ def test_the_command_exists_and_is_runnable() -> None:
     )
 
 
-def test_help_names_the_two_decisions() -> None:
+def test_help_names_the_decisions() -> None:
     r = subprocess.run([str(SCRIPT), "--help"], cwd=str(REPO), capture_output=True, text=True)
     print(f"\n[run-app] --help exit={r.returncode}\n{r.stdout}")
     assert r.returncode == 0, r.stderr
-    assert "--lan" in r.stdout and "--port" in r.stdout
+    assert "--host" in r.stdout and "--port" in r.stdout
     assert "8788" in r.stdout, "the help does not say which port it serves on by default"
+    assert "127.0.0.1" in r.stdout, "the help does not name the loopback/SSH-tunnel case"
+    assert "HTTPS" in r.stdout, "the help does not say HTTPS is always on"
 
 
 def test_a_port_that_is_not_a_number_is_refused_before_anything_starts() -> None:
@@ -215,40 +249,61 @@ def test_a_port_that_is_not_a_number_is_refused_before_anything_starts() -> None
 # --------------------------------------------------------------------------
 
 
-def test_the_app_answers_on_the_url_the_command_prints() -> None:
-    """The acceptance line, read literally: the printed URL answers.
+def test_the_app_answers_https_on_the_url_the_command_prints(tmp_path: Path) -> None:
+    """The acceptance line, read literally: the printed URL answers, over TLS,
+    with a certificate the printed CA actually verifies.
 
     The URL is taken FROM the banner rather than rebuilt from the port, because
     a banner that printed the wrong URL is exactly the defect worth catching and
     a test that composed its own would never see it.
     """
     port = _free_port()
-    with Server("--port", str(port)) as server:
+    with Server("--host", "127.0.0.1", "--port", str(port), tls_dir=tmp_path / "tls") as server:
         assert server.wait_until_answering("127.0.0.1", port), (
-            f"nothing answered on 127.0.0.1:{port} within {BOOT_TIMEOUT}s:\n{server.banner()}"
+            f"nothing answered on 127.0.0.1:{port} within {BOOT_TIMEOUT}s "
+            f"(last connect error: {server.last_error}):\n{server.banner()}"
         )
         banner = server.banner()
-        printed = re.search(r"open:\s+(http://\S+)", banner)
-        assert printed, f"the command printed no URL to open:\n{banner}"
+        printed = re.search(r"open:\s+(https://\S+)", banner)
+        assert printed, f"the command printed no HTTPS URL to open:\n{banner}"
         url = printed.group(1)
-        assert url == f"http://127.0.0.1:{port}", (
+        assert url == f"https://127.0.0.1:{port}", (
             f"the printed URL is not the one it is serving on: {url!r} vs port {port}"
         )
+        assert "ca fingerprint" in banner.lower(), "the banner never names the CA fingerprint"
+        assert "/setup" in banner, "the banner does not point at the trust-instructions page"
 
-        host, printed_port = url[len("http://") :].split(":")
-        status, _, body = _get(host, int(printed_port), "/healthz")
+        host, printed_port = url[len("https://") :].split(":")
+        status, _, body = _get(host, int(printed_port), "/healthz", server.ca_path)
         print(f"[run-app] GET {url}/healthz -> {status} {body.strip()}")
         assert status == 200, f"the printed URL does not answer: {status}"
 
         # The gate is up: every other route is behind the sign-in, and a server
         # that answered 200 here would be one with no gate at all.
-        status, location, _ = _get(host, int(printed_port), "/")
+        status, location, _ = _get(host, int(printed_port), "/", server.ca_path)
         print(f"[run-app] GET {url}/ -> {status} -> {location}")
         assert status in (302, 303, 307), f"/ was not sent to the sign-in: {status}"
         assert "/login" in location, location
 
 
-def test_the_sign_in_it_names_is_the_sign_in_the_page_asks_for() -> None:
+def test_the_certificate_fails_closed_without_the_right_ca(tmp_path: Path) -> None:
+    """A client that does NOT carry the server's own CA is refused by TLS
+    itself -- there is no plain-HTTP fallback and no "trust anything" mode."""
+    port = _free_port()
+    with Server("--host", "127.0.0.1", "--port", str(port), tls_dir=tmp_path / "tls") as server:
+        assert server.wait_until_answering("127.0.0.1", port), server.banner()
+        wrong_ca = tmp_path / "unrelated-ca.crt"
+        other_dir = tmp_path / "other-tls"
+        from app import tls as tls_mod
+
+        made = tls_mod.ensure(tls_dir=other_dir, extra_host="127.0.0.1")
+        wrong_ca.write_bytes(made.ca_cert.read_bytes())
+        with pytest.raises(ssl.SSLError):
+            _get("127.0.0.1", port, "/healthz", wrong_ca, timeout=5.0)
+        print("[run-app] a foreign CA does not verify this server's certificate -- fails closed")
+
+
+def test_the_sign_in_it_names_is_the_sign_in_the_page_asks_for(tmp_path: Path) -> None:
     """The banner's promise, reconciled against the page's own words.
 
     Two ways this goes wrong and both are silent: the banner naming a sign-in
@@ -256,7 +311,7 @@ def test_the_sign_in_it_names_is_the_sign_in_the_page_asks_for() -> None:
     never mentioned. So neither is trusted -- each is read where it lives.
     """
     port = _free_port()
-    with Server("--port", str(port)) as server:
+    with Server("--host", "127.0.0.1", "--port", str(port), tls_dir=tmp_path / "tls") as server:
         assert server.wait_until_answering("127.0.0.1", port), server.banner()
         banner = server.banner()
         said = re.search(r"sign in:\s+(.+)", banner)
@@ -267,7 +322,7 @@ def test_the_sign_in_it_names_is_the_sign_in_the_page_asks_for() -> None:
             "the banner does not name the machine account and the check behind it"
         )
 
-        status, _, page = _get("127.0.0.1", port, "/login")
+        status, _, page = _get("127.0.0.1", port, "/login", server.ca_path)
         print(f"[run-app] GET /login -> {status}")
         assert status == 200
         for asked in ("Sign in with your account on this machine", "Username", "Password"):
@@ -277,24 +332,24 @@ def test_the_sign_in_it_names_is_the_sign_in_the_page_asks_for() -> None:
             )
 
 
-def test_a_wrong_password_is_refused_and_the_issued_cookie_gets_in() -> None:
+def test_a_wrong_password_is_refused_and_the_issued_cookie_gets_in(tmp_path: Path) -> None:
     """As much of "the reader can sign in" as a test can honestly reach.
 
-    The half a test cannot reach is a real password: PAM checks it against this
-    machine's own account, and nothing here knows one. That half is a check only
-    a person can make, and it is named as one rather than faked with a stub --
-    a monkeypatched `authenticate` would prove the test's own stub answers True.
+    The half a test cannot reach is a real password: this machine's own
+    account, and nothing here knows one. That half is a check only a person
+    can make, and it is named as one rather than faked with a stub -- a
+    monkeypatched `authenticate` would prove the test's own stub answers True.
 
     The two halves it CAN reach are the two halves that go wrong silently: a
     wrong password quietly letting someone in, and the sign-in issuing a cookie
     the gate then refuses.
     """
     port = _free_port()
-    with Server("--port", str(port)) as server:
+    with Server("--host", "127.0.0.1", "--port", str(port), tls_dir=tmp_path / "tls") as server:
         assert server.wait_until_answering("127.0.0.1", port), server.banner()
 
         status, location = _post(
-            "127.0.0.1", port, "/login", {"username": "tester", "password": "not-the-password"}
+            "127.0.0.1", port, "/login", {"username": "tester", "password": "definitely-wrong"}, server.ca_path
         )
         print(f"[run-app] POST /login (wrong password) -> {status} -> {location}")
         assert status == 302 and "error=" in location, (
@@ -304,14 +359,15 @@ def test_a_wrong_password_is_refused_and_the_issued_cookie_gets_in() -> None:
         # The cookie the sign-in issues, made the way the sign-in makes it --
         # same secret file, same issuer -- and handed back to the running gate.
         cookie = auth.Sessions(auth.read_or_make_secret()).issue("tester")
-        status, page = _get_with_cookie("127.0.0.1", port, "/", cookie)
+        status, page = _get_with_cookie("127.0.0.1", port, "/", cookie, server.ca_path)
         print(f"[run-app] GET / with the cookie a sign-in issues -> {status}")
         assert status == 200, f"the cookie a sign-in issues does not open the page: {status}"
         assert "<title>" in page.lower() or "converge" in page.lower(), page[:200]
 
 
-def test_it_stays_on_loopback_unless_asked_for_the_network() -> None:
-    """Loopback is the default; `--lan` is the decision, and it is a real one.
+def test_it_binds_every_interface_unless_asked_for_loopback(tmp_path: Path) -> None:
+    """Every interface is the default; `--host 127.0.0.1` is the explicit,
+    named way back to loopback-only -- the SSH-tunnel case.
 
     Checked by connecting from this machine's own LAN address, not by reading
     the flag back out of the banner: the banner is what a wrapper claims and
@@ -319,24 +375,24 @@ def test_it_stays_on_loopback_unless_asked_for_the_network() -> None:
     """
     lan = _lan_address()
     if not lan:
-        pytest.skip("this machine has no non-loopback address to test --lan against")
+        pytest.skip("this machine has no non-loopback address to test the LAN default against")
 
     quiet = _free_port()
-    with Server("--port", str(quiet)) as server:
+    with Server("--host", "127.0.0.1", "--port", str(quiet), tls_dir=tmp_path / "tls-loopback") as server:
         assert server.wait_until_answering("127.0.0.1", quiet), server.banner()
-        assert "loopback only" in server.banner(), server.banner()
-        with pytest.raises(OSError):
-            _get(lan, quiet, "/healthz", timeout=3.0)
-        print(f"[run-app] default: {lan}:{quiet} refused, 127.0.0.1:{quiet} answers")
+        assert "bound to 127.0.0.1 only" in server.banner(), server.banner()
+        with pytest.raises((OSError, ssl.SSLError)):
+            _get(lan, quiet, "/healthz", server.ca_path, timeout=3.0)
+        print(f"[run-app] --host 127.0.0.1: {lan}:{quiet} refused, 127.0.0.1:{quiet} answers")
 
     loud = _free_port()
-    with Server("--lan", "--port", str(loud)) as server:
+    with Server("--port", str(loud), tls_dir=tmp_path / "tls-lan") as server:
         assert server.wait_until_answering("127.0.0.1", loud), server.banner()
-        status, _, _ = _get(lan, loud, "/healthz", timeout=5.0)
-        print(f"[run-app] --lan: GET http://{lan}:{loud}/healthz -> {status}")
-        assert status == 200, f"--lan did not put the app on this network: {status}"
+        status, _, _ = _get(lan, loud, "/healthz", server.ca_path, timeout=5.0)
+        print(f"[run-app] default (every interface): GET https://{lan}:{loud}/healthz -> {status}")
+        assert status == 200, f"the default did not put the app on this network: {status}"
         assert socketlib.gethostname() in server.banner(), (
-            "--lan printed no address another device could open"
+            "the default printed no address another device could open"
         )
 
 

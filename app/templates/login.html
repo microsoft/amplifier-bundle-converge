@@ -9,6 +9,7 @@
       <p class="muted">Sign in with your account on this machine.</p>
       {% if error %}<p class="login-error" role="alert">{{ error }}</p>{% endif %}
       <input type="hidden" name="next" value="{{ next|default('/') }}" />
+      <input type="hidden" name="csrf_token" value="{{ csrf_token|default('') }}" />
       <div class="dialog-field">
         <label for="username">Username</label>
         <input id="username" name="username" autocomplete="username" autofocus required />

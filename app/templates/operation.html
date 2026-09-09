@@ -26,7 +26,13 @@
       </details>
     </section>
 
-    <section class="return-card panel-card">
+    <!-- experience-operation.v1 Core 3: the return brief is the FIRST thing a
+         returning steward reads. It shared a quarter-width column with three
+         other cards, which made "first" a claim the layout did not back --
+         a steward had to find it among four narrow cards, not read it as the
+         main thing on the page. Full width, right after the compact strategy
+         card, is what makes that claim true. -->
+    <section class="return-card panel-card wide-card">
       <div class="card-heading"><div><span class="eyebrow">While you were away</span><h2 id="awayDuration">—</h2></div><button id="timelineButton" class="text-button" type="button">Timeline →</button></div>
       <div id="returnBrief" class="brief-list"></div>
       <!-- Core 3 fixes five parts. This strip says which of them the brief on
@@ -36,7 +42,7 @@
     </section>
 
     <section class="throughput-card panel-card">
-      <div class="card-heading"><div><span class="eyebrow">Flow today</span><h2>Work is moving</h2></div><strong id="throughputNet" class="positive-text">—</strong></div>
+      <div class="card-heading"><div><span class="eyebrow">Flow today</span><h2 id="throughputHeadline">Work is moving</h2></div><strong id="throughputNet" class="muted">—</strong></div>
       <div class="throughput-stats">
         <div><span>Derived</span><strong id="throughputDerived">—</strong></div>
         <div><span>Resolved</span><strong id="throughputResolved">—</strong></div>

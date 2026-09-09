@@ -136,14 +136,15 @@ def project(tmp_path: Path) -> dict:
         'id = "demo"\n'
         'name = "Demo manager"\n'
         f'repos = ["{repo}"]\n'
-        'tmux_socket = "test-socket-that-does-not-exist"\n',
+        'tmux_socket = "test-socket-that-does-not-exist"\n'
+        f'steward = "{GOOD_USER}"\n',
         encoding="utf-8",
     )
     return {
         "repo": repo,
         "config": conf,
         "secret": tmp_path / "secret",
-        "state": tmp_path / "state.json",
+        "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
     }
 
 
@@ -155,7 +156,7 @@ class _FakePam:
 def _app(project, monkeypatch):
     monkeypatch.setattr(auth.pam_module, "pam", _FakePam)
     return serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
 
 

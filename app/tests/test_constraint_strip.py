@@ -248,7 +248,7 @@ def project(tmp_path_factory) -> dict:
         encoding="utf-8",
     )
     # Never the real ~/.amplifier: a test must not move a steward's read point.
-    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json"}
+    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json"}
 
 
 def _free_port() -> int:
@@ -264,7 +264,7 @@ def server(project):
     import uvicorn
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -387,7 +387,25 @@ def _boot(browser, server, project, width: int, height: int, errors: list[str]):
     page.on("console", lambda m: errors.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
     page.goto(server, wait_until="networkidle")
+    # Boot now lands on Home, not an auto-picked manager (experience.v1 Core 1,
+    # converge-t30q acceptance 1) -- open the one manager session this project
+    # registers, exactly as the other rendered suites in this lane do.
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
+    # Opening a manager now defaults to the Operation briefing, with Direction
+    # left as an obvious peer tab (converge-t30q acceptance 1) -- so
+    # #directionView lands `hidden` (render/top.js toggles that class off
+    # `state.workspace === 'direction'`) until this file asks for it by name.
+    # Measuring a `display:none` header is where every chip's box came back
+    # 0x0 at every width: `state="attached"` below is satisfied by a hidden
+    # element too, so nothing here would have failed loud without this click.
+    page.wait_for_selector("#directionTab", timeout=15000)
+    page.click("#directionTab")
     page.wait_for_selector("#directionView .constraint-strip", state="attached", timeout=15000)
+    page.wait_for_function(
+        "() => !document.getElementById('directionView').classList.contains('hidden')",
+        timeout=15000,
+    )
     # The chips are filled by render/top.js from /api; measuring before that lands
     # would measure an empty strip and pass for the wrong reason.
     page.wait_for_function(

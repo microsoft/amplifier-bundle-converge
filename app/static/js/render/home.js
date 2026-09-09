@@ -111,9 +111,75 @@ function renderOriginFold(sessions) {
       ${m.workspace ? `Workspace root <code>${escapeHtml(m.workspace)}</code>.` : ''}</p>`).join('');
 }
 
+// --------------------------------------------------------------------------
+// zero managers: a usable next action, not a silently empty grid
+// --------------------------------------------------------------------------
+//
+// `experience.v1` acceptance 1 (converge-t30q): with no manager session
+// registered, Home must say a usable next action and name the actual
+// workspace roots `/api/boot` scanned (`data.config.workspaces`), including
+// an explicit remedy when one is missing -- never an unexplained blank grid.
+function emptySetupHtml(cfg) {
+  const roots = (cfg && cfg.workspaces) || [];
+  const note = (cfg && cfg.note) || '';
+  return `
+    <div class="home-empty-setup">
+      <span class="eyebrow">Setup</span>
+      <h2>No manager session found yet</h2>
+      <p>This app looked for a session&rsquo;s own registration in
+        ${roots.length} workspace root${roots.length === 1 ? '' : 's'} and found none.</p>
+      ${roots.length
+    ? `<ul>${roots.map((r) => `<li><code>${escapeHtml(r)}</code></li>`).join('')}</ul>`
+    : '<p class="muted">No workspace roots are configured to scan at all &mdash; that is the remedy: add one to converge-app.toml.</p>'}
+      <p class="muted">${escapeHtml(note) || 'Start a manager session in one of the roots above (or a root you add), then reload this page.'}</p>
+    </div>`;
+}
+
+// --------------------------------------------------------------------------
+// identity check failed: fail closed, never a silent continue (correction 3)
+// --------------------------------------------------------------------------
+//
+// `data.identityError` is set only when `window.ConvergePWA.setPrincipal`
+// rejected after boot (main.js). That is a setup/identity failure, not an
+// empty manager list, so it gets its own honest card rather than being read
+// as "no manager session found yet" -- and a real recovery action, since
+// reloading is the one thing that re-runs the identity check from scratch.
+function identityFailureHtml(message) {
+  return `
+    <div class="home-empty-setup home-identity-failure">
+      <span class="eyebrow">Identity check failed</span>
+      <h2>Your session could not be verified</h2>
+      <p>${escapeHtml(message || 'The identity check after boot did not complete.')}</p>
+      <p class="muted">Nothing cached was shown, and no manager or document data was read.
+        Reload to try the check again.</p>
+      <button type="button" class="primary-button" id="identityRetryButton">Reload and try again</button>
+    </div>`;
+}
+
+function wireIdentityRetry() {
+  const btn = $('identityRetryButton');
+  if (!btn || btn.dataset.wired) return;
+  btn.dataset.wired = '1';
+  btn.addEventListener('click', () => window.location.reload());
+}
+
 export function renderHome() {
+  if (data.identityError) {
+    $('homeAttentionTotal').textContent = '0';
+    $('homeSessionGrid').innerHTML = identityFailureHtml(data.identityError);
+    renderOriginFold([]);
+    wireTellAll();
+    wireIdentityRetry();
+    return;
+  }
   const sorted = [...data.managerList].sort((a, b) => b.needs - a.needs || (a.status === 'running' ? -1 : 1));
   $('homeAttentionTotal').textContent = data.managerList.reduce((sum, m) => sum + (m.needs || 0), 0);
+  if (!sorted.length) {
+    $('homeSessionGrid').innerHTML = emptySetupHtml(data.config);
+    renderOriginFold(sorted);
+    wireTellAll(); // safe with zero sessions: tellAllSessions() itself toasts and stops
+    return;
+  }
   $('homeSessionGrid').innerHTML = sorted.map((m) => `
       <button class="home-manager-card" data-home-manager="${escapeHtml(m.id)}" type="button">
         <div class="home-card-top">

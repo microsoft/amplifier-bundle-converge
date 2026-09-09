@@ -2244,3 +2244,560 @@ def test_w6_the_break_glass_token_is_read_in_the_repos_own_frame(
 
     assert decision.result.action == "continue", decision.result.reason
     assert decision.events[0][0] == "converge:guard_unlock_used"
+
+
+# ---------------------------------------------------------------------------
+# W7 -- single-use: a ratified candidate already recorded is spent
+#
+#   converge-wu3y  MEASURED 2026-09-06:
+#                  `contracts/operator-surface.v2-candidate.md` was ratified,
+#                  applied to the locked target via PR #90, and then LEFT IN
+#                  PLACE with its `target:` line unchanged. Result: the
+#                  escape hatch stayed open indefinitely for anyone, because
+#                  `_find_ratified_candidate` had no way to tell "already
+#                  landed" from "still pending". The fix: a candidate whose
+#                  amendment is already recorded in the target's own
+#                  `## Changelog` (by the candidate's own repo-relative path,
+#                  never a bare date or a fuzzy substring) no longer opens
+#                  the hatch; a still-unspent candidate for the same target
+#                  is unaffected.
+# ---------------------------------------------------------------------------
+
+SPENT_CONTRACT = (
+    FROZEN_STAMP
+    + "# X Contract - v1 (FROZEN 2026-09-06)\n\n"
+    "amended clause\n\n"
+    "## Changelog\n\n"
+    "- **2026-09-06 -- v1 (FROZEN 2026-09-06).** Amendment landed from "
+    "`contracts/x.v2-candidate.md`.\n"
+)
+
+SPENT_CANDIDATE = (
+    "target: contracts/x.v1.md\n\nproposal, already applied...\n\n" + RATIFIED_STAMP
+)
+
+
+def test_w7_a_candidate_recorded_in_the_targets_changelog_no_longer_unlocks(
+    tmp_path: Path,
+) -> None:
+    """The reproduction, pinned. Before the fix this returned `continue` and
+    emitted `converge:guard_allowed_ratified` -- the spent candidate reopened
+    the hatch indefinitely."""
+    _write(tmp_path, "contracts/x.v1.md", SPENT_CONTRACT)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "tampered"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+    assert [e[1]["reason_code"] for e in decision.events] == ["frozen_direct_edit"]
+    assert not any(name == "converge:guard_allowed_ratified" for name, _ in decision.events)
+
+
+def test_w7_an_unspent_candidate_still_unlocks_positive_control(
+    tmp_path: Path,
+) -> None:
+    """Positive control: identical fixture, but the target's Changelog does
+    NOT yet name the candidate -- the hatch must still open. This is the
+    existing-behavior guarantee the fix must not regress."""
+    unspent_contract = (
+        FROZEN_STAMP
+        + "# X Contract - v1 (FROZEN 2026-09-06)\n\n"
+        "old clause\n\n"
+        "## Changelog\n\n"
+        "- **2026-09-06 -- v1 (FROZEN 2026-09-06).** Locked on the steward's word.\n"
+    )
+    _write(tmp_path, "contracts/x.v1.md", unspent_contract)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "amended clause"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+    assert any(name == "converge:guard_allowed_ratified" for name, _ in decision.events)
+
+
+def test_w7_a_different_unrelated_candidate_for_the_same_target_still_unlocks(
+    tmp_path: Path,
+) -> None:
+    """One candidate landing must not close the door on a SEPARATE, later
+    proposal for the same target. The search must continue past a spent
+    candidate to find an unspent one, not stop at the first match."""
+    _write(tmp_path, "contracts/x.v1.md", SPENT_CONTRACT)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    _write(
+        tmp_path,
+        "contracts/x.v3-candidate.md",
+        "target: contracts/x.v1.md\n\na second, later proposal...\n\n" + RATIFIED_STAMP,
+    )
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "second amendment"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+    assert any(name == "converge:guard_allowed_ratified" for name, _ in decision.events)
+
+
+def test_w7_a_similar_date_in_the_changelog_does_not_accidentally_spend_a_different_candidate(
+    tmp_path: Path,
+) -> None:
+    """No fuzzy substring/date matching (goal instruction, converge-wu3y):
+    a Changelog entry that shares a date with an unrelated, still-pending
+    candidate must not be read as recording THAT candidate. Only the
+    candidate's own path counts."""
+    contract = (
+        FROZEN_STAMP
+        + "# X Contract - v1 (FROZEN 2026-09-06)\n\n"
+        "clause\n\n"
+        "## Changelog\n\n"
+        "- **2026-09-06 -- v1 (FROZEN 2026-09-06).** Locked on the steward's word.\n"
+    )
+    _write(tmp_path, "contracts/x.v1.md", contract)
+    # This candidate's own path never appears in the changelog above, even
+    # though the date "2026-09-06" does.
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "amended clause"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+
+
+def test_w7_workspace_relative_target_below_cwd_a_spent_candidate_still_denies(
+    tmp_path: Path,
+) -> None:
+    """The single-use check reaches where converge-qfi9's governing-root fix
+    reaches: a spent candidate beside a contract in a repo BELOW the session
+    cwd must not unlock it either."""
+    workspace, repo = _below_cwd_repo(tmp_path)
+    _write(repo, "contracts/x.v1.md", SPENT_CONTRACT)
+    _write(repo, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": str(repo / "contracts" / "x.v1.md"), "content": "tampered"},
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+
+
+def test_w7_workspace_relative_target_below_cwd_an_unspent_candidate_still_unlocks(
+    tmp_path: Path,
+) -> None:
+    """Positive control for the below-cwd frame: an unspent candidate there
+    must still open the hatch, exactly as before this fix."""
+    workspace, repo = _below_cwd_repo(tmp_path)
+    unspent_contract = (
+        FROZEN_STAMP
+        + "# X Contract - v1 (FROZEN 2026-09-06)\n\n"
+        "old clause\n\n"
+        "## Changelog\n\n"
+        "- **2026-09-06 -- v1 (FROZEN 2026-09-06).** Locked on the steward's word.\n"
+    )
+    _write(repo, "contracts/x.v1.md", unspent_contract)
+    _write(repo, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {
+            "file_path": str(repo / "contracts" / "x.v1.md"),
+            "content": "amended clause",
+        },
+        _config(),
+        str(workspace),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+
+
+def test_w7_malformed_no_changelog_section_falls_back_to_unspent(
+    tmp_path: Path,
+) -> None:
+    """Malformed input: a FROZEN contract with no ``## Changelog`` heading at
+    all. Nothing can be "recorded" in a section that does not exist, so the
+    candidate is treated as not-yet-landed -- the pre-existing behavior,
+    unchanged by this fix."""
+    contract = FROZEN_STAMP + "# X Contract - v1 (FROZEN 2026-09-06)\n\nclause\n"
+    _write(tmp_path, "contracts/x.v1.md", contract)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "amended clause"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+
+
+def test_w7_malformed_empty_changelog_section_falls_back_to_unspent(
+    tmp_path: Path,
+) -> None:
+    """Malformed input: a ``## Changelog`` heading present but with no body
+    before EOF -- must not raise, and must not be read as recording
+    anything."""
+    contract = (
+        FROZEN_STAMP + "# X Contract - v1 (FROZEN 2026-09-06)\n\nclause\n\n## Changelog\n"
+    )
+    _write(tmp_path, "contracts/x.v1.md", contract)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "amended clause"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+
+
+def test_w7_malformed_candidate_path_mentioned_outside_the_changelog_does_not_spend_it(
+    tmp_path: Path,
+) -> None:
+    """Malformed/adversarial input: the candidate's path appears in the
+    document's PROSE (not under Changelog) -- must not count as a record.
+    Only text actually inside the Changelog section is evidence of landing."""
+    contract = (
+        FROZEN_STAMP + "# X Contract - v1 (FROZEN 2026-09-06)\n\n"
+        "See contracts/x.v2-candidate.md for background.\n\n"
+        "## Changelog\n\n"
+        "- **2026-09-06 -- v1 (FROZEN 2026-09-06).** Locked on the steward's word.\n"
+    )
+    _write(tmp_path, "contracts/x.v1.md", contract)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "amended clause"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+
+
+def test_w7_regression_the_target_is_read_only_once_for_the_escape_hatch_check(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Removal control for the defect-1 fix (converge-wu3y): with the
+    default `require_frozen_marker: true`, the guarded target's content,
+    once successfully read to determine it is guarded (step 6), must be
+    REUSED for the already-landed check (step 7) rather than read a second
+    time. Counts every read of the target file specifically."""
+    _write(tmp_path, "contracts/x.v1.md", SPENT_CONTRACT)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config()
+
+    import amplifier_module_hooks_candidate_guard.guard as guard_module
+
+    real_read = guard_module._read_file_text
+    target_reads = {"n": 0}
+
+    def counting_read(path: Path) -> str:
+        if Path(path).name == "x.v1.md":
+            target_reads["n"] += 1
+        return real_read(path)
+
+    monkeypatch.setattr(guard_module, "_read_file_text", counting_read)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "tampered"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+    assert target_reads["n"] == 1, target_reads
+
+
+def test_w7_an_unreadable_target_during_the_escape_hatch_check_fails_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The reproduction of defect 1, pinned. With `require_frozen_marker`
+    disabled -- so the guarded-path check (step 6) never reads the target
+    and there is no already-read content to reuse -- the escape hatch's own
+    read of that SAME target file, to check whether a ratified candidate is
+    already spent, is the only read left. A failure on THAT read must DENY
+    the write (`fail_closed_on_error` defaults `true`), never silently fall
+    back to "not yet recorded" and let the write through.
+
+    Before the fix, `_candidate_already_landed` caught the `OSError` and
+    returned `False` ("not recorded" -- unspent), so the ratified candidate
+    was treated as still valid and the write was allowed (`continue`)
+    despite `fail_closed_on_error: true`. That is the defect: an I/O error
+    on the guard's own re-read silently reopened the hatch instead of
+    denying."""
+    _write(tmp_path, "contracts/x.v1.md", SPENT_CONTRACT)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config(require_frozen_marker=False)
+
+    import amplifier_module_hooks_candidate_guard.guard as guard_module
+
+    real_read = guard_module._read_file_text
+
+    def flaky_read(path: Path) -> str:
+        if Path(path).name == "x.v1.md":
+            raise OSError("simulated transient I/O failure")
+        return real_read(path)
+
+    monkeypatch.setattr(guard_module, "_read_file_text", flaky_read)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "tampered"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+
+
+def test_w7_an_unreadable_target_with_fail_closed_disabled_still_does_not_unlock(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Even with `fail_closed_on_error: false`, an error while checking the
+    escape hatch must never be read as "an escape hatch was found" -- it
+    degrades to the ordinary "no escape hatch" outcome (deny for this
+    guarded path), never to an allow. Only the SHAPE of the deny (the
+    generic guard-evaluation-error message vs. the ordinary frozen-file
+    message) is gated by the flag; the direction never is."""
+    _write(tmp_path, "contracts/x.v1.md", SPENT_CONTRACT)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config(require_frozen_marker=False, fail_closed_on_error=False)
+
+    import amplifier_module_hooks_candidate_guard.guard as guard_module
+
+    real_read = guard_module._read_file_text
+
+    def flaky_read(path: Path) -> str:
+        if Path(path).name == "x.v1.md":
+            raise OSError("simulated transient I/O failure")
+        return real_read(path)
+
+    monkeypatch.setattr(guard_module, "_read_file_text", flaky_read)
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "tampered"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+
+
+# ---------------------------------------------------------------------------
+# W8 -- exact path-token matching for the single-use check (converge-wu3y
+# defect 2): the previous `candidate_rel in changelog or candidate_path.name
+# in changelog` was a substring-OR-basename test, which read two different
+# documents as "the same candidate".
+# ---------------------------------------------------------------------------
+
+
+def test_w8_a_changelog_naming_a_longer_similar_filename_does_not_spend_the_candidate(
+    tmp_path: Path,
+) -> None:
+    """Defect 2a: `contracts/x.v2-candidate.md` must not read as
+    already-landed just because the changelog names a LONGER, different
+    file that happens to start with the same text --
+    `contracts/x.v2-candidate.md.bak`. Before the fix, a raw substring
+    search matched this (the shorter path is a literal prefix of the longer
+    one) and wrongly spent a candidate that was, in truth, still valid --
+    denying a write a genuinely unspent, ratified candidate should have
+    allowed."""
+    contract = (
+        FROZEN_STAMP
+        + "# X Contract - v1 (FROZEN 2026-09-06)\n\n"
+        "clause\n\n"
+        "## Changelog\n\n"
+        "- **2026-09-06 -- v1 (FROZEN 2026-09-06).** See the backup at "
+        "contracts/x.v2-candidate.md.bak for the pre-amendment text.\n"
+    )
+    _write(tmp_path, "contracts/x.v1.md", contract)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "amended clause"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+    assert any(name == "converge:guard_allowed_ratified" for name, _ in decision.events)
+
+
+def test_w8_a_changelog_naming_a_same_basename_in_a_different_directory_does_not_spend_it(
+    tmp_path: Path,
+) -> None:
+    """Defect 2b: `contracts/proposals/x.v2-candidate.md` must not read as
+    already-landed just because the changelog names a file with the SAME
+    BASENAME in a DIFFERENT directory -- `notes/x.v2-candidate.md`. Before
+    the fix, the basename-only fallback (`candidate_path.name in
+    changelog`) matched this regardless of directory."""
+    contract = (
+        FROZEN_STAMP
+        + "# X Contract - v1 (FROZEN 2026-09-06)\n\n"
+        "clause\n\n"
+        "## Changelog\n\n"
+        "- **2026-09-06 -- v1 (FROZEN 2026-09-06).** See notes/x.v2-candidate.md "
+        "for background.\n"
+    )
+    _write(tmp_path, "contracts/x.v1.md", contract)
+    _write(
+        tmp_path,
+        "contracts/proposals/x.v2-candidate.md",
+        "target: contracts/x.v1.md\n\nproposal, still pending...\n\n" + RATIFIED_STAMP,
+    )
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "amended clause"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+    assert any(name == "converge:guard_allowed_ratified" for name, _ in decision.events)
+
+
+def test_w8_a_trailing_period_with_no_backticks_still_spends_the_candidate(
+    tmp_path: Path,
+) -> None:
+    """The exact-path-token rule must not be so strict that ordinary prose
+    -- the candidate's path followed directly by a sentence-ending period,
+    with no backticks -- fails to register as a record. Only a LONGER,
+    different filename (defect 2a) is rejected; trailing sentence
+    punctuation with no backticks is still a valid record."""
+    contract = (
+        FROZEN_STAMP
+        + "# X Contract - v1 (FROZEN 2026-09-06)\n\n"
+        "amended clause\n\n"
+        "## Changelog\n\n"
+        "- **2026-09-06 -- v1 (FROZEN 2026-09-06).** Amendment landed from "
+        "contracts/x.v2-candidate.md.\n"
+    )
+    _write(tmp_path, "contracts/x.v1.md", contract)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "tampered"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+
+
+def test_w8_a_markdown_link_form_still_spends_the_candidate(
+    tmp_path: Path,
+) -> None:
+    """The path-token boundary works for a Markdown link's parenthesised
+    target too -- `[label](contracts/x.v2-candidate.md)` -- with no special
+    handling needed for that form specifically."""
+    contract = (
+        FROZEN_STAMP
+        + "# X Contract - v1 (FROZEN 2026-09-06)\n\n"
+        "amended clause\n\n"
+        "## Changelog\n\n"
+        "- **2026-09-06 -- v1 (FROZEN 2026-09-06).** See "
+        "[the landed proposal](contracts/x.v2-candidate.md) for detail.\n"
+    )
+    _write(tmp_path, "contracts/x.v1.md", contract)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "tampered"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "deny", decision.result.reason
+
+
+def test_w8_a_different_final_extension_does_not_spend_the_candidate(
+    tmp_path: Path,
+) -> None:
+    """Defect 2, one more adversarial shape: a changelog naming
+    `contracts/x.v2-candidate.mdx` (a real, different file with a longer
+    extension) must not spend `contracts/x.v2-candidate.md`."""
+    contract = (
+        FROZEN_STAMP
+        + "# X Contract - v1 (FROZEN 2026-09-06)\n\n"
+        "clause\n\n"
+        "## Changelog\n\n"
+        "- **2026-09-06 -- v1 (FROZEN 2026-09-06).** See "
+        "contracts/x.v2-candidate.mdx for the rendered version.\n"
+    )
+    _write(tmp_path, "contracts/x.v1.md", contract)
+    _write(tmp_path, "contracts/x.v2-candidate.md", SPENT_CANDIDATE)
+    config = _config()
+
+    decision = evaluate_tool_pre(
+        "write_file",
+        {"file_path": "contracts/x.v1.md", "content": "amended clause"},
+        config,
+        str(tmp_path),
+    )
+
+    assert decision.result.action == "continue", decision.result.reason
+    assert any(name == "converge:guard_allowed_ratified" for name, _ in decision.events)
+
+
+def test_w8_changelog_records_candidate_unit_table(tmp_path: Path) -> None:
+    """Direct unit coverage of `_changelog_records_candidate`, pinning the
+    exact-token rule independent of the full `evaluate_tool_pre` plumbing."""
+    from amplifier_module_hooks_candidate_guard.guard import (
+        _changelog_records_candidate,
+    )
+
+    rel = "contracts/x.v2-candidate.md"
+    cases: list[tuple[str, bool]] = [
+        ("Amendment landed from `contracts/x.v2-candidate.md`.", True),
+        ("See the backup at contracts/x.v2-candidate.md.bak instead.", False),
+        ("See notes/x.v2-candidate.md for background.", False),
+        ("Amendment landed from contracts/x.v2-candidate.md.", True),
+        ("See [it](contracts/x.v2-candidate.md) here.", True),
+        ("See contracts/x.v2-candidate.mdx instead.", False),
+        ("No mention of any candidate here.", False),
+        ("(contracts/x.v2-candidate.md)", True),
+    ]
+    for changelog_text, expected in cases:
+        assert _changelog_records_candidate(changelog_text, rel) is expected, (
+            changelog_text,
+            expected,
+        )

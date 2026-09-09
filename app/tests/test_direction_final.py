@@ -101,9 +101,10 @@ Setup
   Open http://127.0.0.1:8788/ on the Direction view, in a browser sized with the
   devtools device toolbar ("Responsive"), at 1280 x 800, console open.
 
-Check — five abilities, five controls (§3)
-  a. SEE in the document toolbar: Wide · Raw · Copy rendered · Copy source ·
-     Download · A− 100% A+ · Ask…
+Check — five abilities, five controls (§3, folded into Tools by converge-43uv)
+  a. SEE in the document toolbar: a "Tools" control · Raw beside the Read tab ·
+     Ask…. Click "Tools". SEE it open to reveal: Wide · Copy rendered ·
+     Copy source · Download · A− 100% A+.
   b. Click "Copy source", paste into an editor. SEE the Markdown file: a line
      beginning "# ", "## " headings, "**bold**" markers.
   c. Click "Copy rendered", paste. SEE the same document as prose: no "#", no
@@ -111,9 +112,9 @@ Check — five abilities, five controls (§3)
   FAILS IF: the two paste the same thing, or "Copy rendered" pastes Markdown.
 
 Check — zoom (§3)
-  d. Click A+ four times. SEE the document text grow at each click and the
-     readout go 115% · 130% · 150% · 175%; SEE no horizontal scrollbar along the
-     bottom of the window at any step.
+  d. With Tools still open, click A+ four times. SEE the document text grow at
+     each click and the readout go 115% · 130% · 150% · 175%; SEE no
+     horizontal scrollbar along the bottom of the window at any step.
   e. Click A+ again. SEE nothing change and the button greyed at 175%.
   FAILS IF: the toolbar or the change cards grow with the text, or the page
      scrolls sideways.
@@ -308,14 +309,15 @@ def project(tmp_path_factory) -> dict:
         f'batch_dir = "{batch}"\n'
         f'repos = ["{repo}"]\n'
         'tracker_project = ""\n'
-        'tmux_socket = "test-socket-that-does-not-exist"\n',
+        'tmux_socket = "test-socket-that-does-not-exist"\n'
+        f'steward = "{USER}"\n',
         encoding="utf-8",
     )
     # Never the real ~/.amplifier: a test must not move a steward's read point.
     return {
         "config": conf,
         "secret": tmp_path / "secret",
-        "state": tmp_path / "state.json",
+        "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
         "repo": repo,
     }
 
@@ -333,7 +335,7 @@ def server(project):
     import uvicorn
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -382,12 +384,27 @@ def _boot(browser, server, project, width: int, height: int, errors: list[str]):
     )
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
     page.goto(server, wait_until="networkidle")
-    # Below 980px the Manager Console is a fixed tray over the bottom 68vh of
-    # the screen (console.css), so a phone reads with it closed — that is the
-    # app's own design and the steward's own gesture, not something to force
-    # past. The header tests re-open it deliberately.
+    # Boot always lands on Home first, never an auto-picked manager
+    # (experience.v1 Core 1, converge-t30q) -- opening a manager and its
+    # Direction tab is now deliberate navigation, same as every other
+    # rendered suite in this lane (converge-e2c3).
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
     if width <= 980:
+        # Below the breakpoint opening a manager shows the Manager Console as
+        # a sheet OVER the page, intercepting clicks on the tabs underneath
+        # it -- close it before trying to reach #directionTab, not after.
         page.wait_for_selector("#consoleToggle", timeout=15000)
+        page.click("#consoleToggle")
+        page.wait_for_timeout(500)
+    page.wait_for_selector("#directionTab", timeout=15000)
+    page.click("#directionTab")
+    if width <= 980 and page.evaluate(
+        "() => { const c = document.getElementById('managerConsole'); "
+        "return !!(c && c.getBoundingClientRect().width > 0 && !c.classList.contains('hidden')); }"
+    ):
+        # Switching to the Direction tab can reopen the console sheet at this
+        # width; close it again before anything below tries to click through it.
         page.click("#consoleToggle")
         page.wait_for_timeout(500)
     page.wait_for_selector("#directionView .lock-gate", state="attached", timeout=15000)
@@ -431,6 +448,16 @@ def _open_gate(page) -> None:
     if not page.evaluate("() => document.getElementById('lockGate').open"):
         page.click("#lockGate summary")
         page.wait_for_timeout(150)
+
+
+def _open_tools(page) -> None:
+    """converge-43uv folded Wide/Copy/Download/zoom into one Tools disclosure
+    (§3's five abilities are still each one gesture away — the gesture is now
+    opening this menu once, the same pattern `_open_gate` already uses for the
+    lock gate). Every test below that reaches into the menu opens it first."""
+    if not page.evaluate("() => document.getElementById('toolsMenu').open"):
+        page.click("#toolsMenu summary")
+        page.wait_for_timeout(120)
 
 
 def _gate(page) -> dict:
@@ -508,6 +535,7 @@ def test_the_two_copy_controls_carry_different_text(server, project, browser):
     errors: list[str] = []
     ctx, page = _boot(browser, server, project, 1280, 800, errors)
     _open_doc(page, "Vision")
+    _open_tools(page)
 
     page.click("#copySource")
     page.wait_for_timeout(400)
@@ -539,9 +567,17 @@ def test_the_two_copy_controls_carry_different_text(server, project, browser):
 @needs_browser
 @pytest.mark.parametrize("width,height", [(1280, 800), (390, 844)])
 def test_all_five_abilities_have_a_visible_control(server, project, browser, width, height):
-    """§3's five abilities, each with a control a reader can actually reach."""
+    """§3's five abilities, each with a control a reader can actually reach.
+
+    converge-43uv folds four of the five (copy \u00d7 2, download, zoom, width)
+    into one accessible Tools disclosure so the document dominates the screen
+    (acceptance 1) \u2014 "reachable" now means "one gesture (opening the menu)
+    away", the same standard \u00a72 already sets for the raw source. The menu is
+    opened here, once, before any box is measured.
+    """
     errors: list[str] = []
     ctx, page = _boot(browser, server, project, width, height, errors)
+    _open_tools(page)
     controls = {
         "copy as rendered": "#copyRendered",
         "copy as source": "#copySource",
@@ -580,6 +616,7 @@ def test_zoom_scales_the_reading_text_and_never_widens_the_page(
     errors: list[str] = []
     ctx, page = _boot(browser, server, project, width, height, errors)
     _open_doc(page, "Vision")
+    _open_tools(page)
 
     def reading() -> dict:
         return page.evaluate(

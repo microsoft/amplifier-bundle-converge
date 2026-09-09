@@ -91,31 +91,50 @@
 .rail-heading .eyebrow { color:#71829a; }
 .rail-heading h2 { margin:4px 0 0; font-size:15px; color:#fff; }
 .small-button { border:1px solid #25364d; background:#0d1a2d; color:#aeb9ca; border-radius:8px; padding:6px 9px; }
-.session-list { display:flex; flex-direction:column; gap:10px; }
-.session-card {
-  width:100%;
-  text-align:left;
-  background:#0e1c2e;
+.session-list { display:flex; flex-direction:column; gap:6px; }
+/* The compact workspace rail (converge-t30q, manager correction 1): a
+   narrow row per manager, not Home's rich card redrawn a second time on
+   every screen. The row itself carries only name + status/needs badge; the
+   metrics/summary Home already shows in full sit behind a native, keyboard-
+   and screen-reader-reachable <details> rather than being dropped. */
+.session-row {
   border:1px solid #203149;
-  color:#e9eef5;
-  border-radius:13px;
-  padding:12px;
+  border-radius:10px;
+  background:#0e1c2e;
   transition:.15s ease;
 }
-.session-card:hover { background:#122238; border-color:#304763; }
-.session-card.active { border-color:#7b61ff; box-shadow:inset 0 0 0 1px rgba(123,97,255,.22); background:linear-gradient(180deg,#14243b,#0f1d31); }
-.session-topline { display:flex; justify-content:space-between; gap:8px; align-items:center; }
-.session-name { font-weight:800; color:#fff; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.session-age { color:#71829a; font-size:11px; white-space:nowrap; flex:0 0 auto; }
-.session-summary { margin:5px 0 8px; font-size:12px; color:#a8b4c6; min-height:34px; }
-.session-status-line { display:flex; gap:6px; align-items:center; font-size:11px; color:#a8b4c6; }
-.session-status-line strong.running { color:#48d597; }
-.session-status-line strong.waiting { color:#f5b34c; }
-.session-metrics { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
-.session-metric { background:rgba(255,255,255,.035); padding:8px; border-radius:9px; }
-.session-metric strong { display:block; font-size:18px; color:#fff; }
-.session-metric span { color:#8291a8; font-size:10px; }
-.session-resources { display:flex; gap:10px; margin-top:9px; color:#7688a1; font-size:10px; }
+.session-row:hover { background:#122238; border-color:#304763; }
+.session-row.active { border-color:#7b61ff; box-shadow:inset 0 0 0 1px rgba(123,97,255,.22); background:linear-gradient(180deg,#14243b,#0f1d31); }
+.session-row-main {
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  text-align:left;
+  background:transparent;
+  border:0;
+  color:#e9eef5;
+  padding:9px 10px;
+}
+.session-row-name { font-weight:800; color:#fff; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1 1 auto; }
+.session-row-badges { display:flex; align-items:center; gap:6px; flex:0 0 auto; }
+.session-row-status { font-size:10px; color:#8291a8; white-space:nowrap; }
+.needs-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:17px; height:17px; padding:0 4px; border-radius:999px;
+  background:#f15c69; color:#fff; font-size:10px; font-weight:800;
+}
+.session-row-detail { padding:0 10px 9px; }
+.session-row-detail > summary { cursor:pointer; font-size:10px; color:#71829a; list-style:none; }
+.session-row-detail > summary::-webkit-details-marker { display:none; }
+.session-row-summary { margin:6px 0 6px; font-size:11px; color:#a8b4c6; }
+.session-row-metrics { display:flex; flex-wrap:wrap; gap:8px; font-size:10px; color:#7688a1; }
+/* Belt and braces on top of native <details> behaviour: an explicit
+   `display` on a closed detail's own child must never win a cascade fight
+   against the collapsed state -- said out loud rather than left to engine
+   behavior alone. */
+.session-row-detail:not([open]) > :not(summary) { display:none; }
 .new-session { width:100%; margin-top:14px; border:1px dashed #2b3b50; border-radius:11px; background:transparent; color:#71829a; padding:10px; }
 .ghost-disabled { cursor:not-allowed; opacity:.7; }
 
@@ -179,6 +198,25 @@
 .home-card-meta strong { display:block; font-size:16px; }
 .home-card-meta span { font-size:10px; color:var(--muted); }
 
+/* Zero managers: a usable next action, not a blank grid (converge-t30q,
+   acceptance 1) -- reuses the same card shell as a manager card so the
+   empty state does not look like a second, unrelated surface. */
+.home-empty-setup { background:#fff; border:1px dashed var(--line-strong); border-radius:16px; padding:22px; }
+.home-empty-setup h2 { margin:6px 0 8px; }
+.home-empty-setup ul { margin:8px 0; padding-left:20px; }
+.home-empty-setup li { margin:2px 0; }
+.home-empty-setup p { color:var(--muted); margin:0 0 8px; }
+/* Identity check failed (converge-t30q, manager correction 3): a distinct
+   look from the plain empty-setup state, because the cause is different --
+   this is a fail-closed refusal, not an honestly empty list. */
+.home-identity-failure { border-style:solid; border-color:#e26169; }
+
+/* A non-document need (converge-t30q, manager correction 2) lands on
+   Operation and, when the item is in the visible front of the priority
+   queue, highlights the exact row it is about rather than leaving the
+   steward to find it themselves. */
+.need-target-flash { outline:2px solid #7b61ff; outline-offset:2px; border-radius:6px; }
+
 .floating-menu { position:fixed; z-index:60; top:58px; left:260px; width:300px; max-width:calc(100vw - 24px); background:#fff; border:1px solid var(--line); border-radius:12px; box-shadow:0 20px 60px rgba(15,23,42,.22); padding:7px; }
 .floating-menu button { width:100%; border:0; background:transparent; text-align:left; padding:10px; border-radius:8px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
 .floating-menu button:hover { background:#f4f6fa; }
@@ -231,8 +269,8 @@
   }
   .rail-heading { display:none; }
   .session-list { flex-direction:row; overflow:auto; gap:8px; padding-bottom:2px; }
-  .session-card { min-width:210px; padding:9px 10px; }
-  .session-summary, .session-metrics, .session-resources { display:none; }
+  .session-row { min-width:190px; flex:0 0 auto; }
+  .session-row-detail { display:none; }
   .new-session { display:none; }
   .workspace-header { padding:12px 14px; }
   .constraint-strip { display:none; }
@@ -293,7 +331,7 @@
   .icon-label-button { height:34px; padding:0 8px; font-size:11px; gap:5px; }
   .attention-pill::after { content:""; }
   .workspace-tab { min-width:120px; }
-  .session-card { min-width:170px; }
+  .session-row { min-width:150px; }
 }
 
 /* --------------------------------------------------------------------------

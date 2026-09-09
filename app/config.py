@@ -102,6 +102,39 @@ class ManagerConfig:
                 return branch
         return ""
 
+    def console_target(self) -> tuple[str, str] | None:
+        """This manager's own console -- (socket, session) -- or None.
+
+        `manager_tmux` is written one of two shapes, and both are legal
+        forever (converge-c6cv):
+
+        * a bare session name -- the ordinary case, one socket for a
+          manager's worker lanes AND its own console -- which is read
+          against THIS manager's own `tmux_socket`;
+        * the combined `socket:session` form, for when the manager's own
+          console runs on a DIFFERENT socket than its lanes (`--manager-tmux`
+          in `scripts/register-manager.py` accepts either verbatim).
+
+        Parsed on the FIRST colon only, exactly as the client parses the
+        same string in `state.js`'s `normalizeTmux` -- so a registration and
+        the browser reading it can never disagree about what one `manager_tmux`
+        value means. An empty result (missing socket or session after a
+        colon, or no `manager_tmux` recorded at all) is None, matching
+        nothing -- an unfinished registration is refused, never treated as
+        "anyone may act".
+        """
+        raw = (self.manager_tmux or "").strip()
+        if not raw:
+            return None
+        if ":" in raw:
+            socket, _, session = raw.partition(":")
+            socket, session = socket.strip(), session.strip()
+        else:
+            socket, session = self.tmux_socket, raw
+        if not socket or not session:
+            return None
+        return (socket, session)
+
 
 @dataclass(frozen=True)
 class AppConfig:
@@ -118,6 +151,39 @@ class AppConfig:
     def manager(self, mid: str) -> ManagerConfig | None:
         for one in self.managers:
             if one.id == mid:
+                return one
+        return None
+
+    def manager_for_tmux(self, tmux_socket: str, session: str) -> ManagerConfig | None:
+        """The manager whose own console this (socket, session) pair names,
+        or None.
+
+        Matched against each manager's resolved `console_target()` -- a
+        manager's OWN console, the only tmux target the app's UI ever opens
+        for typing (`console.js` only sets `writable: true` in the manager
+        context, never for a lane) -- rather than against `tmux_socket` and
+        `manager_tmux` compared as separate, literal fields. That literal
+        comparison assumed a manager's own console always ran on the SAME
+        socket as its worker lanes; a registration recording the combined
+        `socket:session` form for a manager on a DIFFERENT socket then
+        matched nothing here even though the read side (`console.js`'s
+        `normalizeTmux`) resolved it correctly, so a registered steward
+        could watch their own session but not type into it (403 "no
+        registered manager owns this tmux session") -- converge-c6cv.
+
+        `console_target()` returning None (no `manager_tmux` recorded yet)
+        never matches, so an unfinished registration is refused the same as
+        an unrecognized session, never treated as "anyone may act" -- the
+        same fail-closed rule `steward` follows. Nothing here reads the
+        ambient `$TMUX`, and nothing here infers permission from a session
+        NAME alone -- both socket and session of the resolved target must
+        match what was asked for.
+        """
+        if not session:
+            return None
+        wanted = (tmux_socket, session)
+        for one in self.managers:
+            if one.console_target() == wanted:
                 return one
         return None
 
@@ -235,15 +301,56 @@ def app_repo_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def default_workspace_roots() -> tuple[Path, ...]:
-    """The parent of this app's own repository.
+#: The process's own working directory, captured the moment this module is
+#: first imported — before `tls.ensure()`, uvicorn, or anything else run by
+#: `app.serve.main()` has any chance to `chdir`. This is the one honest
+#: answer to "where was the caller actually standing", captured once here
+#: rather than read fresh with `Path.cwd()` on every request, so a later,
+#: unrelated `chdir` elsewhere in the process can never change which
+#: workspace an installed wheel discovers registrations under.
+_CALLER_CWD_AT_IMPORT = Path.cwd()
 
-    A workspace holds its repositories side by side, so the checkout this
-    module is running from sits one level below the workspace root. That makes
-    the default correct for the ordinary case — the app running inside the
-    workspace it is watching — without anybody configuring anything.
+
+def _is_source_checkout(root: Path) -> bool:
+    """True when `root` is this project's own source checkout — the layout
+    `default_workspace_roots` was originally written for, where the app is
+    one repository sitting beside the others in the workspace it watches.
+
+    False for an installed wheel: `pip install`/`uv pip install` puts `app/`
+    and `amplifier_converge/` side by side under `site-packages`, with no
+    `pyproject.toml` or `scripts/run-app.sh` anywhere near them. `parents[1]`
+    there resolves to `site-packages` itself (or the Amplifier bundle cache a
+    wheel was built from and installed out of) — a real directory, so the
+    old, unconditional default silently "worked" by scanning
+    `<site-packages-parent>/.converge/*` for registrations, which is never
+    where a reader's actual project lives.
     """
-    return (app_repo_root().parent,)
+    return (root / "pyproject.toml").is_file() and (root / "scripts" / "run-app.sh").is_file()
+
+
+def default_workspace_roots() -> tuple[Path, ...]:
+    """Where this app looks for manager registrations, with no config file
+    and no `CONVERGE_WORKSPACES` naming anything.
+
+    A source checkout: the parent of this app's own repository — a workspace
+    holds its repositories side by side, so the checkout this module runs
+    from sits one level below the workspace root, and that is the correct
+    default for the ordinary case.
+
+    An installed wheel (or any layout with no adjacent checkout): the
+    caller's own working directory at process start
+    (`_CALLER_CWD_AT_IMPORT`) — never `site-packages`, never the Amplifier
+    bundle cache the wheel happened to be built from, and never a broad scan
+    of `$HOME`. A reader who ran `amplifier-converge start` from their own
+    project's workspace is standing in the one directory this can honestly
+    call "theirs"; an explicit `workspaces =` in `converge-app.toml`, or
+    `$CONVERGE_WORKSPACES`, still wins over this default either way (see
+    `load()`).
+    """
+    root = app_repo_root()
+    if _is_source_checkout(root):
+        return (root.parent,)
+    return (_CALLER_CWD_AT_IMPORT,)
 
 
 def env_workspace_roots(value: str | None = None) -> tuple[Path, ...]:

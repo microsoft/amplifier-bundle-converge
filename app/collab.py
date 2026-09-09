@@ -55,6 +55,8 @@ Wiring, one line each:
 
 from __future__ import annotations
 
+import asyncio
+import hashlib
 import json
 import os
 import shutil
@@ -111,7 +113,12 @@ DECISION_WORDS = dict(writes.DECISION_WORDS)
 # --------------------------------------------------------------------------
 def host_cli() -> str:
     """The path to the host command line, or an empty string when absent."""
-    return shutil.which("gh") or ""
+    found = shutil.which("gh")
+    # `shutil.which` preserves a relative entry from $PATH (for example
+    # `bin/gh`).  `_run` deliberately changes cwd to the configured
+    # repository, so anchor the executable while we are still in the caller's
+    # cwd.  `absolute()` preserves a symlink if PATH found one.
+    return str(Path(found).absolute()) if found else ""
 
 
 def _run(repo: Path, argv: list[str]) -> tuple[bool, str, str]:
@@ -198,6 +205,32 @@ def proposal_from_pull(pull: dict, repo_ident: str) -> dict:
     The keys are `app/data.py`'s `proposals_for` keys, so nothing downstream has
     to know a proposal came from the host rather than from a `*-candidate.md`
     file beside a document. `source` and `origin` carry that fact as a value.
+
+    converge-ibxt: an earlier version of this function fell back to the
+    body's own first paragraphs whenever a heading it recognized ("the exact
+    change", "the evidence", ...) was missing -- so an ordinary PR body with
+    its own, equally valid headings ('What this PR corrects', 'The gate this
+    PR runs under', ...) got its first four paragraphs mislabelled 'What
+    changes', its first heading repeated as 'Why now', and its real evidence
+    -- sitting under a heading this reader simply did not know -- reported as
+    "No evidence was attached", which is false. Recognizing a heading and a
+    PR *having* one are different facts, and only the reader's ignorance
+    changed between them.
+
+    Now each of `changes` / `evidence` / `why` / `unchanged` is populated ONLY
+    from a heading this function actually recognized, and each carries its own
+    `*Recognized` flag so the reader can say "unrecognized", never "absent".
+    The complete, original body -- untruncated, never paraphrased -- rides
+    alongside as `body` (raw) and `bodyHtml` (rendered through
+    `app/data.py`'s `render_markdown`, `html: False`, so raw HTML/script tags
+    come back escaped as text and a javascript-scheme or data-scheme link is
+    left as plain text rather than becoming a clickable one -- verified
+    interactively against this exact renderer before reuse, per this lane's
+    brief). The browser decides when to show which: a PR shaped like
+    Converge's own three-part proposal shows the quick extract with the full
+    body one disclosure away; a PR that recognizes nothing shows the full
+    body as the primary reading, not a set of empty, misleadingly-labelled
+    sections.
     """
     body = str(pull.get("body") or "")
     sections = _sections(body)
@@ -209,19 +242,27 @@ def proposal_from_pull(pull: dict, repo_ident: str) -> dict:
     number = pull.get("number")
 
     changes = _bullets(sections.get(change_key, "")) if change_key else []
-    if not changes:
-        changes = _paragraphs(sections.get(change_key, "") or body)[:4]
+    if change_key and not changes:
+        changes = _paragraphs(sections.get(change_key, ""))
 
     evidence = _bullets(sections.get(evidence_key, "")) if evidence_key else []
-    if not evidence:
-        evidence = _paragraphs(sections.get(evidence_key, ""))[:4]
+    if evidence_key and not evidence:
+        evidence = _paragraphs(sections.get(evidence_key, ""))
 
     why = sections.get(why_key, "") if why_key else ""
-    if not why:
-        why = (_paragraphs(body)[0] if _paragraphs(body) else "")
+
+    # Two repositories can each have their own "#7" -- clause 3 asks for one
+    # review whoever the origin is, and that only holds if the id a reader
+    # clicks is unique across every repository a manager session carries, not
+    # just within one, AND still unique when two repositories happen to share
+    # a basename (converge-xet9: `/a/repo` and `/b/repo` both list under
+    # `repo::pull-7` if the identifier is a bare name). `repo_ident` is
+    # always `_repo_key(repo)` -- a canonical-path-derived key, never a
+    # basename -- so this never collides and never degrades silently.
+    ident = f"{repo_ident}::pull-{number}" if repo_ident else f"pull-{number}"
 
     return {
-        "id": f"pull-{number}",
+        "id": ident,
         "title": str(pull.get("title") or f"Pull request {number}"),
         "source": f"Pull request #{number} - {author}",
         "origin": {
@@ -234,12 +275,18 @@ def proposal_from_pull(pull: dict, repo_ident: str) -> dict:
             "updated": str(pull.get("updatedAt") or ""),
         },
         "why": why,
+        "whyRecognized": bool(why_key),
         "changes": changes,
+        "changesRecognized": bool(change_key),
         "evidence": evidence,
+        "evidenceRecognized": bool(evidence_key),
         "unchanged": sections.get(unchanged_key, "") if unchanged_key else "",
+        "unchangedRecognized": bool(unchanged_key),
         "recommendation": "",
         "tradeoffs": [],
         "file": str(pull.get("headRefName") or ""),
+        "body": body,
+        "bodyHtml": data.render_markdown(body) if body.strip() else "",
         "comments": [
             {
                 "author": ((one.get("author") or {}) or {}).get("login") or "",
@@ -407,11 +454,56 @@ def steward_of(mc) -> str:
     return str(getattr(mc, "steward", "") or "")
 
 
+def _repo_key(repo) -> str:
+    """A collaboration-identity key unique to THIS repository, across the
+    whole manager session -- not just within one bare name.
+
+    converge-xet9: `data.repo_id` is `Path(repo).name`, so two configured
+    repositories that happen to share a basename (``/a/repo`` and
+    ``/b/repo``) answer to the SAME identifier -- both list every pull
+    request under ``repo::pull-<n>``, and a request naming that identifier
+    cannot say which of the two it means. Changing `data.repo_id` itself
+    would ripple into every document route this lane does not own (`find_doc`
+    and the docs listing in `app/data.py`), so this module keys its OWN
+    routes -- pull requests only -- off the repository's CANONICAL path
+    instead: `Path(repo).resolve()` is unique per real directory regardless
+    of what two directories happen to be named, and stable across requests
+    (the same repository always resolves to the same key, whether the
+    manager's own registration spelled it as a relative path, a symlink, or
+    with a trailing slash). The key is deliberately opaque -- it carries no
+    promise of being readable -- so callers that want a name for a human
+    (`list_pulls`'s `unreadable` rows) pair it with `Path(repo).name` as a
+    separate, explicitly-labelled field rather than overloading one string
+    to mean both \"the identity\" and \"the label\".
+    """
+    return hashlib.sha256(str(Path(repo).resolve()).encode("utf-8")).hexdigest()[:16]
+
+
 def _repo_for(mc, repo_ident: str):
-    for one in mc.repos:
-        if data.repo_id(one) == repo_ident:
-            return one
-    return mc.repo
+    """The repository a request means -- refusing rather than guessing.
+
+    converge-xet9: this used to match a bare basename and fall back to
+    `mc.repo` (the first configured repository) whenever nothing matched --
+    so an unknown identifier, a stale one left over from before this fix, or
+    an entirely absent one silently read or WROTE against whatever repository
+    happened to be first. Two repositories sharing one basename made this
+    worse still: both answered to the same identifier, so even a "matching"
+    request could not say which repository it actually meant.
+
+    Now: an identifier that names exactly one configured repository (by
+    `_repo_key`) is honoured. One that names none is refused (`None`) --
+    including a stale, pre-fix identifier like a bare basename, which no
+    longer matches anything on purpose (better a visible refusal than a
+    silent remap to the wrong repository). An ABSENT identifier is accepted
+    only in the one case it is unambiguous: a manager steering exactly one
+    repository, so ordinary single-repo operation needs no change on the
+    client's part. An absent identifier with more than one repository
+    configured is refused rather than defaulted to the first.
+    """
+    if repo_ident:
+        matches = [one for one in mc.repos if _repo_key(one) == repo_ident]
+        return matches[0] if len(matches) == 1 else None
+    return mc.repo if len(mc.repos) == 1 else None
 
 
 def _who(request: Request) -> str:
@@ -430,10 +522,15 @@ def list_pulls(mid: str, request: Request) -> JSONResponse:
     proposals: list[dict] = []
     trouble: list[dict] = []
     for repo in mc.repos:
-        repo_ident = data.repo_id(repo)
+        repo_ident = _repo_key(repo)
         found, why = read_pulls(Path(repo), repo_ident)
         if why:
-            trouble.append({"repoId": repo_ident, "reason": why})
+            # converge-xet9: `repoId` is the opaque identity key (unique even
+            # when two repositories share a basename); `repoLabel` is the
+            # readable name a steward actually recognizes. Neither alone is
+            # enough -- an opaque key with nothing readable beside it is
+            # useless in a trouble line a person has to read.
+            trouble.append({"repoId": repo_ident, "repoLabel": Path(repo).name, "reason": why})
             continue
         proposals.extend(found)
     return JSONResponse({
@@ -455,10 +552,10 @@ def one_pull(mid: str, number: int, request: Request, repoId: str = "") -> JSONR
     repo = _repo_for(mc, repoId)
     if repo is None:
         return JSONResponse({"error": "this manager session has no repository to read"}, status_code=400)
-    found, why = read_pull(Path(repo), data.repo_id(repo), number)
+    found, why = read_pull(Path(repo), _repo_key(repo), number)
     if why:
         return JSONResponse({"ok": False, "reason": why}, status_code=502)
-    return JSONResponse({"ok": True, "proposal": found, "freshness": freshness(data.repo_id(repo))})
+    return JSONResponse({"ok": True, "proposal": found, "freshness": freshness(_repo_key(repo))})
 
 
 @router.post("/{mid}/pulls/{number}/comments")
@@ -480,7 +577,17 @@ async def ask_on_the_host(mid: str, number: int, request: Request) -> JSONRespon
         return JSONResponse({"ok": False, "reason": "a question with nothing in it is not sent"}, status_code=400)
     who = _who(request)
     signed = f"{said}\n\n_Asked by {who} from Converge._" if who else said
-    result = post_comment(Path(repo), number, signed)
+    # converge-j6vi: `post_comment` runs the host's own command line via a
+    # blocking `subprocess.run` (see `_run`). This route is `async def`, so
+    # calling it inline would run that blocking call directly on Uvicorn's
+    # single asyncio event loop -- stalling every other request this server
+    # is handling, for every manager and repository, for however long the
+    # host takes to answer. `asyncio.to_thread` moves the blocking call to a
+    # worker thread and awaits its result, freeing the loop for other work
+    # while it runs -- the same effect `one_pull` gets for free by being a
+    # plain `def` route that Starlette itself dispatches to a threadpool.
+    # Nothing about the result, its shape, or its status code changes.
+    result = await asyncio.to_thread(post_comment, Path(repo), number, signed)
     return JSONResponse(result, status_code=200 if result.get("ok") else 502)
 
 
@@ -490,10 +597,36 @@ async def answer_a_pull(mid: str, number: int, request: Request) -> JSONResponse
 
     Both halves of clause 5, in one action, and each reported separately so a
     host that refuses the comment never makes the record look unwritten.
+
+    converge-0zmv: `experience-collaboration.v1` Core 8 reserves *whose word
+    counts* -- ratification, the authority to answer a proposal -- to the
+    registered steward, exactly as `/decision` already enforces for a local
+    document. This route used to skip that check entirely: any authenticated
+    teammate's direct POST recorded a ratification and posted it back to the
+    host, with the caller's identity taken from `_who(request)` (verified
+    session state) but never compared to `mc.steward`. Fixed by reusing
+    `app/serve.py`'s existing `_steward_denied` -- the SAME narrow policy
+    `/decision` uses, not a second one that could drift out of sync -- via a
+    function-scoped import (this module is imported at `app/serve.py`
+    MODULE load time for `WEBHOOK_PATH`, so a top-level import here back
+    into `serve` would run while `serve` is still mid-import; deferring the
+    import to call time, when both modules are fully loaded, avoids that
+    coupling entirely). The check runs first, before the request body is
+    even parsed, so a forged `decision`/`note`/`docId` never reaches
+    `writes.record_decision` or the host CLI -- an absent registered
+    steward or a signed-in non-steward is refused the same way `/decision`
+    refuses it, fail-closed, with no record written and no host call made.
+    Ordinary teammate actions on this router (`ask_on_the_host`, reads) are
+    unaffected: this guard is added ONLY to this one write.
     """
     mc = _manager(request, mid)
     if mc is None:
         return JSONResponse({"error": f"no manager named {mid}"}, status_code=404)
+    from . import serve as _serve
+
+    denied = _serve._steward_denied(mc, request)
+    if denied is not None:
+        return denied
     try:
         body = await request.json()
     except Exception:
@@ -519,13 +652,19 @@ async def answer_a_pull(mid: str, number: int, request: Request) -> JSONResponse
         note=note,
         user=who,
     )
-    returned = post_answer_back(Path(repo), number, decision, note, who)
+    # converge-j6vi: same fix as `ask_on_the_host`, same reason -- `_run`'s
+    # `subprocess.run` is blocking, this route is `async def`, and inline it
+    # would freeze the whole event loop for the host's answer time. The
+    # record was already written above, synchronously, before this line, so
+    # the record-before-host ordering `writes.record_decision` -> host is
+    # unchanged; only the blocking host call itself moves off the loop.
+    returned = await asyncio.to_thread(post_answer_back, Path(repo), number, decision, note, who)
     return JSONResponse({
         "ok": bool(recorded.get("ok")),
         "decision": DECISION_WORDS[decision],
         "recorded": recorded,
         "returnedToOrigin": returned,
-        "origin": {"kind": "pull request", "number": number, "repoId": data.repo_id(repo)},
+        "origin": {"kind": "pull request", "number": number, "repoId": _repo_key(repo)},
     })
 
 

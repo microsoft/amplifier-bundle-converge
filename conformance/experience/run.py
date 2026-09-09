@@ -57,6 +57,7 @@ reason names what would have to exist for the rule to become checkable.
 
 from __future__ import annotations
 
+import ast
 import re
 import sys
 from pathlib import Path
@@ -242,6 +243,265 @@ PER_PERSON_MARKERS = (
     re.compile(r"Path\.home\(\)"),
     re.compile(r"per[ -](?:person|steward)", re.I),
 )
+
+#: converge-lech. Clause 7 names exactly six things as "the project's truth":
+#: its documents, code record, work queue, lanes, return log, and pending
+#: decisions. A store is only a second copy of THAT if its own text shows it
+#: holds one of these six -- classified by content, never by which file it
+#: sits in. Phrases, not bare nouns: `state_store.py` (the allowed reading)
+#: says "one small JSON *document*" describing its own file format, and
+#: `auth.py` says "the PWA *lane* can confirm its own principal" -- neither
+#: is a copy of the project's documents or lanes, and a bare-noun marker
+#: would have faulted both. Drawn from clause 7's own wording so a marker
+#: here is a citation, not an invention.
+PROJECT_TRUTH_MARKERS = (
+    re.compile(r"\bwork queue\b", re.I),
+    re.compile(r"\bproject('|\u2019)?s?\s+(?:documents?|truth)\b", re.I),
+    re.compile(r"\bcode record\b", re.I),
+    re.compile(r"\breturn log\b", re.I),
+    re.compile(r"\bpending decisions?\b", re.I),
+    re.compile(r"\blane claims?\b", re.I),
+)
+
+#: converge-lech, reopened. `PROJECT_TRUTH_MARKERS` reads PROSE describing the
+#: six things clause 7 names. A real store persists them as DATA, and a store
+#: can carry that data with no explanatory prose at all: measured reopening --
+#: `cache = {"lanes": [{"id": "lane-1", "state": "working"}]}` beside a bare
+#: `def revoke(sid): ...` -- `PROJECT_TRUTH_MARKERS` finds nothing (no file
+#: anywhere says the word "lane"), `AUTH_STATE_MARKERS` finds `revoke`, and
+#: the store was granted the auth exemption though it serializes exactly the
+#: lane records clause 7 names. Content is classified by what a serialized
+#: shape actually stores, not only by what a docstring says it stores.
+#:
+#: Each pattern matches a dict/JSON KEY -- quoted, followed by either a colon
+#: (a literal: `"lanes": [...]`) or a closing-bracket-then-assignment (a
+#: table already open and being written into: `table["lanes"] = [...]`, the
+#: same shape `app/auth.py`'s own `table["revoked"] = sorted(revoked)...`
+#: uses for the allowed store) -- in both cases followed by the
+#: collection-shaped value that record type actually takes (a list, almost
+#: always). Running prose can never match either shape: prose does not write
+#: `"lanes":` or `["lanes"] =` followed by an open bracket. This is
+#: deliberately narrower than a bare key name (`"id"` and `"state"` alone are
+#: far too generic to name); it is the six categories' own plural,
+#: list-shaped record collections.
+def _serialized_key_pattern(keys: str, value_open: str = r"\[") -> re.Pattern:
+    return re.compile(
+        rf"""[\"'](?:{keys})[\"']\s*(?::|\]\s*=)\s*{value_open}""")
+
+
+SERIALIZED_PROJECT_TRUTH_MARKERS = (
+    ("lanes", _serialized_key_pattern("lanes")),
+    ("work queue", _serialized_key_pattern("queue|work_queue|work_items")),
+    ("documents", _serialized_key_pattern("documents", value_open=r"[\[{]")),
+    ("code record", _serialized_key_pattern("code_record|commits")),
+    ("return log", _serialized_key_pattern("return_log|briefs?", value_open=r"[\[{]")),
+    ("pending decisions",
+     _serialized_key_pattern("decisions|pending_decisions|ratifications")),
+)
+
+#: converge-lech, repaired. What marks a store as per-instance AUTHENTICATION
+#: / session-revocation state -- `app/auth.py`'s `SessionRegistry`. None of
+#: clause 7's six project-truth categories is "who is still signed in", so a
+#: store that is ONLY this was never a copy of the project's truth to begin
+#: with -- it needs no exemption from clause 7 (neither "the reading" nor
+#: anything else) because clause 7 was never about it. `carries_project_truth`
+#: still overrides this: a real project cache hiding behind revocation-
+#: sounding words is still a copy.
+#:
+#: This used to be a blacklist of revocation-sounding words (`revoke`,
+#: `revoked`, `SessionRegistry`, ...). Two rounds of narrowing that blacklist
+#: still left an open escape: `cache = {"lanes": records}` (a variable, not a
+#: literal list) or `cache = {"lanes": "lane-1"}` (a scalar) beside a bare
+#: `def revoke(sid): ...` matches no project-truth marker (neither reads
+#: prose nor a literal-list shape) and matches the bare word `revoke` --
+#: granted the exemption though it is neither the reading nor session state.
+#: No further word can close that gap; the escape is the *shape* of the
+#: check, not a missing word.
+#:
+#: So this recognizes the schema itself, positively, instead of asking what
+#: words are absent: a table initialized to exactly `{"revoked": []}`
+#: (`SESSION_REGISTRY_INIT`), read via `.get`/`.setdefault("revoked", ...)`,
+#: written via a literal `["revoked"] = ...` assignment, and hand to
+#: `json.dump(table, out)` -- while never touching any other literal key
+#: anywhere it appears. Matched by content, not by class or file name (the
+#: real `SessionRegistry` uses the local name `table` in three different
+#: methods; a copy under a different name is read the same way as long as it
+#: repeats the same four pieces under one name). This is a bounded static
+#: recognizer for one known persisted shape -- not a proof of what a
+#: variable holds at runtime, and not a general dataflow analysis of
+#: arbitrary Python.
+SESSION_REGISTRY_INIT = re.compile(r"\{\s*[\"']revoked[\"']\s*:\s*\[\s*\]\s*\}")
+
+
+#: converge-lech, reopened a fourth time. `\w+`-anchored key regexes accept
+#: only identifier-shaped key text, so `table["extra-cache"] = records` --
+#: a real second key, just not a `\w+` one, a hyphen is not a word
+#: character -- matched none of the three regexes above at all. Not "matched
+#: and treated as an extra key" -- invisible outright, so `all_keys` stayed
+#: `{"revoked"}` and the file still read as the bounded schema, byte for
+#: byte, with a second persisted key sitting right beside it unaccounted
+#: for. A `\w+` key regex is not a schema hole that needs a wider character
+#: class; it is the wrong tool for "every literal key", because Python
+#: string-literal keys are not bounded to `\w+` at all (hyphens, spaces,
+#: empty strings, punctuation are all legal dict keys).
+#:
+#: So this reads keys the same way `_json_dump_targets` reads call targets:
+#: by parsing the AST and asking what each node actually is, not by pattern
+#: text. Every access to `var` -- `var.get(...)`, `var.setdefault(...)`,
+#: `var[...]` in any context -- is walked; a literal string key (any
+#: `ast.Constant` string, no character-class restriction) is recorded, and a
+#: DYNAMIC key (a variable, an expression, anything that is not a string
+#: constant) disqualifies the file outright rather than being silently
+#: dropped from the key set -- an unknown key must not let the file
+#: positively qualify as touching only "revoked", because there is no way
+#: to prove it doesn't touch something else.
+def _table_matches_session_registry_schema(body: str, var: str) -> bool:
+    """True if `var`, as used throughout `body`, touches exactly one literal
+    key -- "revoked" -- reading it via `.get`/`.setdefault` AND writing it via
+    a `[...] = ` assignment. Any other literal key reached through `var`,
+    anywhere in the file, disqualifies it; so does a dynamic (nonliteral) key
+    access on `var`, since it cannot be proven not to touch something else.
+    The whole point is that the persisted table holds nothing else.
+    """
+    try:
+        tree = ast.parse(body)
+    except SyntaxError:
+        return False
+
+    def _string_key(node) -> str | None:
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            return node.value
+        return None
+
+    read_keys: set[str] = set()
+    write_keys: set[str] = set()
+    all_keys: set[str] = set()
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr in ("get", "setdefault")
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == var):
+            key = _string_key(node.args[0]) if node.args else None
+            if key is None:
+                # `.get(dynamic_expr)` / `.get()` on the tracked var -- an
+                # access this cannot vouch for; disqualify rather than drop.
+                return False
+            read_keys.add(key)
+            all_keys.add(key)
+        if (isinstance(node, ast.Subscript)
+                and isinstance(node.value, ast.Name)
+                and node.value.id == var):
+            key = _string_key(node.slice)
+            if key is None:
+                # `var[dynamic_expr]` -- same reasoning: an unknown key must
+                # not let the file positively qualify as "revoked"-only.
+                return False
+            all_keys.add(key)
+            if isinstance(node.ctx, ast.Store):
+                write_keys.add(key)
+    if all_keys != {"revoked"}:
+        return False
+    return "revoked" in read_keys and "revoked" in write_keys
+
+
+#: converge-lech, reopened a second time. The previous fix bounded what ONE
+#: table may hold, but `recognizes_session_registry_schema` still asked
+#: `any(...)` across every `json.dump` call site the old `\bjson\.dump\(\s*
+#: (\w+)\s*,` regex happened to find. Two ways that let a store past clause
+#: 7 with something the schema was never meant to cover: (1) a SECOND,
+#: separately persisted identifier dumped elsewhere in the file -- e.g. a
+#: real `json.dump(table, out)` (matches) beside `json.dump(cache, out)`
+#: where `cache = {"lanes": records}` (a variable value, so
+#: `SERIALIZED_PROJECT_TRUTH_MARKERS`' literal-list pattern never fires
+#: either) -- the lone matching `table` was enough to satisfy `any()`; (2) a
+#: nonidentifier expression -- `json.dump(collect_debug_snapshot(), out)`,
+#: `json.dump({"x": 1}, out)`, `json.dump(obj.table, out)` -- which the
+#: `\w+`-anchored regex never matched at all, so it was never enumerated,
+#: never checked, and never counted against the file; an unaccounted target
+#: is not the same as an absent one.
+#:
+#: So every `json.dump` call in the file is now enumerated by parsing the
+#: AST (basic call enumeration -- bounded and safer than widening the regex
+#: further, not a general dataflow prover) and EVERY one must both name a
+#: plain identifier and have that identifier satisfy the bounded schema.
+#: A file that fails to parse, or hands `json.dump` even one expression that
+#: is not a bare name, is conservatively treated as carrying an unknown
+#: target and never recognized as pure SessionRegistry state.
+#:
+#: converge-lech, reopened a third time. `json.dump`'s real signature is
+#: `dump(obj, fp, ...)` -- both keyword-capable -- but the enumeration above
+#: only ever looked at `node.args[0]`, and only entered the branch at all
+#: when `node.args` was non-empty. A call written keyword-only --
+#: `json.dump(obj=cache, fp=out)` -- has an EMPTY `node.args`, so the whole
+#: call was skipped: never enumerated, never counted as unknown, simply
+#: invisible. A second, separately persisted `cache = {"lanes": records}`
+#: dumped this way rode straight past the file-wide check the same way the
+#: previous reopening's nonidentifier expression did. The fix there does not
+#: cover this: `node.args` being empty is not the same as the call having no
+#: target, it means the target arrived by keyword instead.
+#:
+#: So the target is now read from `node.args[0]` when present, else from a
+#: keyword argument literally named `obj` (the real parameter name), and a
+#: call offering neither -- no positional argument and no `obj=` keyword --
+#: is conservatively counted as an unknown target rather than skipped, the
+#: same treatment a nonidentifier expression already gets.
+def _json_dump_targets(body: str) -> tuple[set[str], bool]:
+    """Every `json.dump(...)` call's target identifier in `body`, via AST
+    call enumeration -- and whether any call's target was something OTHER
+    than a bare identifier, or could not be located at all (or the file
+    could not be parsed at all). Returns `(identifier_names,
+    has_unknown_target)`.
+
+    The target is `node.args[0]` when the call passes it positionally, else
+    whichever keyword argument is spelled `obj=` (matching `json.dump`'s own
+    parameter name) when the call passes it by keyword. A call with neither
+    -- no positional argument and no `obj=` keyword -- cannot be located and
+    counts as unknown, the same as a nonidentifier expression.
+    """
+    try:
+        tree = ast.parse(body)
+    except SyntaxError:
+        return set(), True
+    names: set[str] = set()
+    unknown = False
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr == "dump"
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "json"):
+            continue
+        if node.args:
+            first = node.args[0]
+        else:
+            obj_kw = next((kw for kw in node.keywords if kw.arg == "obj"), None)
+            if obj_kw is None:
+                unknown = True
+                continue
+            first = obj_kw.value
+        if isinstance(first, ast.Name):
+            names.add(first.id)
+        else:
+            unknown = True
+    return names, unknown
+
+
+def recognizes_session_registry_schema(body: str) -> bool:
+    """True if EVERY `json.dump` call in `body` targets a table that matches
+    the bounded SessionRegistry persisted schema -- see the block comments
+    above. A file may use the name `table` in three separate methods (as
+    `app/auth.py` does) with none of them individually naming every piece --
+    the schema is asserted about each identifier across the whole file, not
+    about any one call site -- but a second, unaccounted identifier, or a
+    nonidentifier expression, fails the whole file rather than being
+    silently ignored.
+    """
+    names, has_unknown_target = _json_dump_targets(body)
+    if has_unknown_target or not names:
+        return False
+    return (all(_table_matches_session_registry_schema(body, name) for name in names)
+            and bool(SESSION_REGISTRY_INIT.search(body)))
 
 #: Core 8 — how a body publishes the manager-session operation behind a write.
 MANAGER_OPERATION_MARKERS = (
@@ -635,43 +895,79 @@ def check_no_copy_of_the_projects_truth(snapshot, repo):
         body = path.read_text(encoding="utf-8", errors="replace")
         for name, pattern in STORE_MARKERS:
             if pattern.search(body):
+                # converge-lech, reopened: a serialized shape is project truth
+                # whether or not any file ever says so in prose.
+                carries_project_truth = (
+                    any(p.search(body) for p in PROJECT_TRUTH_MARKERS)
+                    or any(p.search(body) for _, p in SERIALIZED_PROJECT_TRUTH_MARKERS))
                 stores.append({
                     "file": repo.rel(path),
                     "kind": name,
                     "is_the_reading": bool(
                         any(p.search(body) for p in READING_STORE_MARKERS)
                         and any(p.search(body) for p in PER_PERSON_MARKERS)),
+                    # converge-lech: authentication/session-revocation state is
+                    # not one of clause 7's six project-truth categories, so a
+                    # store that is ONLY this needs no exemption -- but a store
+                    # that ALSO carries project truth is still a second copy,
+                    # revocation-sounding words or not. Recognized by its
+                    # bounded persisted shape (see recognizes_session_registry_
+                    # schema), never by a revocation-sounding word alone.
+                    "is_auth_state": bool(
+                        not carries_project_truth
+                        and recognizes_session_registry_schema(body)),
+                    "carries_project_truth": carries_project_truth,
                 })
                 break
     if not stores:
         return KIT.ok("7", "the app keeps no store of its own — every screen is drawn "
                            "from the project's own files and queues",
                       repository=str(repo.root))
+
+    tainted = [s["file"] for s in stores if s["carries_project_truth"]]
+    if tainted:
+        return KIT.bad(
+            "7",
+            f"{tainted} persists content clause 7 names as the project's truth — its "
+            "documents, code record, work queue, lanes, return log, or pending "
+            "decisions — which is a second copy of the truth regardless of which file "
+            "holds it, whether it is kept per person, or what else the file also stores",
+            stores=stores)
+
     clause = dict(core_clauses(repo.text(CONTRACT))).get(7, "")
     allows_the_reading = bool(CLAUSE7_ALLOWS_THE_READING.search(clause))
     listed = ", ".join(f"{s['file']} ({s['kind']})" for s in stores)
+
     if not allows_the_reading:
-        return KIT.bad(
-            "7",
-            f"the app keeps a store of its own — {listed} — and clause 7 allows it none, "
-            "so this is a second copy of the truth",
-            stores=stores, clause_allows_the_reading=False)
-    not_the_reading = [s["file"] for s in stores if not s["is_the_reading"]]
-    if not_the_reading:
-        return KIT.bad(
-            "7",
-            f"clause 7 allows exactly one store — your own reading, kept per person "
-            f"outside the repository — and {not_the_reading} is not it, so this is a "
-            "second copy of the truth",
-            stores=stores, clause_allows_the_reading=True)
+        unexempt = [s["file"] for s in stores if not s["is_auth_state"]]
+        if unexempt:
+            return KIT.bad(
+                "7",
+                f"the app keeps a store of its own — {listed} — and clause 7 grants no "
+                f"per-person reading exemption yet, so {unexempt} is a second copy of "
+                "the truth",
+                stores=stores, clause_allows_the_reading=False)
+    else:
+        unaccounted = [s["file"] for s in stores
+                       if not s["is_the_reading"] and not s["is_auth_state"]]
+        if unaccounted:
+            return KIT.bad(
+                "7",
+                f"clause 7 allows exactly one store beyond authentication state — your "
+                f"own reading, kept per person outside the repository — and "
+                f"{unaccounted} is neither that nor per-instance authentication/session "
+                "state, so this is a second copy of the truth",
+                stores=stores, clause_allows_the_reading=True)
     return KIT.ok(
         "7",
-        f"the only store the app keeps ({listed}) is the one clause 7 names as yours — "
-        "where you have read to and what you are keeping, kept per person outside the "
-        "repository. What that file holds at runtime is beyond a static read; that every "
-        "store the app keeps is that per-person reading, and that the clause allows it, "
-        "is what this rule asserts.",
-        stores=stores, clause_allows_the_reading=True)
+        f"every store the app keeps ({listed}) is either the one clause 7 names as "
+        "yours — where you have read to and what you are keeping, kept per person "
+        "outside the repository — or per-instance authentication/session state, which "
+        "is not a copy of the project's truth clause 7 enumerates (documents, code "
+        "record, work queue, lanes, return log, pending decisions) in the first place. "
+        "What a store holds at runtime is beyond a static read; that its content is one "
+        "of these two, is what this rule asserts.",
+        stores=stores, clause_allows_the_reading=allows_the_reading)
 
 
 # --------------------------------------------------------------------------- #

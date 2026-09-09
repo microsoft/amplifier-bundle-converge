@@ -238,14 +238,15 @@ def project(tmp_path_factory) -> dict:
         f'batch_dir = "{batch}"\n'
         f'repos = ["{repo}"]\n'
         'tracker_project = "demo-project"\n'
-        'tmux_socket = "test-socket-that-does-not-exist"\n',
+        'tmux_socket = "test-socket-that-does-not-exist"\n'
+        f'steward = "{USER}"\n',
         encoding="utf-8",
     )
     # Never the real ~/.amplifier: a test must not move a steward's read point.
     return {
         "config": conf,
         "secret": tmp_path / "secret",
-        "state": tmp_path / "state.json",
+        "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
         "batch": batch,
         "repo": repo,
     }
@@ -350,7 +351,7 @@ def server(project, patched):
     import uvicorn
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -387,6 +388,11 @@ def _open_operation(browser, server, project, width: int, height: int, errors: l
             lambda m: errors.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
     page.goto(server, wait_until="networkidle")
+    # Boot always lands on Home first, never an auto-picked manager
+    # (experience.v1 Core 1, converge-t30q) -- open the one manager session
+    # this project registers before reaching its Operation tab.
+    page.wait_for_selector(".home-manager-card", timeout=20000)
+    page.click(".home-manager-card")
     page.wait_for_selector("#operationTab", timeout=20000)
     page.click("#operationTab")
     page.wait_for_selector("#operationView:not(.hidden)", timeout=20000)

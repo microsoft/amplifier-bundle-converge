@@ -5,7 +5,12 @@ description = "Amplifier Converge: vision-first, contract-driven development —
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
-dependencies = []
+# `click` is a BASE dependency, not an `app`-extra one: it is what
+# `amplifier_converge.cli` itself is built on, and that console script must
+# still run -- `--help`, `--version`, `doctor`'s dependency table -- for a
+# reader who has not installed `--extra app` yet. `doctor` is how they find
+# out the app extra is what is missing; it cannot need that extra to say so.
+dependencies = ["click>=8.1"]
 
 [project.optional-dependencies]
 web = [
@@ -26,6 +31,9 @@ app = [
     "tmux-kit>=0.1",
     "httpx>=0.27",
     "pytest>=8.0",
+    # HTTPS lane (converge-b2ak): the local CA + leaf certificate app/tls.py
+    # issues.
+    "cryptography>=41",
 ]
 
 [project.scripts]
@@ -36,7 +44,29 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/amplifier_converge"]
+# `app` carries the FastAPI app itself -- templates, static assets and tests
+# beside the Python it serves -- and is included as a second top-level
+# package for the same reason `amplifier_converge` is: `uv run --extra app
+# python -m app.serve` imports it as `app.*`, dev and installed alike.
+packages = ["src/amplifier_converge", "app"]
+# The wheel ships what a reader needs to RUN the app -- templates, static
+# assets, the TLS/auth modules -- never its own test suite.
+exclude = ["app/tests/**"]
+
+[tool.hatch.build.targets.wheel.force-include]
+# `scripts/*` are not a Python package -- they are the commands
+# `composition.v1` Core 5 and this app's own doctor point a reader at
+# (`run-app.sh`, `register-manager.py`, `install-check.py`). Force-included
+# so a wheel install still has them beside the app, without turning a flat
+# scripts directory into a package it was never written to be.
+"scripts" = "amplifier_converge_scripts"
+# `assets/branding` is not a Python package either -- it is the favicons/PWA
+# icon set `login.html`/`setup.html` reference by absolute `/branding/...`
+# path. Force-included the same way `scripts/*` is, so `app/serve.py`'s
+# `_branding_dir()` finds real files beside the installed `app` package
+# instead of silently mounting nothing (converge-iizz install-final: those
+# `<link>`/`<img>` tags rendered fine and then 404'd for real).
+"assets/branding" = "amplifier_converge_branding"
 
 [tool.pytest.ini_options]
 markers = ["real_default_roots: the test is about discovery's default workspace root and must see the real one"]

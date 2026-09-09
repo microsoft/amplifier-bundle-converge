@@ -603,16 +603,51 @@ function readImage(input) {
 // follows on the same press, named after the note the server just wrote, so it
 // lands beside it rather than as a second piece of feedback (converge-rj1).
 // The field itself, the recording, and that write are `feedback_voice.js`.
+// Feedback is a per-manager write (`POST /api/managers/{mid}/feedback`), but
+// `experience.v1` Core 1 (converge-t30q, acceptance 1) puts the steward on
+// Home first, before any manager is opened, and the Feedback control has
+// always been reachable there too (converge-nng).
+//
+// Manager correction 4 (converge-t30q): this used to fall back to the first
+// manager sorted onto Home's own list, silently -- a steward who had not
+// picked one yet could have their words filed against the wrong session with
+// no sign it happened. There is already an explicit all-manager path for
+// "every session" (`homeTellAllButton`/`tellAllButton`, `tellAllSessions`);
+// what was missing was an honest single-target path for "one session, but I
+// have not opened it yet". So this never guesses: a manager already open is
+// used exactly as before, and with none open the dialog asks for one before
+// Send is meaningful.
+function feedbackTargetId() {
+  return state.managerId || null;
+}
+
 export function openFeedback() {
   const doc = currentDoc();
-  const m = data.manager;
+  const openManagerId = feedbackTargetId();
+  const sessions = data.managerList || [];
+  if (!openManagerId && !sessions.length) {
+    toast('No manager session is listed yet, so there is nothing to send feedback about.');
+    return;
+  }
+  const m = data.manager || (openManagerId && sessions.find((one) => one.id === openManagerId)) || null;
   // Assigned once the dialog's markup is in the DOM, a few lines below: the
   // field has to exist before anything can be wired to it.
   let voice = null;
-  const context = `${m ? m.name : 'Converge'} · ${state.workspace === 'direction' && doc ? doc.fullTitle : 'Operation'}`;
+  const needsChooser = !openManagerId;
+  const contextFor = (name) => `${name || 'Converge'} · ${state.workspace === 'direction' && doc ? doc.fullTitle : 'Operation'}`;
+  const chooserHtml = needsChooser
+    ? `<div class="dialog-field"><label for="feedbackTarget">Which manager session this is about</label>
+         <select id="feedbackTarget">
+           <option value="" selected disabled>Choose a manager session…</option>
+           ${sessions.map((s) => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.name)}</option>`).join('')}
+         </select></div>
+       <p class="muted">No manager session is open, so pick which one this is about — or close this and use
+         &ldquo;Tell all manager sessions&rdquo; on Home to reach every one at once.</p>`
+    : '';
   openDialog('Tell the manager what you noticed', 'Feedback', `
+      ${chooserHtml}
       <div class="dialog-field"><label for="feedbackText">Feedback</label><textarea id="feedbackText" placeholder="Still not working on Android…"></textarea></div>
-      <div class="dialog-field"><label for="feedbackContext">Context the app will attach</label><input id="feedbackContext" value="${escapeHtml(context)}" readonly /></div>
+      <div class="dialog-field"><label for="feedbackContext">Context the app will attach</label><input id="feedbackContext" value="${escapeHtml(contextFor(m ? m.name : ''))}" readonly /></div>
       <div class="dialog-field"><label for="feedbackImage">Optional screenshot or image</label><input id="feedbackImage" type="file" accept="image/*" /></div>
       ${voiceField()}
       <p class="muted">The manager decides whether this reopens verification, updates existing work, or belongs back in Direction.</p>`, [
@@ -621,6 +656,12 @@ export function openFeedback() {
       label: 'Send feedback',
       kind: 'primary',
       action: async () => {
+        const targetId = needsChooser ? ($('feedbackTarget') ? $('feedbackTarget').value : '') : openManagerId;
+        if (!targetId) { toast('Choose which manager session this is about first.'); return; }
+        const targetName = needsChooser
+          ? ((sessions.find((s) => s.id === targetId) || {}).name || targetId)
+          : (m ? m.name : 'Converge');
+        const context = contextFor(targetName);
         const text = $('feedbackText')?.value.trim();
         if (!text) { toast('Add a little feedback first.'); return; }
         const image = await readImage($('feedbackImage'));
@@ -629,7 +670,7 @@ export function openFeedback() {
         let said;
         let note = '';
         try {
-          const res = await api.feedback(state.managerId, { text, context, imageDataUrl: image || undefined });
+          const res = await api.feedback(targetId, { text, context, imageDataUrl: image || undefined });
           note = res && res.path ? String(res.path).split('/').pop() : '';
           said = res && res.path ? `Feedback filed at ${res.path}` : 'Feedback delivered to the manager.';
         } catch (err) {
@@ -640,7 +681,7 @@ export function openFeedback() {
         // — so the voice half reports itself beside it and never overwrites it.
         if (spoken) {
           try {
-            const kept = await sendVoiceNote(state.managerId, {
+            const kept = await sendVoiceNote(targetId, {
               dataUrl: spoken.dataUrl, note, context, text,
             });
             said += `, with your voice note beside it as ${kept.voice}`;
@@ -653,6 +694,114 @@ export function openFeedback() {
     },
   ]);
   voice = wireVoiceField(document);
+}
+
+// --------------------------------------------------------------------------
+// the decision inbox: at most five named choices, one dialog, no guessing
+// --------------------------------------------------------------------------
+//
+// `experience.v1` Core 5 -- "at most five things ask for your word at once" --
+// and the servers side of that is already true: `GET /api/needs/{mid}`
+// answers `_needs_items(mc)[:5]`. What was missing was a screen that showed
+// them as five named things rather than silently jumping to the first
+// document and guessing docMode='review' for everything else (converge-are2 /
+// converge-t30q acceptance 4).
+//
+// Two kinds arrive today: a `proposal` (a repo/doc it lives in) and a `work`
+// item from the tracker's blocked queue (only an item id -- there is no
+// document view for it in this app). Each gets its own honest action:
+// review opens the ordinary Direction review flow this app already has;
+// a work item opens the Manager Console on the manager's own session and
+// says plainly that this app has no document view for it, rather than
+// dropping it into a Review tab it does not belong in.
+
+function needKindLabel(kind) {
+  return kind === 'proposal' ? 'Proposal' : 'Work item';
+}
+
+function needTargetLabel(need) {
+  const where = need.where || {};
+  if (where.repoId && where.docId) return `${where.repoId} \u203a ${where.docId}`;
+  if (where.itemId) return where.itemId;
+  return 'no target named';
+}
+
+export async function openNeeds() {
+  if (!state.managerId) { toast('Open a manager session first.'); return; }
+  let items = [];
+  try {
+    items = ((await api.needs(state.managerId)) || []).slice(0, 5);
+  } catch (err) {
+    toast(`Could not read what needs your word: ${err.message}`);
+    return;
+  }
+  data.needList = items;
+  if (!items.length) { toast('Nothing needs your word on this manager right now.'); return; }
+
+  const rows = items.map((n, i) => `
+      <li class="need-row">
+        <div class="need-row-head"><strong>${escapeHtml(needKindLabel(n.kind))}</strong>
+          <span class="muted">${escapeHtml(needTargetLabel(n))}</span></div>
+        <p>${escapeHtml(n.title || 'untitled')}</p>
+        ${n.since ? `<p class="muted">Since ${escapeHtml(n.since)}</p>` : ''}
+        <button type="button" class="outline-button" data-need-act="${i}">
+          ${n.kind === 'proposal' ? 'Review this document' : 'Open in Operation'}
+        </button>
+      </li>`).join('');
+
+  openDialog(
+    'What needs your word',
+    'Decisions',
+    `<ul class="needs-list">${rows}</ul>
+     <p class="muted">Up to five, most recent first. A document opens the ordinary review path; a work item opens
+     Operation, where its existing queue, priority, feedback and steer controls already answer it -- the Console
+     there is optional, never the only way in.</p>`,
+    [{ label: 'Close', kind: 'outline', action: closeDialog }],
+  );
+
+  items.forEach((n, i) => {
+    const btn = document.querySelector(`[data-need-act="${i}"]`);
+    if (!btn) return;
+    btn.addEventListener('click', async () => {
+      closeDialog();
+      if (n.kind === 'proposal' && n.where && n.where.repoId && n.where.docId) {
+        state.screen = 'workspace';
+        state.workspace = 'direction';
+        await hooks.selectDoc(n.where.repoId, n.where.docId);
+        state.docMode = 'review';
+        hooks.renderAll();
+        return;
+      }
+      // Manager correction 2 (converge-t30q): this used to force the Console
+      // open as the ONLY answer for a non-document need -- a work-tracker
+      // item is not a ratification and gets no new write kind, but Operation
+      // already has real controls for exactly this (the priority queue's
+      // raise/lower, the feedback drop, steer, tell-all) and forcing Console
+      // open pretended those did not exist. So land on Operation instead,
+      // leaving the console exactly as the steward left it (never forced),
+      // and point at the named item's own row in the priority queue when it
+      // is in the visible front of it -- `render/operation.js` (another
+      // lane's file) is what drew that row; this only reads the DOM it
+      // produced, the same way `watchLane` already does for a lane card.
+      state.screen = 'workspace';
+      state.workspace = 'operation';
+      hooks.renderAll();
+      const named = (n.where && n.where.itemId) || 'this item';
+      let row = null;
+      try {
+        const raiseBtn = document.querySelector(`[data-raise="${window.CSS && CSS.escape ? CSS.escape(named) : named}"]`);
+        row = raiseBtn ? raiseBtn.closest('.priority-row') : null;
+      } catch { /* an id with characters CSS.escape cannot help with: fall through */ }
+      if (row) {
+        row.classList.add('need-target-flash');
+        row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        setTimeout(() => row.classList.remove('need-target-flash'), 2600);
+        toast(`This app has no document view for ${named}. It is highlighted in Operation's priority queue below -- raise or lower it, leave feedback, or steer the manager from there.`);
+      } else {
+        toast(`This app has no document view for ${named}. Operation's queue, priority, feedback and steer controls are how you answer a work item like this one; open the Console there too if you want to ask the manager directly.`);
+      }
+    });
+  });
 }
 
 export function openSteer() {

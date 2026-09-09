@@ -151,7 +151,13 @@ def project(tmp_path: Path) -> dict:
         f'batch_dir = "{batch}"\n'
         f'repos = ["{repo}"]\n'
         'tracker_project = "demo-project"\n'
-        'tmux_socket = "priority-socket-that-does-not-exist"\n',
+        'tmux_socket = "priority-socket-that-does-not-exist"\n'
+        # converge-b2ak https-repair item 3: priority/steer/decision/lock are
+        # steward-only now. `client` below signs in as GOOD_USER, so it has
+        # to be the registered steward for those existing calls to still
+        # land -- the identity comes from registration, never from who is
+        # merely signed in.
+        f'steward = "{GOOD_USER}"\n',
         encoding="utf-8",
     )
     # Never the real ~/.amplifier: a test must not move a steward's read point,
@@ -162,7 +168,7 @@ def project(tmp_path: Path) -> dict:
         "highway": batch / "HIGHWAY.md",
         "config": conf,
         "secret": tmp_path / "secret",
-        "state": tmp_path / "state.json",
+        "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
         "webhook_secret": tmp_path / "webhook-secret",
     }
 
@@ -192,7 +198,7 @@ def _quiet_machine(monkeypatch, project):
 
 def build_app(project: dict):
     return serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
 
 
@@ -502,7 +508,14 @@ def test_no_other_route_became_reachable_without_a_cookie(guest, client) -> None
         "POST /api/collab/webhooks/host -> 503",
         "GET /healthz -> 200",
         "GET /login -> 200",
-    ]), f"the public surface is not the three it should be: {answered}"
+        # converge-b2ak acceptance #3: read-only trust-setup surface, added by
+        # the HTTPS lane after this test was first written. /setup renders
+        # (200) with no CA generated yet in this fixture's isolated tls_dir;
+        # /ca.crt has nothing to serve yet, so it 404s rather than opening a
+        # write or leaking a key.
+        "GET /setup -> 200",
+        "GET /ca.crt -> 404",
+    ]), f"the public surface is not the three-plus-two it should be: {answered}"
 
 
 def test_the_public_path_is_matched_whole_and_never_as_a_prefix(guest) -> None:
@@ -598,6 +611,11 @@ def test_the_card_is_on_the_screen_at_both_widths(served, project, width, height
         page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(served, wait_until="networkidle")
+        # Boot always lands on Home first, never an auto-picked manager
+        # (experience.v1 Core 1, converge-t30q) -- open the one manager
+        # session this project registers before reaching its Operation tab.
+        page.wait_for_selector(".home-manager-card", timeout=15000)
+        page.click(".home-manager-card")
         page.wait_for_selector("#operationTab", timeout=15000)
         page.click("#operationTab")
         page.wait_for_selector("#priorityQueue", state="visible", timeout=15000)
@@ -647,6 +665,11 @@ def test_pressing_raise_writes_the_call_and_shows_it_back(served, project) -> No
         }])
         page = ctx.new_page()
         page.goto(served, wait_until="networkidle")
+        # Boot always lands on Home first, never an auto-picked manager
+        # (experience.v1 Core 1, converge-t30q) -- open the one manager
+        # session this project registers before reaching its Operation tab.
+        page.wait_for_selector(".home-manager-card", timeout=15000)
+        page.click(".home-manager-card")
         page.wait_for_selector("#operationTab", timeout=15000)
         page.click("#operationTab")
         page.wait_for_selector("#priorityList [data-raise]", state="visible", timeout=15000)
@@ -664,6 +687,9 @@ def test_pressing_raise_writes_the_call_and_shows_it_back(served, project) -> No
         assert "this one first, it blocks the rest" in written[0]
 
         page.reload(wait_until="networkidle")
+        # A reload runs boot() again, which always lands on Home first.
+        page.wait_for_selector(".home-manager-card", timeout=15000)
+        page.click(".home-manager-card")
         page.wait_for_selector("#operationTab", timeout=15000)
         page.click("#operationTab")
         page.wait_for_selector("#priorityCallList", state="visible", timeout=15000)
