@@ -166,7 +166,7 @@ def project(tmp_path) -> dict:
         'tmux_socket = "test-socket-that-does-not-exist"\n',
         encoding="utf-8",
     )
-    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json",
+    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
             "repo": repo, "batch": batch}
 
 
@@ -183,7 +183,7 @@ def client(project, monkeypatch) -> TestClient:
     monkeypatch.setattr(auth.pam_module, "pam", _FakePam)
     monkeypatch.setattr(data, "tmux_sessions", lambda socket: {"hw__hw-demo__w1-alpha"})
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     made_client = TestClient(made, follow_redirects=False)
     answer = made_client.post("/login", data={"username": GOOD_USER, "password": GOOD_PASSWORD, "next": "/"})

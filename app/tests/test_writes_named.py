@@ -268,7 +268,7 @@ def project(tmp_path_factory) -> dict:
     conf = tmp_path / "converge-app.toml"
     conf.write_text("".join(blocks), encoding="utf-8")
     # Never the real ~/.amplifier: a test must not move a steward's read point.
-    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json"}
+    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json"}
 
 
 def _free_port() -> int:
@@ -290,7 +290,7 @@ def server(project):
     patch.setattr(data, "tracker_counts", lambda mc: dict(COUNTS))
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -485,6 +485,10 @@ MEASURE = """
   document.querySelectorAll('body, body *').forEach(el => {
     const s = getComputedStyle(el);
     if (s.display === 'none' || s.visibility === 'hidden') return;
+    // A stowed console is opacity:0 on its ancestor; child boxes still exist.
+    // Keep measuring the console when visible, and the whole document's width.
+    const pane = el.closest('#managerConsole');
+    if (pane && getComputedStyle(pane).opacity === '0') return;
     const r = el.getBoundingClientRect();
     if (r.right > de.clientWidth + 0.01) {
       past.push(((el.id ? '#' + el.id : '') + '.' + String(el.className || el.tagName)).slice(0, 50)
@@ -547,9 +551,14 @@ def _push_the_console_sheet_down(page, width: int) -> bool:
     """
     if width > 520:
         return False
+    if page.eval_on_selector("#managerConsole", "el => getComputedStyle(el).pointerEvents === 'none'"):
+        return False
     page.click("#consoleToggle", timeout=5000)
     page.wait_for_function(
-        "() => getComputedStyle(document.getElementById('managerConsole')).pointerEvents === 'none'",
+        """() => {
+          const s = getComputedStyle(document.getElementById('managerConsole'));
+          return s.pointerEvents === 'none' && s.opacity === '0';
+        }""",
         timeout=5000,
     )
     return True
@@ -679,6 +688,9 @@ def test_the_controls_this_surface_owns_carry_the_naming_beside_them(
     ctx, page = _open(browser, server, project, width, height, errors)
     _push_the_console_sheet_down(page, width)
 
+    page.click(f'[data-home-manager="{MANAGERS[0]}"]')
+    page.wait_for_selector("#operationTab", timeout=15000)
+    _push_the_console_sheet_down(page, width)
     page.click("#operationTab")
     page.wait_for_selector("#operationView:not(.hidden)", timeout=15000)
 
@@ -730,6 +742,9 @@ def test_nothing_widens_the_page_with_every_fold_open(
     ctx, page = _open(browser, server, project, width, height, errors)
     _push_the_console_sheet_down(page, width)
 
+    page.click(f'[data-home-manager="{MANAGERS[0]}"]')
+    page.wait_for_selector("#operationTab", timeout=15000)
+    _push_the_console_sheet_down(page, width)
     page.click("#operationTab")
     page.wait_for_selector("#operationView:not(.hidden)", timeout=15000)
     # Every fold this lane added, open at once - the widest the page can be.

@@ -50,7 +50,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from app import auth, serve  # noqa: E402
+from app import assets, auth, serve  # noqa: E402
 
 USER = "tester"
 
@@ -215,7 +215,7 @@ def project(tmp_path_factory) -> dict:
     return {
         "config": conf,
         "secret": tmp_path / "secret",
-        "state": tmp_path / "state.json",
+        "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
         "repo": repo,
         "vision": repo / "docs" / "VISION.md",
     }
@@ -234,7 +234,7 @@ def server(project):
     import uvicorn
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -313,10 +313,18 @@ def _installed(browser, server, project, width=1280, height=800):
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
 
     page.goto(server, wait_until="networkidle")
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
+    page.wait_for_selector("#directionTab", timeout=15000)
+    page.click("#directionTab")
     page.wait_for_selector("#documentModeContent", timeout=15000)
     page.evaluate("async () => { await navigator.serviceWorker.ready; }")
 
     page.reload(wait_until="networkidle")
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
+    page.wait_for_selector("#directionTab", timeout=15000)
+    page.click("#directionTab")
     page.wait_for_selector("#documentModeContent", timeout=15000)
     page.wait_for_function("() => !!navigator.serviceWorker.controller", timeout=15000)
     page.wait_for_timeout(1200)
@@ -350,6 +358,64 @@ def _go_offline(ctx, page):
         "the harness failed to take the network away; every assertion below would be "
         f"measuring the wrong thing (page={online_here}, worker={online_there})"
     )
+
+
+def _console_state(page) -> dict:
+    """Is the Manager Console pane actually in front of the page right now?
+
+    Read off the pane itself -- `pointerEvents` is what `console.css` sets, and
+    it is the same fact `main.js`'s own `consoleIsStowedHere()` reads -- rather
+    than re-deriving the breakpoint or trusting the control's label.
+    """
+    return page.evaluate(
+        """() => {
+            const pane = document.getElementById('managerConsole');
+            const btn = document.getElementById('consoleToggle');
+            if (!pane) return {interactive: false, pointerEvents: 'no pane', pressed: null};
+            const pe = getComputedStyle(pane).pointerEvents;
+            return {
+                interactive: pe !== 'none',
+                pointerEvents: pe,
+                pressed: btn ? btn.getAttribute('aria-pressed') : null,
+            };
+        }"""
+    )
+
+
+def _open_manager_offline(page, width):
+    """The steward's own two taps after an offline reload: Home, then a manager.
+
+    Home-first is the app's rule with the network down exactly as with it up
+    (`experience.v1` Core 1; `main.js`'s `boot()` ends on Home whatever the
+    boot payload held). A reload therefore never restores the manager and
+    document that were open before it -- so a test that looked straight at
+    `#documentModeContent` after reloading would be asserting an
+    auto-selection this app deliberately does not make (converge-ex30).
+
+    Below 980px the Manager Console is a sheet OVER the page and a reload
+    opens it again. It is stowed on Home, so the card is reachable, but it
+    covers a manager's own screens -- a steward on a phone pushes it down
+    before reading under it, and so does this.
+    """
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
+    page.wait_for_selector("#directionTab", timeout=15000)
+    if width < 980:
+        # Read the sheet's own state rather than assuming which way a toggle
+        # goes: on Home the control deliberately reads "not pressed" while the
+        # state behind it is untouched (`main.js`, converge-30aw), so the only
+        # honest question is whether the pane is interactive HERE, now.
+        before = _console_state(page)
+        print(f"[{width}] console pane on opening the manager: {before}")
+        if before["interactive"]:
+            page.click("#consoleToggle")
+            page.wait_for_timeout(600)
+            after = _console_state(page)
+            print(f"[{width}] console pane after pushing it down: {after}")
+            assert not after["interactive"], (
+                "the console sheet stayed over the page after being pushed down, so "
+                f"nothing under it can be reached at {width}px: {after}"
+            )
 
 
 def _worker_online(page):
@@ -418,6 +484,10 @@ def test_offline_the_app_shows_what_it_last_synced_with_a_visible_as_of_time(
     assert stored, "nothing from /api was stored while online, so there is nothing to read offline"
 
     _go_offline(ctx, page)
+
+    _open_manager_offline(page, width)
+    page.click("#directionTab")
+    page.wait_for_selector("#documentModeContent", timeout=15000)
 
     opened = page.query_selector("#documentModeContent") is not None
     manager = page.eval_on_selector("#managerNameTop", "el => el.textContent.trim()")
@@ -574,12 +644,10 @@ def test_offline_a_write_driven_from_the_screen_says_the_sentence_on_the_screen(
     ctx, page, errors = _installed(browser, server, project, width, height)
     _go_offline(ctx, page)
 
-    if width < 980:
-        # Below the breakpoint the Manager Console is a sheet OVER the page, and
-        # a reload opens it again; a steward on a phone pushes it down before
-        # reaching anything under it.
-        page.click("#consoleToggle")
-        page.wait_for_timeout(500)
+    # Home first, then the manager -- the reload did not restore one, and it is
+    # not meant to. `_open_manager_offline` also pushes the console sheet down
+    # below the breakpoint, where a reload opens it over the page.
+    _open_manager_offline(page, width)
 
     page.click("#operationTab")
     page.wait_for_selector("#steerButton", state="visible", timeout=8000)
@@ -691,4 +759,10 @@ def test_the_worker_still_refuses_to_store_the_two_things_it_must_not():
         "would read the last person's documents offline"
     )
     assert OFFLINE_JS.is_file(), "the banner script named by the precache list is missing"
-    assert "/static/js/offline.js" in text, "offline.js is not precached, so the banner dies offline"
+    # converge-moe4: PRECACHE's `/static/...` entries are `${STATIC_PREFIX}`
+    # template literals now (app/assets.py), not plain string literals --
+    # assets.precache_entries reads either shape back as the same logical,
+    # unversioned URL.
+    assert "/static/js/offline.js" in assets.precache_entries(text), (
+        "offline.js is not precached, so the banner dies offline"
+    )

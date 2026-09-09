@@ -1,7 +1,7 @@
 {
   "path": "AMPLIFIER-PACKAGING / contracts/release.v1.md",
   "title": "Release Contract",
-  "updated": "Updated Sep 3, 2026 by bkrabach",
+  "updated": "Updated Sep 3, 2026 by the project steward",
   "state": "gap",
   "sections": [
     ["Purpose", "<p>Define what must be true before a release candidate can be cut.</p>"],

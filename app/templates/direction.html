@@ -28,33 +28,42 @@
         <select id="repoFilter" aria-label="Repository filter"><option value="all">All repos</option></select>
       </div>
       <div id="repoTree"></div>
-      <div class="nav-utilities">
-        <button type="button" data-nav-special="changes"><span>All changes</span><b id="allChangesCount">0</b></button>
-        <button type="button" data-nav-special="proposals"><span>Proposals</span><b id="proposalCountNav">0</b></button>
-        <button type="button" data-nav-special="decisions"><span>My decisions</span><b id="decisionsCountNav" class="hidden"></b></button>
-      </div>
     </aside>
 
     <article class="document-surface" id="documentSurface">
       <div class="document-toolbar">
         <div class="doc-path" id="docPath">—</div>
         <div class="doc-tools">
-          <button id="wideToggle" class="tiny-button" type="button" aria-pressed="false">Wide</button>
-          <button id="rawToggle" class="tiny-button" type="button" aria-pressed="false">Raw</button>
           <!-- §3 names five reader abilities, and two of them are copies: what
                the page shows, and the file behind it. They are different text
                and one control cannot stand for both — this one used to be
                called "Copy rendered" and hand over the source (converge-jdm).
                Both are wired in render/direction.js, each to the text its
-               label promises. -->
-          <button id="copyRendered" class="tiny-button" type="button">Copy rendered</button>
-          <button id="copySource" class="tiny-button" type="button">Copy source</button>
-          <button id="downloadDoc" class="tiny-button" type="button">Download</button>
-          <span class="zoom-controls" role="group" aria-label="Zoom the document text">
-            <button id="zoomOut" class="tiny-button" type="button" title="Smaller text">A&minus;</button>
-            <span id="zoomLevel" class="zoom-level" aria-live="polite">100%</span>
-            <button id="zoomIn" class="tiny-button" type="button" title="Larger text">A+</button>
-          </span>
+               label promises.
+
+               converge-43uv collapses these four plus width into one
+               accessible "Tools" disclosure so the document — not its own
+               toolbar — dominates the screen. `<details>`/`<summary>` is
+               used deliberately: it is keyboard-operable (Enter/Space toggles,
+               Tab walks its contents) and carries its own open/closed state to
+               assistive tech with no extra ARIA wiring. The four IDs below are
+               unchanged, so main.js's `wire()` — which binds `#wideToggle`,
+               `#copyRendered`, `#downloadDoc` at boot, before any render —
+               keeps finding them regardless of where in the DOM they sit. -->
+          <details class="tools-menu" id="toolsMenu">
+            <summary class="tiny-button" aria-label="Reader tools: width, copy, download, zoom">Tools</summary>
+            <div class="tools-menu-panel" role="group" aria-label="Reader tools">
+              <button id="wideToggle" class="tiny-button" type="button" aria-pressed="false">Wide</button>
+              <button id="copyRendered" class="tiny-button" type="button">Copy rendered</button>
+              <button id="copySource" class="tiny-button" type="button">Copy source</button>
+              <button id="downloadDoc" class="tiny-button" type="button">Download</button>
+              <span class="zoom-controls" role="group" aria-label="Zoom the document text">
+                <button id="zoomOut" class="tiny-button" type="button" title="Smaller text">A&minus;</button>
+                <span id="zoomLevel" class="zoom-level" aria-live="polite">100%</span>
+                <button id="zoomIn" class="tiny-button" type="button" title="Larger text">A+</button>
+              </span>
+            </div>
+          </details>
           <!-- Ask at document scope. The paragraph-scoped one sits beside each
                paragraph in the Reading view; every-document scope is chosen in
                the dialog this opens. Wired in render/direction.js, not main.js,
@@ -73,7 +82,20 @@
            when the document came from the server just now. -->
       <div class="document-title-row">
         <div>
-          <div class="title-meta"><span id="docStateBadge" class="state-badge kept">Kept</span><span id="docUpdated"></span><span id="docSyncedAt" class="doc-synced" hidden></span></div>
+          <!-- converge-43uv splits one conflated badge into the two dimensions
+               experience-direction.v1 names apart: AGREEMENT — what this
+               document's own H1 says, draft or locked-with-its-word — and
+               CONFORMANCE — what the project's ledger says about whether the
+               promise is actually kept. A FROZEN document with nothing
+               measuring it used to show "DRAFT" here, which reads as "this
+               document is still a draft" when it is really "nothing checks
+               this yet"; the two badges below cannot make that mistake because
+               each only ever answers its own question. -->
+          <div class="title-meta">
+            <span id="docStateBadge" class="state-badge draft" title="Whether this document itself is locked.">Draft</span>
+            <span id="docConformanceBadge" class="conformance-badge unchecked" title="Whether the project's ledger has checked this promise.">Not checked</span>
+            <span id="docUpdated"></span><span id="docSyncedAt" class="doc-synced" hidden></span>
+          </div>
           <h1 id="docTitle">&nbsp;</h1>
         </div>
         <button id="bookmarkButton" class="round-button" type="button" aria-pressed="false" title="Bookmark">☆</button>
@@ -120,7 +142,31 @@
         </div>
       </details>
 
+      <!-- Raw is a direct, always-reachable control per experience-direction.v1
+           §2 ("the source is always one gesture away") — never folded into the
+           Tools menu. It sits beside Read because that is the only mode it
+           modifies (render/direction.js's renderRead() honors it; the other
+           three modes ignore state.raw entirely). -->
+      <!-- converge-vtkw: the host panel used to sit in #contextRail, which
+           direction.css hides outright at <=1320 CSS px (`.context-rail {
+           display:none}`) -- so at 1280 and at 390 the only entry point to a
+           GitHub pull request vanished along with the rest of the rail.
+           experience-collaboration.v1 Core 3/4 asks for one review reachable
+           by normal pointer/keyboard action; a control that only exists above
+           1320px is not that. `.document-surface` (this article) carries no
+           such width rule at any breakpoint, so the panel moves here -- high,
+           right after the title row and before the tabs, so reaching it never
+           means scrolling past a long document's own body first. It keeps its
+           own collapsed-by-default <details> shell (converge-collab.html),
+           the same native disclosure `#lockGate` above it already uses, so
+           nothing about the surrounding architecture changes: one panel, one
+           set of ids, moved rather than duplicated. The context rail may
+           still summarize project-wide reality (`.aux-detail` above), but it
+           owns no review of its own any longer. -->
+      {% include "collab.html" %}
+
       <div class="mode-tabs" role="tablist" aria-label="Document mode">
+        <button id="rawToggle" class="tiny-button raw-toggle" type="button" aria-pressed="false" title="Show the Markdown source instead of the rendered Read view">Raw</button>
         <button data-doc-mode="read" class="mode-tab active" role="tab" aria-selected="true" type="button">Read</button>
         <button data-doc-mode="changes" class="mode-tab" role="tab" aria-selected="false" type="button">Changes <span class="count-chip" id="changesCountChip">0</span></button>
         <button data-doc-mode="review" class="mode-tab" role="tab" aria-selected="false" type="button">Review <span class="count-chip" id="reviewCountChip">0</span></button>
@@ -140,13 +186,17 @@
 
       <div class="context-card" id="proposalCard"></div>
 
-      <div class="context-card compact">
-        <span class="eyebrow">Reality</span>
+      <!-- converge-43uv: this is project-wide reality, not evidence about the
+           one document on screen — auxiliary context, not something a steward
+           must see to read or answer this document. Collapsed by default,
+           reachable in one gesture (a native, keyboard-operable disclosure),
+           rather than sitting open beside every document whether relevant or not. -->
+      <details class="context-card compact aux-detail">
+        <summary class="eyebrow">Project reality</summary>
         <div class="reality-row"><span>Contracts kept</span><strong id="realityKept">—</strong></div>
         <div class="reality-row"><span>Not yet</span><strong id="realityNotYet">—</strong></div>
         <div class="reality-row"><span>Broken</span><strong id="realityBroken" class="danger-text">—</strong></div>
-      </div>
-      {% include "collab.html" %}
+      </details>
 </aside>
   </div>
 </section>

@@ -202,11 +202,12 @@ def project(tmp_path_factory) -> dict:
         f'batch_dir = "{batch}"\n'
         f'repos = ["{repo}"]\n'
         'tracker_project = "demo-project"\n'
-        'tmux_socket = "test-socket-that-does-not-exist"\n',
+        'tmux_socket = "test-socket-that-does-not-exist"\n'
+        f'steward = "{USER}"\n',
         encoding="utf-8",
     )
     # Never the real ~/.amplifier: a test must not move a steward's read point.
-    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json",
+    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
             "batch": batch, "repo": repo}
 
 
@@ -229,7 +230,7 @@ def server(project):
     patch.setattr(data, "tracker_counts", lambda mc: dict(COUNTS))
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -264,6 +265,15 @@ MEASURE = """
   document.querySelectorAll('body, body *').forEach(el => {
     const s = getComputedStyle(el);
     if (s.display === 'none' || s.visibility === 'hidden') return;
+    // A closed Manager Console is a real, 0px grid column (converge-t30q):
+    // getBoundingClientRect() reports a clipped descendant's un-clipped
+    // natural box regardless of the ancestor's own overflow:hidden, so the
+    // pane's own header/resize-handle read as "past the right edge" even
+    // though nothing there is visible or reachable. Skip anything inside a
+    // pane that is itself inert (pointer-events:none), the same signal
+    // main.js's own consoleIsStowedHere() reads.
+    const pane = el.closest('.manager-console');
+    if (pane && getComputedStyle(pane).pointerEvents === 'none') return;
     const r = el.getBoundingClientRect();
     if (r.right > de.clientWidth + 0.01) {
       rows.push(((el.id ? '#' + el.id : '') + '.' + String(el.className || el.tagName)).slice(0, 50)
@@ -284,6 +294,11 @@ def _open_operation(browser, server, project, width: int, height: int, errors: l
     page.on("console", lambda m: errors.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
     page.goto(server, wait_until="networkidle")
+    # Boot always lands on Home first, never an auto-picked manager
+    # (experience.v1 Core 1, converge-t30q) -- open the one manager session
+    # this project registers before reaching its Operation tab.
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
     page.wait_for_selector("#operationTab", timeout=15000)
     page.click("#operationTab")
     page.wait_for_selector("#lanesGrid .lane-status", timeout=15000)

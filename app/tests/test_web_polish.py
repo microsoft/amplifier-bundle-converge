@@ -76,7 +76,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from app import auth, serve  # noqa: E402
+from app import assets, auth, serve  # noqa: E402
 
 USER = "tester"
 
@@ -93,6 +93,21 @@ CONSOLE_CSS = STATIC / "css" / "console.css"
 #: repeated here, so a version bump cannot leave this test quietly checking a
 #: cache nobody writes to any more.
 STATIC_CACHE = re.search(r"const STATIC = '([^']+)'", SW.read_text(encoding="utf-8")).group(1)
+
+#: converge-moe4: the revision THIS on-disk `app/static/` computes right now --
+#: the same pure function `app/serve.py`'s `create_app()` calls, over the same
+#: tree, so this test's expectations and the running server's own rendered
+#: URLs can never independently drift from each other.
+STATIC_REVISION = assets.compute_revision(STATIC)
+
+
+def _versioned(entry: str) -> str:
+    """The REAL key a browser's Cache Storage carries for one PRECACHE entry
+    against the running server above -- `entry` unchanged for anything not
+    under `/static/` (manifest, branding: never part of this revision)."""
+    if not entry.startswith("/static/"):
+        return entry
+    return f"/static/{STATIC_REVISION}" + entry[len("/static"):]
 
 #: The width below which `console.css` makes the console an OVERLAY rather than
 #: a column. Read from the stylesheet for the same reason.
@@ -127,7 +142,10 @@ Check — the precache list carries every module (converge-9ke)
   i. Reload once, then in the devtools console run:
        (await (await caches.open('converge-static-v4')).keys())
          .map(r => new URL(r.url).pathname).sort().join('\\n')
-  j. SEE: /static/js/presence.js in that list, alongside every other module.
+  j. SEE: an entry ending in /js/presence.js in that list (it reads
+     /static/<revision>/js/presence.js -- <revision> is this server
+     generation's own fingerprint, converge-moe4 -- any entry ending that
+     way is the one to look for), alongside every other module.
   k. Tick Offline in devtools > Network, and reload.
   l. SEE: the Direction surface, with its document, not a broken page.
   FAILS IF: presence.js is absent from the list, or the page comes up empty
@@ -238,7 +256,7 @@ def project(tmp_path_factory) -> dict:
     conf = tmp_path / "converge-app.toml"
     conf.write_text("".join(blocks), encoding="utf-8")
     # Never the real ~/.amplifier: a test must not move a steward's read point.
-    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json",
+    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
             "repos": repos}
 
 
@@ -255,7 +273,7 @@ def server(project):
     import uvicorn
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -362,6 +380,25 @@ def _home(page) -> None:
     page.wait_for_selector(".home-manager-card", timeout=15000)
 
 
+def _workspace(page) -> None:
+    """Open a manager session, the way a steward does.
+
+    The app boots to Home and always has since `experience.v1` Core 1 landed
+    (converge-t30q): Home is the list of manager sessions, never an
+    arbitrarily first-picked one. `_open()` therefore lands on Home, so a test
+    that wants to look at the WORKSPACE has to open a manager first -- this
+    used to be implicit in `_open()` and stopped being true underneath the one
+    test below that never went Home before asking about it.
+    """
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
+    page.wait_for_selector("#directionTab", timeout=15000)
+    page.wait_for_function(
+        "() => !document.getElementById('app').classList.contains('screen-home')",
+        timeout=15000,
+    )
+
+
 # --------------------------------------------------------------------------
 # 1. converge-nxf — Home is usable on a phone, on arrival
 # --------------------------------------------------------------------------
@@ -424,6 +461,18 @@ def test_the_console_pane_is_untouched_on_the_two_places_it_belongs_to(
     """
     errors: list[str] = []
     ctx, page = _open(browser, server, project, width, height, errors)
+    _workspace(page)
+    # The pane is where the steward left it, and a fresh session leaves it down
+    # (`state.js`: `consoleOpen: false`, converge-t30q). §6's gesture is what
+    # raises it, so this test raises it with that gesture and then asks whether
+    # the sheet is what §6 and Core 1 say -- rather than assuming an open pane
+    # it never opened.
+    if page.evaluate(CONSOLE_SHAPE)["togglePressed"] != "true":
+        page.click("#consoleToggle", timeout=5000)
+        page.wait_for_function(
+            "() => getComputedStyle(document.getElementById('managerConsole')).pointerEvents !== 'none'",
+            timeout=5000,
+        )
 
     on_workspace = page.evaluate(CONSOLE_SHAPE)
     print(f"\n[{width}] console on the workspace: {on_workspace}")
@@ -733,11 +782,11 @@ def test_a_fresh_install_precaches_every_module_and_the_app_opens_offline(
         print(f"  {key}")
 
     assert installed["active"], "the re-registered worker never became active"
-    assert "/static/js/presence.js" in installed["keys"], (
+    assert _versioned("/static/js/presence.js") in installed["keys"], (
         "a fresh install does not carry presence.js, so a browser that goes offline before "
         "ever fetching it loses render/direction.js with it — the whole Direction surface"
     )
-    missing = [entry for entry in listed if entry not in installed["keys"]]
+    missing = [entry for entry in listed if _versioned(entry) not in installed["keys"]]
     assert not missing, (
         "install ran but these precache entries are not in the cache — `cache.addAll` is "
         f"all-or-nothing and sw.js swallows its rejection, so check they all resolve: {missing}"
@@ -755,7 +804,7 @@ def test_a_fresh_install_precaches_every_module_and_the_app_opens_offline(
     # obtainable with the network gone, and the only place it can be coming
     # from is the cache `install` filled. Without this the test would pass on a
     # browser that was never really offline.
-    served = page.evaluate(STILL_REACHABLE, "/static/js/presence.js")
+    served = page.evaluate(STILL_REACHABLE, _versioned("/static/js/presence.js"))
     rendered = page.evaluate(RENDERED)
     print(f"offline (navigator.onLine={online}): {rendered}")
     print(f"offline, presence.js still answers from the worker's cache: {served}")
@@ -796,7 +845,7 @@ def test_without_presence_js_in_the_cache_the_direction_surface_dies_offline(
 
     installed = page.evaluate(FRESH_INSTALL, [STATIC_CACHE, "negative-control"])
     assert installed["active"], f"the re-registered worker never became active: {installed}"
-    evicted = page.evaluate(EVICT, [STATIC_CACHE, "/static/js/presence.js"])
+    evicted = page.evaluate(EVICT, [STATIC_CACHE, _versioned("/static/js/presence.js")])
     print(f"\nevicted /static/js/presence.js: {evicted}")
     assert evicted["deleted"] and not evicted["stillThere"], f"eviction did not take: {evicted}"
 
@@ -812,7 +861,7 @@ def test_without_presence_js_in_the_cache_the_direction_surface_dies_offline(
     # assertion below reads as a statement about precaching when it is really a
     # statement about the harness. That is exactly how this check spent two days
     # calling the app wrong (converge-9a56).
-    leftover = page.evaluate(STILL_REACHABLE, "/static/js/presence.js")
+    leftover = page.evaluate(STILL_REACHABLE, _versioned("/static/js/presence.js"))
     rendered = page.evaluate(RENDERED)
     print(f"offline, presence.js is still obtainable: {leftover}")
     print(f"offline with presence.js missing: {rendered}")
@@ -878,16 +927,30 @@ def test_the_served_client_never_says_the_console_is_read_only(
 
 
 def _precache_entries() -> list[str]:
-    block = re.search(r"const PRECACHE = \[(.*?)\];", SW.read_text(encoding="utf-8"), re.S)
-    assert block, "sw.js no longer has a PRECACHE list this test can read"
-    return re.findall(r"'([^']+)'", block.group(1))
+    """Every PRECACHE URL, in its LOGICAL (unversioned) form -- a plain
+    literal and a `${STATIC_PREFIX}` template literal both come back the
+    same shape. `app/assets.py` owns the parsing; see its own docstring."""
+    return assets.precache_entries(SW.read_text(encoding="utf-8"))
 
 
 def _referenced_by_templates() -> set[str]:
-    """Every first-party `/static/` asset the served pages actually ask for."""
+    """Every first-party `/static/` asset the served pages actually ask for,
+    in its LOGICAL (unversioned) form.
+
+    converge-moe4: `base.html`/`shell.html`/`collab.html` render every
+    first-party static reference through `static_url('relpath')` rather
+    than a literal `/static/...` href/src (see `app/assets.py`), so this
+    reads the TEMPLATE SOURCE for `static_url(...)` calls -- never the
+    rendered HTML, so no server is needed and this stays a source-only
+    fence. A template this lane does not own that still writes a literal
+    `/static/...` reference is caught too, exactly as before.
+    """
     found: set[str] = set()
     for html in sorted(TEMPLATES.glob("*.html")):
-        for ref in re.findall(r"/static/[A-Za-z0-9_./-]+", html.read_text(encoding="utf-8")):
+        text = html.read_text(encoding="utf-8")
+        for rel in re.findall(r"""static_url\(\s*['"]([^'"]+)['"]\s*\)""", text):
+            found.add("/static/" + rel.lstrip("/"))
+        for ref in re.findall(r"/static/[A-Za-z0-9_./-]+", text):
             found.add(ref)
     # The worker never precaches itself, and the vendored terminal is 488K that
     # only the terminal viewer needs — and by `platform-web.v1` §12 that viewer
@@ -949,17 +1012,34 @@ def test_every_precached_url_is_answered_by_the_app(server) -> None:
     One path in that list that 404s would precache NOTHING, silently, and the
     only symptom would be an app that does not open offline.
 
-    WHAT WOULD FALSIFY THIS: any entry the running app does not answer with 200.
+    converge-moe4: `_precache_entries()` reads `PRECACHE` back in its LOGICAL
+    (unversioned) form -- the same shape every server has ever answered on,
+    which a tab or Cache Storage entry from before this lane's URL-versioning
+    fix may still be asking for, so that legacy path is checked here exactly
+    as before. But it is no longer the URL a REAL browser today ever actually
+    requests: `app/serve.py` renders `sw.js` with `STATIC_PREFIX` substituted
+    to THIS server generation's own revision (`app/assets.py`'s
+    `render_service_worker`), so the PRECACHE entries a running worker's
+    `install` handler is actually told to fetch are the VERSIONED URLs
+    (`_versioned()`, already used elsewhere in this file for the same reason).
+    A legacy-only check here would miss a rendered `sw.js` whose versioned
+    entries 404 while the never-served logical form still happily answers.
+
+    WHAT WOULD FALSIFY THIS: any entry -- legacy or the versioned form a real
+    worker actually precaches -- that the running app does not answer with 200.
     """
     import httpx
 
     answers = {}
     with httpx.Client(base_url=server, timeout=10.0) as client:
         for entry in _precache_entries():
-            answers[entry] = client.get(entry).status_code
-    for entry, code in answers.items():
-        print(f"  {code} {entry}")
-    bad = {entry: code for entry, code in answers.items() if code != 200}
+            answers[f"legacy   {entry}"] = client.get(entry).status_code
+            versioned = _versioned(entry)
+            if versioned != entry:
+                answers[f"versioned {versioned}"] = client.get(versioned).status_code
+    for label, code in answers.items():
+        print(f"  {code} {label}")
+    bad = {label: code for label, code in answers.items() if code != 200}
     assert not bad, f"these precache entries are not served, so nothing would be precached: {bad}"
 
 

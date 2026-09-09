@@ -91,6 +91,28 @@ def run_kit_on_a_changed_good(change):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def run_kit_on_good_with_operation_route_removed():
+    """`sample-good`, with the operation route struck from its manifest.
+
+    `appsnapshot.from_dir` only reads a route the manifest still names, so
+    this is how a target that never served `/api/managers/{mid}/operation`
+    at all is modeled -- distinct from serving it with an empty body, which
+    the other helper covers via a copy of the real payload.
+    """
+    tmp = tempfile.mkdtemp(prefix="experience-operation-kit-")
+    try:
+        target = Path(tmp) / "snapshot"
+        shutil.copytree(GOOD, target)
+        manifest_path = target / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["routes"] = [r for r in manifest["routes"]
+                               if not r["route"].endswith("/operation")]
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        return run_kit(target)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def a_reported_lane(lane_id, word="Done", evidence="2 commits"):
     """One entry of the `reported` list.
 
@@ -290,6 +312,96 @@ def test_a_reported_lane_is_judged_like_a_working_one():
     assert row["status"] == "FAIL", "a lane in both lists was accepted"
     assert "w1-kit" in row["detail"], f"the failure did not name the lane: {row['detail']}"
     assert row["in_both_lists"] == ["w1-kit"], row
+
+
+def test_empty_subject_is_skip_not_pass_or_fail():
+    """converge-3lhm.
+
+    A well-formed operation payload can legitimately declare no lane at all --
+    nothing running, nothing reported back. Core 8 says a lane carries a plain
+    state word and evidence; it does not say a lane must exist. Judging that
+    absence would make the verdict track the host's weather (is anything
+    running right now) rather than the app, so the rule must report an
+    explicit no-subject SKIP -- never a manufactured PASS, and never the FAIL
+    it used to report for exactly this shape.
+    """
+    _, report = run_kit_on_a_changed_good(
+        lambda p: p.update({"lanes": [], "reported": []}))
+    row = by_rule(report)["8"]
+    assert row["status"] == "SKIP", (
+        "an empty-but-well-formed lane subject must SKIP, not PASS or FAIL: " + json.dumps(row))
+    assert row.get("reason"), "the SKIP carries no reason"
+    assert "no lane" in row["reason"].lower()
+
+
+def test_missing_operation_payload_is_still_fail():
+    """converge-3lhm: the empty-subject SKIP must not swallow this case too.
+
+    A target that never served an operation payload at all is not "no lane
+    to judge" -- it is the app failing to answer the question in the first
+    place, and stays FAIL exactly as it did before this rule learned to SKIP.
+    """
+    code, report = run_kit_on_good_with_operation_route_removed()
+    row = by_rule(report)["8"]
+    assert row["status"] == "FAIL", (
+        "a missing operation payload must still FAIL, not SKIP: " + json.dumps(row))
+    assert "no operation payload" in row["detail"].lower()
+
+
+def test_malformed_collections_fail_not_skip_not_except():
+    """converge-3lhm: only an EXPLICIT, well-formed empty `lanes` AND `reported`
+    earns the no-subject SKIP. Every other shape a payload might hand back for
+    those two fields -- missing outright, null, an object where a list belongs,
+    or a list holding a bare scalar/null instead of a lane object -- is a
+    structured FAIL naming the fault, never an exception and never a SKIP.
+
+    Measured against the unfixed rule (B/evidence/conformance/manager-shape-
+    controls.json): valid-empty correctly SKIPped, but missing-collections,
+    null-lanes and object-lanes also SKIPped (should FAIL), and
+    invalid-populated raised AttributeError (should FAIL).
+    """
+    cases = {
+        "missing-collections": lambda p: (p.pop("lanes", None), p.pop("reported", None)),
+        "null-lanes": lambda p: p.update({"lanes": None}),
+        "null-reported": lambda p: p.update({"lanes": [], "reported": None}),
+        "object-lanes": lambda p: p.update({"lanes": {}, "reported": []}),
+        "object-reported": lambda p: p.update({"lanes": [], "reported": {"a": 1}}),
+        "scalar-lanes": lambda p: p.update({"lanes": "none", "reported": []}),
+        "lanes-with-null-entry": lambda p: p.update({"lanes": [None], "reported": []}),
+        "lanes-with-scalar-entry": lambda p: p.update({"lanes": ["w1-kit"], "reported": []}),
+        "reported-with-null-entry": lambda p: p.update({"lanes": [], "reported": [None]}),
+        "one-explicit-one-missing": lambda p: (p.pop("reported", None), p.update({"lanes": []})),
+    }
+    for name, change in cases.items():
+        code, report = run_kit_on_a_changed_good(change)
+        row = by_rule(report)["8"]
+        assert row["status"] == "FAIL", (
+            f"{name}: malformed/ambiguous collection must FAIL, got {row['status']}: "
+            + json.dumps(row))
+        assert row.get("detail"), f"{name}: a FAIL with no detail names nothing"
+        assert code == 1, f"{name}: kit exit code did not reflect the FAIL"
+
+
+def test_valid_empty_still_skips():
+    """The one shape `test_malformed_collections_fail_not_skip_not_except` must
+    NOT catch: both fields explicitly present and explicitly empty."""
+    _, report = run_kit_on_a_changed_good(
+        lambda p: p.update({"lanes": [], "reported": []}))
+    row = by_rule(report)["8"]
+    assert row["status"] == "SKIP", json.dumps(row)
+
+
+def test_duplicate_id_within_a_single_list_fails():
+    """A lane id repeated within `lanes` (or `reported`) alone -- not just one
+    shared across both lists -- is still a lane told in two states at once."""
+    def two_working(payload):
+        first = dict((payload.get("lanes") or [{}])[0])
+        payload["lanes"] = [first, dict(first)]
+
+    _, report = run_kit_on_a_changed_good(two_working)
+    row = by_rule(report)["8"]
+    assert row["status"] == "FAIL", "a repeated lane id within one list was accepted"
+    assert "w1-kit" in row["detail"]
 
 
 def test_a_list_nobody_judges_is_a_place_to_hide_a_lane():

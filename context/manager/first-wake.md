@@ -49,7 +49,7 @@ code editor could read back to you:
 
 One thing belongs in that first brief besides the four answers: **where the
 steward can watch this** - the app's URL when it answers on
-`http://127.0.0.1:8788`, and the one command that starts it
+`https://127.0.0.1:8788`, and the one command that starts it
 (`scripts/run-app.sh`) when it does not - because the registration written in
 step 0 puts this session on a page nobody has been told how to open.
 

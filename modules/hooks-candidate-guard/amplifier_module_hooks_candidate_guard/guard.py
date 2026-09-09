@@ -31,9 +31,15 @@ Implements the decision order from
    written, so the document stays a draft and the combined write can be
    re-issued.
 7. Escape hatch (§2.7) per guarded path: ratified-CANDIDATE (primary) or
-   emergency-unlock token (fallback, config-gated).
+   emergency-unlock token (fallback, config-gated). A ratified candidate
+   already recorded in the target's own Changelog -- matched as a complete
+   path token, never a substring or bare basename -- is spent and does not
+   count (converge-wu3y, single-use); the search continues to any other
+   candidate for the same target. The already-landed check reuses the
+   target's content read in step 6 rather than reading it a second time.
 8. Otherwise -> deny (§2.6).
-9. Any exception while evaluating a ``guarded_globs``-matching path fails
+9. Any exception while evaluating a ``guarded_globs``-matching path --
+   including one raised while checking the escape hatch in step 7 -- fails
    closed (§2.8); errors on non-matching paths are swallowed (continue).
 """
 
@@ -562,6 +568,32 @@ def _read_file_text(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _read_guarded_content(
+    rel: str, config: GuardConfig, root: str
+) -> tuple[bool, str | None]:
+    """Like ``_is_guarded``, but also returns the content actually read (if
+    any), so a caller that goes on to check the escape hatch (converge-wu3y)
+    can reuse it instead of reading the same guarded target a SECOND time.
+
+    Returns ``(guarded, content)``. ``content`` is ``None`` when
+    ``require_frozen_marker`` is disabled (glob membership alone decided it,
+    so nothing was read) or when the file does not exist yet -- in either
+    case there is nothing to reuse, and a caller that needs content anyway
+    (the escape-hatch's own already-landed check) reads it itself. May
+    raise -- callers are responsible for the fail-closed/continue split
+    described in §2.8, exactly as before.
+    """
+    if not config.require_frozen_marker:
+        return True, None
+    abs_path = Path(root) / rel
+    if not abs_path.is_file():
+        # Doesn't exist yet (a new file under a guarded glob) -- can't
+        # already be FROZEN, so this is a create, not a frozen-file amendment.
+        return False, None
+    content = _read_file_text(abs_path)
+    return bool(re.search(config.frozen_marker_regex, content)), content
+
+
 def _is_guarded(rel: str, config: GuardConfig, root: str) -> bool:
     """Caller has already confirmed ``rel`` matches ``guarded_globs``.
 
@@ -569,16 +601,12 @@ def _is_guarded(rel: str, config: GuardConfig, root: str) -> bool:
     FROZEN/RATIFIED marker (or ``require_frozen_marker`` is disabled, in
     which case glob membership alone is sufficient). May raise -- callers
     are responsible for the fail-closed/continue split described in §2.8.
+
+    Thin wrapper over ``_read_guarded_content`` for callers (the ``bash``
+    branch) that have no use for the content itself.
     """
-    if not config.require_frozen_marker:
-        return True
-    abs_path = Path(root) / rel
-    if not abs_path.is_file():
-        # Doesn't exist yet (a new file under a guarded glob) -- can't
-        # already be FROZEN, so this is a create, not a frozen-file amendment.
-        return False
-    content = _read_file_text(abs_path)
-    return bool(re.search(config.frozen_marker_regex, content))
+    guarded, _content = _read_guarded_content(rel, config, root)
+    return guarded
 
 
 # ---------------------------------------------------------------------------
@@ -740,7 +768,163 @@ def _extract_field(content: str, field_name: str) -> str | None:
     return value or None
 
 
-def _find_ratified_candidate(rel: str, root: str, config: GuardConfig) -> str | None:
+# ---------------------------------------------------------------------------
+# Single-use: a ratified candidate already recorded on its target is spent
+# (converge-wu3y)
+#
+# MEASURED 2026-09-06: `contracts/operator-surface.v2-candidate.md` was
+# ratified, applied to the locked target via PR #90, and then left in place
+# with its `target:` line unchanged -- so `_find_ratified_candidate` kept
+# finding it and the escape hatch stayed open indefinitely for anyone, for as
+# long as the applied candidate existed. The README documented single-landing
+# as an expectation ("the ratified proposal is expected to be archived"), not
+# a mechanism -- an expectation nobody's checklist carries is exactly how it
+# was missed.
+#
+# The rule: a candidate stops unlocking its target once the target's own
+# ``## Changelog`` already names it. Landing an amendment always means
+# writing a changelog entry (composition.v1 clause 7 / the freeze-bar
+# convention this module already enforces via the half-freeze check above),
+# so the changelog is the one place "already landed" is recorded, in the same
+# file, by the same write that used the hatch. Checking the CANDIDATE'S OWN
+# repo-relative path there -- not a date, not a fuzzy substring of the
+# proposal's prose -- is the minimum reliable signal: a date or a bare word
+# could belong to a different, still-unspent proposal that happens to share
+# one; the candidate's path cannot.
+# ---------------------------------------------------------------------------
+
+
+def _changelog_section(content: str) -> str | None:
+    """Return the text under the document's own ``## Changelog`` heading
+    (any ``#``-level heading spelled "Changelog"), up to the next heading of
+    the same or shallower level, or ``None`` if the document carries no such
+    section.
+
+    Deliberately narrow: only text actually inside the Changelog counts as a
+    record that an amendment landed. A candidate's path appearing elsewhere
+    in the document (its own prose, a cross-reference) is not evidence of
+    that -- restricting the search to the Changelog is what keeps this from
+    becoming exactly the kind of fuzzy match that could close an unrelated,
+    still-unspent proposal by accident.
+    """
+    lines = content.splitlines()
+    start: int | None = None
+    level = 0
+    for i, line in enumerate(lines):
+        m = re.match(r"^(#{1,6})\s*changelog\b", line, re.IGNORECASE)
+        if m:
+            start = i + 1
+            level = len(m.group(1))
+            break
+    if start is None:
+        return None
+    end = len(lines)
+    for i in range(start, len(lines)):
+        m = re.match(r"^(#{1,6})\s+\S", lines[i])
+        if m and len(m.group(1)) <= level:
+            end = i
+            break
+    return "\n".join(lines[start:end])
+
+
+_PATH_TOKEN_RE = re.compile(r"[A-Za-z0-9_./-]+")
+
+
+def _changelog_records_candidate(changelog: str, candidate_rel: str) -> bool:
+    """True iff ``candidate_rel`` -- the candidate's own repo-relative path,
+    forward-slash normalized -- appears in ``changelog`` as a COMPLETE path
+    token, never as a substring of a longer filename and never by bare
+    basename (converge-wu3y defect 2: the previous check used
+    ``candidate_rel in changelog or candidate_path.name in changelog``, a
+    substring-OR-basename test that reads two different documents as "the
+    same candidate").
+
+    A token is a maximal run of path-safe characters
+    (``[A-Za-z0-9_./-]``); comparing whole tokens instead of doing a raw
+    substring search is what tells ``contracts/x.v2-candidate.md`` apart
+    from a changelog that only names the longer, different
+    ``contracts/x.v2-candidate.md.bak`` (a substring match would wrongly
+    accept this: the shorter path is a literal prefix of the longer one),
+    and from ``notes/x.v2-candidate.md`` -- a different directory that
+    happens to share the same basename (the removed basename fallback would
+    wrongly accept this too). Markdown backticks, link parentheses, and
+    quoting all fall outside the path-token character class, so they bound
+    a token correctly with no special-casing needed for those forms.
+
+    One deliberately narrow normalization: a token that mismatches only
+    because it ends in a single extra ``.`` is retried with that one
+    trailing dot stripped, so an ordinary end-of-sentence period placed
+    directly after the path with no backticks (``...candidate.md.``) is not
+    mistaken for part of the filename. This does not reopen the
+    ``.bak``-style false positive: ``contracts/x.v2-candidate.md.bak`` does
+    not end in ``.`` at all, so nothing is stripped from it and the exact
+    comparison still fails.
+    """
+    for match in _PATH_TOKEN_RE.finditer(changelog):
+        token = match.group(0)
+        if token == candidate_rel:
+            return True
+        if token.endswith(".") and token[:-1] == candidate_rel:
+            return True
+    return False
+
+
+def _candidate_already_landed(
+    root: str,
+    rel: str,
+    candidate_path: Path,
+    target_content: str | None = None,
+) -> bool:
+    """Return True iff the guarded document's own Changelog already records
+    ``candidate_path`` by its repo-relative path -- the amendment is spent,
+    and this candidate must not reopen the hatch (converge-wu3y).
+
+    Matches on the candidate's exact repo-relative path (e.g.
+    ``contracts/operator-surface.v2-candidate.md``) as a complete path
+    token (``_changelog_records_candidate``) -- never a fuzzy substring, a
+    bare basename, or a bare date: any of those could belong to a
+    different, still-unspent proposal, or to an unrelated longer filename
+    that merely starts the same way. The path is the one thing that names
+    THIS candidate and no other.
+
+    ``target_content`` is the guarded document's content, when the caller
+    (``evaluate_tool_pre``) already read it successfully while determining
+    the path was guarded in the first place -- passed through so the target
+    is never read a SECOND time (converge-wu3y defect 1: a second read that
+    failed was previously swallowed into "not recorded", silently reopening
+    the hatch on a transient I/O error despite ``fail_closed_on_error``).
+    When it is not supplied (a direct call, or ``require_frozen_marker``
+    disabled so nothing was read yet), the content is read here instead;
+    unlike the previous version, a failure on THAT read is no longer
+    caught and turned into "not recorded" -- it propagates, so the caller's
+    own fail-closed policy (spec §2.8) decides the outcome, exactly as any
+    other guard-evaluation error. Never silently open a locked file on
+    uncertainty.
+    """
+    if target_content is not None:
+        content = target_content
+    else:
+        abs_path = Path(root) / rel
+        if not abs_path.is_file():
+            return False
+        content = _read_file_text(abs_path)  # let OSError propagate: fail closed
+    changelog = _changelog_section(content)
+    if not changelog:
+        return False
+    try:
+        candidate_rel = str(candidate_path.relative_to(root))
+    except ValueError:
+        candidate_rel = candidate_path.name
+    candidate_rel = candidate_rel.replace("\\", "/")
+    return _changelog_records_candidate(changelog, candidate_rel)
+
+
+def _find_ratified_candidate(
+    rel: str,
+    root: str,
+    config: GuardConfig,
+    target_content: str | None = None,
+) -> str | None:
     """Search the guarded document's own repository for a proposal file --
     under either sanctioned name, ``<contract>.vN-candidate.md`` or the legacy
     ``CANDIDATE-*.md`` -- whose ``target:`` names ``rel`` and whose content
@@ -753,7 +937,17 @@ def _find_ratified_candidate(rel: str, root: str, config: GuardConfig) -> str | 
     ``root`` is the governing repository root the guarded path was resolved
     against (converge-qfi9), NOT necessarily the session cwd -- so a proposal
     beside a contract in a repo BELOW cwd, carrying the ``target:`` line a
-    person in that repo would write, still opens the hatch."""
+    person in that repo would write, still opens the hatch.
+
+    ``target_content``, when supplied, is forwarded to
+    ``_candidate_already_landed`` so the guarded target is never read twice
+    (converge-wu3y defect 1) -- see that function's docstring.
+
+    A candidate that matches but whose amendment is already recorded in the
+    target's own Changelog (``_candidate_already_landed``) is SKIPPED, not
+    returned: it is spent, and the search continues to the next candidate
+    file rather than stopping here (a still-unspent candidate for the same
+    target, filed after the first one landed, must still open the hatch)."""
     search_root = Path(root)
     seen: set[Path] = set()
     for pattern in config.candidate_glob:
@@ -775,11 +969,16 @@ def _find_ratified_candidate(rel: str, root: str, config: GuardConfig) -> str | 
             target_rel = normalize_repo_relative(target, root)
             if target_rel != rel:
                 continue
-            if re.search(config.ratified_stamp_regex, content):
-                try:
-                    return str(candidate_path.relative_to(search_root))
-                except ValueError:
-                    return str(candidate_path)
+            if not re.search(config.ratified_stamp_regex, content):
+                continue
+            if _candidate_already_landed(
+                root, rel, candidate_path, target_content=target_content
+            ):
+                continue  # spent -- already recorded, does not reopen the hatch
+            try:
+                return str(candidate_path.relative_to(search_root))
+            except ValueError:
+                return str(candidate_path)
     return None
 
 
@@ -807,13 +1006,23 @@ def _check_emergency_unlock(rel: str, root: str, config: GuardConfig) -> str | N
 
 
 def _check_escape_hatch(
-    rel: str, config: GuardConfig, root: str
+    rel: str,
+    config: GuardConfig,
+    root: str,
+    target_content: str | None = None,
 ) -> tuple[str, str] | None:
     """Returns (kind, detail) where kind is "ratified" or "token", or None
-    if no escape hatch validates for ``rel``."""
+    if no escape hatch validates for ``rel``.
+
+    ``target_content``, when supplied, is the guarded target's already-read
+    content, forwarded to ``_find_ratified_candidate`` so the single-use
+    (converge-wu3y) already-landed check never reads the target a second
+    time."""
     mode = config.escape_mode
     if mode in ("ratified_candidate", "both"):
-        candidate = _find_ratified_candidate(rel, root, config)
+        candidate = _find_ratified_candidate(
+            rel, root, config, target_content=target_content
+        )
         if candidate is not None:
             return ("ratified", candidate)
     if mode in ("token", "both"):
@@ -1012,6 +1221,11 @@ def evaluate_tool_pre(
         return GuardDecision(HookResult(action="continue"))
 
     guarded_paths: list[TargetPath] = []
+    # converge-wu3y defect 1: content read once here, when the guarded-path
+    # check itself reads it, is reused by the escape-hatch's already-landed
+    # check below -- so that check never reads the same target a second
+    # time (and so never has a second, independent chance to fail).
+    guarded_content: dict[TargetPath, str | None] = {}
     unrecorded_locks: list[tuple[str, str]] = []
     for raw in raw_paths:
         target = resolve_target_path(raw, cwd)
@@ -1027,7 +1241,7 @@ def evaluate_tool_pre(
         if not _glob_match_any(target.rel, config.guarded_globs):
             continue
         try:
-            guarded = _is_guarded(target.rel, config, target.root)
+            guarded, content = _read_guarded_content(target.rel, config, target.root)
             # Step 6b -- the half-freeze check (converge-p17d). Only for a path
             # that is NOT already locked: a locked one is the deny path's, and
             # this check must never be what makes a locked file writable.
@@ -1056,6 +1270,7 @@ def evaluate_tool_pre(
             continue
         if guarded:
             guarded_paths.append(target)
+            guarded_content[target] = content
 
     if not guarded_paths:
         if unrecorded_locks:
@@ -1083,7 +1298,40 @@ def evaluate_tool_pre(
     events: list[tuple[str, dict[str, Any]]] = []
     blocked: list[str] = []
     for target in guarded_paths:
-        escape = _check_escape_hatch(target.rel, config, target.root)
+        try:
+            escape = _check_escape_hatch(
+                target.rel,
+                config,
+                target.root,
+                target_content=guarded_content.get(target),
+            )
+        except Exception as exc:  # noqa: BLE001 -- deliberate: fail-closed per spec §2.8
+            # converge-wu3y defect 1: an error evaluating the escape hatch
+            # (e.g. a transient I/O failure re-reading the target when no
+            # cached content was available) must never be read as "an
+            # escape hatch was found" -- treat this guarded path as blocked
+            # exactly as if _check_escape_hatch had returned None, and, per
+            # the same fail-closed policy every other guard-evaluation
+            # error uses, deny the whole call outright when
+            # fail_closed_on_error is on (the default).
+            if config.fail_closed_on_error:
+                return GuardDecision(
+                    HookResult(
+                        action="deny",
+                        reason=(
+                            "converge/candidate-guard: guard evaluation error "
+                            f"for '{target.display}': {exc}. Failing closed "
+                            "(spec §2.8)."
+                        ),
+                        user_message=(
+                            f"Guard evaluation error for {target.display} — "
+                            "failing closed."
+                        ),
+                        user_message_level="error",
+                    )
+                )
+            blocked.append(target.display)
+            continue
         if escape is None:
             blocked.append(target.display)
         else:

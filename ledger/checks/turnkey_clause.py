@@ -46,6 +46,23 @@ kinds of reading, and neither answer is "ignore it":
 WHAT IT DOES NOT PROVE. That the reading is right -- only what the harness's own
 reader says right now, on this checkout, in its own words. The row's `proves`
 carries the limits of the reading itself.
+
+CONVERGE_INTEGRATION_BRANCH explicitly selects the harness's integration ref
+for a private preview. Unset, the harness still defaults to main. This changes
+the target, never the required attribution verdict or its evidence.
+
+CONVERGE_PLAN_RECORD explicitly selects the harness's --plan-record for step
+(j) -- the manager's actual registered plan, when it lives outside the lane
+workspace find_workspace() locates below (an operation's own PLAN.md kept
+beside a nested batch directory, rather than inside it, say). Unset, the
+harness keeps its legacy HIGHWAY.md/PLAN.md/WAVE-LOG.md search in that same
+workspace, unchanged (converge-51oq). This selects WHICH file step (j) reads
+for the plan-visibility clause; it never substitutes for --workspace, which
+still supplies the lane facts (manifest, briefs, worktrees) this file's own
+find_workspace() finds. It is forwarded for step (j) ONLY -- step (k) reads
+this repository's own git history and nothing else (see the ATTRIBUTION
+section above), so an invalid or dangling CONVERGE_PLAN_RECORD must never
+reach its argv and break git-only attribution.
 """
 
 from __future__ import annotations
@@ -141,6 +158,12 @@ def read(letter: str) -> tuple[dict | None, str]:
 
     cmd = ["uv", "run", str(HARNESS), "--env", "local", "--json-only",
            "--steps", letter]
+    integration = os.environ.get("CONVERGE_INTEGRATION_BRANCH", "").strip()
+    if integration:
+        cmd += ["--integration-branch", integration]
+    plan_record = os.environ.get("CONVERGE_PLAN_RECORD", "").strip()
+    if plan_record and letter == "j":
+        cmd += ["--plan-record", plan_record]
     workspace, how = find_workspace()
     if workspace is not None:
         cmd += ["--workspace", str(workspace)]

@@ -2,18 +2,43 @@
 
     scripts/run-app.sh
 
-That is the one command, and it is the one `README.md` names: it serves on
-<http://127.0.0.1:8788>, prints that URL, says how you sign in, and prints every
-workspace root it scanned for manager sessions. `--lan` binds every interface
-instead of loopback and prints the address another device can open (here,
-<http://spark-1:8788> — 192.168.1.5); `--port N` moves it off 8788; anything
-else is handed to `app.serve` unchanged. Ctrl-C stops it.
+That is the one command, and it is the one `README.md` names: it serves HTTPS
+on <https://127.0.0.1:8788>, prints that URL, says how you sign in and how to
+trust its certificate, and prints every workspace root it scanned for manager
+sessions. Every interface is bound by default, and the banner prints the
+address another device can open (for example, <https://your-hostname:8788>);
+`--host 127.0.0.1` binds loopback only, for the SSH-tunnel case; `--port N`
+moves it off 8788; anything else is handed to `app.serve` unchanged. Ctrl-C
+stops it.
+
+**HTTPS is always on** — there is no plain-HTTP mode. On first run the app
+creates a small local certificate authority and a leaf certificate it signs
+(`app/tls.py`), under `~/.amplifier/converge-app-tls` by default
+(`--tls-dir`/`$CONVERGE_TLS_DIR` overrides it; `0600` on every private key,
+`0700` on the directory, atomic writes, and the CA is never rotated once
+made). `GET /setup` on the running app — public, no sign-in required, no
+private key ever exposed — carries the CA's download link, its SHA-256
+fingerprint, and how to trust it in your browser or OS; `GET /ca.crt` is the
+one file it downloads. Trusting the CA once covers every future certificate
+renewal; clicking through the one-time browser warning instead works too, for
+browsing, but most browsers refuse to install this app as a PWA until the CA
+is trusted.
+
+**`amplifier-converge start` is the same command, resolved from this
+package's own installed location** rather than a checkout you `cd` into —
+`uv run --project <this bundle's resolved path> --extra app python -m
+amplifier_converge.cli start` works from any workspace. `amplifier-converge
+doctor` is the read-only twin: every dependency, PAM, tmux, the certificate's
+expiry and SAN coverage, and every workspace/registration this app would
+discover — never a side effect, never a generated certificate, never a
+request for a secret. `amplifier-converge register` is a thin call into
+`scripts/register-manager.py`'s own `main()` (same flags, see below).
 
 Underneath it is one line, and running that line yourself is the same thing:
 
     uv run --extra app python -m app.serve --host 0.0.0.0 --port 8788
 
-**As a service**, which is how this host runs it — `cp
+**As a Linux user service**, copy the included unit with `cp
 app/converge-app.service ~/.config/systemd/user/ && systemctl --user enable
 --now converge-app`. The unit runs the module line above directly rather than
 the wrapper: a unit file already carries the working directory, the arguments
@@ -21,7 +46,15 @@ and the restart policy, so the wrapper's whole job — remembering `--extra app`
 choosing a bind, printing where to go — is already done by systemd and would
 only be a second place for the port to drift. Change the port in one of them and
 you have changed it in one of them. Tests: `uv run --extra app --with pytest
---with httpx pytest -q app/tests`.
+--with httpx --with playwright pytest -q app/tests`.
+
+Browser automation is a test dependency, not an app runtime dependency; install
+Chromium once with `uv run --with playwright playwright install chromium`.
+Authority-bearing test fixtures name their steward explicitly, and rendered
+tests navigate Home, choose a manager, then choose a view. A skipped browser
+check is not proof. In particular, an offline-window flag alone may not cut off
+a service worker's own network requests: offline boot needs a real controlled
+transport outage, not a longer arbitrary sleep.
 
 **Sign-in is your machine account, checked by PAM** — the same check `login`
 makes; the app keeps no passwords. What it keeps is a signed cookie naming
@@ -29,7 +62,20 @@ you, good for twelve hours, signed with `~/.amplifier/converge-app.secret`
 (created `0600` on first run). **There is no loopback exemption:** a request
 from 127.0.0.1 is gated like any other, because when the server is bound to
 the LAN, "it came from localhost" says nothing about who is asking. Only
-`/login`, `/static`, `/branding` and `/healthz` answer without a cookie.
+`/login`, `/static`, `/branding`, `/healthz`, `/setup` and `/ca.crt` answer
+without a cookie — the last two are read-only trust instructions and the
+CA's own public certificate, never a private key.
+
+**Every unsafe request is checked for same-origin and, once a `cv_csrf`
+cookie exists, a matching CSRF token** — login and logout included, and every
+`/api/` route (the console's keystrokes and the voice note among them). A
+present-and-wrong `Origin`/`Referer` or CSRF token is always refused; neither
+being present at all is not, because a same-origin browser page always sends
+one or both once it has opened this app once, and the double-submit token
+is what actually catches a forged cross-site request from a browser that
+already holds this app's cookies. See `app/auth.py`'s module docstring for
+the full reasoning. Repeated wrong passwords are throttled per caller
+(`auth.LoginThrottle`), in memory, cleared by a restart.
 
 **What it watches** is every manager session that has registered itself, plus
 `~/.amplifier/converge-app.toml` — one `[[managers]]` block per manager session

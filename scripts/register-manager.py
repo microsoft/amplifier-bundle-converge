@@ -45,6 +45,12 @@ by a flag. Nothing is invented:
   ``$TMUX`` is deliberately not read: it names the socket and pane this process
   happens to sit in, which is a different fact from the session a steward would
   attach to, and ``app/config.py`` refuses the same inference on the other side.
+  A bare session name (the ordinary case) is read against ``--tmux-socket`` --
+  the SAME socket this session's own worker lanes run on. When this session's
+  own console runs on a DIFFERENT socket, pass the combined ``socket:session``
+  form instead (e.g. ``--manager-tmux "othersocket:mgr"``); both shapes are
+  written verbatim and both are read back the same way by ``app/config.py``'s
+  ``ManagerConfig.console_target`` (converge-c6cv).
 * repositories: ``--repo`` (repeatable), else every immediate child of the
   workspace root holding a ``.git``. Each one's default branch is read from
   ``origin/HEAD`` when the remote publishes one, else ``main`` or ``master``

@@ -22,3 +22,11 @@
 .voice-record { flex:0 0 auto; }
 .voice-state { flex:1 1 12rem; min-width:0; font-size:12px; color:#667085; }
 .voice-unavailable { margin:0 0 8px; font-size:12px; line-height:1.5; color:#667085; }
+
+/* The needs pill's decision inbox (converge-t30q, acceptance 4): up to five
+   named choices, each a row rather than a table so the target and the reason
+   both fit without truncation. */
+.needs-list { list-style:none; margin:0 0 12px; padding:0; display:flex; flex-direction:column; gap:10px; }
+.need-row { border:1px solid var(--line); border-radius:10px; padding:11px 12px; }
+.need-row-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:4px; }
+.need-row p { margin:0 0 8px; }

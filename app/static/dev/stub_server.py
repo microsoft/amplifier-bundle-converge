@@ -12,9 +12,10 @@ import argparse
 import json
 import pathlib
 import datetime
+import sys
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, FileResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -26,7 +27,17 @@ BRANDING = ROOT / "assets" / "branding"
 FIXTURES = DEV / "fixtures"
 LOG = DEV / "requests.log"
 
+sys.path.insert(0, str(ROOT))
+from app import assets  # noqa: E402  -- the same helper app/serve.py uses; see its module docstring
+
+# One revision for this stub process's own lifetime. A plain module global is
+# fine here (unlike app/serve.py's create_app, which the real test suite
+# instantiates several times in one process) -- this script starts exactly
+# one long-running FastAPI app, never a second one to poison.
+STATIC_REVISION = assets.compute_revision(STATIC)
+
 env = Environment(loader=FileSystemLoader(str(TEMPLATES)), autoescape=select_autoescape(["html"]))
+env.globals["static_url"] = lambda relpath: assets.static_url(STATIC_REVISION, relpath)
 app = FastAPI()
 
 
@@ -46,7 +57,7 @@ def log(line: str) -> None:
 
 @app.get("/", response_class=HTMLResponse)
 def shell():
-    return env.get_template("shell.html").render(user="bkrabach")
+    return env.get_template("shell.html").render(user="project-steward")
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -68,7 +79,9 @@ def manifest():
 
 @app.get("/sw.js")
 def service_worker():
-    return FileResponse(STATIC / "sw.js", media_type="text/javascript")
+    source = (STATIC / "sw.js").read_text(encoding="utf-8")
+    rendered = assets.render_service_worker(source, STATIC_REVISION)
+    return Response(rendered, media_type="text/javascript")
 
 
 @app.get("/api/boot")
@@ -218,7 +231,7 @@ def collab_pulls(mid: str):
     return found
 
 
-app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
+app.mount("/static", assets.VersionedStaticFiles(directory=str(STATIC), revision=STATIC_REVISION), name="static")
 app.mount("/branding", StaticFiles(directory=str(BRANDING)), name="branding")
 
 

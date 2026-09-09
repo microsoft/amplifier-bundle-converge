@@ -10,3 +10,6 @@ uv.lock
 # directory can appear here. Same line this repository ships to adopters in
 # docs/workspace-template/gitignore-addendum.txt (documents.v1 §13, converge-i8wb).
 .converge/
+
+# Worker completion signals are not project artifacts.
+DONE.json

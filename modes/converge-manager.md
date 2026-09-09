@@ -428,7 +428,8 @@ repository already hold code?**
    scripts/register-manager.py --steward <name> --print`. A first wake is
    exactly when a steward most needs to see that a session exists at all, and
    the loop's step 1 has not run yet on this path. Every later wake re-writes it.
-   **Then, if the app answers — `curl -sf http://127.0.0.1:8788/healthz` — name
+   **Then, if the app answers — `curl -skf https://127.0.0.1:8788/healthz` (`-k`:
+   this is a liveness probe, not a certificate check) — name
    that URL in your first brief**, because a registration a steward cannot open
    the page to see is a heartbeat into an empty room; if nothing answers, say
    the one command that starts it (`scripts/run-app.sh`) instead of the URL.

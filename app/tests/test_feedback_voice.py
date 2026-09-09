@@ -127,6 +127,7 @@ def project(tmp_path: Path) -> dict:
         "[[managers]]\n"
         'id = "demo"\n'
         'name = "Demo manager"\n'
+        f'steward = "{GOOD_USER}"\n'
         f'batch_dir = "{batch}"\n'
         f'repos = ["{repo}"]\n'
         'tracker_project = ""\n'
@@ -140,7 +141,7 @@ def project(tmp_path: Path) -> dict:
         # Never the real ~/.amplifier: a test must not touch a steward's own
         # secret or move their read point.
         "secret": tmp_path / "secret",
-        "state": tmp_path / "state.json",
+        "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
         "feedback": repo / ".converge" / "feedback",
     }
 
@@ -161,7 +162,7 @@ def build_app(project: dict):
     comes to find out what that is.
     """
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     made.include_router(feedback_voice.router)
     return made
@@ -464,7 +465,7 @@ def test_report_whether_serve_mounts_the_router(project, monkeypatch) -> None:
     """
     monkeypatch.setattr(auth.pam_module, "pam", _FakePam)
     stock = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     posts = [p for p, m in stock.openapi()["paths"].items() if "post" in m]
     mounted = any("feedback/{form}" in p for p in posts)
@@ -645,9 +646,10 @@ def test_one_gesture_drops_the_text_and_the_voice_note(server, project, width, h
         page.goto(f"{server}/login")
         page.fill("input[name=username]", GOOD_USER)
         page.fill("input[name=password]", GOOD_PASSWORD)
-        page.click("button")
+        page.click('button[type="submit"]')
         page.wait_for_selector("#app", timeout=20000)
-        page.wait_for_timeout(1500)
+        page.wait_for_selector(".home-manager-card", timeout=15000)
+        page.click(".home-manager-card")
 
         page.click("#feedbackButton")
         page.wait_for_selector("#feedbackVoice", timeout=10000)

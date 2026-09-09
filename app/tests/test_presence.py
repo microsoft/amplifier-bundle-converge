@@ -237,14 +237,22 @@ def project(tmp_path_factory) -> dict:
         f'batch_dir = "{batch}"\n'
         f'repos = ["{repo}"]\n'
         'tracker_project = ""\n'
-        'tmux_socket = "test-socket-that-does-not-exist"\n',
+        'tmux_socket = "test-socket-that-does-not-exist"\n'
+        # ANA is this manager's registered steward, and BROOK is a DISTINCT
+        # signed-in teammate -- never a second name for the same person. The
+        # line used to read `steward = "{USER}"` against a name this module
+        # never defines, so the fixture raised NameError and every test here
+        # errored out (converge-bk6o). Naming ANA explicitly is what makes the
+        # collision test below a real two-person test: brook writes as somebody
+        # who is NOT the steward, which is exactly the case that regressed.
+        f'steward = "{ANA}"\n',
         encoding="utf-8",
     )
     # Never the real ~/.amplifier: a test must not move a steward's read point.
     return {
         "config": conf,
         "secret": tmp_path / "secret",
-        "state": tmp_path / "state.json",
+        "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
         "repo": repo,
         "vision": repo / "docs" / "VISION.md",
         "root": tmp_path,
@@ -253,7 +261,7 @@ def project(tmp_path_factory) -> dict:
 
 def _signed_in(project, user: str) -> TestClient:
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     client = TestClient(made)
     sessions = auth.Sessions(auth.read_or_make_secret(project["secret"]))
@@ -269,7 +277,7 @@ def _signed_in(project, user: str) -> TestClient:
 def test_two_signed_in_people_see_each_other_through_the_routes(project):
     """One app, two cookies. The mark ana sets is the mark brook reads."""
     app = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     sessions = auth.Sessions(auth.read_or_make_secret(project["secret"]))
     client = TestClient(app)
@@ -306,7 +314,7 @@ def test_presence_is_nowhere_on_disk(project):
     """A note about the next sixty seconds belongs in neither the repository
     nor the reading store. Both are checked, byte for byte."""
     app = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     sessions = auth.Sessions(auth.read_or_make_secret(project["secret"]))
     client = TestClient(app)
@@ -338,7 +346,7 @@ def test_a_manager_session_is_told_to_queue_and_the_document_is_untouched(projec
     that backing off leaves the file alone.
     """
     app = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     sessions = auth.Sessions(auth.read_or_make_secret(project["secret"]))
     client = TestClient(app)
@@ -395,7 +403,7 @@ def test_a_manager_session_is_told_to_queue_and_the_document_is_untouched(projec
 def test_presence_needs_a_sign_in_and_names_what_is_missing(project):
     """The gate is the middleware's, and a malformed ask is refused in words."""
     app = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     stranger = TestClient(app)
     shut_out = stranger.post("/api/managers/demo/presence", json={"repoId": "r", "docId": "d"})
@@ -453,7 +461,7 @@ def server(project):
     import uvicorn
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -487,6 +495,15 @@ MEASURE = """
   document.querySelectorAll('body, body *').forEach(el => {
     const s = getComputedStyle(el);
     if (s.display === 'none' || s.visibility === 'hidden') return;
+    // A closed Manager Console is a real, 0px grid column (converge-t30q):
+    // getBoundingClientRect() reports a clipped descendant's un-clipped
+    // natural box regardless of the ancestor's own overflow:hidden, so the
+    // pane's own header/resize-handle read as "past the right edge" even
+    // though nothing there is visible or reachable. Skip anything inside a
+    // pane that is itself inert (pointer-events:none), the same signal
+    // main.js's own consoleIsStowedHere() reads.
+    const pane = el.closest('.manager-console');
+    if (pane && getComputedStyle(pane).pointerEvents === 'none') return;
     const r = el.getBoundingClientRect();
     if (r.right > de.clientWidth + 0.01) {
       past.push(((el.id ? '#' + el.id : '') + '.' + String(el.className || el.tagName)).slice(0, 50)
@@ -520,8 +537,22 @@ def _boot(browser, server, project, user, width=1280, height=800, intercept=Fals
     page.on("console", lambda m: errors.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
     page.goto(server, wait_until="networkidle")
-    page.wait_for_selector("#documentModeContent", timeout=15000)
+    # Boot always lands on Home first, never an auto-picked manager
+    # (experience.v1 Core 1, converge-t30q) -- open the one manager session
+    # this project registers, then its Direction tab.
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
     if width < 980:
+        page.wait_for_selector("#consoleToggle", timeout=15000)
+        page.click("#consoleToggle")
+        page.wait_for_timeout(500)
+    page.wait_for_selector("#directionTab", timeout=15000)
+    page.click("#directionTab")
+    page.wait_for_selector("#documentModeContent", timeout=15000)
+    if width < 980 and page.evaluate(
+        "() => { const c = document.getElementById('managerConsole'); "
+        "return !!(c && c.getBoundingClientRect().width > 0 && !c.classList.contains('hidden')); }"
+    ):
         page.click("#consoleToggle")
         page.wait_for_timeout(500)
     return ctx, page, errors

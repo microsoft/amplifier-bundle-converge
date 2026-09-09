@@ -439,6 +439,684 @@ def test_a_per_person_store_that_is_not_your_reading_is_still_a_second_copy():
         assert allowed["status"] == "PASS", allowed
 
 
+def test_auth_revocation_state_is_not_a_copy_of_the_projects_truth():
+    """converge-lech, repaired.
+
+    `app/auth.py`'s `SessionRegistry` persists `{"revoked": [...]}` -- which
+    session ids a logout has ended -- in a JSON file under `Path.home()`. That
+    matches STORE_MARKERS ("a JSON file of its own"), but clause 7 names six
+    things as the project's truth (documents, code record, work queue, lanes,
+    return log, pending decisions) and "who is still signed in" is none of
+    them. Rule 7 must not report the app's own good security practice as a
+    defect, and must not need the filename `auth.py` to say so -- the same
+    content, in a differently-named file, must be read the same way.
+
+    A word-only fixture (`is_revoked` reading a bare `table.get('revoked')`,
+    `revoke` doing nothing) is no longer a positive control here: the rule no
+    longer grants the exemption for revocation-sounding words, only for the
+    bounded persisted schema itself. So this copies the real shape --
+    initialized to exactly `{"revoked": []}`, read via `.get`/`.setdefault`,
+    written via a `["revoked"] = ...` assignment, handed to `json.dump` --
+    under a different class and file name, proving the recognizer reads
+    content, not identifiers.
+    """
+    kit = kit_module()
+    import repotarget
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "contracts").mkdir()
+        (root / "app").mkdir()
+        (root / "contracts" / "experience.v1.md").write_text(ratified, encoding="utf-8")
+        repo = repotarget.Repo(root, "checkout")
+
+        # Not named auth.py, and not called SessionRegistry, on purpose: the
+        # classifier reads content, not a filename or class-name allowlist.
+        revocation_store = root / "app" / "session_state.py"
+        revocation_store.write_text(
+            '"""Which issued session ids a logout has ended."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "class LogoutLedger:\n"
+            "    def _read(self):\n"
+            "        if not self.path.exists():\n"
+            '            return {"revoked": []}\n'
+            "        table = json.loads(self.path.read_text())\n"
+            '        table.setdefault("revoked", [])\n'
+            "        return table\n\n"
+            "    def is_revoked(self, sid):\n"
+            "        return sid in self._read().get('revoked', [])\n\n"
+            "    def revoke(self, sid):\n"
+            "        table = self._read()\n"
+            '        revoked = set(table.get("revoked") or [])\n'
+            "        revoked.add(sid)\n"
+            '        table["revoked"] = sorted(revoked)\n'
+            "        with open(self.path, 'w') as out:\n"
+            "            json.dump(table, out)\n\n"
+            'PATH = Path.home() / ".amplifier" / "app.sessions.json"\n',
+            encoding="utf-8")
+        allowed = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert allowed["status"] == "PASS", allowed
+
+
+def test_a_project_cache_disguised_with_revocation_words_still_fails():
+    """converge-lech's own negative control: `carries_project_truth` outranks
+    `is_auth_state`. A store that mentions revocation vocabulary AND actually
+    persists the project's work queue is still a second copy of the truth --
+    named regardless of the file it sits in, and regardless of being kept
+    per person (the same principle `test_a_per_person_store_that_is_not_your_\
+reading_is_still_a_second_copy` already established for the reading
+    exemption).
+    """
+    kit = kit_module()
+    import repotarget
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        (root / "contracts").mkdir()
+        (root / "app").mkdir()
+        (root / "contracts" / "experience.v1.md").write_text(ratified, encoding="utf-8")
+        repo = repotarget.Repo(root, "checkout")
+
+        disguised = root / "app" / "auth.py"
+        disguised.write_text(
+            '"""SessionRegistry: is_revoked, revoked, revoke -- and, quietly,\n'
+            "a per-person copy of the project's work queue too.\"\"\"\n"
+            "from pathlib import Path\n"
+            'PATH = Path.home() / ".amplifier" / "auth.json"\n',
+            encoding="utf-8")
+        refused = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert refused["status"] == "FAIL", refused
+        assert "auth.py" in refused["detail"], refused
+
+
+def _repo_with_app_file(root, ratified, filename, content):
+    """A minimal repository checkout carrying one file under `app/`.
+
+    Shared by the serialized-shape tests below so each one states only what
+    differs: the store's own content.
+    """
+    import repotarget
+    (root / "contracts").mkdir()
+    (root / "app").mkdir()
+    (root / "contracts" / "experience.v1.md").write_text(ratified, encoding="utf-8")
+    (root / "app" / filename).write_text(content, encoding="utf-8")
+    return repotarget.Repo(root, "checkout")
+
+
+def test_a_serialized_lane_cache_with_no_prose_is_still_project_truth():
+    """converge-lech, reopened -- the exact reproduction.
+
+    `cache = {"lanes": [{"id": "lane-1", "state": "working"}]}` beside a bare
+    `def revoke(sid): ...`, with NO prose anywhere in the file. Before this
+    fix: `PROJECT_TRUTH_MARKERS` reads prose only, finds nothing (the word
+    "lane" appears nowhere as a phrase), `AUTH_STATE_MARKERS` finds `revoke`,
+    and the store was granted the auth exemption though it serializes exactly
+    the lane records clause 7 names -- a false PASS. This must FAIL.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "lane_cache.py",
+            '"""Serialized lane cache, no explanatory prose."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            'cache = {"lanes": [{"id": "lane-1", "state": "working"}]}\n\n'
+            "def revoke(sid):\n"
+            "    pass\n\n"
+            'PATH = Path.home() / ".amplifier" / "lane_cache.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "lane_cache.py" in result["detail"], result
+
+
+def test_serialized_project_shapes_are_recognized_without_prose():
+    """The other explicit project categories, each with no prose: a document
+    store, a work-queue store, a pending-decisions store, and a return-log
+    store. Every one must FAIL -- the content is the project's truth whether
+    or not any file says so in a sentence."""
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    cases = {
+        "doc_cache.py": 'snapshot = {"documents": [{"path": "docs/VISION.md"}]}\n',
+        "queue_cache.py": 'snapshot = {"work_items": [{"id": "converge-1"}]}\n',
+        "decision_cache.py": 'snapshot = {"decisions": [{"id": "d-1"}]}\n',
+        "log_cache.py": 'snapshot = {"return_log": [{"lane": "x"}]}\n',
+    }
+    for filename, body in cases.items():
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = _repo_with_app_file(
+                Path(tmp), ratified, filename,
+                '"""No explanatory prose here -- data only."""\n'
+                "from pathlib import Path\n"
+                + body +
+                f'PATH = Path.home() / ".amplifier" / "{filename}.json"\n')
+            result = kit.check_no_copy_of_the_projects_truth(None, repo)
+            assert result["status"] == "FAIL", f"{filename}: {result}"
+            assert filename in result["detail"], f"{filename}: {result}"
+
+
+def test_a_mixed_auth_plus_project_payload_still_fails():
+    """A single store that genuinely holds BOTH revocation state and a
+    serialized project shape -- `{"revoked": [...], "lanes": [...]}` -- is
+    still a second copy of the truth. Revocation vocabulary sitting beside
+    real project data must never launder it into the auth exemption."""
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "mixed_store.py",
+            '"""Session table, plus (quietly) a lane cache."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "def revoke(sid):\n"
+            "    table = json.loads(PATH.read_text())\n"
+            '    table.setdefault("revoked", []).append(sid)\n'
+            '    table["lanes"] = [{"id": "lane-1", "state": "working"}]\n'
+            "    PATH.write_text(json.dumps(table))\n\n"
+            'PATH = Path.home() / ".amplifier" / "mixed_store.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "mixed_store.py" in result["detail"], result
+
+
+def test_a_per_person_serialized_cache_is_still_project_truth():
+    """A per-person cache (kept per `Path.home()`, the very shape clause 7's
+    reading exemption uses) that ALSO serializes project data is still a
+    second copy of the truth -- being per-person is not what clause 7 asks
+    about, what the store holds is."""
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "per_person_cache.py",
+            '"""Per-person, on purpose -- still a copy of the queue."""\n'
+            "from pathlib import Path\n\n"
+            'cache = {"queue": [{"id": "converge-1", "state": "open"}]}\n\n'
+            'PATH = Path.home() / ".amplifier" / "per-person-cache.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "per_person_cache.py" in result["detail"], result
+
+
+def test_a_real_revocation_only_store_still_passes_alongside_the_new_markers():
+    """Regression control: the new serialized-shape markers must not start
+    faulting the store clause 7 already allows. A store that matches the
+    bounded SessionRegistry schema -- and nothing beyond it -- is still the
+    permitted per-instance authentication state.
+
+    A word-only `revoke`/`is_revoked` fixture with no actual persistence
+    (`revoke` doing nothing) is no longer a positive control: see
+    `test_a_variable_or_scalar_lane_payload_beside_bare_revoke_still_fails`
+    for exactly why that shape must not pass any more. This copies the real
+    persisted schema instead.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "sessions.py",
+            '"""Which issued session ids a logout has ended."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "class SessionRegistry:\n"
+            "    def _read(self):\n"
+            "        if not self.path.exists():\n"
+            '            return {"revoked": []}\n'
+            "        table = json.loads(self.path.read_text())\n"
+            '        table.setdefault("revoked", [])\n'
+            "        return table\n\n"
+            "    def is_revoked(self, sid):\n"
+            "        return sid in self._read().get('revoked', [])\n\n"
+            "    def revoke(self, sid):\n"
+            "        table = self._read()\n"
+            '        revoked = set(table.get("revoked") or [])\n'
+            "        revoked.add(sid)\n"
+            '        table["revoked"] = sorted(revoked)\n'
+            "        with open(self.path, 'w') as out:\n"
+            "            json.dump(table, out)\n\n"
+            'PATH = Path.home() / ".amplifier" / "sessions.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "PASS", result
+
+
+def test_a_variable_or_scalar_lane_payload_beside_bare_revoke_still_fails():
+    """converge-lech, repaired -- the escape the previous two blacklist
+    refinements still permitted.
+
+    `SERIALIZED_PROJECT_TRUTH_MARKERS` only matches a literal list value
+    (`"lanes": [`). A lane payload assigned from a variable, or a bare
+    scalar, matches no project-truth marker -- and the old blacklist's bare
+    `revoke` word still matched, granting the auth exemption though the
+    store is neither the reading nor session-revocation state. The positive
+    recognizer only exempts a store that matches the bounded SessionRegistry
+    schema byte for byte; neither of these does, so both must FAIL.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    cases = {
+        "variable_lane_cache.py": (
+            'records = [{"id": "lane-1", "state": "working"}]\n'
+            'cache = {"lanes": records}\n\n'
+            "def revoke(sid):\n"
+            "    pass\n"),
+        "scalar_lane_cache.py": (
+            'cache = {"lanes": "lane-1"}\n\n'
+            "def revoke(sid):\n"
+            "    pass\n"),
+    }
+    for filename, body in cases.items():
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = _repo_with_app_file(
+                Path(tmp), ratified, filename,
+                '"""No explanatory prose here -- data only."""\n'
+                "from pathlib import Path\n"
+                + body +
+                f'PATH = Path.home() / ".amplifier" / "{filename}.json"\n')
+            result = kit.check_no_copy_of_the_projects_truth(None, repo)
+            assert result["status"] == "FAIL", f"{filename}: {result}"
+            assert filename in result["detail"], f"{filename}: {result}"
+
+
+def test_an_unrelated_json_store_that_merely_says_revoke_still_fails():
+    """A JSON store with no relation to session revocation at all -- an
+    ordinary cache key, no `{"revoked": [...]}` schema anywhere -- but the
+    word `revoke` happens to appear in an unrelated function name. The
+    positive recognizer requires the bounded schema, not the word; this
+    must FAIL.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "unrelated_cache.py",
+            '"""An unrelated cache; happens to mention revoke."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "def revoke_stale_entries(cache):\n"
+            '    cache.pop("stale", None)\n\n'
+            'state = {"last_seen": "2026-09-09"}\n\n'
+            'PATH = Path.home() / ".amplifier" / "unrelated_cache.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "unrelated_cache.py" in result["detail"], result
+
+
+def test_a_table_touching_revoked_and_another_key_still_fails():
+    """converge-lech, repaired: the bounded schema requires the persisted
+    table touch NO literal key beyond "revoked". A table that also reads or
+    writes one other literal key -- even one none of clause 7's six
+    project-truth categories names, so `carries_project_truth` never fires
+    -- is not the permitted SessionRegistry shape and must FAIL, not be
+    waved through on a bare `revoke` word.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "extra_key_store.py",
+            '"""Session table that also keeps an unrelated counter."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "def revoke(sid):\n"
+            "    table = json.loads(PATH.read_text()) if PATH.exists() "
+            'else {"revoked": []}\n'
+            '    revoked = set(table.get("revoked") or [])\n'
+            "    revoked.add(sid)\n"
+            '    table["revoked"] = sorted(revoked)\n'
+            '    table["hits"] = table.get("hits", 0) + 1\n'
+            "    with open(PATH, 'w') as out:\n"
+            "        json.dump(table, out)\n\n"
+            'PATH = Path.home() / ".amplifier" / "extra_key_store.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "extra_key_store.py" in result["detail"], result
+
+
+def test_a_separately_persisted_unknown_cache_beside_the_valid_table_still_fails():
+    """converge-lech, reopened a second time.
+
+    `recognizes_session_registry_schema` used to ask `any(...)` across every
+    `json.dump` call site: a file with a REAL, valid revoked-only
+    SessionRegistry table (`json.dump(table, out)`, touching only
+    `"revoked"`) ALSO separately persisting an unrelated cache
+    (`json.dump(cache, out)`, `cache = {"lanes": records}` -- a variable
+    value, so `SERIALIZED_PROJECT_TRUTH_MARKERS`' literal-list pattern never
+    fires either) still PASSed, because the one matching `table` alone
+    satisfied `any()`. Every `json.dump` write target in the file must now be
+    accounted for and satisfy the bounded schema; this second, unaccounted
+    target must fail the whole file.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "dual_store.py",
+            '"""A real SessionRegistry table, plus an unrelated, separately\n'
+            'persisted lane cache the old any()-based recognizer never\n'
+            'weighed against the rest of the file."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "class SessionRegistry:\n"
+            "    def _read(self):\n"
+            "        if not self.path.exists():\n"
+            '            return {"revoked": []}\n'
+            "        table = json.loads(self.path.read_text())\n"
+            '        table.setdefault("revoked", [])\n'
+            "        return table\n\n"
+            "    def revoke(self, sid):\n"
+            "        table = self._read()\n"
+            '        revoked = set(table.get("revoked") or [])\n'
+            "        revoked.add(sid)\n"
+            '        table["revoked"] = sorted(revoked)\n'
+            "        with open(self.path, 'w') as out:\n"
+            "            json.dump(table, out)\n\n"
+            "def snapshot_lanes(records):\n"
+            '    cache = {"lanes": records}\n'
+            "    with open(CACHE_PATH, 'w') as out:\n"
+            "        json.dump(cache, out)\n\n"
+            'PATH = Path.home() / ".amplifier" / "dual_store.sessions.json"\n'
+            'CACHE_PATH = Path.home() / ".amplifier" / "dual_store.lanes.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "dual_store.py" in result["detail"], result
+
+
+def test_an_unknown_expression_dumped_alongside_the_valid_table_still_fails():
+    """converge-lech, reopened a second time.
+
+    The old `\\bjson\\.dump\\(\\s*(\\w+)\\s*,` regex silently skipped any
+    `json.dump` call whose first argument was not a bare identifier -- a
+    nonidentifier expression (here, a function call) was never enumerated as
+    a target at all, so it was never checked and never counted against the
+    file. A file with a real, valid revoked-only table (`json.dump(table,
+    out)`) ALSO dumping an unrelated expression this recognizer cannot vouch
+    for (`json.dump(collect_debug_snapshot(), out)`) must fail the whole
+    file -- an unaccounted target is not the same as an absent one.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "expr_dump_store.py",
+            '"""A real SessionRegistry table, plus an unrelated dump of a\n'
+            'nonidentifier expression the recognizer must not silently\n'
+            'ignore."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "class SessionRegistry:\n"
+            "    def _read(self):\n"
+            "        if not self.path.exists():\n"
+            '            return {"revoked": []}\n'
+            "        table = json.loads(self.path.read_text())\n"
+            '        table.setdefault("revoked", [])\n'
+            "        return table\n\n"
+            "    def revoke(self, sid):\n"
+            "        table = self._read()\n"
+            '        revoked = set(table.get("revoked") or [])\n'
+            "        revoked.add(sid)\n"
+            '        table["revoked"] = sorted(revoked)\n'
+            "        with open(self.path, 'w') as out:\n"
+            "            json.dump(table, out)\n\n"
+            "def collect_debug_snapshot():\n"
+            '    return {"last_seen": "2026-09-09"}\n\n'
+            "def dump_debug_snapshot():\n"
+            "    with open(DEBUG_PATH, 'w') as out:\n"
+            "        json.dump(collect_debug_snapshot(), out)\n\n"
+            'PATH = Path.home() / ".amplifier" / "expr_dump_store.sessions.json"\n'
+            'DEBUG_PATH = Path.home() / ".amplifier" / "expr_dump_store.debug.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "expr_dump_store.py" in result["detail"], result
+
+
+def test_a_keyword_only_dump_target_beside_the_valid_table_still_fails():
+    """converge-lech, reopened a third time -- the manager's own reproduction.
+
+    `json.dump`'s real signature is `dump(obj, fp, ...)`, both keyword-
+    capable. `_json_dump_targets` only ever read `node.args[0]`, and only
+    entered its branch when `node.args` was non-empty at all -- so a call
+    written keyword-only, `json.dump(obj=cache, fp=out)`, had an EMPTY
+    `node.args` and was skipped outright: never enumerated, never counted
+    as unknown, invisible. A file with a real, valid revoked-only
+    SessionRegistry table (`json.dump(table, out)`) ALSO separately
+    persisting an unrelated lane cache this way (`cache = {"lanes":
+    records}`, `json.dump(obj=cache, fp=out)`) must fail the whole file --
+    the same as the second reopening's positional nonidentifier expression,
+    just reached by keyword instead of by position.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "kwonly_dump_store.py",
+            '"""A real SessionRegistry table, plus an unrelated lane cache\n'
+            'dumped with a keyword-only `obj=`, which the old positional-only\n'
+            'enumeration never even looked at."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "class SessionRegistry:\n"
+            "    def _read(self):\n"
+            "        if not self.path.exists():\n"
+            '            return {"revoked": []}\n'
+            "        table = json.loads(self.path.read_text())\n"
+            '        table.setdefault("revoked", [])\n'
+            "        return table\n\n"
+            "    def revoke(self, sid):\n"
+            "        table = self._read()\n"
+            '        revoked = set(table.get("revoked") or [])\n'
+            "        revoked.add(sid)\n"
+            '        table["revoked"] = sorted(revoked)\n'
+            "        with open(self.path, 'w') as out:\n"
+            "            json.dump(table, out)\n\n"
+            "def snapshot_lanes(records):\n"
+            '    cache = {"lanes": records}\n'
+            "    with open(CACHE_PATH, 'w') as out:\n"
+            "        json.dump(obj=cache, fp=out)\n\n"
+            'PATH = Path.home() / ".amplifier" / "kwonly_dump_store.sessions.json"\n'
+            'CACHE_PATH = Path.home() / ".amplifier" / "kwonly_dump_store.lanes.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "kwonly_dump_store.py" in result["detail"], result
+
+
+def test_a_keyword_only_dump_of_the_valid_table_itself_still_passes():
+    """Positive control paired with the test above: `obj=`/`fp=` keyword
+    syntax is not itself disqualifying -- only an unaccounted SECOND target
+    is. The real table, dumped entirely by keyword and touching no key
+    beyond "revoked", must still PASS.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "kwonly_valid_store.py",
+            '"""The real SessionRegistry schema, dumped entirely by keyword."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "class SessionRegistry:\n"
+            "    def _read(self):\n"
+            "        if not self.path.exists():\n"
+            '            return {"revoked": []}\n'
+            "        table = json.loads(self.path.read_text())\n"
+            '        table.setdefault("revoked", [])\n'
+            "        return table\n\n"
+            "    def revoke(self, sid):\n"
+            "        table = self._read()\n"
+            '        revoked = set(table.get("revoked") or [])\n'
+            "        revoked.add(sid)\n"
+            '        table["revoked"] = sorted(revoked)\n'
+            "        with open(self.path, 'w') as out:\n"
+            "            json.dump(obj=table, fp=out)\n\n"
+            'PATH = Path.home() / ".amplifier" / "kwonly_valid_store.sessions.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "PASS", result
+
+
+def test_a_json_dump_call_with_no_locatable_target_still_fails():
+    """Unknown-argument control. A `json.dump(...)` call offering neither a
+    positional argument nor an `obj=` keyword -- e.g. only `fp=`, or no
+    arguments recognizable as the object at all -- cannot be located, and
+    must be conservatively counted as an unknown target (the same treatment
+    a nonidentifier expression already gets), never silently skipped.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "unlocatable_dump_store.py",
+            '"""A real SessionRegistry table, plus a json.dump call whose\n'
+            'target argument cannot be located by name or position at all."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "class SessionRegistry:\n"
+            "    def _read(self):\n"
+            "        if not self.path.exists():\n"
+            '            return {"revoked": []}\n'
+            "        table = json.loads(self.path.read_text())\n"
+            '        table.setdefault("revoked", [])\n'
+            "        return table\n\n"
+            "    def revoke(self, sid):\n"
+            "        table = self._read()\n"
+            '        revoked = set(table.get("revoked") or [])\n'
+            "        revoked.add(sid)\n"
+            '        table["revoked"] = sorted(revoked)\n'
+            "        with open(self.path, 'w') as out:\n"
+            "            json.dump(table, out)\n\n"
+            "def dump_mystery(fp=None, **extra):\n"
+            "    json.dump(fp=fp, **extra)\n\n"
+            'PATH = Path.home() / ".amplifier" / "unlocatable_dump_store.sessions.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "unlocatable_dump_store.py" in result["detail"], result
+
+
+def test_a_hyphenated_key_on_the_tracked_table_still_fails():
+    """converge-lech, reopened a fourth time -- the manager's own
+    reproduction. `_table_matches_session_registry_schema` used to read keys
+    with a `\\w+`-anchored regex, so `table["extra-cache"] = records` -- a
+    real second key, just not an identifier-shaped one, a hyphen is not a
+    word character -- matched no key regex at all and was invisible: not
+    counted as an extra key, just never seen. A table that also writes one
+    other literal key, hyphenated, still fails -- the same as the earlier
+    `test_a_table_touching_revoked_and_another_key_still_fails` control, just
+    with a key `\\w+` cannot see.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "hyphen_key_store.py",
+            '"""Session table that also keeps an unrelated, hyphenated key."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "def revoke(sid):\n"
+            "    table = json.loads(PATH.read_text()) if PATH.exists() "
+            'else {"revoked": []}\n'
+            '    revoked = set(table.get("revoked") or [])\n'
+            "    revoked.add(sid)\n"
+            '    table["revoked"] = sorted(revoked)\n'
+            '    table["extra-cache"] = revoked\n'
+            "    with open(PATH, 'w') as out:\n"
+            "        json.dump(table, out)\n\n"
+            'PATH = Path.home() / ".amplifier" / "hyphen_key_store.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "hyphen_key_store.py" in result["detail"], result
+
+
+def test_an_empty_string_key_on_the_tracked_table_still_fails():
+    """Same blind spot as the hyphenated key, taken to its edge: an empty
+    string is a legal dict key that `\\w+` (one or more word characters)
+    can never match at all, `\\w*` would be needed and still was not used.
+    AST literal-key inspection has no such gap -- any string constant is a
+    key, including `""`.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "empty_key_store.py",
+            '"""Session table that also keeps an empty-string key."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "def revoke(sid):\n"
+            "    table = json.loads(PATH.read_text()) if PATH.exists() "
+            'else {"revoked": []}\n'
+            '    revoked = set(table.get("revoked") or [])\n'
+            "    revoked.add(sid)\n"
+            '    table["revoked"] = sorted(revoked)\n'
+            '    table[""] = "marker"\n'
+            "    with open(PATH, 'w') as out:\n"
+            "        json.dump(table, out)\n\n"
+            'PATH = Path.home() / ".amplifier" / "empty_key_store.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "empty_key_store.py" in result["detail"], result
+
+
+def test_a_dynamic_key_access_on_the_tracked_table_still_fails():
+    """Unknown-key control. A key reached through a variable or expression
+    rather than a string literal -- `table[cache_key] = value` -- cannot be
+    proven to be "revoked" or anything else. Unknown/dynamic key access must
+    not positively qualify a table as revoked-only; it disqualifies it, the
+    same as a second, known, unrelated key does.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "dynamic_key_store.py",
+            '"""Session table that also writes through a dynamic key."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "def revoke(sid, cache_key):\n"
+            "    table = json.loads(PATH.read_text()) if PATH.exists() "
+            'else {"revoked": []}\n'
+            '    revoked = set(table.get("revoked") or [])\n'
+            "    revoked.add(sid)\n"
+            '    table["revoked"] = sorted(revoked)\n'
+            "    table[cache_key] = sid\n"
+            "    with open(PATH, 'w') as out:\n"
+            "        json.dump(table, out)\n\n"
+            'PATH = Path.home() / ".amplifier" / "dynamic_key_store.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "dynamic_key_store.py" in result["detail"], result
+
+
+def test_a_dynamic_get_key_on_the_tracked_table_still_fails():
+    """Same unknown-key reasoning, on the read side: `table.get(some_var)`
+    reaches an unproven key through `.get`/`.setdefault` rather than a
+    literal. It must not be silently ignored (dropped from the key set,
+    letting the file read as if `.get` were never called) or wrongly
+    counted as reading "revoked" -- either way, an unknown read disqualifies
+    the file.
+    """
+    kit = kit_module()
+    ratified = CONTRACT.read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = _repo_with_app_file(
+            Path(tmp), ratified, "dynamic_get_store.py",
+            '"""Session table also read through a dynamic .get key."""\n'
+            "from pathlib import Path\n"
+            "import json\n\n"
+            "def revoke(sid, field):\n"
+            "    table = json.loads(PATH.read_text()) if PATH.exists() "
+            'else {"revoked": []}\n'
+            '    revoked = set(table.get("revoked") or [])\n'
+            "    revoked.add(sid)\n"
+            '    table["revoked"] = sorted(revoked)\n'
+            "    _ = table.get(field)\n"
+            "    with open(PATH, 'w') as out:\n"
+            "        json.dump(table, out)\n\n"
+            'PATH = Path.home() / ".amplifier" / "dynamic_get_store.json"\n')
+        result = kit.check_no_copy_of_the_projects_truth(None, repo)
+        assert result["status"] == "FAIL", result
+        assert "dynamic_get_store.py" in result["detail"], result
+
+
 def test_rule_7_reads_the_clause_and_not_the_reserved_section():
     """Before the ratification the arbiter was the umbrella's Reserved section,
     which asked where the reading cursor was kept. That question is answered and

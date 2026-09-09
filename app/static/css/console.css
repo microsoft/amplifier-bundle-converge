@@ -14,6 +14,21 @@
   flex-direction:column;
   overflow:hidden;
   transition:opacity .15s ease;
+  /* A dock, not a scroll-with-the-page column: without a height of its own the
+     pane is a plain grid item with `height:auto`, so CSS Grid's implicit row
+     sizes to the TALLEST item sharing that row -- the Operation/Direction
+     workspace's own content, which can be far taller than one screen. Every
+     column in the row then stretches to match, including this one, which
+     drags the resize handle's `top:0;bottom:0` box hundreds of pixels below
+     the viewport with it (converge-t30q: measured 1280x800, the handle's own
+     bounding box height went 1573px against an 800px-tall window, so a real
+     pointer drag at its vertical center landed off-screen and moved nothing).
+     Pinning the pane's own height to the viewport keeps it a fixed-height
+     dock regardless of how tall a sibling column's content gets; its own
+     `.console-body` already scrolls internally (`console-body { overflow:auto }`
+     above) so nothing inside it is lost, only no longer able to inflate the
+     shared row. */
+  height:calc(100vh - 66px);
 }
 /* Closed is a 0px column: there is no pane, so there is no divider to draw. The
    1px border is the pane's whole remaining width, and it sits past the right edge. */

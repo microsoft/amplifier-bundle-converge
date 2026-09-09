@@ -155,7 +155,8 @@ def project(tmp_path: Path) -> dict:
         f'batch_dir = "{batch}"\n'
         f'repos = ["{repo}"]\n'
         'tracker_project = ""\n'
-        'tmux_socket = "test-socket-that-does-not-exist"\n',
+        'tmux_socket = "test-socket-that-does-not-exist"\n'
+        f'steward = "{GOOD_USER}"\n',
         encoding="utf-8",
     )
     return {
@@ -163,7 +164,7 @@ def project(tmp_path: Path) -> dict:
         "batch": batch,
         "config": conf,
         "secret": tmp_path / "secret",
-        "state": tmp_path / "state.json",
+        "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
     }
 
 
@@ -177,7 +178,7 @@ class _FakePam:
 def client(project, monkeypatch) -> TestClient:
     monkeypatch.setattr(auth.pam_module, "pam", _FakePam)
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     return TestClient(made, follow_redirects=False)
 

@@ -1,7 +1,7 @@
 {
   "path": "AMPLIFIER-CORE / contracts/kernel.v1.md",
   "title": "Kernel Contract",
-  "updated": "Ratified Aug 28, 2026 by bkrabach",
+  "updated": "Ratified Aug 28, 2026 by the project steward",
   "state": "kept",
   "sections": [
     ["Purpose", "<p>The kernel supplies a minimal set of lifecycle and orchestration primitives. It does not absorb capabilities that can remain in modules.</p>"],

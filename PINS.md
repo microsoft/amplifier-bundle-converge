@@ -18,33 +18,13 @@ line here is wrong, sessions act on it anyway — fix it the moment it drifts.
 | Conformance kits | `conformance/<contract>/run.py` — `conformance/README.md` names each one and how to run it |
 | Integration branch | `main` |
 
-Measured on this tree, 2026-09-06:
-
-```
-$ uv run conformance/documents/run.py .
-VERDICT: PASS  (pass=18 fail=0 skip=9)
-$ uv run --with pyyaml ledger/checks/verify.py; echo "exit=$?"
-FAILURES:
-  - SYNC contracts/documents.v1.md     723f8923…    (179 rows, 14 contracts)
-  - SYNC contracts/operation.v1.md     7615b5c1…
-  - SYNC contracts/platform-web.v1.md  306c88fb…
-  - CVG-020 expect NOT met
-exit=1
-```
-
-**The ledger self-check exits 1 today, and every failure in it is filed rather
-than unknown.** Do not read a non-zero exit here as a fresh failure without
-reading the failure text first.
-
-- The three `SYNC` rows are the three documents whose H1 gained
-  `held loosely 2026-09-06` (`converge-w3m4`). Nothing but the H1 moved — the
-  same run reports `178/178 quotes verify byte-for-byte` — so what is owed is
-  the re-pin **and** the re-review `docs/LEDGER-FORMAT.md` §4 requires with it,
-  never a silent hash bump.
-- `CVG-020` reads `docs/workflow/OWNER-RETURN-LOG.md` and finds today's round-3
-  return entry carrying no time away (`converge-9koj`).
-
-Every other self-check in that run passes.
+**Name the integration being checked.** The live attribution wrapper forwards
+`CONVERGE_INTEGRATION_BRANCH` to the harness's existing integration-ref option.
+Unset, the default remains `main`; checking another branch requires naming that
+branch explicitly. Do not move main or weaken a row to manufacture a pass.
+Run `uv run --extra app --with pytest --with httpx --with playwright pytest -q
+app/tests tests` for the app and repository tests. A passing test suite does
+not establish that human checks or every operational contract are satisfied.
 
 ## Naming
 
@@ -94,25 +74,30 @@ Every other self-check in that run passes.
 A second, different guard runs inside Amplifier sessions and denies write-shaped
 tool calls. Its shipped configuration is in `behaviors/converge.yaml`:
 
-- Guards `contracts/*.md`, `contracts/**/*.md`, `docs/VISION.md`, `VISION.md`.
+- Guards `contracts/*.md`, `contracts/**/*.md`, `docs/VISION.md`, `VISION.md`,
+  `docs/PROTOCOL.md` and `PROTOCOL.md`.
 - Only guards a file whose **on-disk content** already carries the frozen
   marker, so a `(DRAFT)` contract is writable during authoring.
 - Also scans `bash` for write-laundering (`>`, `tee`, `sed -i`, `cp`, `mv`,
   `truncate`, `dd of=`).
 - `fail_closed_on_error: true` — an error in the guard denies the write.
 
-Two facts about it that are **not** what you would assume:
+Current source facts (the former marker/name mismatch descriptions were stale):
 
-1. Its `frozen_marker_regex` matches `**Status:** RATIFIED|FROZEN` or
-   `status: FROZEN` — **not** the `(FROZEN <date>)` H1 parenthetical that
-   `contracts/documents.v1.md` clause 6 mandates and that `.githooks/pre-push`
-   checks. The two guards read different markers.
-2. Its `always_allow_globs` / `candidate_glob` are `**/CANDIDATE-*.md` only —
-   it does **not** yet recognise `<contract>.vN-candidate.md`, though
-   `contracts/composition.v1.md` clause 7 says it must.
+1. `frozen_marker_regex` recognizes `(FROZEN ...)` and `(RATIFIED ...)` heading
+   markers as well as the legacy body-status forms. The behavior configuration
+   and module defaults are checked together by the guard tests.
+2. `always_allow_globs` and `candidate_glob` include both `CANDIDATE-*.md` and
+   `<contract>.vN-candidate.md`. Paths are interpreted in the target's repository,
+   not accidentally in its containing multi-repo workspace.
+3. A ratified candidate already recorded in the
+   target's Changelog cannot authorize another edit. The check requires its full
+   normalized repo-relative path token, not a substring or bare basename.
+   Target-read errors fail closed. This is the in-session guard's check; it does
+   not claim that the separate pre-push presence scan performs the same check.
 
-Both are recorded as work, not worked around. Do not "fix" a document to match
-the guard; the contract is the law and the guard is the thing that must move.
+The module README and `tests/test_guard.py` hold the exact cases and limits.
+Do not change a document to suit a guard, or route around a refusal.
 
 ## Composition
 

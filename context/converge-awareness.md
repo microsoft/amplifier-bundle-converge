@@ -40,8 +40,10 @@ wins.
 ## The app — where the steward watches
 
 From a checkout of the Converge repository, `scripts/run-app.sh` serves the app
-on <http://127.0.0.1:8788> and prints that URL; sign-in is the machine account,
-`--lan` puts it on the network, `--port N` moves it. Nobody adds a manager
+over HTTPS on <https://127.0.0.1:8788> (every interface by default) and prints
+that URL; sign-in is the machine account, `--host 127.0.0.1` stays on
+loopback, `--port N` moves it, and `/setup` on the printed URL says how to
+trust the certificate. Nobody adds a manager
 session to it: each one writes
 `<workspace>/.converge/<manager-id>/registration.toml` on every wake (`uv run
 scripts/register-manager.py --steward <name>`), the app scans for those files on

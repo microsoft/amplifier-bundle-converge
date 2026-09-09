@@ -171,7 +171,7 @@ def project(tmp_path_factory) -> dict:
         encoding="utf-8",
     )
     # Never the real ~/.amplifier: a test must not move a steward's read point.
-    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json"}
+    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json"}
 
 
 def _free_port() -> int:
@@ -187,7 +187,7 @@ def server(project):
     import uvicorn
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -262,7 +262,13 @@ def _boot(browser, server, project, width: int, height: int, errors: list[str]):
     page.on("console", lambda m: errors.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
     page.goto(server, wait_until="networkidle")
-    page.wait_for_selector("#managerConsole", timeout=15000)
+    # `state="attached"` rather than the default "visible": the console
+    # starts CLOSED now (experience-console.v1 Core 1/7, converge-t30q
+    # acceptance 3), which collapses its grid column to zero width -- a real
+    # element, present in the DOM, that Playwright's default visibility check
+    # reads as hidden because it has no rendered box yet. Every test below
+    # toggles it open/closed itself through `_set_console`.
+    page.wait_for_selector("#managerConsole", state="attached", timeout=15000)
     return ctx, page
 
 

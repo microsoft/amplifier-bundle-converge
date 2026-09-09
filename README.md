@@ -179,10 +179,15 @@ of this repository, one command:
 scripts/run-app.sh
 ```
 
-It prints where to open it — **<http://127.0.0.1:8788>** — and stops with
-Ctrl-C. You sign in with your account on that machine, the same username and
-password as `login`; the app keeps no passwords of its own. It stays on
-loopback unless you say `--lan`, and takes `--port N` when 8788 is busy.
+It prints where to open it — **<https://127.0.0.1:8788>** by default (every
+interface, so a phone or a teammate's machine can reach it too) — and stops
+with Ctrl-C. You sign in with your account on that machine, the same username
+and password as `login`; the app keeps no passwords of its own. HTTPS is
+always on, with a small local certificate authority the app makes on first
+run; open `/setup` on the printed URL for the download link, its fingerprint,
+and how to trust it (or safely click through the browser warning instead).
+Pass `--host 127.0.0.1` for the loopback/SSH-tunnel case, and `--port N` when
+8788 is busy.
 
 **What you see** is Home: the list of manager sessions you run, each with what
 wants your word, lanes running against lanes intended, and its last brief line.
@@ -261,8 +266,8 @@ anything the run started outside that directory — then delete the project's
   clause disagree, the clause wins.
 - `app/` — **the app you open beside a project**: Home, the two places, and the
   Manager Console as a pane beside either. One command from a checkout of this
-  repository, `scripts/run-app.sh`, which serves it on
-  <http://127.0.0.1:8788>. This is the body the experience family is written
+  repository, `scripts/run-app.sh`, which serves it over HTTPS on
+  <https://127.0.0.1:8788> (every interface by default). This is the body the experience family is written
   against and the five experience kits read. [Run the app](#run-the-app) above
   starts it; [`app/README.md`](app/README.md) carries the rest of its operation.
 - `src/amplifier_converge/` — the Python package the app reads through, and

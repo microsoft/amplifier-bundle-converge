@@ -62,6 +62,7 @@ def served(tmp_path, monkeypatch) -> str:
         # Never the real ~/.amplifier: a test must not move a steward's own
         # read point or drop their kept marks.
         state_path=tmp_path / "state.json",
+        sessions_path=tmp_path / "sessions.json",
     )
     client = TestClient(made, follow_redirects=False)
     answer = client.post(
@@ -153,7 +154,10 @@ def test_a_route_exists_to_carry_a_keystroke(tmp_path, monkeypatch) -> None:
     conf = tmp_path / "converge-app.toml"
     conf.write_text("", encoding="utf-8")
     made = serve.create_app(
-        config_path=conf, secret_path=tmp_path / "secret", state_path=tmp_path / "state.json"
+        config_path=conf,
+        secret_path=tmp_path / "secret",
+        state_path=tmp_path / "state.json",
+        sessions_path=tmp_path / "sessions.json",
     )
     paths = made.openapi()["paths"]
     keys = [p for p, methods in paths.items() if "keys" in p and "post" in methods]

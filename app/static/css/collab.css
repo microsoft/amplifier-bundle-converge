@@ -6,10 +6,16 @@
  *
  * Everything here is under `.collab-panel`, and every value comes from
  * `tokens.css`, so this file cannot reach any other view by accident.
+ *
+ * converge-vtkw: this panel lives inside `.document-surface` (see
+ * direction.html), not inside the padded `.context-rail` it used to sit in,
+ * so its own margin follows the sibling controls already there --
+ * `.lock-gate`'s `margin:0 0 14px` -- rather than the symmetric spacing a
+ * rail card wanted.
  */
 
 .collab-panel {
-  margin: 12px;
+  margin: 0 0 16px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -169,10 +175,36 @@
   font-size: 13px;
 }
 .collab-button:hover { border-color: var(--purple); color: var(--purple); }
+.collab-button[disabled] { opacity: .5; cursor: not-allowed; }
+.collab-button[disabled]:hover { border-color: var(--line-strong); color: inherit; }
 
 .collab-decisions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .collab-outcome { margin: 10px 0 0; font-size: 13px; color: var(--ink); min-height: 1.2em; }
+
+/* converge-ibxt: the complete, original PR body, rendered through
+ * `app/data.py`'s `render_markdown` (safe: html:false, dangerous link
+ * schemes left as plain text). Sized down from the document reader's own
+ * type scale -- this sits inside a review panel, not the main reading
+ * column -- but every element Markdown can produce still reads plainly. */
+.collab-body-render { font-size: 13px; color: #344054; }
+.collab-body-render h1, .collab-body-render h2, .collab-body-render h3 { margin: 14px 0 6px; font-size: 14px; color: var(--ink); }
+.collab-body-render p { margin: 0 0 8px; }
+.collab-body-render ul, .collab-body-render ol { margin: 0 0 8px; padding-left: 20px; }
+.collab-body-render li { margin: 3px 0; }
+.collab-body-render table { border-collapse: collapse; width: 100%; margin: 0 0 10px; font-size: 12px; }
+.collab-body-render th, .collab-body-render td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; }
+.collab-body-render code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #f1f4f8; padding: 1px 4px; border-radius: 4px; }
+.collab-body-render pre { overflow: auto; background: #0e1727; color: #d7e2ef; padding: 12px; border-radius: 8px; }
+.collab-body-render pre code { background: transparent; padding: 0; color: inherit; }
+.collab-body-render a { color: var(--blue); }
+
+/* A recognized proposal shape keeps the full body one native disclosure away
+ * -- present for verification, never shown open beside the same content the
+ * quick-view bullets already said. */
+.collab-fullbody { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+.collab-fullbody > summary { cursor: pointer; color: #6048d2; font-size: 12px; }
+.collab-fullbody[open] > summary { margin-bottom: 8px; }
 
 .collab-foot { margin: 14px 0 0; font-size: 12px; color: var(--muted); }
 
@@ -180,7 +212,7 @@
  * nothing is dropped, so a steward on a phone answers the same proposal with
  * the same evidence in front of them. */
 @media (max-width: 720px) {
-  .collab-panel { margin: 8px; }
+  .collab-panel { margin: 0 0 12px; }
   .collab-layout { grid-template-columns: minmax(0, 1fr); }
   .collab-body { padding: 0 12px 12px; }
   .collab-decisions .collab-button { flex: 1 1 45%; }

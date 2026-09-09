@@ -1,7 +1,7 @@
 {
   "path": "AMPLIFIER-RUNTIME / docs/VISION.md",
   "title": "Runtime Reliability Vision",
-  "updated": "Updated Sep 1, 2026 by bkrabach",
+  "updated": "Updated Sep 1, 2026 by the project steward",
   "state": "draft",
   "sections": [
     ["Purpose", "<p>Reduce the reliability gaps that cost people trust, without changing the public contract.</p>"],

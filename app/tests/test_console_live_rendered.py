@@ -194,6 +194,7 @@ def project(tmp_path_factory) -> dict:
         "[[managers]]\n"
         'id = "demo"\n'
         'name = "Demo manager"\n'
+        f'steward = "{USER}"\n'
         f'batch_dir = "{batch}"\n'
         f'repos = ["{repo}"]\n'
         'tracker_project = ""\n'
@@ -202,7 +203,7 @@ def project(tmp_path_factory) -> dict:
         encoding="utf-8",
     )
     # Never the real ~/.amplifier: a test must not move a steward's read point.
-    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json"}
+    return {"config": conf, "secret": tmp_path / "secret", "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json"}
 
 
 def _free_port() -> int:
@@ -218,7 +219,7 @@ def server(project):
     import uvicorn
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     uv_server = uvicorn.Server(uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning"))
@@ -262,7 +263,33 @@ def _boot(browser, project, server, width, height, errors):
     page.on("console", lambda m: errors.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
     page.goto(server, wait_until="networkidle")
-    page.wait_for_selector("#managerConsole", timeout=15000)
+    # Boot now lands on Home, not an auto-picked manager (experience.v1 Core 1,
+    # converge-t30q acceptance 1) -- open the one manager session this
+    # project registers so the tests below have a manager, and its tmux
+    # target, actually selected.
+    page.wait_for_selector(".home-manager-card", timeout=15000)
+    page.click(".home-manager-card")
+    # `state="attached"` rather than the default "visible": the console
+    # starts CLOSED now (experience-console.v1 Core 1/7, converge-t30q
+    # acceptance 3), which collapses its grid column to zero width -- a real
+    # element, present in the DOM, that Playwright's default visibility check
+    # reads as hidden because it has no rendered box yet. The code just below
+    # opens it explicitly before anything in this file reads its content.
+    page.wait_for_selector("#managerConsole", state="attached", timeout=15000)
+    page.wait_for_function(
+        "() => document.getElementById('consoleContextTitle').textContent.trim() !== '\u2014'",
+        timeout=15000,
+    )
+    # The console now starts CLOSED (experience-console.v1 Core 1/7,
+    # converge-t30q acceptance 3) -- open it explicitly, since every check in
+    # this file is about the pane's own live behaviour once open, not about
+    # the closed default itself (that default is covered in
+    # test_console_overflow_rendered.py).
+    if page.evaluate(
+        "() => document.querySelector('.body-grid').classList.contains('console-closed')"
+    ):
+        page.click("#consoleToggle")
+        page.wait_for_timeout(300)
     page.wait_for_timeout(800)  # the first capture tick
     return ctx, page
 
@@ -345,7 +372,11 @@ def test_a_line_typed_in_the_browser_arrives_in_the_manager_session(
 
     field = page.locator("#consoleForm input")
     field.fill(TYPED)
-    field.press("Enter")
+    with page.expect_response(
+        lambda response: response.request.method == "POST" and response.url.endswith("/keys")
+    ) as delivery:
+        field.press("Enter")
+    assert delivery.value.status == 200, delivery.value.text()
 
     deadline = time.time() + 8
     text = ""
@@ -429,6 +460,13 @@ def test_the_pane_is_a_dismissible_tray_at_390(tmux_server, project, server, bro
                   handle: handle ? getComputedStyle(handle).display : 'absent'};
         }"""
     )
+    # `_boot()` already forced the console open (its default is now closed --
+    # experience-console.v1 Core 1/7, converge-t30q). Confirm that before
+    # measuring "open", so this toggle is exercised in a known direction
+    # regardless of the default.
+    assert not page.evaluate(
+        "() => document.querySelector('.body-grid').classList.contains('console-closed')"
+    ), "the console must be open here for the toggle below to mean anything"
     open_measure = page.evaluate(MEASURE)
     page.click("#consoleToggle")
     page.wait_for_timeout(500)

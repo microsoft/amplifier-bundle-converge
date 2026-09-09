@@ -1,5 +1,4 @@
 {
-  "base": "/home/bkrabach/dev/hw-converge/lanes/w7-ratchet-family/amplifier-bundle-converge/conformance/experience-console/fixtures/sample-bad",
   "captured": "fixture",
   "manager": "m1",
   "note": "the same promises with nothing behind them \u2014 every checkable rule FAILs",

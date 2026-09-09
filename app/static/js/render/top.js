@@ -28,18 +28,46 @@ export function renderTop() {
   $('operationTab').setAttribute('aria-selected', state.workspace === 'operation' ? 'true' : 'false');
 }
 
+// --------------------------------------------------------------------------
+// the workspace rail: narrow rows, not a second set of Home's cards
+// --------------------------------------------------------------------------
+//
+// Manager correction 1 (converge-t30q): this used to redraw Home's own rich
+// card -- name, age, summary paragraph, a 2-up metrics grid, a resources
+// line -- once per manager, on every screen, all the time. That is a
+// required compact rail duplicating a required full card, not a choice
+// between them (shell-inbox.md acceptance 2: "do not duplicate expanded
+// cards in every place"). So the row here carries only what a narrow rail
+// needs to answer "which one, and does it need me": the manager's own name,
+// a status dot with its word, and a needs badge when something is waiting.
+// Everything Home's card already shows in full -- summary, lanes, repos,
+// projects -- stays reachable through a native <details> so it is still
+// there, accessibly, on demand rather than gone.
 export function renderSessions() {
-  $('sessionList').innerHTML = data.managerList.map((m) => `
-      <button class="session-card ${m.id === state.managerId && state.screen === 'workspace' ? 'active' : ''}" data-manager-id="${escapeHtml(m.id)}" type="button">
-        <div class="session-topline"><span class="session-name">${escapeHtml(m.name)}</span><span class="session-age">${escapeHtml(m.age)}</span></div>
-        <div class="session-summary">${escapeHtml(m.summary)}</div>
-        <div class="session-status-line"><span class="status-dot ${escapeHtml(m.status)}"></span><strong class="${escapeHtml(m.status)}">${escapeHtml(m.statusLabel)}</strong></div>
-        <div class="session-metrics">
-          <div class="session-metric"><strong>${m.needs}</strong><span>Need your word</span></div>
-          <div class="session-metric"><strong>${m.lanesActive} / ${m.lanesMax}</strong><span>Lanes active</span></div>
-        </div>
-        <div class="session-resources"><span>${m.repos} repos</span><span>${m.projects} projects</span></div>
-      </button>`).join('');
+  $('sessionList').innerHTML = data.managerList.map((m) => {
+    const active = m.id === state.managerId && state.screen === 'workspace';
+    const needs = Number(m.needs) || 0;
+    return `
+      <div class="session-row ${active ? 'active' : ''}">
+        <button class="session-row-main" data-manager-id="${escapeHtml(m.id)}" type="button" title="${escapeHtml(m.name)} \u2014 ${escapeHtml(m.statusLabel)}">
+          <span class="session-row-name">${escapeHtml(m.name)}</span>
+          <span class="session-row-badges">
+            <span class="status-dot ${escapeHtml(m.status)}" aria-hidden="true"></span>
+            <span class="session-row-status">${escapeHtml(m.statusLabel)}</span>
+            ${needs > 0 ? `<span class="needs-badge" title="${needs} need your word">${needs}</span>` : ''}
+          </span>
+        </button>
+        <details class="session-row-detail">
+          <summary>Details</summary>
+          <p class="session-row-summary">${escapeHtml(m.summary)}</p>
+          <div class="session-row-metrics">
+            <span>${m.lanesActive} / ${m.lanesMax} lanes</span>
+            <span>${m.repos} repos</span>
+            <span>${m.projects} projects</span>
+          </div>
+        </details>
+      </div>`;
+  }).join('');
   qsa('[data-manager-id]', $('sessionList')).forEach((btn) =>
     btn.addEventListener('click', () => hooks.selectManager(btn.dataset.managerId)));
 }

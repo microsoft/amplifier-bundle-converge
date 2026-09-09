@@ -19,7 +19,7 @@
     {
       "id": "runtime",
       "name": "AMPLIFIER-RUNTIME",
-      "path": "/home/bkrabach/dev/amplifier-runtime",
+      "path": "/workspace/amplifier-runtime",
       "docs": [
         { "id": "reliability-vision", "title": "Vision", "fullTitle": "Runtime Reliability Vision", "state": "draft" }
       ]

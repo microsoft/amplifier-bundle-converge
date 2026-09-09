@@ -8,7 +8,7 @@ reported rule 8a as the one FAIL left in it --
 
     8a  FAIL  no manager session names a steward, so whose word counts is
               inferred from whoever is looking (this target answers as
-              'bkrabach')
+              'the signed-in user')
 
 The change is one field in three places: `steward` on `ManagerConfig`, read
 from the `[[managers]]` block by `_manager_from_table`, and put on the card by
@@ -95,6 +95,7 @@ def _client(conf: Path, tmp_path: Path, monkeypatch) -> TestClient:
         config_path=conf,
         secret_path=tmp_path / f"secret-{conf.stem}",
         state_path=tmp_path / f"state-{conf.stem}.json",
+        sessions_path=tmp_path / f"sessions-{conf.stem}.json",
     )
     client = TestClient(made, follow_redirects=False)
     answer = client.post("/login", data={"username": GOOD_USER, "password": GOOD_PASSWORD, "next": "/"})

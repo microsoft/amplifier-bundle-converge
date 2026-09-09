@@ -11,6 +11,47 @@ Full design: `docs/design/hooks-candidate-guard-spec.md`.
 
 ## Changelog
 
+### 2026-09-09 — the single-use fix itself had two defects
+
+**`converge-wu3y` (reopened) — the first fix for single-use candidates was
+denying more than it should, and less than it should, at the same time.**
+
+1. **Fail-open on a transient read error.** `_candidate_already_landed` read
+   the guarded target a SECOND time (the first read already happened, and
+   succeeded, in the ordinary guarded-path check) to look for its own
+   Changelog record. A failure on that second read was caught and turned
+   into `False` ("not recorded" — unspent), so `evaluate_tool_pre` returned
+   `continue` and let the write through despite `fail_closed_on_error:
+   true`. Fixed two ways at once: the target's already-read content is now
+   threaded through to the already-landed check so it is never read twice
+   in the ordinary path, and when it genuinely is not available (a direct
+   call, or `require_frozen_marker: false`), a failure on that read now
+   propagates and is denied by the same fail-closed policy every other
+   guard-evaluation error uses — never silently swallowed into "unspent".
+2. **Substring/basename match instead of exact path.** The already-landed
+   check matched with `candidate_rel in changelog or candidate_path.name in
+   changelog` — a raw substring search plus a bare-basename fallback. A
+   changelog naming only `contracts/x.v2-candidate.md.bak` wrongly spent
+   `contracts/x.v2-candidate.md` (the shorter path is a literal prefix of
+   the longer filename); a changelog naming only `notes/x.v2-candidate.md`
+   wrongly spent `contracts/proposals/x.v2-candidate.md` (same basename,
+   different directory). Both denied writes a genuinely unspent, ratified
+   candidate should have allowed. Fixed by requiring the candidate's
+   complete, normalized repo-relative path to appear as one path token
+   (`_changelog_records_candidate`) — never a substring of a longer
+   filename, never a bare basename. Markdown backticks and link
+   parentheses bound a token correctly with no special-casing; a trailing
+   sentence period with no backticks is handled explicitly so it is not
+   mistaken for a real difference.
+
+Tests: W7 (`test_w7_an_unreadable_target_during_the_escape_hatch_check_fails_closed`,
+`test_w7_an_unreadable_target_with_fail_closed_disabled_still_does_not_unlock`,
+`test_w7_regression_the_target_is_read_only_once_for_the_escape_hatch_check`)
+for defect 1 — all three fail against the pre-fix code; W8 for defect 2 —
+four of its six cases fail against the pre-fix code (the other two, a
+trailing period with no backticks and a Markdown link form, already
+happened to match under the old substring search).
+
 ### 2026-09-06 — the repo below the cwd was not guarded at all
 
 **`converge-qfi9` — three direct edits to a FROZEN contract went through.**
@@ -467,10 +508,16 @@ git-tracked file (default path `.converge/UNLOCK`, only honored when
 naming the one guarded path it unlocks. Committed → auditable; scoped to one
 named file; never a global flag. Emits `converge:guard_unlock_used`.
 
-**Single-landing hygiene:** after an amendment lands, the ratified
-proposal is expected to be archived/removed in the same change (the locked
-file now carries the amended clause + a changelog entry). The guard does
-not enforce single-use; this is a documented expectation, not a mechanism.
+**Single-use is enforced (converge-wu3y):** a ratified candidate that has
+already landed -- its repo-relative path appears in the target's own
+``## Changelog`` section -- is spent and no longer opens the hatch for that
+target; the search continues to any OTHER candidate on the same target that
+has not yet landed. Archiving/removing the ratified proposal after it lands
+is still good hygiene (nothing here requires it), but a leftover spent
+candidate can no longer reopen the hatch by itself. The check reads only the
+Changelog section and matches on the candidate's own path -- never a bare
+date or a fuzzy substring -- so a different, still-unspent proposal that
+happens to share a date or a word is never closed by accident.
 
 **Why not an env var:** an env var (`CONVERGE_RATIFIED=1`) is ambient —
 un-scoped, un-audited, trivially left set. The ratified-proposal mechanism
@@ -561,6 +608,22 @@ than a behaviour:
   not widened), and
   `test_w6_a_non_repository_directory_below_cwd_is_the_documented_limit`
   (the limit is asserted, not discovered later).
+- W7 (`converge-wu3y`) covers the single-use check itself, including the
+  fail-closed hardening: a transient I/O error re-checking whether a
+  candidate already landed must deny, never silently fall back to
+  "unspent" (`test_w7_an_unreadable_target_during_the_escape_hatch_check_fails_closed`),
+  and this holds even with `fail_closed_on_error: false`
+  (`test_w7_an_unreadable_target_with_fail_closed_disabled_still_does_not_unlock`).
+  `test_w7_regression_the_target_is_read_only_once_for_the_escape_hatch_check`
+  is the removal control proving the target is never read twice in the
+  first place.
+- W8 (`converge-wu3y`) covers the single-use check's *exact-path-token*
+  matching: a changelog naming a longer, different filename that merely
+  starts with the candidate's path (`contracts/x.v2-candidate.md.bak`), or
+  a same-basename file in a different directory
+  (`notes/x.v2-candidate.md`), must NOT spend the candidate -- only a
+  complete repo-relative path token does, covering Markdown backticks,
+  link parentheses, and a bare trailing sentence period with no backticks.
 
 ### Live evidence (2026-09-02)
 

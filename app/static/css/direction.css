@@ -63,27 +63,82 @@
 .repo-doc { width:100%; border:0; border-radius:8px; background:transparent; color:#536177; text-align:left; padding:8px 9px 8px 17px; display:flex; justify-content:space-between; gap:8px; align-items:center; font-size:12px; }
 .repo-doc:hover { background:#edf2f8; }
 .repo-doc.active { background:#e7edff; color:#3d48ad; font-weight:700; }
+/* The nav list's own conformance dot — the same four+one words the document
+   badge shows, at a glance, per doc. Never draws "kept" unless the ledger
+   actually measured it: an unchecked promise is grey, not green. */
 .doc-state-mini { width:7px; height:7px; border-radius:50%; background:#29a86f; flex:0 0 auto; }
-.doc-state-mini.gap { background:#e0a225; }
-.nav-utilities { border-top:1px solid var(--line); padding-top:10px; display:flex; flex-direction:column; gap:3px; }
-.nav-utilities button { border:0; background:transparent; border-radius:8px; padding:8px 9px; display:flex; justify-content:space-between; color:#526078; text-align:left; }
-.nav-utilities button:hover { background:#edf2f8; }
-.nav-utilities b { min-width:24px; padding:1px 5px; border-radius:999px; color:#5f47d8; background:#ece7ff; text-align:center; }
-
+.doc-state-mini.notyet { background:#e0a225; }
+.doc-state-mini.broken { background:#c23b45; }
+.doc-state-mini.pinned { background:#3d63c9; }
+.doc-state-mini.unchecked { background:#b7c0cd; }
 .document-surface { background:#fff; min-width:0; padding:0 28px 48px; --doc-zoom:1; }
 .document-surface.wide .document-mode-content { max-width:none; }
 .document-toolbar { min-height:52px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:12px; }
 .doc-path { color:var(--muted); font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.doc-tools { display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; }
+.doc-tools { display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; align-items:flex-start; }
 .tiny-button { border:1px solid var(--line); background:#fff; color:#5b677b; border-radius:7px; padding:5px 8px; font-size:11px; }
 .tiny-button:hover, .tiny-button[aria-pressed="true"] { background:#f0edff; color:#5a42cc; border-color:#d9d0ff; }
+
+/* The Reader tools menu (converge-43uv, §3). A native <details> rather than a
+   hand-rolled popover: Enter/Space on the summary toggles it, Tab walks its
+   contents, and no JS is needed to track open/closed state. Positioned
+   absolutely so opening it does not reflow the toolbar or the document below
+   it — the whole point is that the document, not its own chrome, dominates
+   the screen. */
+.tools-menu { position:relative; }
+.tools-menu > summary { list-style:none; cursor:pointer; }
+.tools-menu > summary::-webkit-details-marker { display:none; }
+.tools-menu > summary::marker { content:""; }
+.tools-menu > summary::after { content:" \25be"; font-size:9px; }
+.tools-menu[open] > summary,
+.tools-menu > summary:focus-visible { background:#f0edff; color:#5a42cc; border-color:#d9d0ff; outline:2px solid #b9adff; outline-offset:1px; }
+/* The browser's own UA stylesheet hides a closed <details>'s non-summary
+   children (`details:not([open]) > *:not(summary) { display:none }`), but
+   that is a *normal-origin UA rule* and any normal-origin author rule beats
+   it in the cascade regardless of selector specificity. An earlier,
+   unconditional `.tools-menu-panel { display:flex }` did exactly that: it
+   silently re-showed the panel while `<details>` was still closed (measured:
+   a 27.94px-tall box for a control that should not exist while collapsed).
+   So `display` here is gated on `[open]` explicitly rather than left to the
+   UA default \u2014 closed is `none`, `[open]` is the only path to `flex`. */
+.tools-menu-panel {
+  position:absolute; top:calc(100% + 6px); right:0; z-index:20; min-width:190px;
+  background:#fff; border:1px solid var(--line); border-radius:10px; padding:8px;
+  display:none; flex-direction:column; align-items:stretch; gap:6px;
+  box-shadow:0 6px 20px rgba(15,23,42,.14);
+}
+.tools-menu[open] > .tools-menu-panel { display:flex; }
+.tools-menu-panel .zoom-controls { justify-content:space-between; border:1px solid var(--line); border-radius:7px; padding:3px 6px; }
+@media (max-width: 520px) {
+  .tools-menu-panel { right:auto; left:0; }
+}
+
+/* Raw sits beside the Read tab, not in the Tools menu — it is a direct, "one
+   gesture away" control per experience-direction.v1 §2, and it modifies only
+   the Read view. Styled as a small chip rather than a full mode-tab so it
+   reads as "Read, raw" rather than a fifth mode. */
+.mode-tabs { align-items:center; }
+.raw-toggle { margin:0 8px 0 0; }
 .document-title-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:24px 0 16px; }
 .document-title-row h1 { margin:6px 0 0; font-size:28px; letter-spacing:-.035em; }
 .title-meta { display:flex; gap:8px; align-items:center; color:var(--muted); font-size:11px; }
+/* Two badges, two questions, per converge-43uv (experience-direction.v1):
+   `.state-badge` answers AGREEMENT — is this document itself locked? — from
+   `doc.locked`/`docLock` and nothing else. `.conformance-badge` answers
+   CONFORMANCE — has the project's ledger checked this promise, and what does
+   it say? — from `doc.standing`/`conformance`. Neither ever stands in for
+   the other, so a locked document with an unchecked promise reads as exactly
+   that: "Locked" beside "Not checked", never a single word doing both jobs. */
 .state-badge { padding:3px 7px; border-radius:999px; font-weight:800; font-size:10px; text-transform:uppercase; letter-spacing:.04em; }
-.state-badge.kept { color:#128353; background:#e8f8f0; }
-.state-badge.gap { color:#9b640d; background:#fff4d7; }
+.state-badge.locked { color:#5540b4; background:#f0edff; }
 .state-badge.draft { color:#4a5568; background:#eef2f8; }
+
+.conformance-badge { padding:3px 7px; border-radius:999px; font-weight:800; font-size:10px; text-transform:uppercase; letter-spacing:.04em; }
+.conformance-badge.kept { color:#128353; background:#e8f8f0; }
+.conformance-badge.notyet { color:#9b640d; background:#fff4d7; }
+.conformance-badge.broken { color:#a03038; background:#fdecec; }
+.conformance-badge.pinned { color:#2847a3; background:#eaf0ff; }
+.conformance-badge.unchecked { color:#657087; background:#eef2f8; }
 /* platform-web.v1 §10 (converge-baz): a document being read out of this
    device's store says so beside its own title, with the moment it came from.
    Amber rather than green because it is a true reading of something that is
@@ -234,9 +289,36 @@
 .review-section p { margin:0; }
 .evidence-list { display:flex; flex-direction:column; gap:7px; }
 .evidence-item { display:flex; gap:8px; align-items:center; padding:8px 9px; background:#f7f9fc; border-radius:8px; }
+
+/* converge-neu6: the actual exact-change / rationale / full-proposal text is
+   now server-rendered Markdown (`app/data.py`'s `render_markdown`), the same
+   renderer and escaping `render/collab.js` already trusts for a hosted PR
+   body -- these rules give it the same readable shape, not a redesign. */
+.review-change-render, .review-why-render, .review-body-render { font-size:13px; color:#344054; }
+.review-change-render h1, .review-change-render h2, .review-change-render h3,
+.review-why-render h1, .review-why-render h2, .review-why-render h3,
+.review-body-render h1, .review-body-render h2, .review-body-render h3 { margin:14px 0 6px; font-size:14px; color:var(--ink); }
+.review-change-render p, .review-why-render p, .review-body-render p { margin:0 0 8px; }
+.review-change-render ul, .review-change-render ol,
+.review-why-render ul, .review-why-render ol,
+.review-body-render ul, .review-body-render ol { margin:0 0 8px; padding-left:20px; }
+.review-change-render li, .review-why-render li, .review-body-render li { margin:3px 0; }
+.review-change-render code, .review-why-render code, .review-body-render code { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; background:#f1f4f8; padding:1px 4px; border-radius:4px; }
+.review-change-render pre, .review-why-render pre, .review-body-render pre { overflow:auto; background:#0e1727; color:#d7e2ef; padding:12px; border-radius:8px; }
+.review-change-render pre code, .review-why-render pre code, .review-body-render pre code { background:transparent; padding:0; color:inherit; }
+.review-body-raw { overflow:auto; white-space:pre-wrap; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px; background:#f7f9fc; padding:12px; border-radius:8px; }
+.review-fullbody { margin-top:10px; padding-top:8px; border-top:1px solid var(--line); }
+.review-fullbody > summary { cursor:pointer; color:#6048d2; font-size:12px; }
+.review-fullbody[open] > summary { margin-bottom:8px; }
+
 .decision-stack { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:14px; }
 .decision-stack button { min-height:38px; }
+.decision-stack button[disabled] { opacity:.5; cursor:not-allowed; }
 .decision-status { margin-top:10px; padding:9px; border-radius:9px; background:#eaf8f1; color:#137a50; font-weight:700; }
+/* converge-8crs: guidance, not the guard -- the real one is app/serve.py's
+   own 403 -- but a non-steward should see why before they try, not after. */
+.steward-gate-note { margin-top:8px; font-size:12px; }
+.changes-banner-actions button[disabled] { opacity:.5; cursor:not-allowed; }
 
 .history-layout { display:grid; grid-template-columns:210px minmax(0,1fr); gap:18px; }
 .history-list { border-right:1px solid var(--line); padding-right:14px; }
@@ -259,6 +341,19 @@
 .proposal-mini dd { margin:2px 0 10px; font-size:12px; }
 .reality-row { display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #eef2f6; }
 .reality-row:last-child { border-bottom:0; }
+/* Auxiliary context, collapsed by default (converge-43uv): a plain <details>,
+   so the summary alone shows until a steward asks for more, and the reveal is
+   the same native gesture as the lock gate above it. */
+.aux-detail > summary { cursor:pointer; list-style:none; }
+.aux-detail > summary::-webkit-details-marker { display:none; }
+.aux-detail > summary::after { content:" \25be"; font-size:9px; }
+.aux-detail[open] > summary { margin-bottom:5px; }
+.aux-detail .reality-row:first-of-type { padding-top:0; }
+
+/* Honest "nothing to read" states (converge-43uv, experience-direction.v1):
+   no documents · a fetch that failed · nothing picked yet — each its own
+   sentence, never a bare "Loading…" left standing after loading is done. */
+.state-note { display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
 
 @media (max-width: 1320px) {
   .direction-layout { grid-template-columns:200px minmax(0,1fr); }
@@ -292,8 +387,18 @@
 @media (max-width: 520px) {
   .document-title-row { padding-top:18px; }
   .title-meta { align-items:flex-start; flex-direction:column; gap:4px; }
-  .mode-tabs { overflow:auto; }
-  .mode-tab { white-space:nowrap; padding:10px 9px; }
+  /* converge-43uv repair: four fixed tabs (plus Raw) are a bounded, small
+     control set, not unbounded content \u2014 `overflow:auto` was left as a
+     safety net for even narrower devices, but at 390px the row was actually
+     ~28px wider than its own box (measured live: the last tab's own
+     getBoundingClientRect right edge landed at 398px on a 390px viewport,
+     invisible only because the ancestor clips it, which is still a real
+     comfortable-reading defect per this lane's \u00a72 acceptance). Tightened so
+     the whole strip fits without needing to scroll at all at this width. */
+  .mode-tabs { overflow:auto; gap:2px; }
+  .raw-toggle { margin:0 4px 0 0; }
+  .mode-tab { white-space:nowrap; padding:8px 6px; }
+  .count-chip { margin-left:2px; padding:1px 4px; }
   .since-banner { align-items:flex-start; flex-direction:column; }
   .arch-grid { grid-template-columns:1fr; }
   .decision-stack { grid-template-columns:1fr; }

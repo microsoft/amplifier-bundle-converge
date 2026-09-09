@@ -66,9 +66,26 @@ any manager session followed it.
 
 | | Step | Reads | Clauses |
 |---|---|---|---|
-| j | `clauses` | the lane briefs the manager session wrote, its own plan record in the workspace, git, the queue | 2 · 3 · 4 · 6 · 9 · 11 · 13 |
+| j | `clauses` | the lane briefs the manager session wrote, its plan record (registered via `--plan-record`, or found in the workspace), git, the queue | 2 · 3 · 4 · 6 · 9 · 11 · 13 |
 | k | `attribution` | which side of a lane merge a check-run record arrived on, and the queue's own resolution text | 7 · 8 · 12 |
 | l | `installed_tree` | whether the path the re-run check ran from still exists, and where the installed package actually resolves | 7 |
+
+**`--plan-record PATH` (step j only, converge-51oq).** `--workspace` is where
+lane facts live (`manifest.tsv`, briefs, worktrees) and, by default, is also
+where step (j) searches for a plan record (`HIGHWAY.md`, `PLAN.md`,
+`WAVE-LOG.md`, in that order). Those two are not always the same directory: a
+manager session's actual registration can name a plan record living outside
+its lane workspace -- an operation's own `PLAN.md` kept beside a nested batch
+directory, rather than inside it, for instance. `--plan-record PATH` (or the
+wrapper's `CONVERGE_PLAN_RECORD` env value, see
+`ledger/checks/turnkey_clause.py`) points step (j) at that file directly,
+without changing what `--workspace` supplies. The override must be an
+existing regular file -- a missing or invalid one refuses the run outright
+(exit 3, a clear message) rather than silently falling back to the
+`--workspace` search. Every clause-2 reading also carries its `plan_record`
+path and `plan_record_source` (`explicit` or `legacy_fallback`) in its raw
+evidence, so a report always says which one supplied it. Omit the flag and
+nothing changes: step (j) keeps its original `--workspace` search.
 
 **They are not part of the turnkey sentence and never change its verdict.**
 The report carries two tallies — `turnkey` (a–i) and `clauses` (j–l) — so a

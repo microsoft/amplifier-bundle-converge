@@ -1,0 +1,50 @@
+/* Install affordance — platform-web.v1 §9. Hidden by default; JS in
+   offline.js decides whether and what to show, so nothing here can claim a
+   capability the browser does not actually have. Kept in its own file
+   because shell.css is owned by another lane. */
+
+.pwa-install-banner {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 40;
+  max-width: 360px;
+  background: var(--navy, #07111f);
+  color: #fff;
+  border-radius: var(--radius-sm, 10px);
+  box-shadow: var(--shadow, 0 12px 35px rgba(14, 25, 45, .08));
+  padding: 14px 16px;
+}
+.pwa-install-banner[hidden] { display: none; }
+
+.pwa-install-text { margin: 0 0 10px; font-size: 13px; line-height: 1.45; color: #dbe3f0; }
+.pwa-install-text a { color: #9fc1ff; text-decoration: underline; }
+.pwa-install-text a:hover, .pwa-install-text a:focus-visible { color: #c7dcff; }
+
+.pwa-install-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+.pwa-install-button {
+  background: var(--purple, #6d4df4);
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-weight: 700;
+  font-size: 13px;
+}
+.pwa-install-button[hidden] { display: none; }
+
+.pwa-install-dismiss {
+  background: transparent;
+  color: #c8d3e4;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+/* The offline banner already sits bottom-left (shell.css); on a narrow
+   viewport this banner would otherwise overlap it, so it moves above. */
+@media (max-width: 520px) {
+  .pwa-install-banner { left: 8px; right: 8px; bottom: 78px; max-width: none; }
+}

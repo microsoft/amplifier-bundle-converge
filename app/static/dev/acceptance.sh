@@ -4,7 +4,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/../../.." || exit 1
 
-MOCK=/home/bkrabach/dev/vision-focused-team-ci/ai-context/converge-mockup-standalone.html
+: "${MOCK:?Set MOCK to the standalone mockup HTML path}"
 fail=0
 pass() { echo "  PASS  $1"; }
 bad()  { echo "  FAIL  $1"; fail=1; }

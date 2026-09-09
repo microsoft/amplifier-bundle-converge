@@ -299,6 +299,7 @@ def project(tmp_path_factory) -> dict:
         f'repos = ["{repo}"]\n'
         'tracker_project = "demo-project"\n'
         'tmux_socket = "test-socket-that-does-not-exist"\n'
+        f'steward = "{USER}"\n'
         "\n"
         "[[managers]]\n"
         'id = "other"\n'
@@ -306,14 +307,15 @@ def project(tmp_path_factory) -> dict:
         f'batch_dir = "{other_batch}"\n'
         f'repos = ["{other}"]\n'
         'tracker_project = "other-project"\n'
-        'tmux_socket = "test-socket-that-does-not-exist"\n',
+        'tmux_socket = "test-socket-that-does-not-exist"\n'
+        f'steward = "{USER}"\n',
         encoding="utf-8",
     )
     # Never the real ~/.amplifier: a test must not move a steward's read point.
     return {
         "config": conf,
         "secret": tmp_path / "secret",
-        "state": tmp_path / "state.json",
+        "state": tmp_path / "state.json", "sessions": tmp_path / "sessions.json",
         "batch": batch,
         "repo": repo,
     }
@@ -346,7 +348,7 @@ def server(project):
     )
 
     made = serve.create_app(
-        config_path=project["config"], secret_path=project["secret"], state_path=project["state"]
+        config_path=project["config"], secret_path=project["secret"], state_path=project["state"], sessions_path=project["sessions"]
     )
     port = _free_port()
     config = uvicorn.Config(made, host="127.0.0.1", port=port, log_level="warning")
@@ -397,6 +399,11 @@ def _open_operation(browser, server, project, width: int, height: int, errors: l
     page.on("console", lambda m: errors.append(f"console.{m.type}: {m.text}") if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(f"pageerror: {e}"))
     page.goto(server, wait_until="networkidle")
+    # Boot always lands on Home first, never an auto-picked manager
+    # (experience.v1 Core 1, converge-t30q). This fixture has TWO managers;
+    # "other" ranks first by need, but the lane assertions describe "demo".
+    page.wait_for_selector('[data-home-manager="demo"]', timeout=20000)
+    page.click('[data-home-manager="demo"]')
     page.wait_for_selector("#operationTab", timeout=20000)
     page.click("#operationTab")
     page.wait_for_selector("#operationView:not(.hidden)", timeout=20000)
@@ -471,6 +478,10 @@ def test_the_fill_control_is_offered_exactly_when_a_lane_is_short(server, projec
     try:
         width_file.write_text("2\n", encoding="utf-8")
         page.reload(wait_until="networkidle")
+        # A reload runs boot() again, which always lands on Home first
+        # (experience.v1 Core 1, converge-t30q) -- re-open the same manager.
+        page.wait_for_selector('[data-home-manager="demo"]', timeout=20000)
+        page.click('[data-home-manager="demo"]')
         page.wait_for_selector("#operationTab", timeout=20000)
         page.click("#operationTab")
         page.wait_for_selector("#operationView:not(.hidden)", timeout=20000)

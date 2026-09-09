@@ -253,8 +253,13 @@ def check_waves_with_lanes(snapshot):
     op = snapshot.operation()
     if not op:
         return KIT.bad("2a", "the app served no operation payload, so there is no plan to read")
+    if not isinstance(op, dict):
+        return KIT.bad("2a", f"the operation payload is a {type(op).__name__}, not an object, "
+                              "so there is no plan to read")
     waves = op.get("waves") or []
-    lanes = op.get("lanes") or []
+    lanes, lanes_problem, _ = lane_collection_shape(op, "lanes")
+    if lanes_problem:
+        return KIT.bad("2a", lanes_problem)
     if not waves:
         return KIT.bad("2a", "the plan carries no waves")
     empty = [w.get("label") or w.get("id") for w in waves if not (w.get("items") or [])]
@@ -472,6 +477,49 @@ def without_evidence(rows) -> list:
     return [str(r.get("id") or "?") for r in rows if not str(r.get("evidence") or "").strip()]
 
 
+def lane_collection_shape(op, key):
+    """Validate one of Core 8's two lists (`lanes`, `reported`) on the payload.
+
+    Returns `(rows, problem, explicit_empty)`:
+      * `rows` -- the list of object entries, safe to iterate. Never contains
+        a non-object entry; those are named in `problem` instead, so a caller
+        never calls `.get()` on a bare string/int/None (the AttributeError
+        converge-3lhm measured on `lanes=[null]`).
+      * `problem` -- set when the field itself is malformed: present but
+        wrong (null, an object, a scalar) or a list holding a non-object
+        entry. `None` when the field is either absent or a well-formed list.
+      * `explicit_empty` -- True only when the payload actually carries this
+        key as a well-formed empty list (`[]`). A key that is simply absent
+        from the payload is NOT explicit-empty: it is silently treated as no
+        rows to judge (so a payload that has never carried `reported` at all,
+        like this kit's own `sample-good` fixture, keeps working), but it
+        does not by itself license the Core 8 no-subject SKIP below -- only
+        an app that actually says "here is an empty list" earns that.
+    """
+    if key not in op:
+        return [], None, False
+    value = op[key]
+    if value is None:
+        return [], f"`{key}` is null, not a list", False
+    if not isinstance(value, list):
+        return [], f"`{key}` is a {type(value).__name__}, not a list", False
+    bad = [i for i, item in enumerate(value) if not isinstance(item, dict)]
+    if bad:
+        kinds = sorted({type(value[i]).__name__ for i in bad})
+        return [], (f"`{key}` carries {len(bad)} non-object entr"
+                     f"{'y' if len(bad) == 1 else 'ies'} at index {bad[:6]} "
+                     f"({', '.join(kinds)}), which no lane can be read from"), False
+    return value, None, (len(value) == 0)
+
+
+def duplicate_ids(rows) -> list:
+    seen: dict = {}
+    for row in rows:
+        rid = str(row.get("id") or "?")
+        seen[rid] = seen.get(rid, 0) + 1
+    return sorted(k for k, v in seen.items() if v > 1)
+
+
 def check_lane_state_words(snapshot):
     """Core 8, over BOTH lists of lanes.
 
@@ -485,14 +533,49 @@ def check_lane_state_words(snapshot):
     reported PASS. A list nobody judges is a place to hide a lane, so a lane id
     appearing in BOTH lists is faulted too: that is the other way the split
     could be used to dodge a check.
+
+    converge-3lhm narrowed this further: only an operation payload that is
+    itself an object, whose `lanes` and `reported` fields (when present) are
+    each a well-formed list of objects, may be judged at all -- and only a
+    payload that explicitly declares BOTH as empty lists earns the no-subject
+    SKIP. A missing key, a null, an object in a list's place, or a bare
+    scalar/null sitting where a lane object belongs is a structured FAIL
+    naming the exact shape fault, never an exception and never a manufactured
+    SKIP or PASS.
     """
     op = snapshot.operation()
     if not op:
         return KIT.bad("8", "the app served no operation payload, so no lane can be read")
-    lanes = op.get("lanes") or []
-    reported = op.get("reported") or []
+    if not isinstance(op, dict):
+        return KIT.bad("8", f"the operation payload is a {type(op).__name__}, not an object, "
+                             "so no lane can be read")
+
+    lanes, lanes_problem, lanes_explicit_empty = lane_collection_shape(op, "lanes")
+    reported, reported_problem, reported_explicit_empty = lane_collection_shape(op, "reported")
+    if lanes_problem or reported_problem:
+        return KIT.bad("8", "; ".join(p for p in (lanes_problem, reported_problem) if p))
+
     if not lanes and not reported:
-        return KIT.bad("8", "no lane is shown at all")
+        # A well-formed operation payload can legitimately declare no lane at
+        # all -- nothing running, nothing reported back. Core 8 says each lane
+        # carries a plain state word and evidence you can open; it does not
+        # require a lane to exist. Judging an absent subject would make the
+        # verdict track the host's weather (is anything running right now)
+        # rather than the app (converge-3lhm). This is a narrow no-subject
+        # SKIP, not a broad waiver: a MALFORMED populated list -- a bad word,
+        # missing evidence, a duplicate id -- is still FAIL below, a missing
+        # operation payload above is still FAIL too, and so is a subject that
+        # only LOOKS empty because one or both fields were never declared --
+        # only an explicit `[]` on both sides earns the SKIP.
+        if lanes_explicit_empty and reported_explicit_empty:
+            return KIT.skip("8", "the operation payload declares no lane, running or reported "
+                                  "-- there is no lane here for this rule to judge, which is not "
+                                  "the same as every lane keeping the clause")
+        return KIT.bad("8", "no lane is shown at all, and the payload does not explicitly "
+                             "declare both `lanes` and `reported` as well-formed empty lists -- "
+                             "an absent or ambiguous collection is not the same as the app "
+                             "declaring there is nothing here to judge")
+
     script = snapshot.script_named("render/operation.js") or snapshot.script_text()
     field = field_shown_for_lanes(script)
     reported_field = field_shown_for_reported(script)
@@ -503,11 +586,17 @@ def check_lane_state_words(snapshot):
     reported_foreign = outside(reported, reported_field, WORK_WORDS)
     blind = without_evidence(lanes)
     reported_blind = without_evidence(reported)
+    lanes_dupes = duplicate_ids(lanes)
+    reported_dupes = duplicate_ids(reported)
     # A lane in both lists is read in two vocabularies at once, and is one
     # rename away from being in neither.
     in_both = sorted({str(lane.get("id")) for lane in lanes} & {str(r.get("id")) for r in reported})
 
     problems = []
+    if lanes_dupes:
+        problems.append(f"`lanes` repeats id(s) {lanes_dupes} -- each lane must be told once")
+    if reported_dupes:
+        problems.append(f"`reported` repeats id(s) {reported_dupes} -- each lane must be told once")
     if foreign:
         problems.append(
             f"the surface shows each working lane's `{field}`, and "
@@ -558,7 +647,12 @@ def check_watch_session(snapshot):
     the clause is about where the control goes, not how many there are.
     """
     op = snapshot.operation() or {}
-    lanes = op.get("lanes") or []
+    if not isinstance(op, dict):
+        return KIT.bad("9", f"the operation payload is a {type(op).__name__}, not an object, "
+                             "so no lane can be read")
+    lanes, lanes_problem, _ = lane_collection_shape(op, "lanes")
+    if lanes_problem:
+        return KIT.bad("9", lanes_problem)
     control = present(snapshot, r"data-watch-lane", r"watchLane", r"Watch session")
     if not control:
         return KIT.bad("9", "no lane offers Watch session, so the bottom rung of the ladder "
