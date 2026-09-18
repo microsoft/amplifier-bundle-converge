@@ -55,12 +55,19 @@ starts. `app/README.md` carries the rest, including running it as a service.
 
 ## Documents and proposals
 
-A **locked** document — one the steward has read and agreed to — cannot be edited
-in place by anyone, person or AI; `hooks-candidate-guard` refuses it. It changes
-only by a **proposal** written beside it (`<contract>.vN-candidate.md`) carrying
+A **locked** document — one the steward has read and agreed to — changes only
+through a **proposal** written beside it (`<contract>.vN-candidate.md`) carrying
 the target line, the exact change, real evidence — a cost paid or a failure
-caught, never a preference — and what does **not** change. The steward answers
-with one word: *ratified* · *ratified with edits* · *declined* · *later*.
+caught, never a preference — and what does **not** change. No person or AI
+direct-edits the target while that proposal awaits the steward's answer:
+*ratified* · *ratified with edits* · *declined* · *later*.
+
+After ratification and authorization to publish, verify the target, approved
+payload, decision record and applicable checks. Publish only the approved diff
+plus its dated changelog through the existing guard; preserve the proposal and
+decision evidence. This is the §5 publication step, not a second ratification
+or permission for unrelated edits. Higher-priority instructions still control;
+a guard refusal is a stop, never permission to bypass it.
 
 The **ratchet** keeps this honest: after each change lands, every contract is
 re-checked and reported in plain words — *Kept · Not yet · Broken · Pinned open ·

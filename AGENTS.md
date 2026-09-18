@@ -43,10 +43,12 @@ repository toward them.
   it ships in `docs/workspace-template/`. A rule we do not follow here is not a
   rule we may ship.
 
-## 2. Never edit a locked contract — propose instead
+## 2. Change a locked contract only through a ratified proposal
 
-A file whose heading carries `(FROZEN <date>)` does not change in place. Not for
-a typo, not "while I'm in there", not because the change is obviously right.
+A file whose heading carries `(FROZEN <date>)` takes no unapproved direct edit.
+Not for a typo, not "while I'm in there", not because the change is obviously
+right. Write the proposal first; leave its target unchanged while it awaits
+the steward's answer.
 
 To change one, add a sibling file named `<contract>.vN-candidate.md` — for
 example `contracts/documents.v2-candidate.md` — with three parts, in order:
@@ -58,6 +60,14 @@ example `contracts/documents.v2-candidate.md` — with three parts, in order:
 
 The original stays the law until the steward answers with one word: *ratified* ·
 *ratified with edits* · *declined* · *later*.
+
+Once the steward has ratified the exact change and authorized publication,
+verify the target, approved candidate bytes or hash, decision record, and test
+evidence. Apply only that approved diff plus its dated changelog through the
+existing guard, preserve the proposal and decision evidence, and re-check the
+ledger. That is §5 publication, not a second ratification. Follow
+`context/converge-awareness.md` for the same distinction; higher-priority
+instructions remain controlling.
 
 Two guards enforce this, and they are not the same guard. `.githooks/pre-push`
 refuses a push that edits a locked file without a candidate beside it;
