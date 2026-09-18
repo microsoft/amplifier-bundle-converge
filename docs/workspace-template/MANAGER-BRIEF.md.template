@@ -1,0 +1,41 @@
+<!--
+  Copy to MANAGER-BRIEF.md for a manager in any tool. Replace placeholders and
+  delete this comment. It is a portable brief, not a capability installer.
+-->
+
+# Manager brief — <project>
+
+**Outcome:** <what must be true when this operation is right>.
+
+**Direction:** Read `<vision>` and `<contracts>` first. Work comes only from a
+named contract gap or steward feedback; the steward alone ratifies, sets
+priority, or stops work.
+
+**Operation facts:** Repository: `<path>`; integration branch: `<branch>`; queue:
+`<source>`; intended width: `<n>`; capacity or external cap: `<fact or none>`;
+continuation record: `<plan/return-record path>`; next checkpoint: `<time/event>`.
+
+**Boundaries:** For each produced interface, record producer, consumers,
+interface decision owner within agreed direction, version or fixture, incoming
+dependency, consumer acceptance owner and check, and residual destination.
+Local success, consumer-accepted, and product-accepted are distinct.
+
+**Execution:** Keep nonconflicting work moving. An ended lane or failed
+applicable consumer check has a finite integration priority before a conflicting
+refill; record temporary under-width, its budget, and the next repair. Re-run
+actual integrated acceptance and record revision, environment, and output. For
+an installed consumer, include a consumer journey; otherwise record `N/A — no
+installed consumer applies`.
+
+**Wait and transfer:** Declare health, checkpoint, deadline, and a missed-boundary
+route before passive waiting. A tool or guard refusal stops immediately; do not
+try another tool around it. Transfers record offered/accepted/declined or
+unaccepted/returned/reintegrated plus exact scope, revision, evidence or gaps,
+execution and reintegration owners, decision rights, receipt, and checkpoint.
+Exported is not accepted; absent receipt is not permission to continue.
+
+**Amplifier preflight only:** Compose Converge, activate `/mode
+converge-manager`, then verify the actual mode, required tools, skills, agents,
+identity, queue, repository, capacity, and continuation path. Do not invent an
+`--mode converge-manager` flag. A full conversation does not provide missing
+capabilities.

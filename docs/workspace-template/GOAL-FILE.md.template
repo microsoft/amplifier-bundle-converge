@@ -28,6 +28,13 @@ resolve call is not.
 **File ownership — edit ONLY:** `<path>/**` and `<path>/**`. Everything else is
 off-limits. Never merge to the integration branch. Commit to your branch.
 
+**Shared boundary:** Producer: `<lane/item>`; consumers: `<named consumers or
+N/A>`; interface decision owner: `<owner, within agreed direction>`; version or
+fixture: `<revision>`; incoming dependency: `<item or N/A>`; consumer acceptance:
+`<owner and command/journey check, or N/A — no installed consumer applies>`;
+residual destination: `<owner/item and check>`. Local success, consumer
+acceptance, and product acceptance are different states.
+
 ## Outcome
 
 <Two or three sentences describing the state of the world when this lane is
@@ -52,6 +59,16 @@ A criterion this lane cannot satisfy from inside its own file ownership is a
 with what is left, who owns the path, and what a reader runs to see the
 remainder; do not reach outside the ownership split to clear it. Exit B is for a
 cause that stops every deliverable.
+
+## Optional external execution transfer
+
+<Delete when not used. Record in the existing plan or return record: status
+offered / accepted / declined / unaccepted / returned / reintegrated; exact scope
+and revision; evidence or gaps; execution owner; interface decision rights;
+expected receipt; next checkpoint; reintegration owner. Packet exported is not
+recipient accepted or product accepted. Stop duplicate local claims for this
+scope. An explicit steward stop applies without recipient acknowledgement; a
+missing receipt is never permission to continue.>
 
 ## Acceptance
 

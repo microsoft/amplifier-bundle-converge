@@ -162,7 +162,7 @@ manager session's proposal are reviewed identically.
 
 ## Taking this to your own project
 
-`docs/workspace-template/` holds the participant kit — **eight files**, each one
+`docs/workspace-template/` holds the participant kit — **nine copied files**, each one
 listed with its destination in
 [that directory's own README](workspace-template/README.md). Five you need on
 day one: `VISION.md.template` → `docs/VISION.md`; `CONTRACT.md.template` →
@@ -172,8 +172,10 @@ and `pre-push-scan.sh` → the guard, below. Three you do not:
 `converge-dir-README.md.template` and `gitignore-addendum.txt` are for the
 operation's own `.converge/` directory and the workspace `.gitignore`, wanted
 the day that directory first appears; `GOAL-FILE.md.template` records the shape
-of a worker session's brief, which the manager session writes for you. Fill in
-the placeholders in each copy and delete the HTML comment it opens with.
+of a worker session's brief, and `MANAGER-BRIEF.md.template` is the portable
+brief for an independent manager. Its Amplifier preflight is labelled; human and
+Codex managers use the same participant kit. Fill in the placeholders in each
+copy and delete the HTML comment it opens with.
 
 **The pre-push scan is the one that is not a straight copy.** Git runs a
 pre-push hook at `.githooks/pre-push` and nowhere else, so copying it under its

@@ -175,7 +175,7 @@ so on that path you are reading drafts rather than filling in blanks. Copy them
 by hand when you would rather start something yourself, or when you want a file
 step 5 does not produce — the guard, chiefly, which is yours to install.
 
-The kit is **eight**
+The kit is **nine copied**
 files — the directory also holds an index of them, which is not copied
 anywhere — and here is every one, including the ones you do not need.
 
@@ -189,6 +189,7 @@ anywhere — and here is every one, including the ones you do not need.
 | `converge-dir-README.md.template` | `<workspace>/.converge/README.md` | No — for the operation's own directory, when it first appears |
 | `gitignore-addendum.txt` | appended to the workspace root's `.gitignore` | No — same directory, so the operation's state is not committed |
 | `GOAL-FILE.md.template` | one worker session's brief | No — the manager session writes these; it is here so the shape is on record |
+| `MANAGER-BRIEF.md.template` | `MANAGER-BRIEF.md` | No — a portable brief for an independent manager |
 
 [`docs/workspace-template/README.md`](workspace-template/README.md) is the same
 list, kept beside the files themselves.
@@ -232,7 +233,7 @@ actually points at it.
 |---|---|
 | `<workspace>/.converge/<project>/` | Everything the operation stands up. One directory per project; nothing lands outside it, and nothing lands in your home directory. |
 | `<workspace>/.converge/<project>/lanes/` | One working copy per worker session, each on its own branch. |
-| `<workspace>/.converge/<project>/HIGHWAY.md` | The plan, rewritten every cycle: what is running, what waits on you, what was declined and why. |
+| `<workspace>/.converge/<project>/HIGHWAY.md` | The plan: changed boundaries, what is running, what waits on you, and what was declined and why. |
 | `<workspace>/.converge/<project>/infra.tsv` | Anything the run started that outlives a command, each line carrying its own teardown. |
 | Your project repository | The work itself — commits, on branches, merged by the manager session after its own check. |
 

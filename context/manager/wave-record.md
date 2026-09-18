@@ -1,4 +1,4 @@
-# The wave record - the two lines a wave has to leave behind
+# The wave record - boundaries, checks, and transfers a wave leaves behind
 
 A manager session's promises are about what it DOES across a wave, not about what
 any file contains. Six months later, the only thing left of a wave is what
@@ -6,8 +6,20 @@ somebody wrote down while it ran. Two of those writings are conventions rather
 than habits, because a check reads them: the **call stamp** in the plan record,
 and the **check record** in the repository.
 
-Both are small. Neither is bookkeeping for its own sake: each one is the only
-trace that exists of a promise `contracts/operation.v1.md` makes.
+Both are small. Neither is bookkeeping for its own sake: each is the durable
+trace of a promise `contracts/operation.v1.md` makes.
+
+## Boundary facts - in the existing plan record
+
+For each produced boundary, retain one compact line naming the **producer,
+consumers, interface decision owner within agreed direction, version or fixture,
+incoming dependency, consumer acceptance owner and check, and residual
+destination**. This makes local success, consumer acceptance, and product
+acceptance separate facts without adding a tracker or supervisor.
+
+    - BOUNDARY api-v2: producer w3; consumers web, cli; decision owner platform;
+      fixture api-v2.1; incoming auth-v4; consumer check web journey (web owner);
+      residual destination: cli queue item C-18.
 
 ## The call stamp - one line, in the plan record
 
@@ -48,9 +60,10 @@ and re-run the check yourself, append an entry to
 **`docs/workflow/CHECK-RECORD.md`** and commit it **in your own commit on the
 integration branch**.
 
-That file carries its own shape and the three things an entry must name: what it
-covers, the command you ran, and what it printed. Read it before the first time
-you write one.
+That file carries its own shape. Every entry names what it covers, the command
+you ran, what it printed, the revisions, and environment. It also says whether
+an installed consumer journey was run, or `N/A — no installed consumer applies`;
+that is the manager's product-acceptance evidence, not a lane's local green.
 
 Two things about it are worth knowing before you decide it is ceremony:
 
@@ -63,6 +76,23 @@ Two things about it are worth knowing before you decide it is ceremony:
   currently read; lanes edit it, so the newest commit touching it is usually a
   lane's. Measured on this repository on 2026-09-04, that is precisely why the
   turnkey run could not say who had verified the newest wave.
+
+## Optional external execution transfer - still the existing record
+
+When work moves to an external executor, append its state: **offered;
+accepted, declined, or unaccepted; returned; reintegrated.** For every state,
+name the exact scope and revision, evidence or gaps, execution owner, interface
+decision rights, expected receipt, next checkpoint, and reintegration owner.
+
+    - TRANSFER offered: scope cli consumer at a14c9; execution owner partner;
+      interface decisions: platform within direction; receipt: command output by
+      04:40Z; reintegration: manager. Status: unaccepted.
+
+Exporting a packet is not acceptance; acceptance is not product acceptance. Do
+not maintain a duplicate local claim for transferred scope. An explicit steward
+stop applies even without recipient acknowledgement, and a missing receipt is
+never permission to continue the old work. The steward retains ratification and
+priority; this convention does not promise direct manager-to-manager messaging.
 
 ## What these two can prove, and what they cannot
 

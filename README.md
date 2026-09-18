@@ -215,7 +215,7 @@ app's operation.
 |---|---|
 | `<workspace>/.converge/<project>/` | Everything the operation stands up. One directory per project; nothing lands outside it, and nothing lands in your home directory. |
 | `<workspace>/.converge/<project>/lanes/` | One working copy per worker session, each on its own branch. |
-| `<workspace>/.converge/<project>/HIGHWAY.md` | The plan, rewritten every cycle: what is running, what waits on you, what was declined and why. |
+| `<workspace>/.converge/<project>/HIGHWAY.md` | The plan: changed boundaries, what is running, what waits on you, and what was declined and why. |
 | `<workspace>/.converge/<project>/infra.tsv` | Anything the run started that outlives a command, each line carrying its own teardown. |
 | Your project repository | The work itself — commits, on branches, merged by the manager session after its own check. |
 
@@ -298,7 +298,7 @@ therefore carries four files, and this repository carries its own:
 | [`.githooks/pre-push`](.githooks/pre-push) | A pre-push scan that refuses edits to locked contracts, so the rule holds even without the bundle. |
 
 Templates for a project adopting the method live in
-[`docs/workspace-template/`](docs/workspace-template/) — eight files, each one
+[`docs/workspace-template/`](docs/workspace-template/) — nine copied files, each one
 listed in [that directory's own README](docs/workspace-template/README.md) with
 where it goes and whether you need it on day one. The one whose name changes on
 the way in is the pre-push scan: git runs it only at `.githooks/pre-push`, so it

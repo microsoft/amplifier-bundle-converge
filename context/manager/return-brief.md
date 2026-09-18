@@ -53,6 +53,12 @@ away* into *finished* and the check caught it. "Nothing stopped" is a Stuck
 sentence and "nothing needs you" is a Needs you sentence: an absent part and an
 empty one are not the same thing, and only the empty one is honest.
 
+On a quiet return, say that bounded status found no change to lane result,
+revision, dependency, transfer, checkpoint, width, or consumer state. Do not
+rewrite the plan to simulate activity. Unknown state is never quiet: name the
+investigation and its next checkpoint. A required post-merge or consumer check
+still appears here even when the status probe was otherwise healthy.
+
 ## How it reads
 
 - **Sentences, not fragments.** A colleague who has never opened a code editor
@@ -73,3 +79,8 @@ empty one are not the same thing, and only the empty one is honest.
 A brief written at hand-off (clause 13) carries one more thing: what a fresh
 session needs to resume without re-deriving anything - what is already verified,
 what is honestly still open, and where the plan and the queue are.
+
+For an external execution transfer, also state its offered/accepted/declined or
+unaccepted/returned/reintegrated state, exact scope and revision, receipt or
+gap, next checkpoint, and reintegration owner. Packet exported, recipient
+accepted, and product accepted are different states.
