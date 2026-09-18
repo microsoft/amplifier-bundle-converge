@@ -4,9 +4,9 @@ Everything a repository needs to take part in Converge without anyone installing
 the bundle: a colleague reading a contract, a coding agent from another tool, a
 push that must be refused. Copy from here into your own repository.
 
-**Eight files.** Every one is listed below, including the three you do not need
+**Nine copied files.** Every one is listed below, including the four you do not need
 on day one — so that "I have them all" is something you can check rather than
-assume. This index makes a ninth entry in the directory and is not one of them:
+assume. This index makes a tenth entry in the directory and is not one of them:
 it is not copied anywhere.
 
 | File | Copy it to | Needed on day one |
@@ -19,6 +19,7 @@ it is not copied anywhere.
 | `converge-dir-README.md.template` | `<workspace>/.converge/README.md` | No — for the operation's own directory, when it first appears |
 | `gitignore-addendum.txt` | appended to the workspace root's `.gitignore` | No — same directory, so a running operation's state is not committed |
 | `GOAL-FILE.md.template` | one worker session's brief | No — the manager session writes these; it is here so the shape is on record |
+| `MANAGER-BRIEF.md.template` | `MANAGER-BRIEF.md` | No — a portable manager brief, including the optional Amplifier preflight |
 
 Each template opens with an HTML comment telling you what to replace and to
 delete the comment. Delete it — a template judged as a document is judged

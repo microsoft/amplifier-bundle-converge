@@ -6,7 +6,7 @@ description: >
   charter: the honesty gate, acceptance whose evidence a reader can still see, a falsity
   condition on self-authored evidence, the file-ownership split, two exits and no third,
   completion credited from commits. Applies operation.v1 §5 and §7.
-version: 0.3.2
+version: 0.4.0
 ---
 
 # Lane briefs and honest completion
@@ -45,7 +45,7 @@ Anything beyond these four is a lane, and a lane is a session.
 ## What every lane brief carries
 
 The brief template is `docs/workspace-template/GOAL-FILE.md.template`. Whatever
-shape it takes, a brief carries these four things:
+shape it takes, a brief carries these five things:
 
 - **The honesty gate: name the exact outcome that means "not proven" before the
   work starts.** Write the sentence the lane must be able to say — *"no macOS
@@ -68,6 +68,11 @@ shape it takes, a brief carries these four things:
   is the rule for both.
 - **The boundaries it must not cross.** Live services, shared tooling, other
   people's files — named, not implied.
+- **Shared boundary facts.** Name the producer, consumers, interface decision
+  owner within agreed direction, version or fixture, incoming dependency,
+  consumer acceptance owner and check, and residual destination. These facts
+  distinguish local success from consumer acceptance and product acceptance;
+  they do not create a new tracker or give the lane supervisor authority.
 
 ## Evidence the evaluator can see
 
@@ -244,6 +249,19 @@ Two consequences worth stating plainly, because both were guessed wrong:
 - **A brief that hands a lane a criterion outside its ownership has a defect in
   the brief.** Record that as work against the brief, never against the lane.
 
+## External execution transfer is optional and explicit
+
+If the brief transfers scope to an external executor, the manager records it in the existing
+plan or return record as **offered; accepted, declined, or unaccepted; returned;
+reintegrated**. Name exact scope and revision, evidence or gaps, execution
+owner, interface decision rights, expected receipt, next checkpoint, and
+reintegration owner. Stop duplicate local claims for the transferred scope.
+
+Exported packet does not mean recipient accepted, and accepted does not mean
+product accepted. The human steward retains ratification and priority. An
+explicit steward stop applies even without acknowledgement; a missing receipt
+does not authorize work to continue. No direct manager messaging is promised.
+
 ## The terminal marker lives OUTSIDE the worktree
 
 The brief names the marker's absolute path, and that path is outside the
@@ -251,6 +269,12 @@ repository on purpose. A lane's own `git add -A` can then never stage the marker
 and two lanes' markers can never collide when their branches merge. A brief that
 puts the marker inside the working copy is a brief that will cause a merge
 conflict later.
+
+Before launch, verify that the lane may write the named marker path. If an
+access restriction refuses it, the lane prints its commit, check results and
+marker blocker, then ends without trying another tool. The manager verifies
+the committed work and records that reporting residual separately. Never make
+an inaccessible marker the only reachable terminal condition.
 
 ## A commit is the only durable evidence
 

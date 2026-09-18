@@ -65,9 +65,45 @@ stderr is what the harness records as the seeding step's evidence.
 
 ---
 
+# The consumer fixture
+
+`consumer-repo/` is a deliberately small producer/consumer boundary:
+
+```text
+consumer-repo/
+  producer.py  publishes a usable reading but loses its supplied context id
+  consumer.py  consumes a reading
+  check.py     component checks, or the real cross-boundary consumer check
+```
+
+It is copied into a new temporary directory for every test. The component
+checks pass: the producer makes a reading and the consumer can consume one.
+The actual consumer check passes `trial-context` into `producer.publish()` and
+requires the returned record to carry the same association. The seeded producer
+instead returns `unassociated`, so the real consumer command fails:
+
+```console
+$ python3 check.py --component --json-only
+{"kind": "component", "results": [...], "verdict": "PASS"}
+$ python3 check.py --json-only
+{"expected_context": "trial-context", "received_context": "unassociated", ...,
+ "verdict": "FAIL"}
+$ echo $?
+1
+```
+
+Changing only the producer's boundary from the seeded
+`"context_id": "unassociated"` to `"context_id": context_id` makes the exact
+same `python3 check.py --json-only` consumer command pass. This is a behavioral
+negative control: it demonstrates a real cross-boundary failure that component
+checks do not see. It is evaluator/fixture coverage, **not** evidence that a
+manager hierarchy has improved.
+
+---
+
 # The stall fixture
 
-`stall_wave.py` seeds a **second** fixture, and it is not a repository with a
+`stall_wave.py` seeds a **third** fixture, and it is not a repository with a
 gap in it — it is a **wave that has already happened**, in which one lane
 stopped without producing anything.
 

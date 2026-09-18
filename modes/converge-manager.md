@@ -90,10 +90,21 @@ Show the order, the dependencies, the collisions, and the opportunistic picks,
 each with a one-line reason. The steward may reorder anything; nothing is
 hidden.
 
-Rewrite the operating picture every cycle, and regenerate what has landed from
-the repository's own history rather than from memory. Nothing enters or leaves
-the plan silently: every accept, defer, and decline is written down with its
-reason.
+For every boundary the plan names, record: **producer; consumers; interface
+decision owner within agreed direction; version or fixture; consumer acceptance
+owner and check; incoming dependency; and residual destination.** This is
+shared context in the existing plan and queue, not a new tracker or a new
+supervisor. A lane may be locally successful while its consumer or product
+acceptance is still pending.
+
+Read each lane's residuals into that same plan or queue with its destination
+owner and check. Do not reopen an owned-local result merely because a different
+owner must finish the residual.
+
+Regenerate changed facts from repository history rather than memory. On an
+unchanged wake, keep the existing picture and append only the heartbeat and
+bounded status; do not rewrite a full plan to prove nothing changed. Every
+accept, defer, decline, residual, or transfer still has its reason and owner.
 
 ## Clause 3 - Never the bottleneck
 
@@ -112,11 +123,29 @@ recorded on its own cannot be told apart from a wave that stopped. When nothing
 could continue, say so and say why in the same entry - *no ready item that does
 not collide* - because that is a different fact from having given up.
 
-Before you end a turn while lanes are running, make sure something will wake you
-again. A manager session that reports status and then stops has stopped the
-whole operation.
+During authorized unattended work, keep an active bounded wait/control path
+while work remains. Do not end the turn on the assumption that a live watchdog
+will resume you: it records advisories, not automatic re-entry. Yield only with
+a supported resumer verified for this session, an explicit stop, or a recorded
+handoff; otherwise report progress without abandoning the active control path.
 
 The stamp's exact shape is in the wave-record convention loaded with this mode.
+
+**Integration has bounded priority over refill.** When a lane ended, or an
+applicable consumer check failed, first verify and integrate that boundary
+before launching a conflicting refill. This explicitly overrides the
+`ten-lane-highway` refill-first ordering for that case. Preserve healthy,
+independent architecture, design, research, and fixture lanes in parallel; do
+not require one green slice before other nonconflicting work.
+
+Record a temporary under-width, the integration checkpoint or time budget, and
+the next width repair. Refill ready, nonconflicting work within the steward's
+limits once that finite pass ends. Do not loop on a red check: route a repeated
+failure under clause 9. Keep the steward's per-project width distinct from an
+explicit external resource cap: a cap constrains usable capacity, not whether
+work exists. Only accepted external execution scope (or scope explicitly
+stopped by the steward) leaves the local runnable set; retain its dependency
+and reintegration obligations. An unaccepted offer remains locally accountable.
 
 ## Clause 4 - Feedback is signal, not a ticket
 
@@ -150,6 +179,14 @@ terminal session**, started through the parallel-lane tooling. For continuous
 width use the `ten-lane-highway` practice; for a single wave that launches once
 and drains, use `goal-batch` or a single `goal` lane.
 
+An independent manager composes Converge and activates **its own**
+`converge-manager` mode; a conversation handed to it is not capability
+provisioning. Before managing, it verifies the available mode, required tools,
+skills and agents, its identity, queue, repository, capacity, and continuation
+path. Do not invent an `--mode converge-manager` CLI flag. A human or Codex
+manager follows the portable `MANAGER-BRIEF.md.template` and the participant
+kit; only its labelled Amplifier preflight is tool-specific.
+
 ### Where you run, and where the work lands
 
 A manager session runs from the **workspace root**: the nearest ancestor
@@ -171,34 +208,15 @@ Resolve it once, before your first launch, and paste what it printed:
 Pass that `BATCH_DIR` to **every** highway or goal-batch launch, and put nothing
 of the operation anywhere else.
 
-The reason is clause 5 itself, carried through: a lane is a worker session's own
-working copy, and this says where those copies live. Behind it sits
-`contracts/composition.v1.md`'s purpose - Converge must "sit lightly on a host …
-and never a side effect on work that isn't its own" - and a directory of
-worktrees, logs and live infrastructure left in someone's home directory is
-exactly such a side effect. Be honest about the standing: **no numbered clause
-names the location today**; that gap is filed as work, and until it is answered
-this is the mode's rule rather than a contract's. Measured on this host on
-2026-09-05: thirteen batch directories sat under `~/dev/hw-*`, outside every
-workspace root, because the `ten-lane-highway` practice's own example reads
-
-> State lives in `BATCH_DIR` (create one per highway, e.g. `~/dev/hw-<name>`)
-
-and a manager session that starts wherever the steward happened to type
-`amplifier` inherits that example without noticing. The cost is paid later: the
-worktrees, the plan record, and the infra ledger of a finished run outlive the
-workspace they belonged to, and nothing in the home directory says which project
-any of them served. That example lives in the Amplifier CLI's shipped skill and
-is not ours to edit; this rule overrides it for a manager session, which is all
-that is needed.
+This location rule overrides the highway practice's example outside a workspace.
+It is a mode convention serving composition's no-unrelated-side-effects promise,
+not a separately numbered contract clause. Its rationale and limits are in the
+where-you-run context loaded with this mode.
 
 The directory carries a `README.md` explaining itself, and the workspace
 git-ignores it: a running operation's scratch space is not the project's content.
 The template for both is `docs/workspace-template/converge-dir-README.md.template`
 and `docs/workspace-template/gitignore-addendum.txt`.
-
-The rule's full reading, and what it can and cannot prove, is in the where-you-run
-convention loaded with this mode.
 
 If no launcher is reachable, **fail loud and say so**. Never quietly fall back to
 running the work inside this session.
@@ -212,6 +230,10 @@ A manager session may spawn an in-session sub-agent for exactly four things, and
 4. The watcher - absorb waiting; observe only, and stay able to report back.
 
 Anything beyond these four is a lane, and a lane is a session.
+
+Bound every delegate to `context_depth: none` by default. Use a narrow,
+explained exception only when a skill or the specific task requires context;
+this is not a blanket prohibition that overrules such a requirement.
 
 Write the brief with `load_skill("lane-brief")`. It carries the honesty gate,
 the file-ownership split, the two exits, and the marker rule. Do not restate it
@@ -247,6 +269,12 @@ inherited artifact is the commonest false signal there is.
 Each piece ends exactly one of three ways: **done** - **stuck, with the cause** -
 **needs the steward's judgment**.
 
+Keep the acceptance levels separate: **local success** means the lane met its
+owned brief; **consumer-accepted** means its named consumer check passed; and
+**product-accepted** means the manager re-ran the integrated acceptance. A
+residual outside the lane's file ownership does not erase local success: record
+its destination, owner, and check in the existing plan or queue.
+
 ## Clause 8 - Integrate, verify, re-check
 
 Verification is yours, never the worker session's. Run the check yourself, then
@@ -260,14 +288,13 @@ Broken - Pinned open - Can't check* - before the next brief goes out.
 
 **Write the re-run down, in your own commit.** Append an entry to
 `docs/workflow/CHECK-RECORD.md` naming the merges it covers, the command you ran,
-and what it printed; commit it on the integration branch yourself. A lane never
-writes there. That commit sitting outside every lane merge is the only thing that
-tells a later reader your hand from a worker session's - and without it, "the
-manager session's own verification" is a sentence nobody can check. Measured on
-this repository on 2026-09-04: the ledger and the harness's own result file are
-both edited by lanes, so a check reading them could see that an integrator had
-written seven records before and still could not say who verified the newest
-wave.
+what it printed, the revisions and environment. Invoke the actual integrated
+acceptance, including a consumer journey where an installed consumer applies;
+write **N/A — no installed consumer applies** honestly when it does not. Commit
+it on the integration branch yourself. A lane never writes there. That commit
+sitting outside every lane merge is the only thing that tells a later reader
+your hand from a worker session's - and without it, "the manager session's own
+verification" is a sentence nobody can check.
 
 Repair a small defect in place rather than spinning a lane for five one-word
 edits.
@@ -280,42 +307,32 @@ No progress across iterations means stuck, with the cause named, routed either
 to the plan or to the steward. Do not retry the same move hoping for a different
 result.
 
-**The number of iterations is three, and you count them.** An iteration is one
-attempt at the same target - one tool call at the file that refused you, one
-relaunch of the lane that died, one poll of the lane you are waiting on.
-Progress is a new fact: a file changed, a branch moved, a command that had been
-failing succeeded, an error message different from the last one. Time passing is
-not progress, and neither is a poll that returns what the last poll returned. On
-the **third** iteration against one target with no progress, you stop attempting
-and declare - trying a different way around the same refusal is attempt two, not
-a fresh start.
+For failed command or lane recovery, stop after **three no-progress attempts**
+at the same target and record the cause and route. A tool or guard refusal is
+an immediate STOP; never try another tool around it. Healthy passive waiting
+uses a declared health signal, checkpoint, and deadline, not an attempt count.
+Healthy changed results advance normal integration/reconciliation. A missed
+checkpoint or deadline, terminal failure, or unhealthy result triggers the
+named investigation/stop route. Use active bounded waiting as in clause 3.
 
 **Stamp the declaration in the plan record**, the same one line clauses 3 and 11
 ask for:
 
     - 2026-09-06T04:12:07Z STUCK w4-changelog - the locked-document guard
       refuses the changelog edit and there is no candidate file to write instead.
-      Iterations without progress: 3. Routed: plan.
+      Iterations without progress: 1. Routed: plan.
 
 Routed `plan` means the next move is work - file it, requeue it, brief a lane for
 it. Routed `steward` means it is one of clause 11's four calls, stamped as one
 beside it. A stall routed nowhere has not been declared; the route is what turns
 the stop into a decision somebody else can act on.
 
-Measured on 2026-09-06, adopter harness run 03:50Z, scenario 2: after its own
-locked-document guard refused an edit, a manager session recognised the problem,
-tried to get around it by grepping and delegating, then **polled for more than
-twenty minutes without declaring anything**. The person watching got no cause, no
-route, no call, and the scenario's remaining steps were never reached. The rule
-already said stalls are decisions; what it did not carry was a number, so no
-iteration was ever the last one.
-
 An honest refusal is a designed exit and a real result. A lane that stops and
 says why has done better than a lane that reports green and cannot show the
 artifact behind it.
 
-The stamp's exact shape, what counts as an iteration, and what the count can and
-cannot prove are in the stalls convention loaded with this mode.
+The stamp's exact shape, wait boundary, and what the record can and cannot prove
+are in the stalls convention loaded with this mode.
 
 ## Clause 10 - A brief on every return
 
@@ -324,45 +341,11 @@ finished - stuck - needs you - anything quietly broken.** It is appended to
 `docs/workflow/OWNER-RETURN-LOG.md`, which is the durable memory a fresh session
 reads first.
 
-**Stamp the return before you answer it.** The moment the steward's message
-arrives - before you read the queue, before you reply, before anything else -
-append the entry heading with the clock time of their return:
-
-    ## 2026-09-04 04:01 - they came back to a green gate
-
-That heading is the record that a return happened, and nothing else in this
-project keeps one. Write it at the moment of the return and the brief under it
-at the end of the turn, and the two become countable against each other: a
-return that never got briefed is a stamp with the parts missing under it, in
-plain sight in the file the steward already reads.
-
-**Then the five parts, each one sentence, each opening with its own bold
-label**, so the shape is visible without reading the prose:
-
-    **Time away.** ...
-    **Finished.** ...
-    **Stuck.** ...
-    **Needs you.** ...
-    **Anything quietly broken.** ...
-
-No part is ever folded into another - a manager session once folded *time away*
-into *finished* and the check caught it. "Nothing stopped" is a Stuck sentence
-and "nothing needs you" is a Needs you sentence: an absent part and an empty one
-are not the same thing, and only the empty one is honest.
-
-Write the log entry **before** the message to the steward, so nothing is lost if
-your context resets between the two. Stamp, then the five parts, then reply.
-
-A brief you send unprompted - a wave landed while the steward is still away - is
-welcome and keeps a date-only heading. The clause asks that every return has a
-brief, never that every brief has a return.
-
-What this can prove, and what it cannot: stamps and completed briefs are both
-countable, so an unbriefed return is visible to anyone - a person or a check.
-A return this session never recorded at all leaves no trace either way, which is
-the honest limit of a record the returning session keeps itself.
-
-The brief's exact shape is in the return-brief convention loaded with this mode.
+Stamp the return heading immediately, before queue reads or the reply. Complete
+the five separately bold-labelled sentences in the log before replying; an empty
+part must say so, not disappear. Unprompted briefs use a date-only heading.
+The return-brief context loaded with this mode carries the exact format, examples,
+and limits; use it rather than inventing a second brief shape.
 
 ## Clause 11 - Four calls reach the steward
 
@@ -407,6 +390,16 @@ session can resume from, and stops.
 The hand-off is the return log plus the queue plus the operating picture. Name
 what is already verified so the next session does not re-derive it, and name
 what is honestly still open.
+
+An optional execution transfer is a hand-off, not a local duplicate claim.
+Record offered, accepted/declined/unaccepted, returned, and reintegrated in the
+existing plan or return record, with exact scope and revision, evidence or gaps,
+execution owner, interface decision rights, expected receipt, next checkpoint,
+and reintegration owner. Packet exported is not recipient accepted, and neither
+is product accepted. The human steward retains ratification and priority
+authority; no direct manager messaging is guaranteed. An explicit steward stop
+takes effect without recipient acknowledgement; absence of a receipt never
+permits the old work to continue.
 
 ## Clause 14 - The first wake is investigate, then propose
 
@@ -475,10 +468,18 @@ first-wake convention loaded with this mode.
 
 ## The operating loop - on every wake
 
-Run this whole loop each time you wake, whether a watcher returned, a lane
-ended, or the steward sent a message. **Except the first wake of a project that
-has no contracts** - there is nothing yet for this loop to run against, and
-clause 14 above runs in its place, once.
+Run this loop each time you wake, whether a watcher returned, a lane ended, or
+the steward sent a message. **Except the first wake of a project that has no
+contracts** - there is nothing yet for this loop to run against, and clause 14
+above runs in its place, once.
+
+Take the short path only when status, health, feedback, human return, lane
+result, revision, dependency, transfer, due checkpoint, width, and consumer
+state are unchanged: heartbeat, bounded status, retain the existing picture,
+then schedule the next declared check. Unknown state is investigation, never a
+cheap pass. A cheap status does not suppress a steward brief or a required
+post-merge check. For watcher advisories in `wake-needed`, preserve the
+append-only record and advance a processed offset rather than truncating it.
 
 **If this wake is the steward coming back, stamp the return before step 1**
 (clause 10). It costs one line, it is the only record anywhere that a return
@@ -497,22 +498,30 @@ checked rather than hoped for.
    only because this step does not check whether the file is already there. It
    costs a rename. The registration convention loaded with this mode carries
    the fields, the two things it refuses to guess, and how the app finds it.
-2. **Status** - run the instrument once and paste its output. The deficit is
-   computed, not noticed (clause 6).
-3. **Refill first if under width** - before merging, before reporting, before
-   anything else. Under-width with ready work needs a written justification
-   that cycle (clause 6).
-4. **Verify and merge ended lanes** - your own check, then merge, then the
-   post-merge gate if two or more landed in one repository (clauses 7, 8). Write
-   the re-run into `docs/workflow/CHECK-RECORD.md` in your own commit before you
-   move on. If a lane drains during the merge pass, go back to step 3 first.
+2. **Bounded status** - run the instrument once; check new feedback, human
+   return, lane/result/revision/dependency/transfer changes, due checkpoints,
+   width repair, and consumer state. The deficit is computed, not noticed
+   (clause 6). Unknown state routes to investigation.
+3. **Give ended work or a failed applicable consumer check a bounded pass** -
+   record its checkpoint/time budget and temporary under-width. Verify ended
+   lanes yourself; merge only eligible, verified work within existing authority.
+   A failed consumer check triggers diagnosis and a routed fix, never an
+   unconditional merge. Run applicable post-merge gates and write the integrated
+   re-run to `docs/workflow/CHECK-RECORD.md` in your own commit. At the budget
+   boundary, record remaining work and its owner; continue independent work.
+4. **Refill ready nonconflicting work** - within steward limits and after the
+   finite integration pass; preserve independent work already healthy. Under
+   width with ready work needs a written justification and checkpoint that cycle
+   (clause 6).
 5. **Weave in new feedback by explicit decision** - now, queued at a priority,
    or declined, each with a reason recorded (clause 4). Anything that needs the
    steward is stamped as a call, with what continued beside it (clauses 3, 11).
-6. **Rewrite the operating picture** - regenerated from the repository's history,
-   never from memory (clause 2).
-7. **Clear the wake signal**, and make sure something will wake you again before
-   you go quiet (clause 3).
+6. **Update the operating picture only for changed facts** - regenerate those
+   from repository history, never memory (clause 2).
+7. **Advance the wake offset and declare the next active bounded wait** - do not
+   erase append-only wake signals; name health, checkpoint, deadline, and the
+   route for a missed boundary. Remain in the active control path unless a
+   verified resumer, explicit stop, or handoff permits yielding (clauses 3, 9).
 
 Use `/mode off` when the project is handed off (clause 13) or the engagement is
 closed.

@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shlex
+import shutil
 import subprocess
 import sys
 import time
@@ -26,6 +28,7 @@ import pytest
 TURNKEY = Path(__file__).resolve().parent.parent
 FIXTURES = TURNKEY / "fixtures"
 GAP_REPO = FIXTURES / "gap-repo"
+CONSUMER_REPO = FIXTURES / "consumer-repo"
 
 
 def _load_harness():
@@ -311,7 +314,7 @@ def test_seeding_refuses_to_overwrite_existing_work(tmp_path):
 
 def test_every_step_is_named_and_ordered():
     letters = [letter for letter, _, _, _ in run.STEPS]
-    assert letters == list("abcdefghijkl")
+    assert letters == list("abcdefghijklm")
 
 
 def test_the_turnkey_sentence_is_still_exactly_nine_steps():
@@ -323,6 +326,272 @@ def test_the_turnkey_sentence_is_still_exactly_nine_steps():
     """
     assert run.TURNKEY_STEPS == "abcdefghi"
     assert len([s for s in run.STEPS if s[0] in run.TURNKEY_STEPS]) == 9
+
+
+# ---------------------------------------------------------------------------
+# supplemental consumer acceptance check — an optional real boundary check
+# ---------------------------------------------------------------------------
+
+
+def _consumer_copy(tmp_path):
+    """A fresh producer/consumer repository, so one test cannot heal another."""
+    target = tmp_path / "consumer-repo"
+    shutil.copytree(CONSUMER_REPO, target)
+    _git(target.parent, "init", "-q", "-b", "main", str(target))
+    _git(target, "config", "user.email", "fixture@example.invalid")
+    _git(target, "config", "user.name", "consumer fixture")
+    _git(target, "add", "-A")
+    _git(target, "commit", "-qm", "fixture: seeded consumer boundary defect")
+    return target
+
+
+def _consumer_run(cwd, command=None, *extra):
+    argv = [
+        sys.executable, "-B", str(TURNKEY / "run.py"),
+        "--env", "local", "--steps", "m", "--consumer-cwd", str(cwd),
+    ]
+    if command is not None:
+        argv += ["--consumer-check", command]
+    argv += list(extra)
+    done = subprocess.run(argv, capture_output=True, text=True, check=False)
+    return done, json.loads(done.stdout) if done.stdout else None
+
+
+def _consumer_row(report):
+    assert report is not None
+    assert [row["step"] for row in report["steps"]] == ["m"]
+    return report["steps"][0]
+
+
+def test_omitting_the_consumer_check_is_an_explicit_unexercised_skip():
+    done = subprocess.run(
+        [sys.executable, "-B", str(TURNKEY / "run.py"), "--env", "local", "--steps", "m",
+         "--json-only"],
+        capture_output=True, text=True, check=False,
+    )
+    report = json.loads(done.stdout)
+    row = _consumer_row(report)
+    assert done.returncode == 0
+    assert row["status"] == run.SKIP
+    assert "unexercised" in row["detail"]
+    assert report["consumer"]["verdict"] == run.SKIP
+
+
+def test_component_checks_pass_while_the_real_consumer_boundary_is_red(tmp_path):
+    fixture = _consumer_copy(tmp_path)
+    components = subprocess.run(
+        [sys.executable, "check.py", "--component", "--json-only"],
+        cwd=fixture, capture_output=True, text=True, check=False,
+    )
+    direct = subprocess.run(
+        [sys.executable, "check.py", "--json-only"],
+        cwd=fixture, capture_output=True, text=True, check=False,
+    )
+    done, report = _consumer_run(fixture, "python3 check.py --json-only")
+    row = _consumer_row(report)
+
+    assert components.returncode == 0
+    assert json.loads(components.stdout)["verdict"] == run.PASS
+    assert direct.returncode == 1
+    assert json.loads(direct.stdout)["received_context"] == "unassociated"
+    assert done.returncode == 1
+    assert row["status"] == run.FAIL
+    assert row["evidence"]["return_code"] == 1
+    assert row["evidence"]["git_head"]
+    assert report["consumer"]["verdict"] == run.FAIL
+    assert report["verdict"] == run.FAIL, "a requested consumer failure cannot be laundered green"
+
+
+def test_correcting_only_the_producer_boundary_makes_the_same_consumer_check_green(tmp_path):
+    fixture = _consumer_copy(tmp_path)
+    producer = fixture / "producer.py"
+    producer.write_text(
+        producer.read_text(encoding="utf-8").replace(
+            '"context_id": "unassociated"', '"context_id": context_id'
+        ),
+        encoding="utf-8",
+    )
+    done, report = _consumer_run(fixture, "python3 check.py --json-only")
+    row = _consumer_row(report)
+
+    assert done.returncode == 0
+    assert row["status"] == run.PASS
+    assert row["evidence"]["argv"] == ["python3", "check.py", "--json-only"]
+    assert json.loads(row["evidence"]["output_tail"])["received_context"] == "trial-context"
+    assert row["evidence"]["worktree_clean"] is False
+    assert "not identified by HEAD" in row["evidence"]["revision_note"]
+
+
+def test_consumer_command_is_shlex_parsed_and_explicit_cwd_is_not_rebased(tmp_path):
+    fixture = _consumer_copy(tmp_path)
+    before = {path.relative_to(fixture): path.read_bytes() for path in fixture.rglob("*")
+              if path.is_file() and ".git" not in path.parts}
+    command = 'python3 -c "import sys; print(sys.argv[1])" "two words"'
+    done, report = _consumer_run(fixture, command)
+    row = _consumer_row(report)
+    after = {path.relative_to(fixture): path.read_bytes() for path in fixture.rglob("*")
+             if path.is_file() and ".git" not in path.parts}
+
+    assert done.returncode == 0
+    assert row["status"] == run.PASS
+    assert row["evidence"]["argv"] == [
+        "python3", "-c", "import sys; print(sys.argv[1])", "two words",
+    ]
+    assert row["evidence"]["cwd"] == str(fixture)
+    assert row["evidence"]["output_tail"] == "two words"
+    assert report["notes"] == []
+    assert after == before, "step-only local execution must not create setup artifacts"
+
+
+def test_consumer_nonzero_timeout_and_tool_error_are_all_non_green(tmp_path):
+    fixture = _consumer_copy(tmp_path)
+    nonzero, nonzero_report = _consumer_run(
+        fixture, 'python3 -c "raise SystemExit(7)"'
+    )
+    timeout, timeout_report = _consumer_run(
+        fixture, 'python3 -c "import time; time.sleep(1)"', "--timeout", "0.05"
+    )
+    missing_tool, missing_tool_report = _consumer_run(
+        fixture, "turnkey-consumer-tool-that-does-not-exist"
+    )
+
+    assert nonzero.returncode == timeout.returncode == missing_tool.returncode == 1
+    assert _consumer_row(nonzero_report)["evidence"]["return_code"] == 7
+    assert _consumer_row(timeout_report)["status"] == run.FAIL
+    assert "exceeded 0.05s" in _consumer_row(timeout_report)["detail"]
+    assert _consumer_row(missing_tool_report)["status"] == run.FAIL
+    assert "not on PATH" in _consumer_row(missing_tool_report)["detail"]
+
+
+def test_consumer_missing_and_orphan_cwd_refuse_or_fail_without_setup(tmp_path):
+    fixture = _consumer_copy(tmp_path)
+    absent, absent_report = _consumer_run(
+        tmp_path / "does-not-exist", "python3 check.py --json-only"
+    )
+    orphan = subprocess.run(
+        [sys.executable, "-B", str(TURNKEY / "run.py"), "--env", "local", "--steps", "m",
+         "--consumer-check", "python3 check.py"],
+        capture_output=True, text=True, check=False,
+    )
+    malformed = subprocess.run(
+        [sys.executable, "-B", str(TURNKEY / "run.py"), "--env", "local", "--steps", "m",
+         "--consumer-cwd", str(fixture), "--consumer-check", "'unterminated"],
+        capture_output=True, text=True, check=False,
+    )
+    empty = subprocess.run(
+        [sys.executable, "-B", str(TURNKEY / "run.py"), "--env", "local", "--steps", "m",
+         "--consumer-cwd", str(fixture), "--consumer-check", ""],
+        capture_output=True, text=True, check=False,
+    )
+
+    assert absent.returncode == 1
+    assert _consumer_row(absent_report)["status"] == run.FAIL
+    assert _consumer_row(absent_report)["evidence"]["return_code"] is None
+    assert orphan.returncode == malformed.returncode == empty.returncode == 3
+    assert "--consumer-cwd" in orphan.stderr
+    assert "could not be parsed" in malformed.stderr
+    assert "non-empty command" in empty.stderr
+
+
+def test_an_exception_in_an_explicit_consumer_check_is_not_a_soft_skip(monkeypatch, capsys):
+    class ExplodingEnv(run.Env):
+        kind = "local"
+        label = "exploding test environment"
+
+        def run(self, argv, cwd=None, timeout=120.0, env=None):
+            raise RuntimeError("controlled consumer environment error")
+
+    env = ExplodingEnv()
+    monkeypatch.setattr(run, "LocalEnv", lambda: env)
+
+    assert run.main([
+        "--env", "local", "--steps", "m", "--consumer-cwd", "/fixture",
+        "--consumer-check", "python3 check.py", "--json-only",
+    ]) == 1
+    report = json.loads(capsys.readouterr().out)
+    assert _consumer_row(report)["status"] == run.FAIL
+    assert "raised RuntimeError" in _consumer_row(report)["detail"]
+
+
+@pytest.mark.parametrize("selection", ["h", "M", "", "m,", "n", "m,unknown"])
+def test_requested_consumer_cannot_be_silently_excluded(monkeypatch, selection, capsys):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("selection must be refused before setup")
+    monkeypatch.setattr(run, "LocalEnv", forbidden)
+    monkeypatch.setattr(run, "launch_dtu", forbidden)
+    assert run.main([
+        "--steps", selection, "--consumer-check", "python3 check.py",
+        "--consumer-cwd", "/fixture",
+    ]) == 3
+    assert "error:" in capsys.readouterr().err
+
+
+def test_requested_consumer_cannot_be_replaced_by_self_check(capsys):
+    assert run.main([
+        "--self-check", "--consumer-check", "python3 check.py", "--consumer-cwd", "/fixture",
+    ]) == 3
+    assert "cannot be combined" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("command", [None, "python3 check.py"])
+def test_consumer_only_local_path_never_calls_setup_or_unrelated_tools(monkeypatch, capsys, command):
+    class RecordingEnv(run.Env):
+        kind = "local"
+        label = "recorded fixture"
+
+        def __init__(self):
+            self.calls = []
+
+        def run(self, argv, cwd=None, timeout=120.0, env=None):
+            self.calls.append((argv, cwd))
+            responses = {
+                ("test", "-d", "/fixture"): (0, ""),
+                ("git", "-C", "/fixture", "rev-parse", "HEAD"): (0, "a" * 40),
+                ("git", "-C", "/fixture", "status", "--porcelain",
+                 "--untracked-files=normal"): (0, ""),
+                ("python3", "check.py"): (0, "consumer-ok"),
+            }
+            assert tuple(argv) in responses, f"unexpected tool: {argv}"
+            code, out = responses[tuple(argv)]
+            return run.Ran(code, out, "", argv=argv)
+
+    env = RecordingEnv()
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("consumer-only invocation must not set up infrastructure or homes")
+
+    monkeypatch.setattr(run, "LocalEnv", lambda: env)
+    monkeypatch.setattr(run, "launch_dtu", forbidden)
+    monkeypatch.setattr(run, "drive_wave", forbidden)
+    monkeypatch.setattr(run.tempfile, "mkdtemp", forbidden)
+    args = ["--env", "local", "--steps", " m ", "--json-only"]
+    if command:
+        args += ["--consumer-check", command, "--consumer-cwd", "/fixture"]
+    assert run.main(args) == 0
+    row = _consumer_row(json.loads(capsys.readouterr().out))
+    if command:
+        assert len(env.calls) == 4
+        assert env.calls[-1] == (["python3", "check.py"], "/fixture")
+        assert row["evidence"]["worktree_clean"] is True
+    else:
+        assert not env.calls
+        assert row["status"] == run.SKIP
+
+
+def test_dtu_consumer_path_and_arguments_remain_opaque():
+    class RecordingHost:
+        def run(self, argv, **kwargs):
+            self.argv = argv
+            return run.Ran(0, json.dumps({"exit_code": 0, "stdout": "ok"}), "", argv=argv)
+
+    host = RecordingHost()
+    env = run.DtuEnv("fixture-container", host)
+    cwd = "/target's path/$(not-executed)"
+    argv = ["python3", "check.py", "two words", ";not-a-shell-command", "'quoted'"]
+    assert env.run(argv, cwd=cwd).ok
+    script = host.argv[-1]
+    # shlex recovers the data values, including quotes/metacharacters.
+    assert shlex.split(script) == ["cd", cwd, "&&", *argv]
 
 
 def test_every_clause_reading_names_its_ledger_row():

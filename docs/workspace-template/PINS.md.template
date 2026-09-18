@@ -22,6 +22,8 @@ Read this before your first command. Every line is a fact you may rely on.
 | Conformance ledger | `<path, e.g. ledger/rows.yaml>` |
 | Conformance kits | `<path, e.g. conformance/<contract>/run.py>` |
 | Integration branch | `<branch, e.g. main>` |
+| Manager plan / return record | `<path, e.g. .converge/<project>/HIGHWAY.md>` |
+| Manager brief | `MANAGER-BRIEF.md` |
 
 ## Naming
 
