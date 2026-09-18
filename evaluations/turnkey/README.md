@@ -35,6 +35,33 @@ the infra ledger, and puts the run's output — including the manager session's
 full transcript — outside this repository. Everything else is `run.py`, which is
 stdlib-only and needs no install beyond `uv run`.
 
+## Optional consumer acceptance check
+
+Step **(m)** is supplemental to the historical nine-step turnkey sentence. It
+checks a real producer/consumer boundary only when the caller explicitly
+supplies both the command and its working directory:
+
+```sh
+python3 -B evaluations/turnkey/run.py --env local --steps m \
+    --consumer-cwd /path/inside/the/selected/environment \
+    --consumer-check 'python3 check.py --json-only' --json-only
+```
+
+The command is parsed with shell-like quoting into argv and run through the
+selected environment; it is never passed to a shell. `--consumer-cwd` names a
+path **inside that environment**. In particular, a host path is not resolved or
+rebased before a DTU receives it. The step-only local form above does not
+provision a DTU, call `amplifier`, create an `AMPLIFIER_HOME`, change settings,
+or read the work tracker.
+
+Without `--consumer-check`, step (m) is an explicit `SKIP` — *unexercised*, not
+a product `PASS`. An empty/malformed command, a command without a cwd, or an
+orphan cwd is refused before setup. An absent cwd, executable error, timeout,
+or non-zero consumer command is `FAIL`; a requested failure makes the overall
+report and exit code non-green. Its separate `consumer` tally records exact
+argv/cwd, elapsed time, exit code, bounded output, and the selected revision
+when that cwd is a readable Git repository. It does not remediate the failure.
+
 **What it actually reported the last time it ran is in [`RESULT.md`](RESULT.md)
 — currently GREEN, with the four defects it took to get there.**
 
@@ -256,8 +283,8 @@ Two deliberate refusals in that code:
 An assertion nobody can make fail proves nothing.
 
 ```sh
-uv run evaluations/turnkey/run.py --self-check      # 55 cases, no environment needed
-uv run --with pytest pytest evaluations/turnkey -q  # 115 tests
+uv run evaluations/turnkey/run.py --self-check      # 80 cases, no environment needed
+uv run --with pytest pytest evaluations/turnkey -q  # 167 tests
 ```
 
 `--self-check` runs every `assert_*` function against synthetic evidence that
@@ -279,7 +306,7 @@ a real wave with a real stalled lane, run both ways.
 
 ## The fixtures
 
-[`fixtures/`](fixtures/) carries two, and they answer different questions.
+[`fixtures/`](fixtures/) carries three, and they answer different questions.
 
 - **The gap fixture** (`gap-repo/`, `seed.sh`) — a tiny repository with two
   planted gaps in two files that do not touch, and its own conformance kit that
@@ -290,8 +317,32 @@ a real wave with a real stalled lane, run both ways.
   in which one lane stopped with an unchanged branch and a second one did not.
   It is the wave's *output*, and it exists because clause 9 needed an event
   rather than a cleverer parser.
+- **The consumer fixture** (`consumer-repo/`) — isolated copies show that
+  producer and consumer component checks can both pass while their real
+  context association fails; correcting the producer boundary makes the same
+  consumer command pass. It tests this evaluator's optional step, not a
+  measured improvement in manager behavior.
 
-See [`fixtures/README.md`](fixtures/README.md) for both.
+See [`fixtures/README.md`](fixtures/README.md) for all three.
+
+## Future live-trial rubrics — unimplemented and unrun
+
+These are small trial designs for the existing harness vocabulary, not
+instrumentation and not A/B results. Each compares the current hierarchy with
+an improved hierarchy on the same task, quality bar, model, total resource
+budget **including managers**, and deadline; record incomplete outcomes rather
+than excluding them.
+
+1. **Producer/consumer plus independent work.** Seed an unresolved interface
+   association and one disjoint task; compare whether the boundary is resolved
+   and independently-owned work continues without a duplicate item or
+   unverified green.
+2. **External executor transfer.** Transfer one bounded lane to an external
+   executor; compare one derived item, one reintegration, and no duplicate
+   claim against the same normal lane task.
+3. **Healthy wait versus actual stall.** Hold a valid human-only decision while
+   disjoint work remains, then seed a lane with no progress; compare continued
+   work in the first case with an honestly named stuck outcome in the second.
 
 ## Anything it stands up, it tears down
 

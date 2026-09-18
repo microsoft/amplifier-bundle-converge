@@ -59,6 +59,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -2306,6 +2307,11 @@ class Context:
     install_command: str | None = None
     amplifier_home: str | None = None
     timeout: float = 300.0
+    # An optional, explicitly requested producer/consumer acceptance check.
+    # Keep cwd exactly as supplied: it names a path inside `env`, not a host
+    # path to resolve and accidentally rebase before a DTU command sees it.
+    consumer_argv: list[str] | None = None
+    consumer_cwd: str | None = None
     notes: list[str] = field(default_factory=list)
     wave: dict | None = None
     batch_dir: str = WAVE_BATCH_IN_ENV
@@ -3490,6 +3496,86 @@ def step_installed_tree(ctx: Context) -> Result:
                   evidence=evidence)
 
 
+def step_consumer(ctx: Context) -> Result:
+    """(m) An explicitly configured producer/consumer acceptance check.
+
+    This is supplemental to the historical turnkey sentence.  It deliberately
+    uses Env.run with argv parsed before setup, so neither shell evaluation nor
+    host-path rebasing can turn a consumer check into a different command in a
+    target environment.
+    """
+    if ctx.consumer_argv is None:
+        return Result(
+            SKIP,
+            "No consumer acceptance check was configured; this supplemental "
+            "producer/consumer check is unexercised.",
+            reason="pass both --consumer-cwd PATH and --consumer-check COMMAND "
+                   "to run a real consumer acceptance check",
+            evidence={"configured": False},
+        )
+
+    # main() refuses this combination before setup. Keep the check defensive so
+    # a programmatic Context can never turn an explicit request into a SKIP.
+    if not ctx.consumer_cwd:
+        return Result(
+            FAIL,
+            "A consumer acceptance check was requested without a target working directory.",
+            evidence={"configured": True, "argv": ctx.consumer_argv, "cwd": None,
+                      "elapsed_s": 0.0, "return_code": None, "output_tail": ""},
+        )
+
+    began = time.monotonic()
+    cwd_check = ctx.env.run(["test", "-d", ctx.consumer_cwd], timeout=30.0)
+    evidence = {
+        "configured": True,
+        "argv": ctx.consumer_argv,
+        "cwd": ctx.consumer_cwd,
+        "selected_repo_revision": None,
+    }
+    if not cwd_check.ok:
+        evidence.update(
+            elapsed_s=round(time.monotonic() - began, 3),
+            return_code=None,
+            output_tail=cwd_check.tail(800),
+        )
+        return Result(
+            FAIL,
+            f"The consumer working directory {ctx.consumer_cwd!r} is not available "
+            f"in the selected environment: {cwd_check.tail(200)}",
+            evidence=evidence,
+        )
+
+    revision = ctx.env.run(
+        ["git", "-C", ctx.consumer_cwd, "rev-parse", "HEAD"], timeout=30.0
+    )
+    if revision.ok:
+        evidence["selected_repo_revision"] = first_line(revision.out) or None
+
+    ran = ctx.env.run(ctx.consumer_argv, cwd=ctx.consumer_cwd, timeout=ctx.timeout)
+    evidence.update(
+        elapsed_s=round(time.monotonic() - began, 3),
+        return_code=ran.code,
+        output_tail=ran.tail(1200),
+    )
+    if ran.failure:
+        return Result(
+            FAIL,
+            f"The requested consumer acceptance check could not run: {ran.failure}",
+            evidence=evidence,
+        )
+    if ran.code != 0:
+        return Result(
+            FAIL,
+            f"The requested consumer acceptance check exited {ran.code}: {ran.tail(200)}",
+            evidence=evidence,
+        )
+    return Result(
+        PASS,
+        "The requested consumer acceptance check completed successfully.",
+        evidence=evidence,
+    )
+
+
 STEPS = [
     ("a", "environment", "a fresh isolated environment stood up", step_environment),
     ("b", "install", "the one documented install performed", step_install),
@@ -3509,6 +3595,8 @@ STEPS = [
      step_attribution),
     ("l", "installed_tree", "the re-run check ran from a path that must exist",
      step_installed_tree),
+    ("m", "consumer", "an explicitly configured producer/consumer acceptance check",
+     step_consumer),
 ]
 
 # The steps that ARE the turnkey sentence. Everything else is a clause reading.
@@ -4212,7 +4300,13 @@ def build_report(ctx: Context, rows: list[dict], started: float) -> dict:
     # unreadable through the other. Both are reported; the exit code follows
     # the whole run, because a broken promise is a broken promise.
     turnkey_rows = [r for r in rows if r["step"] in TURNKEY_STEPS]
-    clause_rows = [r for r in rows if r["step"] not in TURNKEY_STEPS]
+    clause_rows = [r for r in rows if r["step"] not in TURNKEY_STEPS + "m"]
+    consumer_rows = [r for r in rows if r["step"] == "m"]
+    consumer_verdict = (
+        FAIL if any(r["status"] == FAIL for r in consumer_rows) else
+        PASS if any(r["status"] == PASS for r in consumer_rows) else
+        SKIP
+    )
     return {
         "tool": "converge-turnkey",
         "schema": 1,
@@ -4240,6 +4334,11 @@ def build_report(ctx: Context, rows: list[dict], started: float) -> dict:
             "verdict": FAIL if any(r["status"] == FAIL for r in clause_rows) else PASS,
             "readings": [reading for r in clause_rows
                          for reading in (r.get("evidence") or {}).get("clause_readings", [])],
+        },
+        "consumer": {
+            "steps": [r["step"] for r in consumer_rows],
+            "summary": _tally(consumer_rows),
+            "verdict": consumer_verdict,
         },
         "verdict": FAIL if summary["fail"] else PASS,
         "notes": ctx.notes,
@@ -4278,18 +4377,23 @@ def render_summary(report: dict) -> str:
         f"  VERDICT: {report['verdict']}  (pass={s['pass']} fail={s['fail']} skip={s['skip']})",
         "  A SKIP is not a pass: it is this harness refusing to claim work it did not do.",
     ]
-    turnkey, clauses = report.get("turnkey"), report.get("clauses")
+    turnkey, clauses, consumer = (report.get("turnkey"), report.get("clauses"),
+                                   report.get("consumer"))
     if turnkey and clauses and clauses["steps"]:
         t, c = turnkey["summary"], clauses["summary"]
         lines += [
             f"  the turnkey sentence (a-i): {turnkey['verdict']} "
             f"{t['pass']}·{t['fail']}·{t['skip']}   ·   "
-            f"the clause readings (j-k): {clauses['verdict']} "
+            f"the clause readings (j-l): {clauses['verdict']} "
             f"{c['pass']}·{c['fail']}·{c['skip']}",
         ]
         for reading in clauses["readings"]:
             lines.append(f"         {reading['clause']:8} {reading['row']} "
                          f"[{reading['verdict']:4}] {reading['title']}")
+    if consumer and consumer["steps"]:
+        c = consumer["summary"]
+        lines.append(f"  consumer acceptance (m): {consumer['verdict']} "
+                     f"{c['pass']}·{c['fail']}·{c['skip']}")
     lines.append("")
     for note in report.get("notes", []):
         lines.append(f"  note: {note}")
@@ -4337,6 +4441,10 @@ def build_parser() -> argparse.ArgumentParser:
             "                   resolution was written for, from the manager\n"
             "                   session's own check record, which side of a lane\n"
             "                   merge a commit arrived on, and the queue's own text\n"
+            "\n"
+            "Supplemental (not part of the historical nine-step sentence):\n"
+            "  m consumer       an explicitly configured producer/consumer acceptance\n"
+            "                   check, run as parsed argv inside --consumer-cwd\n"
             "\n"
             "Examples:\n"
             "  uv run evaluations/turnkey/run.py --self-check\n"
@@ -4408,6 +4516,12 @@ def build_parser() -> argparse.ArgumentParser:
                     help="seconds to wait for any one command (default 300)")
     ap.add_argument("--steps", default=None,
                     help="comma-separated step letters to run (default: all)")
+    ap.add_argument("--consumer-check", default=None, metavar="COMMAND",
+                    help="shell-like command parsed into argv (never shell-executed) "
+                         "for supplemental step (m); requires --consumer-cwd")
+    ap.add_argument("--consumer-cwd", default=None, metavar="PATH",
+                    help="working directory for --consumer-check inside the selected "
+                         "environment; this path is never host-rebased for a DTU")
     ap.add_argument("--json-only", action="store_true",
                     help="suppress the human summary on stderr")
     ap.add_argument("--self-check", action="store_true",
@@ -4432,6 +4546,32 @@ def main(argv: list[str] | None = None) -> int:
                 sys.stderr.write(f"  [{'ok  ' if case['ok'] else 'FAIL'}] {case['case']}\n")
             sys.stderr.write(f"\n  VERDICT: {report['verdict']}\n\n")
         return 1 if report["verdict"] == FAIL else 0
+
+    consumer_argv: list[str] | None = None
+    consumer_cwd: str | None = None
+    if args.consumer_check is not None:
+        if not args.consumer_check.strip():
+            sys.stderr.write("error: --consumer-check must name a non-empty command\n")
+            return 3
+        try:
+            consumer_argv = shlex.split(args.consumer_check)
+        except ValueError as exc:
+            sys.stderr.write(f"error: --consumer-check could not be parsed: {exc}\n")
+            return 3
+        if not consumer_argv:
+            sys.stderr.write("error: --consumer-check must name a non-empty command\n")
+            return 3
+        if args.consumer_cwd is None or not args.consumer_cwd.strip():
+            sys.stderr.write(
+                "error: --consumer-check requires a non-empty --consumer-cwd PATH\n"
+            )
+            return 3
+        consumer_cwd = args.consumer_cwd
+    elif args.consumer_cwd is not None:
+        sys.stderr.write(
+            "error: --consumer-cwd is orphaned; pass --consumer-check COMMAND too\n"
+        )
+        return 3
 
     host = LocalEnv()
     repo = str(Path(args.repo).resolve()) if args.repo else str(BUNDLE_ROOT)
@@ -4511,6 +4651,7 @@ def main(argv: list[str] | None = None) -> int:
         answer_key=answer_key, fixture_repo=fixture_repo, amplifier_home=home,
         timeout=args.timeout, notes=notes, width=args.width,
         plan_record=plan_record,
+        consumer_argv=consumer_argv, consumer_cwd=consumer_cwd,
     )
 
     # The wave runs between (d) and (e): the project must exist before a
@@ -4557,11 +4698,19 @@ def main(argv: list[str] | None = None) -> int:
             try:
                 result = run_step(ctx)
             except Exception as exc:  # noqa: BLE001 — a broken step must not fake a pass
-                result = Result(SKIP, f"The step itself raised {exc!r}.",
-                                reason="the harness failed while running this step")
+                if letter == "m" and ctx.consumer_argv is not None:
+                    result = Result(
+                        FAIL,
+                        f"The explicitly requested consumer check raised {exc!r}.",
+                        evidence={"configured": True, "argv": ctx.consumer_argv,
+                                  "cwd": ctx.consumer_cwd},
+                    )
+                else:
+                    result = Result(SKIP, f"The step itself raised {exc!r}.",
+                                    reason="the harness failed while running this step")
             row = {
                 "step": letter, "name": name, "asserts": description,
-                "mode": ctx.mode if letter in "defghijkl" else DRIVEN,
+                "mode": ctx.mode if letter in "defghijklm" else DRIVEN,
                 "status": result.status, "detail": result.detail,
             }
             if result.reason:
