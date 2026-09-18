@@ -62,7 +62,9 @@ cause that stops every deliverable.
 
 ## Optional external execution transfer
 
-<Delete when not used. Record in the existing plan or return record: status
+<Delete when not used. Report a receipt in this lane's permitted terminal
+artifact or printed output; the manager records it in the existing plan or
+return record. The worker never edits manager-owned records. Include: status
 offered / accepted / declined / unaccepted / returned / reintegrated; exact scope
 and revision; evidence or gaps; execution owner; interface decision rights;
 expected receipt; next checkpoint; reintegration owner. Packet exported is not
@@ -83,9 +85,11 @@ closes, so "done" is checked against the promise rather than against a feeling.>
 2. `<command>` is run and its output printed, showing <what>. False if the run
    is against a weakened or stubbed check, or the printed output is not that
    run's.
-3. `grep -n '<the exact string>' <path>` prints at least one line, and that
-   output is shown. False if the printed output came from anywhere but the
-   committed state of that path.
+3. `<consumer-check command>` exercises `<user journey>` against `<revision and
+   environment>`, showing `<expected behavior>`. False if components pass but
+   this interaction fails, or if the check uses a stub instead of the applicable
+   installed consumer. If outside lane ownership, name the integration owner
+   and residual check instead; if inapplicable, state the reason.
 4. The item is resolved, then read back with `work_list` and the stored reason
    printed. False if the printed reason asserts something this lane knows to be
    untrue, or omits a correction made after storing it and not reachable from
@@ -133,3 +137,8 @@ when their branches merge. Do not create, stage, or commit a marker inside the
 repository.
 
   <absolute path outside the repository>/DONE.json
+
+The manager must verify that this path is permitted before launch. If writing
+it is denied, stop the write, print the commit, check output and marker blocker,
+and end; do not retry through another tool. The manager judges the committed
+work and records the marker residual separately.

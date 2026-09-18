@@ -12,8 +12,10 @@ named contract gap or steward feedback; the steward alone ratifies, sets
 priority, or stops work.
 
 **Operation facts:** Repository: `<path>`; integration branch: `<branch>`; queue:
-`<source>`; intended width: `<n>`; capacity or external cap: `<fact or none>`;
+`<source>`; intended project width: `<n>`; authorized resource cap: `<fact or none>`;
 continuation record: `<plan/return-record path>`; next checkpoint: `<time/event>`.
+Transferred execution scope/state: `<exact scope and receipt, or none>`.
+Resource caps constrain capacity; transferred scope changes local readiness.
 
 **Boundaries:** For each produced interface, record producer, consumers,
 interface decision owner within agreed direction, version or fixture, incoming
@@ -32,7 +34,9 @@ route before passive waiting. A tool or guard refusal stops immediately; do not
 try another tool around it. Transfers record offered/accepted/declined or
 unaccepted/returned/reintegrated plus exact scope, revision, evidence or gaps,
 execution and reintegration owners, decision rights, receipt, and checkpoint.
-Exported is not accepted; absent receipt is not permission to continue.
+Exported is not accepted; stop duplicate local execution after accepted transfer
+or an explicit steward stop. An unaccepted offer remains locally accountable;
+absence of a receipt never overrides a stop.
 
 **Amplifier preflight only:** Compose Converge, activate `/mode
 converge-manager`, then verify the actual mode, required tools, skills, agents,

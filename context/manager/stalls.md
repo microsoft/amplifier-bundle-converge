@@ -7,11 +7,14 @@ failed attempt from a healthy wait, and gives both a named boundary and route.
 
 A guard or tool refusal is an **immediate STOP**. Record the target, cause,
 evidence, and route. Do not try a different tool around the refusal. For a
-failed command or terminal lane, bound the attempted recovery in advance; after
-the declared limit, record the named route instead of repeating it.
+failed command or terminal lane, stop after **three no-progress attempts** at
+the same target; record the named route instead of repeating it. Stopping
+earlier is valid when the cause is known. This limit never permits retrying
+around an access refusal.
 
     - 2026-09-06T04:12:07Z STUCK w4-changelog - locked-document guard refused
-      the changelog edit. Attempts: 1. Evidence: guard refusal. Routed: plan.
+      the changelog edit. Iterations without progress: 1.
+      Evidence: guard refusal. Routed: plan.
 
 `Routed: plan` means file, requeue, or brief the next work. `Routed: steward`
 means one of clause 11's four calls, stamped beside it. A route is part of the
@@ -27,10 +30,12 @@ not a stall; they are expected observations until the declared boundary.
     - 2026-09-06T04:12:07Z WAIT w4-tests - health: branch and terminal observed.
       Checkpoint: 04:25Z. Deadline: 04:40Z. Miss route: investigate then plan.
 
-A missed checkpoint or deadline, terminal failure, or changed result triggers
-the route. The highway watchdog is **advisory only**: `LIVE` is observation, not
-automatic resume. It does not make a paused manager session continue, and its
-absence or a missing receipt never authorizes one.
+Healthy changed results advance normal integration/reconciliation: a completed
+lane or a recovered command is progress, not a stall. A missed checkpoint or
+deadline, terminal failure, or unhealthy result triggers the named route.
+The highway watchdog is **advisory only**: `LIVE` is observation, not automatic
+resume. During authorized unattended work, retain the active bounded wait/control
+path; a watchdog does not make a paused manager session continue.
 
 ## What the record can prove
 

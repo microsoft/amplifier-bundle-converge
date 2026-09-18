@@ -47,20 +47,28 @@ python3 -B evaluations/turnkey/run.py --env local --steps m \
     --consumer-check 'python3 check.py --json-only' --json-only
 ```
 
-The command is parsed with shell-like quoting into argv and run through the
-selected environment; it is never passed to a shell. `--consumer-cwd` names a
+The command is parsed with shell-like quoting into argv. Locally it runs without
+a shell; the DTU transport shell-quotes each argument as opaque data.
+`--consumer-cwd` names a
 path **inside that environment**. In particular, a host path is not resolved or
 rebased before a DTU receives it. The step-only local form above does not
 provision a DTU, call `amplifier`, create an `AMPLIFIER_HOME`, change settings,
-or read the work tracker.
+or read the work tracker itself. The command is caller-authorized executable
+code, not sandboxed by the harness; choose a bounded check, never untrusted text.
 
 Without `--consumer-check`, step (m) is an explicit `SKIP` — *unexercised*, not
 a product `PASS`. An empty/malformed command, a command without a cwd, or an
-orphan cwd is refused before setup. An absent cwd, executable error, timeout,
+orphan cwd is refused before setup. Explicit `--steps` must include `m` when a
+consumer command is supplied, and step names are validated before setup.
+`--self-check` cannot replace an explicitly requested consumer command.
+An absent cwd, executable error, timeout,
 or non-zero consumer command is `FAIL`; a requested failure makes the overall
 report and exit code non-green. Its separate `consumer` tally records exact
-argv/cwd, elapsed time, exit code, bounded output, and the selected revision
-when that cwd is a readable Git repository. It does not remediate the failure.
+argv/cwd, elapsed time, exit code, bounded output, and pre-check Git HEAD and
+worktree-clean status when readable. HEAD does not identify dirty/untracked
+content or prove installed dependency versions. This is not an immutable
+execution snapshot. It does not remediate the failure. Command arguments and
+output may contain sensitive data; keep raw reports outside source control.
 
 **What it actually reported the last time it ran is in [`RESULT.md`](RESULT.md)
 — currently GREEN, with the four defects it took to get there.**

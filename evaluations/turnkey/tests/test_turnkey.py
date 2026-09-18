@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shlex
 import shutil
 import subprocess
 import sys
@@ -362,8 +363,7 @@ def _consumer_row(report):
     return report["steps"][0]
 
 
-def test_omitting_the_consumer_check_is_an_explicit_unexercised_skip(tmp_path):
-    fixture = _consumer_copy(tmp_path)
+def test_omitting_the_consumer_check_is_an_explicit_unexercised_skip():
     done = subprocess.run(
         [sys.executable, "-B", str(TURNKEY / "run.py"), "--env", "local", "--steps", "m",
          "--json-only"],
@@ -375,7 +375,6 @@ def test_omitting_the_consumer_check_is_an_explicit_unexercised_skip(tmp_path):
     assert row["status"] == run.SKIP
     assert "unexercised" in row["detail"]
     assert report["consumer"]["verdict"] == run.SKIP
-    assert fixture.exists(), "the optional check must not set up or mutate a fixture"
 
 
 def test_component_checks_pass_while_the_real_consumer_boundary_is_red(tmp_path):
@@ -398,7 +397,7 @@ def test_component_checks_pass_while_the_real_consumer_boundary_is_red(tmp_path)
     assert done.returncode == 1
     assert row["status"] == run.FAIL
     assert row["evidence"]["return_code"] == 1
-    assert row["evidence"]["selected_repo_revision"]
+    assert row["evidence"]["git_head"]
     assert report["consumer"]["verdict"] == run.FAIL
     assert report["verdict"] == run.FAIL, "a requested consumer failure cannot be laundered green"
 
@@ -419,6 +418,8 @@ def test_correcting_only_the_producer_boundary_makes_the_same_consumer_check_gre
     assert row["status"] == run.PASS
     assert row["evidence"]["argv"] == ["python3", "check.py", "--json-only"]
     assert json.loads(row["evidence"]["output_tail"])["received_context"] == "trial-context"
+    assert row["evidence"]["worktree_clean"] is False
+    assert "not identified by HEAD" in row["evidence"]["revision_note"]
 
 
 def test_consumer_command_is_shlex_parsed_and_explicit_cwd_is_not_rebased(tmp_path):
@@ -510,6 +511,87 @@ def test_an_exception_in_an_explicit_consumer_check_is_not_a_soft_skip(monkeypat
     report = json.loads(capsys.readouterr().out)
     assert _consumer_row(report)["status"] == run.FAIL
     assert "raised RuntimeError" in _consumer_row(report)["detail"]
+
+
+@pytest.mark.parametrize("selection", ["h", "M", "", "m,", "n", "m,unknown"])
+def test_requested_consumer_cannot_be_silently_excluded(monkeypatch, selection, capsys):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("selection must be refused before setup")
+    monkeypatch.setattr(run, "LocalEnv", forbidden)
+    monkeypatch.setattr(run, "launch_dtu", forbidden)
+    assert run.main([
+        "--steps", selection, "--consumer-check", "python3 check.py",
+        "--consumer-cwd", "/fixture",
+    ]) == 3
+    assert "error:" in capsys.readouterr().err
+
+
+def test_requested_consumer_cannot_be_replaced_by_self_check(capsys):
+    assert run.main([
+        "--self-check", "--consumer-check", "python3 check.py", "--consumer-cwd", "/fixture",
+    ]) == 3
+    assert "cannot be combined" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("command", [None, "python3 check.py"])
+def test_consumer_only_local_path_never_calls_setup_or_unrelated_tools(monkeypatch, capsys, command):
+    class RecordingEnv(run.Env):
+        kind = "local"
+        label = "recorded fixture"
+
+        def __init__(self):
+            self.calls = []
+
+        def run(self, argv, cwd=None, timeout=120.0, env=None):
+            self.calls.append((argv, cwd))
+            responses = {
+                ("test", "-d", "/fixture"): (0, ""),
+                ("git", "-C", "/fixture", "rev-parse", "HEAD"): (0, "a" * 40),
+                ("git", "-C", "/fixture", "status", "--porcelain",
+                 "--untracked-files=normal"): (0, ""),
+                ("python3", "check.py"): (0, "consumer-ok"),
+            }
+            assert tuple(argv) in responses, f"unexpected tool: {argv}"
+            code, out = responses[tuple(argv)]
+            return run.Ran(code, out, "", argv=argv)
+
+    env = RecordingEnv()
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("consumer-only invocation must not set up infrastructure or homes")
+
+    monkeypatch.setattr(run, "LocalEnv", lambda: env)
+    monkeypatch.setattr(run, "launch_dtu", forbidden)
+    monkeypatch.setattr(run, "drive_wave", forbidden)
+    monkeypatch.setattr(run.tempfile, "mkdtemp", forbidden)
+    args = ["--env", "local", "--steps", " m ", "--json-only"]
+    if command:
+        args += ["--consumer-check", command, "--consumer-cwd", "/fixture"]
+    assert run.main(args) == 0
+    row = _consumer_row(json.loads(capsys.readouterr().out))
+    if command:
+        assert len(env.calls) == 4
+        assert env.calls[-1] == (["python3", "check.py"], "/fixture")
+        assert row["evidence"]["worktree_clean"] is True
+    else:
+        assert not env.calls
+        assert row["status"] == run.SKIP
+
+
+def test_dtu_consumer_path_and_arguments_remain_opaque():
+    class RecordingHost:
+        def run(self, argv, **kwargs):
+            self.argv = argv
+            return run.Ran(0, json.dumps({"exit_code": 0, "stdout": "ok"}), "", argv=argv)
+
+    host = RecordingHost()
+    env = run.DtuEnv("fixture-container", host)
+    cwd = "/target's path/$(not-executed)"
+    argv = ["python3", "check.py", "two words", ";not-a-shell-command", "'quoted'"]
+    assert env.run(argv, cwd=cwd).ok
+    script = host.argv[-1]
+    # shlex recovers the data values, including quotes/metacharacters.
+    assert shlex.split(script) == ["cd", cwd, "&&", *argv]
 
 
 def test_every_clause_reading_names_its_ledger_row():

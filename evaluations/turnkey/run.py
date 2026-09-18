@@ -57,6 +57,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import shlex
@@ -3530,7 +3531,9 @@ def step_consumer(ctx: Context) -> Result:
         "configured": True,
         "argv": ctx.consumer_argv,
         "cwd": ctx.consumer_cwd,
-        "selected_repo_revision": None,
+        "git_head": None,
+        "worktree_clean": None,
+        "revision_note": "Git provenance unavailable; the check may still run.",
     }
     if not cwd_check.ok:
         evidence.update(
@@ -3549,7 +3552,18 @@ def step_consumer(ctx: Context) -> Result:
         ["git", "-C", ctx.consumer_cwd, "rev-parse", "HEAD"], timeout=30.0
     )
     if revision.ok:
-        evidence["selected_repo_revision"] = first_line(revision.out) or None
+        evidence["git_head"] = first_line(revision.out) or None
+        status = ctx.env.run(
+            ["git", "-C", ctx.consumer_cwd, "status", "--porcelain", "--untracked-files=normal"],
+            timeout=30.0,
+        )
+        if status.ok:
+            evidence["worktree_clean"] = not bool(status.out.strip())
+        evidence["revision_note"] = (
+            "Pre-check HEAD and worktree status only; not an immutable snapshot or "
+            "proof of installed dependency versions. Dirty/untracked content is not "
+            "identified by HEAD."
+        )
 
     ran = ctx.env.run(ctx.consumer_argv, cwd=ctx.consumer_cwd, timeout=ctx.timeout)
     evidence.update(
@@ -4534,6 +4548,29 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     started = time.time()
 
+    # Validate selection before any environment setup. An explicit check must
+    # never disappear because its step was misspelled or left out.
+    wanted: set[str] | None = None
+    if args.steps is not None:
+        selected = [step.strip() for step in args.steps.split(",")]
+        known = {letter for letter, _, _, _ in STEPS}
+        if any(step not in known for step in selected):
+            sys.stderr.write("error: --steps must contain known comma-separated step letters\n")
+            return 3
+        wanted = set(selected)
+    if args.consumer_check is not None:
+        if args.self_check or (wanted is not None and "m" not in wanted):
+            sys.stderr.write(
+                "error: --consumer-check requires step m and cannot be combined with --self-check\n"
+            )
+            return 3
+        if not math.isfinite(args.timeout) or args.timeout <= 0:
+            sys.stderr.write("error: consumer --timeout must be finite and positive\n")
+            return 3
+    elif args.consumer_cwd is not None:
+        sys.stderr.write("error: --consumer-cwd requires --consumer-check COMMAND too\n")
+        return 3
+
     if args.self_check:
         report = self_check()
         sys.stdout.write(json.dumps(report, indent=2) + "\n")
@@ -4558,7 +4595,7 @@ def main(argv: list[str] | None = None) -> int:
         except ValueError as exc:
             sys.stderr.write(f"error: --consumer-check could not be parsed: {exc}\n")
             return 3
-        if not consumer_argv:
+        if not consumer_argv or not consumer_argv[0]:
             sys.stderr.write("error: --consumer-check must name a non-empty command\n")
             return 3
         if args.consumer_cwd is None or not args.consumer_cwd.strip():
@@ -4617,8 +4654,6 @@ def main(argv: list[str] | None = None) -> int:
             notes.append(how)
             if placed:
                 repo, workspace = placed, str(Path(placed).parent)
-
-    wanted = set(args.steps.split(",")) if args.steps else None
 
     # A throwaway amplifier home, so the documented install is exercised for
     # real without editing the caller's own configuration. Only made when a

@@ -140,6 +140,11 @@ or three options with their consequences, and say which you recommend.
   its own ignored worktree directory for the manager session to read and report.
   A filesystem access denial is never permission to retry the write through
   bash, Python, or a different tool.
+- **Check manager-guidance changes with**
+  `python3 -B -m pytest tests/test_manager_guidance.py evaluations/turnkey/tests`.
+  These are guidance/fixture regressions, not proof of live manager behavior.
+  Keep the numeric failed-attempt bound separate from healthy waiting, and
+  verify a lane's terminal-report path is permitted before making it required.
 
 ## 6. App verification lessons
 

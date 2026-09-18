@@ -251,7 +251,7 @@ Two consequences worth stating plainly, because both were guessed wrong:
 
 ## External execution transfer is optional and explicit
 
-If the brief transfers scope to an external executor, record it in the existing
+If the brief transfers scope to an external executor, the manager records it in the existing
 plan or return record as **offered; accepted, declined, or unaccepted; returned;
 reintegrated**. Name exact scope and revision, evidence or gaps, execution
 owner, interface decision rights, expected receipt, next checkpoint, and
@@ -269,6 +269,12 @@ repository on purpose. A lane's own `git add -A` can then never stage the marker
 and two lanes' markers can never collide when their branches merge. A brief that
 puts the marker inside the working copy is a brief that will cause a merge
 conflict later.
+
+Before launch, verify that the lane may write the named marker path. If an
+access restriction refuses it, the lane prints its commit, check results and
+marker blocker, then ends without trying another tool. The manager verifies
+the committed work and records that reporting residual separately. Never make
+an inaccessible marker the only reachable terminal condition.
 
 ## A commit is the only durable evidence
 

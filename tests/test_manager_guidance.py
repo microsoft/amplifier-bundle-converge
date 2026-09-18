@@ -75,3 +75,33 @@ def test_transfer_record_has_scope_rights_receipt_and_stop_boundary():
         "missing receipt is never permission",
     ):
         assert term in _normal(WAVE) or term in _normal(GOAL)
+
+
+def test_failed_recovery_keeps_numeric_bound_and_compatible_stamp():
+    for text in (MODE, STALLS):
+        assert "**three no-progress attempts**" in text
+        assert "Iterations without progress: 1" in text
+        assert "Attempts: 1" not in text
+        assert "immediate STOP" in text
+        assert "Healthy changed results advance normal integration/reconciliation" in _normal(text)
+    assert "or changed result triggers" not in _normal(STALLS)
+
+
+def test_active_control_is_not_replaced_by_a_watchdog_or_stale_wake_promise():
+    assert "make sure something will wake you" not in MODE
+    assert "keep an active bounded wait/control path" in _normal(MODE)
+    assert "a supported resumer verified for this session" in _normal(MODE)
+
+
+def test_worker_reports_transfer_without_writing_manager_records():
+    assert "The worker never edits manager-owned records" in _normal(GOAL)
+    assert "the manager records it in the existing plan or return record" in _normal(GOAL)
+    assert "If writing it is denied, stop the write" in _normal(GOAL)
+
+
+def test_capacity_and_external_execution_scope_are_separate():
+    assert "a cap constrains usable capacity, not whether work exists" in _normal(MODE)
+    assert "An unaccepted offer remains locally accountable" in MODE
+    text = MANAGER_BRIEF.read_text(encoding="utf-8")
+    assert "authorized resource cap:" in text
+    assert "Transferred execution scope/state:" in text
