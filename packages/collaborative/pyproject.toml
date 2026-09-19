@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "amplifier-converge-instructions"
+version = "0.1.0"
+description = "Converge collaborative supervisor and manager instruction resources"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+
+[project.urls]
+Repository = "https://github.com/microsoft/amplifier-bundle-converge"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/converge_instructions"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
