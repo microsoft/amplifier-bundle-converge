@@ -1,61 +1,52 @@
 # Collaborative instruction resources
 
-This package carries the supervisor bundle and project-manager instructions for
-Converge's collaborative profile. It publishes text only: no process, tools,
-store, command entrypoint or runtime dependency. The only Python module is the
-resource namespace initializer.
+This text-only package owns portable Converge manager and supervisor instructions.
+It has no runtime, tool, host dependency, process, store or command entrypoint.
 
 ```python
 from importlib.resources import files
 
 manager = files("converge_instructions").joinpath("instructions/manager.md").read_text()
-supervisor = files("converge_instructions").joinpath("bundle/bundle.md").read_text()
+supervisor = files("converge_instructions").joinpath("instructions/supervisor.md").read_text()
 ```
 
-The source owns one copy of each instruction under `src/converge_instructions`.
-The community profile at `bundles/collaborative/bundle.md` points to that owned
-bundle text through a repository-relative symlink. Source archives and wheels
-carry the actual text files, independent of the checkout. Consumers pin a
-reviewed full commit and `#subdirectory=packages/collaborative`.
+The primary bundle entry point is [`behaviors/collaborative.yaml`](../../behaviors/collaborative.yaml).
+It composes the same supervisor resource into an existing host without selecting
+a provider, root instruction, skills list or session orchestrator. The optional
+[`bundles/collaborative`](../../bundles/collaborative/README.md) root composes
+Anchors and that behavior. The original CLI root/mode/guard paths are unchanged.
 
-This is an opt-in instruction profile implementing the canonical Method loop:
-traceable work, durable plans, isolated lanes, bounded failures, independent
-manager checks, actionable returns and exactly four steward calls. The
-[protocol map and gap audit](METHOD-PROTOCOL.md) accounts for every live promise
-of Method's operation, lanes and wake contracts and identifies the execution
-proof still required. It preserves the existing root bundle, manager
-mode, guards and installation path. Publishing the instructions does not prove
-that a runtime obeys them; consumers must verify their own execution behavior.
+Version 0.3.0 removes host-specific command/canvas instructions and moves the
+supervisor resource from `bundle/bundle.md` to `instructions/supervisor.md`.
+Consumers reading the old supervisor resource must use the new path. The manager
+resource and its import path are byte-unchanged; existing pinned runtimes remain
+compatible. A portable package must never depend on a private host integration.
+Both instructions ship as actual files in the wheel and source archive.
+
+The [protocol map](METHOD-PROTOCOL.md) describes canonical Method promises and
+execution proof still required. Instructions are not enforcement. The collaborative
+behavior does not mount the legacy manager mode or filesystem candidate guard.
+API-backed writes need their capability owner's enforcement. Inspect actual
+role/tool/hook manifests; package installation proves none of these are mounted.
+
+Saved sessions stay on their reviewed pins until a separately authorized idle
+adoption. Preserve native identity/history, use exact old/new instruction hashes,
+and inspect runtime readiness. No silent restart or replay is part of this change.
+The manager's known refusal-wording and read-only guidance reconciliation remains
+runtime-owner work; this resource split does not claim to fix or validate it.
 
 ## Checks
-
-From this package directory:
 
 ```sh
 uv run --extra test python -m pytest
 uv build
 ```
 
-The guidance checks protect protocol and authority boundaries; resource checks
-pin this version's instruction bytes and verify that the package contains no
-runtime implementation. These are static and packaging checks, not proof that
-a live manager follows the Method. The reviewed resource hashes are:
+The root CI includes source and installed-wheel resource checks. These are static
+and packaging checks, not proof a live manager follows Method or product acceptance.
+Reviewed SHA-256 values:
 
 - `instructions/manager.md`: `0a91a4810b3cfc136dbff1cc81a109a6e19ba827b10a947cdd7a6b937f79fa1d`
-- `bundle/bundle.md`: `f2ae9914433938df6962d21bb520ab7a9b0598ff2dbe8e6cc6041cb6e46209d7`
+- `instructions/supervisor.md`: `c75ea0d41389fbc5ef66630a233e25bf3bcda6bc702f8616f8946a43f620312c`
 
-The package retains this repository's MIT license. The profile references only
-public bundle dependencies and discovers configured capabilities at runtime.
-
-Version 0.2.2 requires immutable, revision-bound Direction attachments and exact
-worker return shapes in every brief that needs them. Missing context routes a
-named setup defect, without host/cache/private-store discovery. Independent
-review lanes declare `read_only:true` with empty writable ownership. This follows
-an observed reading-policy failure; product checks did not establish that lane's
-Method compliance. The policy does not claim OS sandbox enforcement.
-
-Upgrade a
-live manager only at an observed idle boundary using the runtime's explicit
-old/new instruction-digest transition. Preserve its native session and inspect
-readiness for the actual new digest and tools. The runtime's digest includes
-project-specific text; the resource digest above is not that migration key.
+The package retains the repository's MIT license.

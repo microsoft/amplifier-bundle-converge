@@ -10,7 +10,7 @@ import re
 
 ROOT = files("converge_instructions")
 MANAGER = " ".join(ROOT.joinpath("instructions/manager.md").read_text().split())
-SUPERVISOR = " ".join(ROOT.joinpath("bundle/bundle.md").read_text().split())
+SUPERVISOR = " ".join(ROOT.joinpath("instructions/supervisor.md").read_text().split())
 PACKAGE = Path(__file__).resolve().parents[1]
 MAPPING = (PACKAGE / "METHOD-PROTOCOL.md").read_text()
 

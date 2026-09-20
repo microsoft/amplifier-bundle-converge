@@ -1,15 +1,20 @@
-# Collaborative profile
+# Collaborative supervisor
 
-This opt-in profile guides a supervising conversation using portable Create,
-Direction and Operations capabilities and a dedicated project manager. It keeps
-original intent, decisions, evidence and native conversation ownership explicit.
-It contains instructions, not those capability implementations.
+Add portable supervision to an existing host with the behavior:
 
-The profile is available at
-`git+https://github.com/microsoft/amplifier-bundle-converge@<reviewed-commit>#subdirectory=bundles/collaborative`.
-The Python resource distribution is
-[`amplifier-converge-instructions`](../../packages/collaborative/README.md).
-Both read the same owned bundle text. Select the reviewed immutable revision.
+```sh
+amplifier bundle add 'git+https://github.com/microsoft/amplifier-bundle-converge@<reviewed-commit>#subdirectory=behaviors/collaborative.yaml' --app
+```
 
-The existing root bundle and its installation path remain unchanged. This
-profile does not implicitly replace an installed bundle or start a manager.
+Replace the placeholder with a reviewed full commit. The behavior owns no provider,
+root instruction, session orchestrator, skills list or host API. Installed Create,
+Direction and Operations capabilities and a separately configured native manager
+remain prerequisites; an instruction bundle does not provision them.
+
+This directory remains an optional **complete** Anchors-based supervisor profile.
+Select it deliberately as a root, never as a behavior. Both entry points use the
+same [packaged context](../../packages/collaborative/README.md). The original root
+Converge bundle, manager mode and CLI installation path are unchanged.
+
+Host-specific presentation, installation, canvas/session binding and model adapters
+belong to the consuming integration. Portable packages have no dependency on one.

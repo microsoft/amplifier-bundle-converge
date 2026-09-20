@@ -230,3 +230,13 @@ instruction proves useful execution and continuity, not this protocol's adoption
 - The unchanged root bundle/manager mode and the pre-push frozen-document guard
   were checked. No live session or product files were changed by this package
   work. A migrated live manager obeying the full protocol remains unproven here.
+
+
+## Portable behavior composition (0.3.0)
+
+The supervisor text is now `instructions/supervisor.md`; `behaviors/collaborative.yaml`
+consumes that exact resource. The optional complete profile composes Anchors and
+this behavior while preserving the Anchors root instruction. The manager resource
+is unchanged. Host presentation, installation and session/canvas bindings belong
+to a separate consuming integration. This split changes no Method promise and
+establishes no additional runtime or product acceptance.

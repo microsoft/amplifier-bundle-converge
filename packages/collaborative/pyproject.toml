@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "amplifier-converge-instructions"
-version = "0.2.2"
+version = "0.3.0"
 description = "Converge collaborative supervisor and manager instruction resources"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -17,7 +17,13 @@ Repository = "https://github.com/microsoft/amplifier-bundle-converge"
 packages = ["src/converge_instructions"]
 
 [project.optional-dependencies]
-test = ["pytest>=8"]
+test = [
+  "pytest>=8", "pytest-asyncio>=0.24",
+  "amplifier-foundation @ git+https://github.com/microsoft/amplifier-foundation@2c0063a187181173dfe2438ce031079e8723f894",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
