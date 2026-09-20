@@ -4,12 +4,12 @@ from pathlib import Path
 
 
 EXPECTED = {
-    "instructions/manager.md": "03d1421e550a24ed75597f352604f120e4bf0a65f069d7e55bdedd19558266a1",
-    "bundle/bundle.md": "43092048d79f1eee7b76000d1e1c59e60f0345a65186b1742c6bec63f8e4f5c3",
+    "instructions/manager.md": "f76a3b1506f850939fd30c7053cba32ec1a30a3d5d139578ed368b89744f3f43",
+    "bundle/bundle.md": "858bc1bda1eb5c83ba5e1aa4d06aa8307c23055a6e7b3a14450498384668ee7e",
 }
 
 
-def test_instruction_resources_preserve_adopted_bytes():
+def test_instruction_resources_match_reviewed_version():
     root = files("converge_instructions")
     for name, expected in EXPECTED.items():
         assert hashlib.sha256(root.joinpath(name).read_bytes()).hexdigest() == expected
