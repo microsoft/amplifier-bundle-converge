@@ -1,7 +1,7 @@
 ---
 bundle:
   name: converge
-  version: 0.2.0
+  version: 0.2.2
   description: Converge method for a supervising conversation with portable collaborative Smart Tools.
 includes:
   - bundle: git+https://github.com/microsoft/amplifier-foundation@2c864f7c839c39d4387c41c3bc3f11a7176396da#subdirectory=bundles/anchors/bundle.md
@@ -43,6 +43,12 @@ A helper in the manager conversation is not such a lane. The manager independent
 re-runs acceptance in the lane, then again on the authorized integration target;
 worker reports alone cannot close work. Integration is limited by the user's
 existing authorization. There is no implicit permission to merge or publish.
+
+Required Direction sources and the exact worker return protocol belong in the
+immutable lane brief. A bare document reference is insufficient; missing context
+must return as a setup defect, without searching host caches or private stores.
+An independent review declares read-only ownership explicitly. Passing product
+checks does not excuse a lane that crossed its application reading policy.
 
 Inspect actual Operations records for the plan and its revision, lane identities,
 current tools, worker returns, manager checks and artifacts. Show concrete progress

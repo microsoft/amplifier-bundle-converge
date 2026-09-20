@@ -41,14 +41,21 @@ pin this version's instruction bytes and verify that the package contains no
 runtime implementation. These are static and packaging checks, not proof that
 a live manager follows the Method. The reviewed resource hashes are:
 
-- `instructions/manager.md`: `f76a3b1506f850939fd30c7053cba32ec1a30a3d5d139578ed368b89744f3f43`
-- `bundle/bundle.md`: `858bc1bda1eb5c83ba5e1aa4d06aa8307c23055a6e7b3a14450498384668ee7e`
+- `instructions/manager.md`: `0a91a4810b3cfc136dbff1cc81a109a6e19ba827b10a947cdd7a6b937f79fa1d`
+- `bundle/bundle.md`: `f2ae9914433938df6962d21bb520ab7a9b0598ff2dbe8e6cc6041cb6e46209d7`
 
 The package retains this repository's MIT license. The profile references only
 public bundle dependencies and discovers configured capabilities at runtime.
 
-Version 0.2.0 changes the manager instruction and supervisor profile. Upgrade a
+Version 0.2.2 requires immutable, revision-bound Direction attachments and exact
+worker return shapes in every brief that needs them. Missing context routes a
+named setup defect, without host/cache/private-store discovery. Independent
+review lanes declare `read_only:true` with empty writable ownership. This follows
+an observed reading-policy failure; product checks did not establish that lane's
+Method compliance. The policy does not claim OS sandbox enforcement.
+
+Upgrade a
 live manager only at an observed idle boundary using the runtime's explicit
 old/new instruction-digest transition. Preserve its native session and inspect
 readiness for the actual new digest and tools. The runtime's digest includes
-project-specific text; the resource digest below is not that migration key.
+project-specific text; the resource digest above is not that migration key.

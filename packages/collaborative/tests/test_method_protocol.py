@@ -80,6 +80,35 @@ def test_failed_attempt_bound_cannot_be_reset_by_relabeling_or_healthy_polling()
     ))
 
 
+def test_required_sources_are_materialized_before_admission_without_history_rewrite():
+    require_all(MANAGER, (
+        '`{capability:"direction",document_id,revision}`',
+        "exact current revision",
+        "body, title, draft/settled state, project, revision and hash",
+        "A document ID alone is not source material",
+        "fail preflight before custody or an attempt is consumed",
+        "or revise an already launched brief",
+    ))
+    assert "An exact retry keeps the original captured bytes" in MAPPING
+
+
+def test_missing_worker_context_returns_stuck_without_private_source_discovery():
+    require_all(MANAGER, (
+        "exact scoped `converge_project` call shapes",
+        "`operations.read`, `return_lane` and `record_attempt`",
+        "including required outcome fields and stable request IDs",
+        "return `stuck-with-cause`, name the missing material and route it to the manager",
+        "Do not search host directories, package installations, caches, logs, native history or private databases",
+        "General filesystem tools do not expand a lane's permitted reading boundary",
+        "application policy, not a claim of OS sandbox enforcement",
+    ))
+    require_all(MANAGER, (
+        "`brief.read_only:true` and `owned_paths:[]`",
+        "Do not invent writable paths",
+        "stays clean at its admitted base revision",
+    ))
+
+
 def test_worker_claim_is_never_manager_proof_or_final_closure():
     require_all(MANAGER, (
         "A worker's green is a claim",

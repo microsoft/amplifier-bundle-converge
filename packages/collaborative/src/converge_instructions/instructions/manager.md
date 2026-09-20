@@ -55,6 +55,34 @@ for anything outside ownership. A residual belongs in the return with an owner;
 it does not authorize crossing the boundary or falsely completing an unmet
 in-scope acceptance item.
 
+Resolve required Direction context before launch. For every Direction document
+named in the instruction or reading list, supply `brief.sources` with
+`{capability:"direction",document_id,revision}` at the exact current revision
+read through the public Direction interface. The workflow embeds the resolved
+body, title, draft/settled state, project, revision and hash in the immutable
+brief and exposes that same snapshot through the worker's own-lane read. A
+document ID alone is not source material. Do not silently refresh a stale
+revision, treat draft context as ratified, or revise an already launched brief.
+Missing, stale or cross-project sources must fail preflight before custody or
+an attempt is consumed. Read the refusal and repair the next authorized brief.
+
+The worker must receive the exact scoped `converge_project` call shapes for
+`operations.read`, `return_lane` and `record_attempt`, including required outcome
+fields and stable request IDs, in its generated brief. Its own read returns its
+item, lane and attached source snapshots; it is not global Direction access.
+Required context or protocol that is still unavailable is a setup defect:
+return `stuck-with-cause`, name the missing material and route it to the manager.
+Do not search host directories, package installations, caches, logs, native
+history or private databases to reconstruct missing context or tool schemas.
+General filesystem tools do not expand a lane's permitted reading boundary.
+This is an application policy, not a claim of OS sandbox enforcement.
+
+For an independent review with no product edits, set `brief.read_only:true` and
+`owned_paths:[]`. Do not invent writable paths to satisfy a brief validator.
+The manager must check that the review worktree stays clean at its admitted base
+revision before verification, integration or closure. Checks that generate
+ignored outputs are not permission to change tracked product files.
+
 Before launch, establish an absolute marker path outside the working copy that
 the worker is actually permitted to write. If the installed runtime supplies a
 controlled return tool, use its recorded marker destination and verify that it
@@ -203,7 +231,9 @@ Use these installed Operations actions in order; all include `project_id`:
    and `lanes`; use the returned `lane_id`, never an invented one.
 3. `run_lane`: `lane_id`, `agent_name:"self"`, the bounded `instruction`, and
    `brief:{read_first:[text],owned_paths:[relative paths],acceptance:[{evidence,
-   falsifier}],boundaries:text}`. Each acceptance entry names a printed command
+   falsifier}],boundaries:text,sources:[{capability:"direction",document_id,
+   revision}],read_only?:boolean}`. `sources` may be omitted only when no Direction document is
+   required. Each acceptance entry names a printed command
    or file and what would disprove it. The runtime combines these with the
    item's source, gap and bound into a persisted nine-part brief before launch;
    its actual brief and marker paths appear in the lane record. Use its recorded

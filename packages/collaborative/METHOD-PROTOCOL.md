@@ -120,7 +120,7 @@ installed readiness still must expose these actions before activation.
 | initialize_workspace | optional ignore_patterns:[string] | Manager-only safe repository/baseline preparation within existing authority. |
 | file_item | title, source:{kind,reference,text}, acceptance, attempt_limit, checks; optional gap, discovered_from | Queue preserves immutable source and bounded acceptance/check requirements. |
 | plan_wave | title, item_ids, width | Plan and lane records precede execution. |
-| run_lane | lane_id, agent_name, instruction, brief:{read_first,owned_paths,acceptance,boundaries} | Persists the nine-part brief before isolated native launch; exact retry observes the original attempt. |
+| run_lane | lane_id, agent_name, instruction, brief:{read_first,owned_paths,acceptance,boundaries,sources?,read_only?} | Resolves required revision-bound sources before admission; persists the nine-part brief before isolated native launch; exact retry observes the original attempt. |
 | return_lane | lane_id, outcome, brief:{landed,not_landed,evidence}; cause/routed_to or steward_call when applicable | Worker claim; never independent verification or closure. |
 | record_attempt | lane_id, target, observation, new_fact | Per-target no-new-fact accounting; distinct from total launch cap and healthy waiting. |
 | verify_lane | lane_id | Manager executes declared checks, recording actual result and revision. |
@@ -146,6 +146,36 @@ No public action accepts a
 caller-supplied verification boolean. The optional `finish_wave` records a guarded final brief;
 completion is also derived from records, and the final brief cites their IDs.
 Neither sets a model-supplied project-complete flag.
+
+`brief.sources` is a list of `{capability:"direction",document_id,revision}`.
+For required Direction material the revision must be explicit and current;
+resolution uses the project-scoped public Service getter. The captured body,
+title, state, project, revision and hash become an immutable attachment in the
+attempt, lane and external brief. The worker's scoped read exposes that snapshot,
+not general document browsing. Missing, stale, cross-project and bare unresolved
+document references fail before custody, worktree preparation or an admitted
+attempt. An exact retry keeps the original captured bytes, including their
+draft status; later source changes do not rewrite old briefs.
+
+`brief.read_only:true` accepts `owned_paths:[]` and grants no product-write
+ownership. Manager verification, integration and closure must reject a changed
+review worktree or a HEAD different from its admitted base. Generated ignored
+check outputs do not create product-edit authority. A worker's report of being
+read-only is not sufficient integrity evidence.
+
+The brief also carries exact examples for the only worker actions: scoped read,
+return with all three outcome shapes, and target-attempt reporting. The worker
+returns a named setup defect if needed context is absent. Filesystem access does
+not grant permission to inspect host caches, installed source, private stores or
+manager history. This is an application reading policy, not OS sandboxing.
+
+This correction follows an observed trial failure: an independent reviewer was
+given a draft document ID without its body; its scoped read returned only its
+item and lane, and Direction access was refused. It then used host filesystem
+tools to find the private store and implementation to reconstruct missing
+source and return schemas. Passing product checks did not make that lane comply
+with wake.v1:1. The original brief, attempts and evidence remain preserved;
+source tests of this correction do not retroactively prove that trial compliant.
 
 The original operating root's `.converge` layout is not silently adopted by this
 collaborative profile. The selected runtime and domain libraries own their
@@ -175,7 +205,14 @@ instruction proves useful execution and continuity, not this protocol's adoption
 
 ## Checks for this change
 
-- The package's 13 guidance/resource tests pass against the source and against
+- Version 0.2.2 passes all 15 package guidance/resource tests against the source
+  and an isolated installation of its source-built wheel. With the 187 required
+  manager-guidance/turnkey regressions, the combined source run reports 202
+  passed. The wheel contains only the initializer, two reviewed text resources
+  and distribution metadata. Root bundle/mode and locked contracts remain
+  unchanged. These checks establish shipped guidance, not live recovery from
+  the observed reading-policy failure.
+- The initial package's 13 guidance/resource tests passed against the source and against
   its source-built wheel installed in an isolated environment. The wheel has
   only the namespace initializer, two instruction resources and distribution
   metadata; both resource hashes match the reviewed source.

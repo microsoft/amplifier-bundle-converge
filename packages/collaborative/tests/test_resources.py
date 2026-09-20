@@ -4,8 +4,8 @@ from pathlib import Path
 
 
 EXPECTED = {
-    "instructions/manager.md": "f76a3b1506f850939fd30c7053cba32ec1a30a3d5d139578ed368b89744f3f43",
-    "bundle/bundle.md": "858bc1bda1eb5c83ba5e1aa4d06aa8307c23055a6e7b3a14450498384668ee7e",
+    "instructions/manager.md": "0a91a4810b3cfc136dbff1cc81a109a6e19ba827b10a947cdd7a6b937f79fa1d",
+    "bundle/bundle.md": "f2ae9914433938df6962d21bb520ab7a9b0598ff2dbe8e6cc6041cb6e46209d7",
 }
 
 
