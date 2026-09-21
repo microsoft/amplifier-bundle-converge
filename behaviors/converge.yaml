@@ -185,6 +185,7 @@ modes:
 context:
   include:
     - converge:context/converge-awareness.md
+    - converge:packages/collaborative/src/converge_instructions/instructions/collaboration.md
 
 # NO top-level `spawn:` block — deliberately (DTU-verified 2026-09-02).
 # The live probe this file's old PROPAGATION CAVEAT asked for was run: a

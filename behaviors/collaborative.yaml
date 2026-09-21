@@ -1,8 +1,9 @@
 bundle:
   name: converge-collaborative-behavior
-  version: 0.3.0
+  version: 0.4.0
   description: Portable project-supervisor guidance for installed Converge collaborative capabilities.
 
 context:
   include:
+    - converge:packages/collaborative/src/converge_instructions/instructions/collaboration.md
     - converge:packages/collaborative/src/converge_instructions/instructions/supervisor.md

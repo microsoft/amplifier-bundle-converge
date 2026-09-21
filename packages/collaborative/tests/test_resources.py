@@ -1,11 +1,15 @@
 from importlib.resources import files
 import hashlib
 from pathlib import Path
+import pytest
+
+from converge_instructions import instruction
 
 
 EXPECTED = {
     "instructions/manager.md": "0a91a4810b3cfc136dbff1cc81a109a6e19ba827b10a947cdd7a6b937f79fa1d",
-    "instructions/supervisor.md": "c75ea0d41389fbc5ef66630a233e25bf3bcda6bc702f8616f8946a43f620312c",
+    "instructions/supervisor.md": "4be7a8a358d975b3ebf754289f7172bf8dbbad24292a082f1d6c12e6f6d1b65f",
+    "instructions/collaboration.md": "919e5c7ac05306097fb004416c9643bcd971b0c76b1d75ae1177ac253bd2df33",
 }
 
 
@@ -18,6 +22,22 @@ def test_instruction_resources_match_reviewed_version():
 def test_namespace_exposes_no_runtime_implementation():
     root = files("converge_instructions")
     assert {p.name for p in root.iterdir() if p.name.endswith(".py")} == {"__init__.py"}
+
+
+@pytest.mark.parametrize("role", ("manager", "supervisor"))
+def test_direct_consumer_composes_shared_guidance_once(role):
+    root = files("converge_instructions").joinpath("instructions")
+    shared = root.joinpath("collaboration.md").read_text().rstrip()
+    specific = root.joinpath(f"{role}.md").read_text().rstrip()
+    text = instruction(role)
+    assert text == shared + "\n\n" + specific + "\n"
+    assert text.count(shared) == 1
+
+
+@pytest.mark.parametrize("role", ("worker", "../supervisor", "", "collaboration"))
+def test_direct_consumer_rejects_unsupported_roles(role):
+    with pytest.raises(ValueError, match="role must be"):
+        instruction(role)
 
 
 def test_community_profile_composes_the_behavior_and_preserves_anchors():
