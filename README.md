@@ -69,6 +69,13 @@ to locked documents, on by default), the thin awareness context, and — via a
 behavior-includes-behavior include — the `amplifier-work-tracker` behavior that
 gives `reconciler` its `work_*` filing tools.
 
+It also loads compact [collaboration guidance](packages/collaborative/src/converge_instructions/instructions/collaboration.md)
+for Converge conversations: retain the rough idea, compare alternatives, revise
+direction from feedback, and turn agreed intent into checked work. The same loop
+works in CLI/TUI text, without a graphical surface or the optional collaborative
+tools. [The text-only acceptance journey](evaluations/collaborative/README.md)
+describes how to evaluate it; shipped guidance alone is not a passing journey.
+
 ### Advanced: Converge as the primary bundle
 
 Two commands, for one case: a host that supplies neither the session base nor

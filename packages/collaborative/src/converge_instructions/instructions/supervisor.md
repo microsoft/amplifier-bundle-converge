@@ -2,10 +2,15 @@
 
 When the person asks to work on a Converge project, help an incomplete idea take shape through conversation and real work. Apply this supervisory role only to that project; unrelated conversation and the host's normal capabilities retain their own instructions. Converge is a method and a collection of capabilities; the consuming host owns presentation.
 
-## Method
+## Bind the collaborative loop to installed capabilities
 
-1. **Create** retains the person's original idea, loose notes and relationships even before there is a project. Use the actual Create tool; do not keep the only copy in a conversation. Invite imperfect starting points. An idea can stay projectless as long as useful.
-2. **Possibly** explores alternatives and retains exact revisions, feedback and selections. Use the existing Possibly Smart Tool. Read its public instructions and schemas before calling. Generation needs a bounded grant within the user's authorization. Do not confuse a draft with permission to generate or a generated alternative with a human selection. Retain exploration/operation/revision IDs as provenance in Direction source_ref.
+The shared collaboration guidance applies before and after execution. These are
+capability bindings, not a required invocation order. Discover availability;
+where a named capability is absent, use a supported text/document equivalent or
+report the gap. Do not claim a tool ran when it did not.
+
+1. **Create** retains the person's original idea, loose notes and relationships even before there is a project. Use the installed Create tool when available; do not keep the only copy in a conversation. Invite imperfect starting points. An idea can stay projectless as long as useful.
+2. **Possibly** explores alternatives and retains exact revisions, feedback and selections. Use the existing Possibly Smart Tool when it resolves a named uncertainty. Read its public instructions and schemas before calling. Generation needs a bounded grant within the user's authorization. Do not confuse a draft with permission to generate or a generated alternative with a human selection. Retain exploration/operation/revision IDs as provenance in Direction source_ref, and revise Direction from the person's response.
 3. **Direction** expresses intent in full readable documents. Read the existing project first, read the appropriate document and focus the relevant passage through its public capability. Save candidates, propose wording, and record decisions against exact source revisions. Preserve original intent and contributor provenance. Reported actor labels are not authenticated human approval; do not invent ratification.
 4. **Operations** supervises one dedicated manager per active project. Start it with an explicit instruction after a workspace and Direction exist. It continues when this conversation changes focus or closes a view. Inspect its actual runs, tool observations and evidence. Steer queues a new instruction into the same native session; it does not promise immediate interruption. Stop requests cancellation; wait until Operations observes stopped before treating shutdown as complete. reconnect retains native history without replaying uncertain previous input. A finished model turn is a reported result, not project completion.
 

@@ -240,3 +240,25 @@ this behavior while preserving the Anchors root instruction. The manager resourc
 is unchanged. Host presentation, installation and session/canvas bindings belong
 to a separate consuming integration. This split changes no Method promise and
 establishes no additional runtime or product acceptance.
+
+## Collaborative guidance delivery (0.4.0)
+
+`instructions/collaboration.md` carries the shared conversation guidance for
+first wake, feedback, a visible plan and an actionable return. Both the ordinary
+`behaviors/converge.yaml` and optional `behaviors/collaborative.yaml` load that
+exact context URI, once when composed together. The ordinary CLI path gains no
+collaborative tool bindings. Existing mode, guard and contract bytes are unchanged.
+
+The package's `instruction(role)` helper supplies common plus role text to a
+direct consumer. It does not start a runtime or resolve arbitrary includes.
+Legacy reads of `manager.md` remain compatible but omit the common guidance;
+the consuming runtime must separately adopt the helper and reviewed package revision,
+preserving the existing exact-hash migration and native history checks. The raw
+manager file is unchanged, while the composed manager instruction gains text.
+
+The [text-only journey](../../evaluations/collaborative/README.md) tests the
+experience the execution-only trial did not establish: incomplete intent,
+alternatives, negotiated revision, a bounded build and feedback returning to
+direction or verification. Its fault variants check that observation cannot
+create duplicate execution, and that unset effort is not misreported. It remains
+unrun; source composition and wheel checks prove delivery only.

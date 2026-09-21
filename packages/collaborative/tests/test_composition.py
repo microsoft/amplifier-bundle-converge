@@ -44,8 +44,10 @@ def test_behavior_materializes_once_and_preserves_the_host(tmp_path):
         prepared = PreparedBundle(mount_plan=composed.to_mount_plan(), resolver=None, bundle=composed)
         prompt = await prepared.create_system_prompt_factory(session, session_cwd=tmp_path)()
         source = files('converge_instructions').joinpath('instructions/supervisor.md').read_text()
+        shared = files('converge_instructions').joinpath('instructions/collaboration.md').read_text()
         assert prompt.startswith(host.instruction)
         assert prompt.count(source) == 1
+        assert prompt.count(shared) == 1
         assert all(not payload['failed'] for _, payload in events)
 
     asyncio.run(check())
@@ -63,7 +65,48 @@ def test_complete_profile_resolves_same_behavior_without_body_replacement(tmp_pa
         root = await registry.load(REPO.as_uri() + '#subdirectory=bundles/collaborative')
         root.resolve_pending_context()
         assert root.instruction.strip() == '@anchors:context/system.md'
-        assert len(root.context) == 1
-        assert next(iter(root.context.values())).read_text() == files('converge_instructions').joinpath('instructions/supervisor.md').read_text()
+        assert {path.read_text() for path in root.context.values()} == {
+            files('converge_instructions').joinpath(f'instructions/{name}.md').read_text()
+            for name in ('collaboration', 'supervisor')
+        }
+
+    asyncio.run(check())
+
+
+def test_cli_root_and_app_behavior_share_one_collaboration_resource(tmp_path):
+    async def check():
+        # Only external dependencies are stubbed; real local roots, behaviors,
+        # namespace resolution and prompt materialization are exercised.
+        sources = {}
+        for name in ('amplifier-foundation', 'amplifier-work-tracker'):
+            path = tmp_path / name
+            path.mkdir()
+            (path / 'bundle.md').write_text(
+                f'---\nbundle:\n  name: {name}\n---\n')
+            sources[name] = path.as_uri()
+
+        def resolve(source):
+            return next((uri for name, uri in sources.items() if name + '@' in source), None)
+
+        registry = BundleRegistry(home=tmp_path / 'registry', strict=True,
+                                  include_source_resolver=resolve)
+        root = await registry.load(REPO.as_uri())
+        behavior = await registry.load(REPO.as_uri() + '#subdirectory=behaviors/converge.yaml')
+        collaborative = await registry.load(REPO.as_uri() + '#subdirectory=behaviors/collaborative.yaml')
+        shared = files('converge_instructions').joinpath('instructions/collaboration.md').read_text()
+        for loaded in (root, behavior, root.compose(collaborative), behavior.compose(collaborative)):
+            loaded.resolve_pending_context()
+            assert sum(path.read_text() == shared for path in loaded.context.values()) == 1
+            assert any(path.name == 'converge-awareness.md' for path in loaded.context.values())
+            events = []
+
+            async def emit(event, payload):
+                events.append((event, payload))
+
+            session = SimpleNamespace(coordinator=SimpleNamespace(hooks=SimpleNamespace(emit=emit)))
+            prepared = PreparedBundle(mount_plan=loaded.to_mount_plan(), resolver=None, bundle=loaded)
+            prompt = await prepared.create_system_prompt_factory(session, session_cwd=tmp_path)()
+            assert prompt.count(shared) == 1
+            assert all(not payload['failed'] for _, payload in events)
 
     asyncio.run(check())
