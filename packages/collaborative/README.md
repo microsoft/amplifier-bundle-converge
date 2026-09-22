@@ -18,7 +18,28 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
-## Version 0.4.8: make outcomes and decisions easy to review
+## Version 0.4.9: reconcile current sources before continuing
+
+Supervisor guidance retrieves full relevant Direction/decision bodies when reads
+are abbreviated, and reconciles existing candidate evidence before directing new
+implementation. Routine engineering hypotheses remain revisable within actual
+authority. Supervisor inspection of source/setup is distinguished from product
+verification owned by the manager and tracked lanes.
+
+Shared and manager guidance distinguish a historical stuck worker outcome from
+separately authorized independent qualification of its exact unchanged candidate,
+where the installed runtime supports that guarded path. They use the latest
+trusted returned source, preserve budgets/history, and require fresh checks through
+integration and closure. Unsupported recovery remains explicit; no new action,
+permission, contract or dependency is introduced. This serves `operation.v1`
+clauses 1, 3, 4 and 7–10.
+
+All three resources and both composed hashes change; ordinary CLI/TUI behavior
+loads the same shared text. Publication updates no retained session. The
+[retained-continuation scenario](../../evaluations/collaborative/retained-continuation.md)
+is **NOT RUN**; source/wheel checks establish delivery, not agent compliance.
+
+### Version 0.4.8: make outcomes and decisions easy to review
 
 Shared guidance separates accepted intent from revisable engineering hypotheses,
 and routine agent-owned work from quiet status, meaningful updates and genuine
@@ -190,8 +211,8 @@ The root CI includes source and installed-wheel resource checks. These are stati
 and packaging checks, not proof a live manager follows Method or product acceptance.
 Reviewed SHA-256 values:
 
-- `instructions/manager.md`: `2bb7dd055e35fb36e360178fd7ef45d9d0e5b0bef4c08782a000a1ea813d70b4`
-- `instructions/supervisor.md`: `a162e4d644c1218499f7ddb09e512e74a209de0f0279304b32feb652621aa75c`
-- `instructions/collaboration.md`: `5a4785ba75cd069943cf2dacfc2800689703de82c9e5841557412473d636a255`
+- `instructions/manager.md`: `04da9657f90bf0b8a029fe9178b7ac6dfcf86cee6273d24daa369cc21a20c700`
+- `instructions/supervisor.md`: `d915e66ddc7940f53cb0ee7dc81f174ffe4db44abc8d62c669a429385c1b7727`
+- `instructions/collaboration.md`: `9472c1f27fe389db628183ecb2c9c488348dc4c82b1df3954e18767029457d4f`
 
 The package retains the repository's MIT license.
