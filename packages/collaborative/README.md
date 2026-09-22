@@ -18,7 +18,19 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
-## Version 0.4.1: preserve intent and decision scope
+## Version 0.4.2: check acceptance coverage
+
+Shared guidance asks whether declared checks can pass while an acceptance
+promise remains false, and retains missing or failed acceptance in existing
+check/return records. It adds no required test medium, schema or approval gate.
+The ordinary manager-mode and collaborative consumers already load this same
+resource; the role files and mode remain unchanged. Composed instruction hashes
+change, so retained sessions require their existing explicit adoption process.
+The [acceptance-coverage evaluation](../../evaluations/collaborative/acceptance-coverage.md)
+supplies a reproducible case with passing declared checks and missing behavior;
+fixture validation is separate from observing an agent handle it.
+
+### Version 0.4.1: preserve intent and decision scope
 
 Shared guidance now preserves exact source wording alongside interpretation,
 limits approval to the decision actually made, and asks for meaningful product
@@ -84,6 +96,6 @@ Reviewed SHA-256 values:
 
 - `instructions/manager.md`: `0a91a4810b3cfc136dbff1cc81a109a6e19ba827b10a947cdd7a6b937f79fa1d`
 - `instructions/supervisor.md`: `4be7a8a358d975b3ebf754289f7172bf8dbbad24292a082f1d6c12e6f6d1b65f`
-- `instructions/collaboration.md`: `2c35c04a00fb4c76f3dba7dfdc71b92a628f53879dc39e77ff14b4e7379bed68`
+- `instructions/collaboration.md`: `525ed22fcb1959975c07519d9e5bbc090a1ea465a485a4b58e7a16e3a10d39ae`
 
 The package retains the repository's MIT license.

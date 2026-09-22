@@ -40,6 +40,14 @@ is unavailable; never claim it ran or inspect private storage to emulate it.
 If no equivalent preserves authority and evidence, name the gap and continue
 independent work. Use existing records, not a parallel tracker or chat-only memory.
 
+**Check the promised result.** Before closure, connect each acceptance promise
+and falsifier to an observed check at the boundary where it matters, in existing
+check/return records. Could the declared commands pass while the promised result
+is false? If so, add the smallest discriminating check. Preserve useful work, but
+keep missing or failed acceptance explicit and owned; a caveat does not make it
+pass. The promise determines the needed evidence, not a universal test medium
+or a new permission gate.
+
 **Keep ownership and feedback clear.** Where a dedicated manager exists, the
 main conversation supervises intent and decisions; the manager owns planning,
 real lanes, independent verification and authorized integration. Do not start a
