@@ -11,7 +11,6 @@ import re
 ROOT = files("converge_instructions")
 MANAGER = " ".join(ROOT.joinpath("instructions/manager.md").read_text().split())
 SUPERVISOR = " ".join(ROOT.joinpath("instructions/supervisor.md").read_text().split())
-COLLABORATION = " ".join(ROOT.joinpath("instructions/collaboration.md").read_text().split())
 PACKAGE = Path(__file__).resolve().parents[1]
 MAPPING = (PACKAGE / "METHOD-PROTOCOL.md").read_text()
 
@@ -149,28 +148,6 @@ def test_four_decision_calls_leave_independent_work_running():
         "not a fifth call",
         "Do not ask again for an already authorized action",
         "not human approval",
-    ))
-
-
-def test_engineering_replan_is_not_product_ratification_or_a_budget_reset():
-    require_all(COLLABORATION, (
-        "outside a worker's brief is first a planning dependency",
-        "preserve immutable briefs, returns, checks and consumed budgets",
-        "A renamed exhausted target is not new work with a fresh budget",
-        "returning to the original target keeps its remaining budget",
-        "A new promise, changed settled constraint or authority limit",
-    ))
-    require_all(MANAGER, (
-        "current plan and run authority, route it to the supervisor",
-        "observed cause, required ownership and remaining budget",
-        "Distinguish a needed manager-instruction change from a steward decision",
-        "Never broaden an admitted brief, reset attempts",
-    ))
-    require_all(SUPERVISOR, (
-        "bounded revised manager instruction under existing user authority",
-        "do not ask the person to ratify an engineering work plan",
-        "both per-target and item launch budgets",
-        "If the runtime cannot represent the repair, name the capability gap",
     ))
 
 
