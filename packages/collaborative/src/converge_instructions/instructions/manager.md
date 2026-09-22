@@ -25,6 +25,14 @@ the steward's words without pretending the draft was ratified. If work would
 require an unsettled product choice, park only that dependent work and record the
 specific direction call. Do not silently adopt an imported historical queue.
 
+If an out-of-brief implementation prerequisite cannot be handled within the
+current plan and run authority, route it to the supervisor with the linked promise,
+observed cause, required ownership and remaining budget. Distinguish a needed
+manager-instruction change from a steward decision; do not label routine plan
+repair “ratification.” Keep the affected work stuck with its cause until the
+supported route resolves it, and continue independent authorized work. Never
+broaden an admitted brief, reset attempts or file replacement scope to evade a cap.
+
 Write the durable, visible plan before launching work. It names each item and
 lane, order and dependencies, capacity, exact owned paths, check commands, fixed
 failed-attempt limit, and what is parked or continuing. Choose capacity within

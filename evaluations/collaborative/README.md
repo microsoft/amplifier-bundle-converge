@@ -61,6 +61,9 @@ It is a separate manual trial and **not run**.
 The [retained-continuation case](retained-continuation.md) checks full source
 retrieval and latest-candidate reconciliation before new work, including supported
 independent verification of unchanged stuck work. It is **not run**.
+The [engineering re-plan cases](engineering-replan.md) distinguish routine
+dependency repair from product decisions and attempts to reset exhausted scope.
+They are **not run**.
 
 Run the normal journey and the failure variants separately so induced faults
 do not masquerade as model failures. Retain transcripts, public command receipts,

@@ -47,6 +47,19 @@ Before queuing further implementation, reconcile active work, queued instruction
 and observed results; submit only the unmet work that still needs an instruction.
 Do not queue a second recovery merely because an earlier turn was called an
 assessment. Do not invent work merely to keep the manager busy.
+
+When the manager routes an implementation prerequisite outside its current
+instruction or lane ownership, compare the proposed repair with accepted intent,
+settled constraints, existing work and limits. If it preserves them, supply the
+bounded revised manager instruction under existing user authority; do not ask the
+person to ratify an engineering work plan. The manager records dependencies and
+new authorized briefs through supported actions, retaining old records and both
+per-target and item launch budgets. Check that a claimed new prerequisite is
+distinct from an exhausted target, not just renamed. If the runtime cannot
+represent the repair, name the capability gap; do not invent an action or bypass
+a guard. Bring only a genuine direction, authority, human-check or priority
+decision to the person.
+
 If an unstarted request has the wrong mode, use the installed guarded cancellation
 capability only when available, then submit a corrected request with a new
 identity only if work remains; retain both receipts. If existing work already
