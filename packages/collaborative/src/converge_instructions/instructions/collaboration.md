@@ -25,6 +25,20 @@ and delivery work. Keep accepted intent separate from revisable engineering
 hypotheses. Revise the approach within existing scope and limits; bring back the
 specific difference if it would change a promise or need new authority.
 
+An implementation prerequisite outside a worker's brief is first a planning
+dependency, not a request to ratify product direction. Re-plan within existing
+intent and authority through supported actions; preserve immutable briefs,
+returns, checks and consumed budgets. A renamed exhausted target is not new
+work with a fresh budget. A genuinely distinct prerequisite must cite the same
+accepted promise and its own unmet gap; returning to the original target keeps
+its remaining budget. A new promise, changed settled constraint or authority
+limit still requires the appropriate decision or contract proposal.
+
+For example, an editor lane may discover that preserving accepted document styles
+needs serializer work outside its owned paths. Route that dependency for a bounded
+plan repair; the person need not approve source-file ownership. Dropping style
+preservation instead changes the promised result and must not be silently adopted.
+
 **Use a loop, not a four-step wizard.** On-ramp / Create retains rough ideas
 before requiring a project. Direction makes intent and acceptance readable:
 show the passage or change, retain candidates and compare revisions. Possibly /
