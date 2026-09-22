@@ -43,6 +43,10 @@ actions, lifecycle states or storage paths.
 
 ## Variants and evidence
 
+The separate [acceptance-coverage case](acceptance-coverage.md) exercises the
+verification decision with a real, deliberately incomplete worker artifact and
+passing declared commands. It can be run without the full conversation journey.
+
 Run the normal journey and the failure variants separately so induced faults
 do not masquerade as model failures. Retain transcripts, public command receipts,
 document revisions/decisions, plan and lane records, independent checks and the

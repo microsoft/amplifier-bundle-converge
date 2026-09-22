@@ -285,7 +285,7 @@ jobs:
       - uses: astral-sh/setup-uv@v4
       - run: uv venv --python 3.12
       - run: uv pip install './packages/collaborative[test]'
-      - run: .venv/bin/python -m pytest -q packages/collaborative/tests
+      - run: .venv/bin/python -m pytest -q packages/collaborative/tests evaluations/collaborative/tests
       - run: uv build packages/collaborative --out-dir /tmp/collaborative-dist
       - run: uv pip install --reinstall /tmp/collaborative-dist/*.whl
-      - run: .venv/bin/python -m pytest -q packages/collaborative/tests
+      - run: .venv/bin/python -m pytest -q packages/collaborative/tests evaluations/collaborative/tests
