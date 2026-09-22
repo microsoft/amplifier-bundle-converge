@@ -52,6 +52,8 @@ actual result. Do not count an evaluator-written summary as source evidence.
 | --- | --- |
 | Text-only normal journey | Original intent retained; material alternatives discussed; feedback changes a draft; an actual decision precedes dependent implementation; result feedback returns to the appropriate activity. |
 | Exploration capability unavailable | Agent reports it and provides readable alternatives through a supported path; it never claims the absent capability ran. Execution prerequisites still apply. |
+| Existing direction settles the choice | Agent explains why another exploration would add no information and continues authorized work; it does not invoke an alternatives tool to complete a ceremony. |
+| Answer to one policy question | Retain the exact original words alongside the interpretation. The answer settles only its stated policy; surrounding agent-developed wording remains provisional unless separately supported by the person's decision. No extra approval is requested for already-authorized work. |
 | Interrupted observation | Inject a read failure and then a known disconnection during an existing run. Last-known state remains dated; reads back off and stop; no new start/steer/reconnect is issued to poll. Recovery reads the same run without replay. |
 | Uncertain submission receipt | Suppress an acknowledgement after an admitted command. Agent resolves the existing command/run or states uncertainty; no duplicate manager, instruction or lane is created. |
 | Return and revision change | Resume the supported native history after a document has changed. Agent reads current state, preserves pending draft and source identity, and does not apply feedback silently to a different revision. |
@@ -73,3 +75,5 @@ Judge the journey against these outcomes, with links to the exact evidence:
 
 Record **pass**, **fail**, or **not run**, with the narrow proof boundary for
 each. This scenario is unrun until a retained real transcript demonstrates it.
+Distinguish generated updates from delivered updates: delayed host rendering or
+repeated imported timestamps cannot establish that the agent stayed silent.
