@@ -42,6 +42,14 @@ capability only when available, then submit the corrected request with a new
 identity; retain both receipts. Never cancel an already-started request merely
 to change this flag, silently edit its record, or replay uncertain work.
 
+For `reconnect`, new work belongs in `arguments.instruction`; omitting it restores
+the manager lifecycle only. `require_wave` selects the mode and does not itself
+submit work. Before waiting for new work, confirm its admitted run in the receipt
+or subsequent state; a live, idle manager is insufficient. Reconcile uncertain
+delivery before retrying. If records prove no instruction was admitted, submit
+the corrected work with a new request ID through the retained manager's currently
+supported action; do not keep waiting or replay the lifecycle-only receipt.
+
 The manager must record traceable items and a visible durable plan before any
 product lane runs. Each lane has its own branch, working copy and native session,
 a self-contained brief, and a numeric per-target failure limit set before launch.
@@ -97,7 +105,7 @@ Create actions: `list`, `read` (idea_id), `create` (conversation_id, title, text
 
 Direction actions: `list`, `read`, `create` (project_id, title, body, document_type), `save_candidate`, `propose` (project_id, document_id, expected_revision, body, rationale), `decide` (project_id, proposal_id, expected_revision, decision, actor_reported, reason), `focus`, `view`. All scoped operations need project_id. Keep linked Possibly IDs in source_ref/evidence rather than copying private tool databases.
 
-Operations actions: `read`, `start` (project_id, instruction, runtime:"amplifier", require_wave:true for convergence), `steer` (project_id, instruction, require_wave:true for convergence), `stop` (project_id, expected_revision), `reconnect` (project_id, optional new instruction, require_wave:true for convergence), `strategy` (project_id, expected_revision, strategy, boundaries), `record_evidence` (project_id, run_id, title, summary, uri, optional verification), `verify_evidence` (project_id, evidence_id, expected_revision). A verified file observation means the path and hash were checked; it does not prove the artifact meets the user's intent. Other runtime choices remain unavailable until their native adapters are implemented and tested.
+Operations actions: `read`, `start` (project_id, instruction, runtime:"amplifier", require_wave:true for convergence), `steer` (project_id, instruction, require_wave:true for convergence), `stop` (project_id, expected_revision), `reconnect` (project_id, optional instruction, optional runtime:"amplifier", require_wave:true for convergence), `strategy` (project_id, expected_revision, strategy, boundaries), `record_evidence` (project_id, run_id, title, summary, uri, optional verification), `verify_evidence` (project_id, evidence_id, expected_revision). A verified file observation means the path and hash were checked; it does not prove the artifact meets the user's intent. Other runtime choices remain unavailable until their native adapters are implemented and tested.
 
 ## Continuity and authority
 

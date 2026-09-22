@@ -18,7 +18,20 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
-## Version 0.4.4: verification readiness and bounded recovery
+## Version 0.4.5: distinguish reconnect from new work
+
+Supervisor bindings name the exact `instruction` argument for reconnect and
+require evidence that the intended run was admitted before waiting on it.
+Instruction-free reconnect still restores lifecycle without manufacturing work;
+uncertain delivery is reconciled before retry. This serves `operation.v1`
+clauses 3 and 9 without adding an action, permission or host dependency.
+
+Only the supervisor resource and its composed hash change. Shared collaboration,
+manager instructions, ordinary CLI/TUI behavior and the manager's composed hash
+remain unchanged. Publication does not update a live session; source and wheel
+checks do not prove an agent follows these instructions.
+
+### Version 0.4.4: verification readiness and bounded recovery
 
 Shared guidance checks the manager's verification environment before admitting
 implementation and routes setup failures without spending worker launches just
@@ -128,7 +141,7 @@ and packaging checks, not proof a live manager follows Method or product accepta
 Reviewed SHA-256 values:
 
 - `instructions/manager.md`: `b605f53d80c116458424940effbe2da11701c07c0ff200b0e29b04871910fa02`
-- `instructions/supervisor.md`: `2f38a211f295b877c5ab9a360ddad0f1efb68384195fd825c6d33b3962428557`
+- `instructions/supervisor.md`: `d8a6b6d24815e00f357ad8f92f28e4e66fc6f10121d4bac07e838f3fd7c08a97`
 - `instructions/collaboration.md`: `37faeb74b7741e9d19d9a1057cfc12f83a678db32ac2d6c5c8f171ea680898e8`
 
 The package retains the repository's MIT license.
