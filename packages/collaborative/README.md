@@ -18,7 +18,21 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
-## Version 0.4.2: check acceptance coverage
+## Version 0.4.3: finite feedback before implementation
+
+Feedback acknowledgment, acceptance reassessment and a replacement-plan discussion
+can finish without launching another wave. Supervisor guidance chooses the installed
+`require_wave` mode explicitly; shared and manager guidance preserve the separate
+plan, lane and verification requirements for actual implementation. New feedback
+is handled before another observation loop. This serves `operation.v1` clauses
+4 and 9: feedback is signal, and stalls are decisions. It changes no contract,
+runtime API or permission boundary, and adds no host dependency.
+
+Shared, supervisor and manager resources changed; retained sessions require explicit
+adoption of the new composed hashes. This publication does not update a live session.
+Static guidance checks do not prove that an agent will follow the guidance.
+
+### Version 0.4.2: check acceptance coverage
 
 Shared guidance asks whether declared checks can pass while an acceptance
 promise remains false, and retains missing or failed acceptance in existing
@@ -58,8 +72,8 @@ Legacy direct `importlib.resources` reads still return only the named file.
 They **do not** acquire the shared text by upgrading the package alone. Consumers
 that read `instructions/manager.md` directly need a separate change to
 `instruction("manager")`, a reviewed package source update, and an explicit
-transition of the full per-session instruction hash. The role-specific file remains unchanged
-in this version; its composed instruction will change. Direct supervisor readers
+transition of the full per-session instruction hash. Role-specific and shared files have independent hashes; inspect the selected
+version before adopting its composed instruction. Direct supervisor readers
 likewise need the helper or explicit inclusion of the shared resource. Do not
 pass a composed helper result alongside the same loaded behavior, duplicating
 the common text. No installed or saved session is updated by this source change.
@@ -94,8 +108,8 @@ The root CI includes source and installed-wheel resource checks. These are stati
 and packaging checks, not proof a live manager follows Method or product acceptance.
 Reviewed SHA-256 values:
 
-- `instructions/manager.md`: `0a91a4810b3cfc136dbff1cc81a109a6e19ba827b10a947cdd7a6b937f79fa1d`
-- `instructions/supervisor.md`: `4be7a8a358d975b3ebf754289f7172bf8dbbad24292a082f1d6c12e6f6d1b65f`
-- `instructions/collaboration.md`: `525ed22fcb1959975c07519d9e5bbc090a1ea465a485a4b58e7a16e3a10d39ae`
+- `instructions/manager.md`: `145159ef139a0096567929a178bbdb8057df5148a7e0187ecbd4f29e3b7c440c`
+- `instructions/supervisor.md`: `2f38a211f295b877c5ab9a360ddad0f1efb68384195fd825c6d33b3962428557`
+- `instructions/collaboration.md`: `8697290f8defd0dd0ce8bd3c8f9f13b8a45da65e32342fe67a00468dc6b120e5`
 
 The package retains the repository's MIT license.

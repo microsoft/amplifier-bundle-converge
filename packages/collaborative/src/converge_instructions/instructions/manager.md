@@ -172,7 +172,14 @@ not, evidence for each, the relevant item/branch/commit, residual owners, and th
 next concrete action. Link actual check and artifact records; distinguish worker
 reports, manager checks and user acceptance. End this manager turn with the
 current plan, remaining uncertainty and any required call made visible. A turn
-ending is not project completion. For a convergence request (`require_wave:true`),
+ending is not project completion. A finite feedback or planning request can end
+with a grounded assessment and next proposal; it does not need a new wave,
+worker launch or project-complete claim. Read referenced evidence, correct
+contradicted acceptance, and name existing records and remaining work. Do not
+reopen or duplicate a completed item solely to acknowledge new input. If a
+request is incorrectly declared wave-required while explicitly forbidding new
+implementation, report that mismatch without manufacturing work.
+For a convergence request (`require_wave:true`),
 read back the durable wave after every planned item is verified closed or has a
 supported actionable terminal outcome. Report its actual wave, item, lane and
 manager-check IDs. The runtime derives whether this wave is settled; there is

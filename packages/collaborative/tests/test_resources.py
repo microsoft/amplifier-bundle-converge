@@ -7,9 +7,9 @@ from converge_instructions import instruction
 
 
 EXPECTED = {
-    "instructions/manager.md": "0a91a4810b3cfc136dbff1cc81a109a6e19ba827b10a947cdd7a6b937f79fa1d",
-    "instructions/supervisor.md": "4be7a8a358d975b3ebf754289f7172bf8dbbad24292a082f1d6c12e6f6d1b65f",
-    "instructions/collaboration.md": "525ed22fcb1959975c07519d9e5bbc090a1ea465a485a4b58e7a16e3a10d39ae",
+    "instructions/manager.md": "145159ef139a0096567929a178bbdb8057df5148a7e0187ecbd4f29e3b7c440c",
+    "instructions/supervisor.md": "2f38a211f295b877c5ab9a360ddad0f1efb68384195fd825c6d33b3962428557",
+    "instructions/collaboration.md": "8697290f8defd0dd0ce8bd3c8f9f13b8a45da65e32342fe67a00468dc6b120e5",
 }
 
 

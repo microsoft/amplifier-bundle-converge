@@ -104,7 +104,12 @@ watching; they are not canonical lanes.
 For convergence, the supervisor uses `require_wave:true` on start, steer or
 reconnect. A durable plan, lane execution, worker return, manager checks,
 closure and the derived final wave picture make completion inspectable. A finite informational
-turn need not invent a wave. If the provider ends early, continuation reads the
+turn need not invent a wave. Feedback acknowledgment, acceptance reassessment and
+a plan-only discussion use `require_wave:false`; implementation uses
+`require_wave:true`. The action name `steer` does not decide the mode. An
+incorrectly queued mode can be replaced only through supported guarded
+cancellation while still unstarted, with both receipts retained; never by editing
+a run or replaying started work. If the provider ends early, continuation reads the
 same stored wave under a bounded runtime policy; it does not replay an uncertain
 launch. Missing actions are visible setup defects, never permission for direct
 database writes or a generic delegate fallback.
