@@ -18,6 +18,21 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.12: keep the supervising conversation available
+
+The supervisor yields after bounded observations while independently admitted
+manager work continues. Long synchronous sleeps and unchanged polling do not
+keep the foreground conversation useful. Supported interruptible waits or
+background returns retain their actual host contract; without a wake facility,
+the next real conversation turn reconciles the retained records. Yielding is not
+completion, a stop, or a new permission gate, and promises no automatic notice.
+
+Only the supervisor resource and composed supervisor hash change. Shared and
+manager instruction bytes remain unchanged. The
+[foreground-return scenario](../../evaluations/collaborative/foreground-return.md)
+is a manual behavior trial and **NOT RUN**. Source/composition and installed-wheel
+checks prove delivery, not responsiveness, interruption or model compliance.
+
 ## Version 0.4.11: deliver required sources before a lane starts
 
 Manager examples include exact-revision Operations evidence attachments when
@@ -243,7 +258,7 @@ and packaging checks, not proof a live manager follows Method or product accepta
 Reviewed SHA-256 values:
 
 - `instructions/manager.md`: `7b9661fd2240ea35ff1fa5f574749a1b080638982cc0de2b907793267279516f`
-- `instructions/supervisor.md`: `ccdd1022d1ce07444aed4f80a2675aed9d442f920cf161786a62daf419bae37c`
+- `instructions/supervisor.md`: `2b1eab476065acc044dd303c8b6a1956909d927f9eb8715f713d421322c5efb5`
 - `instructions/collaboration.md`: `a5a3428a764a4a98660be57999a5ea768046cec06fc0f32e590694eabb6aed21`
 
 The package retains the repository's MIT license.
