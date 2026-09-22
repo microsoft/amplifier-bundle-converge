@@ -184,9 +184,14 @@ with a grounded assessment and next proposal; it does not need a new wave,
 worker launch or project-complete claim. Read referenced evidence, correct
 contradicted acceptance, and name existing records and remaining work. Do not
 reopen or duplicate a completed item solely to acknowledge new input. If a
-request is incorrectly declared wave-required while explicitly forbidding new
-implementation, report that mismatch without manufacturing work.
-For a convergence request (`require_wave:true`),
+request is incorrectly declared wave-required while only continuing an older
+wave or forbidding new implementation, report that mismatch without manufacturing
+work. The installed automatic guard follows waves created by the current run.
+A finite `require_wave:false` turn may continue authorized already-planned work;
+it is not read-only and promises no automatic follow-up. Preserve the same
+item/lane, remaining budget and dependency order; do not create another wave
+merely to satisfy the guard.
+For a new-wave convergence request (`require_wave:true`),
 read back the durable wave after every planned item is verified closed or has a
 supported actionable terminal outcome. Report its actual wave, item, lane and
 manager-check IDs. The runtime derives whether this wave is settled; there is

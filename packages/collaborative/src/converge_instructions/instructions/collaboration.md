@@ -72,6 +72,17 @@ supported recovery; if the current state refuses it, name the missing recovery
 capability and route it without bypassing the guard. Repairing the environment
 does not resolve independent product counterevidence or establish acceptance.
 
+**Recover without accepting a stuck return.** A stuck return is ineligible for
+acceptance verification or integration; stop that refused action and retain its
+evidence. Investigate the cause, actual authority and remaining immutable budget
+with one finite inquiry and a named decision point. New facts or a changed
+authorized approach may justify explicit, supported continuation of the same
+lane; unchanged repetition, relabeling and cap resets cannot. Preserve prior
+returns, checks and attempts. If no useful authorized continuation exists, name
+the concrete dependency and accountable assignee/accepted handoff, or the precise
+steward decision needed. A placeholder such as “technical owner” names a need,
+not a completed handoff; responsibility remains until the route is real.
+
 **Keep ownership and feedback clear.** Where a dedicated manager exists, the
 main conversation supervises intent and decisions; the manager owns planning,
 real lanes, independent verification and authorized integration. Do not start a
