@@ -18,7 +18,24 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
-## Version 0.4.7: finite recovery within retained work
+## Version 0.4.8: make outcomes and decisions easy to review
+
+Shared guidance separates accepted intent from revisable engineering hypotheses,
+and routine agent-owned work from quiet status, meaningful updates and genuine
+steward calls. Reviews lead with an actual artifact/version, realistic task and
+limits. Concise summaries preserve received/applied/verified feedback distinctions,
+real stops and inspectable evidence; they confer no execution authority. Role
+instructions retain detailed durable reports without requiring their identifiers
+to dominate the person's return summary. This serves `operation.v1` clauses 3,
+4 and 9–11 without changing contracts, permissions, capabilities or dependencies.
+
+Shared and both role resources change, including both composed hashes. Ordinary
+CLI/TUI behavior loads the same shared guidance. Publication changes no live or
+saved session; retained consumers need their explicit instruction adoption path.
+The [producer-review trial](../../evaluations/collaborative/producer-review.md)
+is **NOT RUN**. Source and wheel checks prove delivery, not the user experience.
+
+### Version 0.4.7: finite recovery within retained work
 
 Shared guidance preserves stuck returns while allowing finite investigation and
 justified same-lane continuation within actual authority and the remaining bound.
@@ -173,8 +190,8 @@ The root CI includes source and installed-wheel resource checks. These are stati
 and packaging checks, not proof a live manager follows Method or product acceptance.
 Reviewed SHA-256 values:
 
-- `instructions/manager.md`: `44586fcb25c62b1eef53e4afd94136e7261feb550898cd6860074be20b70600e`
-- `instructions/supervisor.md`: `fd618048dbcd61623f14d96db5bdfe02b7389635962e38393e089cad982d78d6`
-- `instructions/collaboration.md`: `6c8a8a3b3973d856773d4c35d084a9f31ed356d38ce71b21a35bf04d0f40d078`
+- `instructions/manager.md`: `2bb7dd055e35fb36e360178fd7ef45d9d0e5b0bef4c08782a000a1ea813d70b4`
+- `instructions/supervisor.md`: `a162e4d644c1218499f7ddb09e512e74a209de0f0279304b32feb652621aa75c`
+- `instructions/collaboration.md`: `5a4785ba75cd069943cf2dacfc2800689703de82c9e5841557412473d636a255`
 
 The package retains the repository's MIT license.
