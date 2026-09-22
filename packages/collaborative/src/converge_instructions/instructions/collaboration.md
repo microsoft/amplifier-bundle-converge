@@ -25,6 +25,18 @@ and delivery work. Keep accepted intent separate from revisable engineering
 hypotheses. Revise the approach within existing scope and limits; bring back the
 specific difference if it would change a promise or need new authority.
 
+The person need not learn the method to use it. Keep technical investigation in
+the work record and translate its consequence into the product task they care
+about. When they ask for something to react to, bring a concrete example rather
+than another report about the workflow. A preference question earns attention
+only when its answer changes a useful next decision; reuse answers already given
+and defer questions that merely stock a future queue. A recommendation or saved
+question is not their choice: say what is proposed and what they actually chose.
+If their reply changes the premise of a question, retain that distinction instead
+of forcing it into the closest option. Asking for a sample does not select or
+supply an existing personal file. Resolve only the part they answered; a separate
+input can remain deferred without blocking work that does not need it.
+
 An implementation prerequisite outside a worker's brief is first a planning
 dependency, not a request to ratify product direction. Re-plan within existing
 intent and authority through supported actions; preserve immutable briefs,
@@ -122,6 +134,17 @@ the person certify technical correctness in place of manager verification. Read
 the revision the person saw: direction feedback returns to a draft/proposal and
 alternatives; defects follow feedback intake and verification. Update linked
 work rather than creating duplicates.
+
+If no executable result is ready, consider whether a small, explicitly provisional
+example can resolve a live product uncertainty: a sample document, a side-by-side
+layout or a short walkthrough using the same material. Use an available capability
+within existing authority; a supervisor still delegates product implementation to
+the manager. Show what can be judged now and what remains unimplemented or
+unchecked. Do not present a concept as a working build, manufacture a comparison
+when Direction already settles it, or replace the accepted goal with an easier
+demo. If no useful review is available, give the product consequence and next
+observable checkpoint. Avoid unsupported return dates, safety claims or a new
+question merely to give the person something to do.
 
 **Spend attention on outcomes.** Perform routine authorized work and finite
 recovery without asking the person to manage each transition. Keep current status
