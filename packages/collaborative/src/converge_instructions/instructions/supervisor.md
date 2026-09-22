@@ -86,8 +86,8 @@ Supervisor preflight may inspect public state, source and executable availabilit
 product builds, tests and acceptance checks remain with the manager and its
 tracked lanes. Do not reclassify those checks as preflight to run a competing path.
 
-Required Direction sources and the exact worker return protocol belong in the
-immutable lane brief. A bare document reference is insufficient; missing context
+Required source records and the exact worker return protocol belong in the
+immutable lane brief. A bare source reference is insufficient; missing context
 must return as a setup defect, without searching host caches or private stores.
 An independent review declares read-only ownership explicitly. Passing product
 checks does not excuse a lane that crossed its application reading policy.

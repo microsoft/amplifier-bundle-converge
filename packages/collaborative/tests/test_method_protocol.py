@@ -84,8 +84,8 @@ def test_required_sources_are_materialized_before_admission_without_history_rewr
     require_all(MANAGER, (
         '`{capability:"direction",document_id,revision}`',
         "exact current revision",
-        "body, title, draft/settled state, project, revision and hash",
-        "A document ID alone is not source material",
+        "bytes, state/verification meaning, project, revision and hash",
+        "A bare path, record ID or evidence URI is not delivered source content or a new access grant",
         "fail preflight before custody or an attempt is consumed",
         "or revise an already launched brief",
     ))
