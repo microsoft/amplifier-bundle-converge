@@ -52,6 +52,9 @@ an explicitly unsupported recovery state. Its behavioral checkpoints are unrun.
 The [acceptance-translation case](acceptance-translation.md) checks that an
 observed counterexample is preserved without prescribing an unsupported result
 for its replacement. Its planning and reporting checkpoints are also unrun.
+The [finite-recovery case](finite-recovery.md) distinguishes a refused acceptance
+action from justified retained-lane recovery and checks that reconciliation
+prevents redundant future work. Its behavioral checkpoints are **not run**.
 
 Run the normal journey and the failure variants separately so induced faults
 do not masquerade as model failures. Retain transcripts, public command receipts,

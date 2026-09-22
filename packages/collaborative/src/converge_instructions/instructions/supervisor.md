@@ -29,17 +29,23 @@ manager identity and current operation. Preserve pending drafts and unselected
 alternatives. An authorized repair can derive from the user's exact words; it
 must not masquerade as approval of unrelated proposed direction. Send a bounded
 instruction naming the source, intended result, boundaries and evidence needed.
-For real convergence work, pass `require_wave: true` to the installed Operations
-`start`, `steer` or `reconnect` action. A read-only information request may remain
-a finite turn. Do not invent work merely to keep the manager busy.
-Set `require_wave: false` explicitly for feedback acknowledgment, assessment of
-a counterexample, or a replacement-plan request that stops before implementation.
-For example, “this accepted result still fails; explain why and propose a different
-strategy before implementing” is a finite turn. “Implement the agreed repair and
-verify it” requires a wave. Do not classify every `steer` as implementation.
+For a new request that will own a new authorized wave, pass `require_wave: true`
+to the installed Operations `start`, `steer` or `reconnect` action. Its automatic
+progress accounting follows waves created by that run, not an older wave being
+continued. A read-only information request may remain a finite turn.
+Set `require_wave: false` explicitly for finite feedback, assessment, planning,
+or continuation of already planned retained work. False is a finite manager
+turn, not a read-only restriction or a promise of automatic follow-up. Preserve
+the actual authority, existing item/lane identities and remaining attempt budget.
+Before queuing further implementation, reconcile active work, queued instructions
+and observed results; submit only the unmet work that still needs an instruction.
+Do not queue a second recovery merely because an earlier turn was called an
+assessment. Do not invent work merely to keep the manager busy.
 If an unstarted request has the wrong mode, use the installed guarded cancellation
-capability only when available, then submit the corrected request with a new
-identity; retain both receipts. Never cancel an already-started request merely
+capability only when available, then submit a corrected request with a new
+identity only if work remains; retain both receipts. If existing work already
+satisfies an unstarted request, withdraw only that redundant request through the
+same guarded path. Never cancel an already-started request merely
 to change this flag, silently edit its record, or replay uncertain work.
 
 For `reconnect`, new work belongs in `arguments.instruction`; omitting it restores
@@ -105,7 +111,7 @@ Create actions: `list`, `read` (idea_id), `create` (conversation_id, title, text
 
 Direction actions: `list`, `read`, `create` (project_id, title, body, document_type), `save_candidate`, `propose` (project_id, document_id, expected_revision, body, rationale), `decide` (project_id, proposal_id, expected_revision, decision, actor_reported, reason), `focus`, `view`. All scoped operations need project_id. Keep linked Possibly IDs in source_ref/evidence rather than copying private tool databases.
 
-Operations actions: `read`, `start` (project_id, instruction, runtime:"amplifier", require_wave:true for convergence), `steer` (project_id, instruction, require_wave:true for convergence), `stop` (project_id, expected_revision), `reconnect` (project_id, optional instruction, optional runtime:"amplifier", require_wave:true for convergence), `strategy` (project_id, expected_revision, strategy, boundaries), `record_evidence` (project_id, run_id, title, summary, uri, optional verification), `verify_evidence` (project_id, evidence_id, expected_revision). A verified file observation means the path and hash were checked; it does not prove the artifact meets the user's intent. Other runtime choices remain unavailable until their native adapters are implemented and tested.
+Operations actions: `read`, `start` (project_id, instruction, runtime:"amplifier", require_wave:true only for a new run-owned wave), `steer` (project_id, instruction, require_wave:true only for a new run-owned wave), `stop` (project_id, expected_revision), `reconnect` (project_id, optional instruction, optional runtime:"amplifier", require_wave:true only for a new run-owned wave), `strategy` (project_id, expected_revision, strategy, boundaries), `record_evidence` (project_id, run_id, title, summary, uri, optional verification), `verify_evidence` (project_id, evidence_id, expected_revision). A verified file observation means the path and hash were checked; it does not prove the artifact meets the user's intent. Other runtime choices remain unavailable until their native adapters are implemented and tested.
 
 ## Continuity and authority
 
