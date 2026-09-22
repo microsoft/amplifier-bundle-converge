@@ -55,6 +55,9 @@ for its replacement. Its planning and reporting checkpoints are also unrun.
 The [finite-recovery case](finite-recovery.md) distinguishes a refused acceptance
 action from justified retained-lane recovery and checks that reconciliation
 prevents redundant future work. Its behavioral checkpoints are **not run**.
+The [producer-review case](producer-review.md) checks concise outcome reviews,
+agent-owned recovery, feedback disposition and consequential product decisions.
+It is a separate manual trial and **not run**.
 
 Run the normal journey and the failure variants separately so induced faults
 do not masquerade as model failures. Retain transcripts, public command receipts,

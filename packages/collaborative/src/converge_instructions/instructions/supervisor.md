@@ -81,8 +81,11 @@ A worker returns exactly one of **done with proof**, **stuck with a named cause*
 or **waiting on the steward**, with what landed, what did not and evidence for
 each. The manager's independent check determines closure. The runtime derives whether
 the durable wave is settled from verified closure or actionable terminal outcomes.
-The final report names actual wave, item, lane and manager-check IDs. A model
-turn ending does not finish that wave or set project completion.
+The final report names actual wave, item, lane and manager-check IDs. Preserve
+that detailed report as durable evidence. Lead the person's return summary with
+the outcome and link those details rather than
+reciting them. A model turn ending does not finish that wave or set project
+completion.
 Healthy waiting has a signal, checkpoint, deadline and route, separate from the
 fixed failed-attempt budget. Do not steer a retrospective audit loop when present
 checks and the actionable return are sufficient.

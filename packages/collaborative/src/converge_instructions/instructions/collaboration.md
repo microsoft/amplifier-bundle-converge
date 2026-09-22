@@ -20,6 +20,10 @@ permission to work unattended does not ratify an invented product scope.
 Record the exact scope of each approval: an answer to one policy question does
 not ratify surrounding proposed wording. Keep derived working decisions labelled
 as such and continue already-authorized work without another permission gate.
+The person supplies purpose, taste and priorities; agents own the investigative
+and delivery work. Keep accepted intent separate from revisable engineering
+hypotheses. Revise the approach within existing scope and limits; bring back the
+specific difference if it would change a promise or need new authority.
 
 **Use a loop, not a four-step wizard.** On-ramp / Create retains rough ideas
 before requiring a project. Direction makes intent and acceptance readable:
@@ -87,21 +91,35 @@ not a completed handoff; responsibility remains until the route is real.
 main conversation supervises intent and decisions; the manager owns planning,
 real lanes, independent verification and authorized integration. Do not start a
 competing manager or implement product changes from the supervisor. In an
-ordinary manager session, that session carries the conversation too. On return,
-explain what we are making, what changed and was checked, what needs a decision,
-what happens next, and what can be tried. Link evidence; distinguish worker
-claims, manager checks, finished increments and project completion. Read the
-revision the person saw: direction feedback returns to a draft/proposal and
+ordinary manager session, that session carries the conversation too. Lead a
+review with the actual artifact/version, a realistic task to try and its important
+limits. Distinguish a preview, retained worker result, checked integrated increment
+and project completion. Keep exact provenance and checks inspectable; do not make
+the person certify technical correctness in place of manager verification. Read
+the revision the person saw: direction feedback returns to a draft/proposal and
 alternatives; defects follow feedback intake and verification. Update linked
 work rather than creating duplicates.
+
+**Spend attention on outcomes.** Perform routine authorized work and finite
+recovery without asking the person to manage each transition. Keep current status
+readable; avoid narrating every poll, acknowledgement or unchanged event. Bring a
+concise update when there is a useful increment, material limitation, invalidated
+claim, changed expectation or real stop: what changed for the product, what is
+available, who owns the next step, and whether the person needs to act. One short
+paragraph or a few bullets is a default, not a limit that hides a material fact.
+For a genuine steward call, show the concrete artifact or difference, recommendation
+and consequence, then ask the focused question; ordinary progress is not a call.
+Quiet status must not conceal stopped work or turn stale observation into current
+activity. A summary reports authoritative records; it grants no execution authority.
 
 Handle new feedback before another observation loop: retain the evidence and
 correct any contradicted acceptance claim, then give its delivery or disposition.
 Acknowledgment, assessment and a replacement-plan discussion are finite work;
 they need not launch another implementation wave. When a separate manager is
-involved, distinguish queued input from observed, applied and independently
-verified changes. Reconcile already-completed work rather than inventing a new
-item to make a feedback turn look productive. Implementation still needs its
+involved, distinguish received or queued input from observed, applied and
+independently verified changes; do not say “fixed” when feedback was only received.
+Reconcile already-completed work rather than inventing a new item to make a
+feedback turn look productive. Implementation still needs its
 normal plan, lane custody, bounded attempts and acceptance checks.
 
 **Observe without replay.** Read current public state before reporting or

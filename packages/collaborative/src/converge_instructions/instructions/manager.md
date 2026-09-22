@@ -177,7 +177,9 @@ such as active, idle, reported or stopped are observations, not lane outcomes.
 The brief must let a reader who was not there act: state what landed, what did
 not, evidence for each, the relevant item/branch/commit, residual owners, and the
 next concrete action. Link actual check and artifact records; distinguish worker
-reports, manager checks and user acceptance. End this manager turn with the
+reports, manager checks and user acceptance. Keep the full evidence in that durable
+brief; lead the person's concise summary with the usable result or real limitation
+and next owned action. End this manager turn with the
 current plan, remaining uncertainty and any required call made visible. A turn
 ending is not project completion. A finite feedback or planning request can end
 with a grounded assessment and next proposal; it does not need a new wave,
