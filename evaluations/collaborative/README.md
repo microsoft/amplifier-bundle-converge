@@ -49,6 +49,9 @@ passing declared commands. It can be run without the full conversation journey.
 The [verification-recovery case](verification-recovery.md) checks readiness before
 admission and preserves completed work when manager check setup fails, including
 an explicitly unsupported recovery state. Its behavioral checkpoints are unrun.
+The [acceptance-translation case](acceptance-translation.md) checks that an
+observed counterexample is preserved without prescribing an unsupported result
+for its replacement. Its planning and reporting checkpoints are also unrun.
 
 Run the normal journey and the failure variants separately so induced faults
 do not masquerade as model failures. Retain transcripts, public command receipts,
