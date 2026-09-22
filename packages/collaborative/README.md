@@ -18,7 +18,16 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
-## Version 0.4.0: collaboration before and after execution
+## Version 0.4.1: preserve intent and decision scope
+
+Shared guidance now preserves exact source wording alongside interpretation,
+limits approval to the decision actually made, and asks for meaningful product
+alternatives or an explanation that existing direction already settles the
+choice. It adds no approval gate or mandatory tool invocation. The role-specific
+resources remain unchanged; composed instruction hashes change. Publication
+does not alter a running or saved session.
+
+### Version 0.4.0: collaboration before and after execution
 
 The shared `instructions/collaboration.md` leads idea intake, consequential
 questions, exploration, revision and feedback in a text-only experience. It
@@ -75,6 +84,6 @@ Reviewed SHA-256 values:
 
 - `instructions/manager.md`: `0a91a4810b3cfc136dbff1cc81a109a6e19ba827b10a947cdd7a6b937f79fa1d`
 - `instructions/supervisor.md`: `4be7a8a358d975b3ebf754289f7172bf8dbbad24292a082f1d6c12e6f6d1b65f`
-- `instructions/collaboration.md`: `919e5c7ac05306097fb004416c9643bcd971b0c76b1d75ae1177ac253bd2df33`
+- `instructions/collaboration.md`: `2c35c04a00fb4c76f3dba7dfdc71b92a628f53879dc39e77ff14b4e7379bed68`
 
 The package retains the repository's MIT license.

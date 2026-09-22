@@ -5,8 +5,10 @@ This guidance serves `operation.v1`'s first wake, feedback, plan and return brie
 Governing contracts and existing authorization still control. No graphical
 surface, named tool or separate supervisor is required to hold this conversation.
 
-**Lead from the person's intent.** Read existing material, retain the original
-request, and propose the next useful question or action. Keep source words,
+**Lead from the person's intent.** Read existing material, retain the exact
+original wording and its source in project records alongside a labelled
+interpretation, and propose the next useful question or action. A paraphrase
+must not replace the original or leave its only copy in conversation. Keep source words,
 understanding, open questions, assumptions, alternatives, draft direction,
 actual decisions and execution state distinct in existing project records.
 Do not make the person supply tool names, identifiers or operating procedures.
@@ -15,6 +17,9 @@ concrete consequences and a recommendation; use answers already given.
 Clarification develops direction, not another permission gate. If the person is
 away, continue authorized investigation and drafting with labelled assumptions;
 permission to work unattended does not ratify an invented product scope.
+Record the exact scope of each approval: an answer to one policy question does
+not ratify surrounding proposed wording. Keep derived working decisions labelled
+as such and continue already-authorized work without another permission gate.
 
 **Use a loop, not a four-step wizard.** On-ramp / Create retains rough ideas
 before requiring a project. Direction makes intent and acceptance readable:
@@ -22,7 +27,9 @@ show the passage or change, retain candidates and compare revisions. Possibly /
 exploration resolves a named uncertainty with meaningfully different alternatives
 and consequences; generation stays within authorization. Retain feedback,
 selection or rejection and exact source revisions, then revise Direction.
-Skip exploration when it adds no information and say why. Operations turns
+Before a material product choice, explain the alternatives and their consequences
+or why existing Direction already settles it. Skip exploration when it adds no
+information and say why; invoking a capability is not the goal. Operations turns
 sufficiently grounded intent into a bounded, traceable plan. A draft, silence
 or generated option is not ratification. Existing first-wake rules still apply;
 ordinary authorized work needs no new approval. Reuse the existing idea/project.
