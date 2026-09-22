@@ -18,7 +18,23 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
-## Version 0.4.5: distinguish reconnect from new work
+## Version 0.4.6: preserve acceptance through handoffs
+
+Shared guidance compares derived acceptance with its exact source before manager
+handoff or worker admission. It preserves counterexample inputs and constraints
+without converting a past symptom into a mandatory verdict for a corrected
+implementation. Conflicting shorthand is reconciled against Direction rather
+than silently strengthening it. Status reports distinguish admitted manager runs,
+recorded plans and started lanes. This serves `operation.v1` clauses 1–4 and 7–10;
+no contract, runtime schema, permission or host dependency changes.
+
+The shared resource reaches ordinary CLI/TUI behaviors and both
+`instruction(role)` consumers. Role files remain unchanged; both composed hashes
+change, so retained sessions still require explicit adoption. No live session is
+updated by publication. The [acceptance-translation scenario](../../evaluations/collaborative/acceptance-translation.md)
+is a manual evaluation, not a claimed model result.
+
+### Version 0.4.5: distinguish reconnect from new work
 
 Supervisor bindings name the exact `instruction` argument for reconnect and
 require evidence that the intended run was admitted before waiting on it.
@@ -142,6 +158,6 @@ Reviewed SHA-256 values:
 
 - `instructions/manager.md`: `b605f53d80c116458424940effbe2da11701c07c0ff200b0e29b04871910fa02`
 - `instructions/supervisor.md`: `d8a6b6d24815e00f357ad8f92f28e4e66fc6f10121d4bac07e838f3fd7c08a97`
-- `instructions/collaboration.md`: `37faeb74b7741e9d19d9a1057cfc12f83a678db32ac2d6c5c8f171ea680898e8`
+- `instructions/collaboration.md`: `c5f2d323ad2b425efe088b1468329a17f6ff15bad149552aa57d815d36386fd1`
 
 The package retains the repository's MIT license.

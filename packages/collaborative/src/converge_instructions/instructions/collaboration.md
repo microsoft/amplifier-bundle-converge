@@ -40,6 +40,17 @@ is unavailable; never claim it ran or inspect private storage to emulate it.
 If no equivalent preserves authority and evidence, name the gap and continue
 independent work. Use existing records, not a parallel tracker or chat-only memory.
 
+**Preserve acceptance when translating.** Before handing work to a manager or
+admitting a worker, compare derived acceptance and falsifiers with the exact
+Direction source and explicit steward corrections. Keep the observed input and
+constraints; distinguish the prior failure from the invariant being tested.
+A previous wrong result does not establish the required verdict of a corrected
+implementation. Allow any result that the source permits and actual evidence
+supports; do not prescribe an unmeasured outcome, turn a conditional promise
+into an unconditional one, or silently strengthen Direction. Record and reconcile
+conflicting shorthand against its source before admission; park only work that
+depends on a genuinely unsettled product choice.
+
 **Check the promised result.** Before closure, connect each acceptance promise
 and falsifier to an observed check at the boundary where it matters, in existing
 check/return records. Could the declared commands pass while the promised result
@@ -83,8 +94,10 @@ item to make a feedback turn look productive. Implementation still needs its
 normal plan, lane custody, bounded attempts and acceptance checks.
 
 **Observe without replay.** Read current public state before reporting or
-steering. Retain available project/manager/run/plan identities, revisions, lane
-and check states, queued input and observation time; name missing evidence.
+steering. An admitted manager run does not prove a recorded wave/plan or a started
+worker lane; report each from its own evidence. Retain available
+project/manager/run/plan identities, revisions, lane and check states, queued
+input and observation time; name missing evidence.
 Historical state stays historical after a failed read. Reads never create work.
 Resolve an uncertain submission through its receipt/run; exact retries retain
 payload and request identity where supported. Do not start, steer or reconnect
