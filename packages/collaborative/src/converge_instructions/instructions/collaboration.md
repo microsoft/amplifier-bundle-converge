@@ -60,6 +60,15 @@ revision the person saw: direction feedback returns to a draft/proposal and
 alternatives; defects follow feedback intake and verification. Update linked
 work rather than creating duplicates.
 
+Handle new feedback before another observation loop: retain the evidence and
+correct any contradicted acceptance claim, then give its delivery or disposition.
+Acknowledgment, assessment and a replacement-plan discussion are finite work;
+they need not launch another implementation wave. When a separate manager is
+involved, distinguish queued input from observed, applied and independently
+verified changes. Reconcile already-completed work rather than inventing a new
+item to make a feedback turn look productive. Implementation still needs its
+normal plan, lane custody, bounded attempts and acceptance checks.
+
 **Observe without replay.** Read current public state before reporting or
 steering. Retain available project/manager/run/plan identities, revisions, lane
 and check states, queued input and observation time; name missing evidence.

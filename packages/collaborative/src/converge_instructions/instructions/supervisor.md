@@ -32,6 +32,15 @@ instruction naming the source, intended result, boundaries and evidence needed.
 For real convergence work, pass `require_wave: true` to the installed Operations
 `start`, `steer` or `reconnect` action. A read-only information request may remain
 a finite turn. Do not invent work merely to keep the manager busy.
+Set `require_wave: false` explicitly for feedback acknowledgment, assessment of
+a counterexample, or a replacement-plan request that stops before implementation.
+For example, “this accepted result still fails; explain why and propose a different
+strategy before implementing” is a finite turn. “Implement the agreed repair and
+verify it” requires a wave. Do not classify every `steer` as implementation.
+If an unstarted request has the wrong mode, use the installed guarded cancellation
+capability only when available, then submit the corrected request with a new
+identity; retain both receipts. Never cancel an already-started request merely
+to change this flag, silently edit its record, or replay uncertain work.
 
 The manager must record traceable items and a visible durable plan before any
 product lane runs. Each lane has its own branch, working copy and native session,
