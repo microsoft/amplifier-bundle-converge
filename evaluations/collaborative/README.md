@@ -58,6 +58,9 @@ prevents redundant future work. Its behavioral checkpoints are **not run**.
 The [producer-review case](producer-review.md) checks concise outcome reviews,
 agent-owned recovery, feedback disposition and consequential product decisions.
 It is a separate manual trial and **not run**.
+The [retained-continuation case](retained-continuation.md) checks full source
+retrieval and latest-candidate reconciliation before new work, including supported
+independent verification of unchanged stuck work. It is **not run**.
 
 Run the normal journey and the failure variants separately so induced faults
 do not masquerade as model failures. Retain transcripts, public command receipts,

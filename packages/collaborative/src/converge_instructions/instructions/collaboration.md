@@ -65,7 +65,10 @@ or a new permission gate.
 
 **Prepare verification before implementation.** Before admitting implementation,
 check that required verification executables and test dependencies are available
-in the environment that will actually run the manager's declared checks. A small
+in the environment that will actually run the manager's declared checks, including
+the declared interpreter/runtime requirements. New permission or a reworded cause
+alone is not evidence that a failed prerequisite changed. Repair or select the
+supported check environment within actual authority before repeating that check. A small
 availability check is readiness evidence, not product acceptance. If manager
 verification later cannot start because of its environment, record **Can't check**
 with the cause and route setup repair to its authorized owner. Do not launch or
@@ -76,9 +79,15 @@ supported recovery; if the current state refuses it, name the missing recovery
 capability and route it without bypassing the guard. Repairing the environment
 does not resolve independent product counterevidence or establish acceptance.
 
-**Recover without accepting a stuck return.** A stuck return is ineligible for
-acceptance verification or integration; stop that refused action and retain its
-evidence. Investigate the cause, actual authority and remaining immutable budget
+**Recover without relabeling a stuck return.** A stuck worker claim cannot
+authorize acceptance or integration. Reconcile the latest attempt's trusted
+returned source and checks, not an older return chosen for its optimistic label.
+Where the installed runtime supports separately authorized manager qualification
+of that exact unchanged candidate, use its guarded path and fresh checks through
+integration and closure; authorization alone is not proof. Preserve the worker's
+stuck outcome and exhausted budget: this is independent verification, not replay
+or another source-edit attempt. If unsupported or refused, retain the evidence
+and name the actual limit. Investigate cause, authority and remaining budget
 with one finite inquiry and a named decision point. New facts or a changed
 authorized approach may justify explicit, supported continuation of the same
 lane; unchanged repetition, relabeling and cap resets cannot. Preserve prior

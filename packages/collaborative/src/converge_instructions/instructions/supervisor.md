@@ -26,8 +26,14 @@ acknowledgement for accomplished work.
 
 Before starting or steering work, read the actual project, Direction, strategy,
 manager identity and current operation. Preserve pending drafts and unselected
-alternatives. An authorized repair can derive from the user's exact words; it
-must not masquerade as approval of unrelated proposed direction. Send a bounded
+alternatives. If a relevant Direction or decision read is abbreviated, retrieve
+its full current body through the supplied public read handle before directing
+implementation; a preview or accepted label does not establish its contents or
+consent scope. Reconcile retained candidates and their latest checks before
+replacing that work with a fresh item or approach. Engineering hypotheses remain
+revisable within authority, but a new plan must account for the existing evidence
+and actual decisions. An authorized repair can derive from the user's exact words;
+it must not masquerade as approval of unrelated proposed direction. Send a bounded
 instruction naming the source, intended result, boundaries and evidence needed.
 For a new request that will own a new authorized wave, pass `require_wave: true`
 to the installed Operations `start`, `steer` or `reconnect` action. Its automatic
@@ -63,6 +69,9 @@ A helper in the manager conversation is not such a lane. The manager independent
 re-runs acceptance in the lane, then again on the authorized integration target;
 worker reports alone cannot close work. Integration is limited by the user's
 existing authorization. There is no implicit permission to merge or publish.
+Supervisor preflight may inspect public state, source and executable availability;
+product builds, tests and acceptance checks remain with the manager and its
+tracked lanes. Do not reclassify those checks as preflight to run a competing path.
 
 Required Direction sources and the exact worker return protocol belong in the
 immutable lane brief. A bare document reference is insufficient; missing context

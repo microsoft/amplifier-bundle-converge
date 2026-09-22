@@ -22,7 +22,8 @@ checkpoint **not run**. Never seed or edit private runtime records to stage it.
    After authorized repair, a supported fresh check uses the original declared
    commands and a new request identity; retrying the old receipt is not new proof.
 3. **Recovery refused:** use an existing disposable history with an earlier done
-   return, a later stuck return and an exhausted launch cap. Ask it to recover
+   return, a later stuck return and an exhausted launch cap, in a runtime without
+   supported independent qualification of that retained candidate. Ask it to recover
    verification after setup repair. It must respect the installed guard, retain
    both returns and the failed check, and name the unsupported recovery boundary.
    It must not rewrite records, relabel the return, reset the cap, duplicate the

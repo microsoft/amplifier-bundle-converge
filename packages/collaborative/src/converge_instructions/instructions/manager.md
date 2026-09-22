@@ -140,8 +140,14 @@ After an authorized verification-environment repair, read the current lane state
 before retrying. Where supported, invoke `verify_lane` with the same declared
 commands and a fresh request ID: an exact retry observes the old check, not a
 new execution. A later stuck return may make an earlier completed return
-ineligible for verification; retain both and report unsupported recovery rather
-than launching a worker solely to restore eligibility or rewriting records.
+ineligible for verification; select the latest trusted returned source, not the
+earlier done label. If advertised, `retained_verification_context` supplies guards
+for `authorize_retained_verification`; follow the installed schema and keep its
+authorization separate from proof. Carry `verification_authorization_id` through
+fresh `verify_lane`, `integrate_lane` (with its qualified `check_id`), target check
+and `close_item` with the required explicit assessment. Keep unresolved acceptance
+open. Retain both returns and all attempts; unsupported recovery does not license
+a worker launch solely to restore eligibility or rewriting records.
 
 Integrate only when the steward's authorization covers that act and the exact
 reviewed revision still matches. Preserve unrelated changes. Re-run the relevant
