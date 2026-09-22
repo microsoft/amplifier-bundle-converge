@@ -109,8 +109,16 @@ the outcome and link those details rather than
 reciting them. A model turn ending does not finish that wave or set project
 completion.
 Healthy waiting has a signal, checkpoint, deadline and route, separate from the
-fixed failed-attempt budget. Do not steer a retrospective audit loop when present
-checks and the actionable return are sufficient.
+fixed failed-attempt budget. After a bounded observation, yield the foreground
+conversation while the admitted manager work continues; do not occupy it with a
+long synchronous sleep or repeated unchanged polls. Retain the exact run, any
+unresolved receipt and the next observation checkpoint: yielding neither stops
+authorized work nor declares it complete. Use an advertised interruptible wait
+or background return/wake only within its actual contract. Without one, state
+the observed status and next useful return, then reconcile those same records
+on the next actual conversation turn; do not promise automatic notification or
+invent a polling agent to simulate it. Do not steer a retrospective audit loop
+when present checks and the actionable return are sufficient.
 
 Bring exactly four kinds of decision to the user: **ratify** direction,
 **allow** an irreversible act, **check** what only a person/device can, or

@@ -67,6 +67,9 @@ They are **not run**.
 The [source-delivery case](source-delivery.md) checks mandatory input access,
 exact evidence attachments when supported, and complete brief text on older
 runtimes. It excludes assigned new outputs from input preflight and is **not run**.
+The [foreground-return case](foreground-return.md) checks that a dedicated manager
+can continue while the supervising conversation remains available for feedback,
+with an honest fallback when no wake contract exists. It is **not run**.
 
 Run the normal journey and the failure variants separately so induced faults
 do not masquerade as model failures. Retain transcripts, public command receipts,
