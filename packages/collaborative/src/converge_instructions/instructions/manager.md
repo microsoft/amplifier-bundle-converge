@@ -136,6 +136,13 @@ hash, clean exit or screenshot proves only what that observation measures.
 Compare actual behavior with acceptance and falsifiers; component checks do not
 prove whole-product or visual acceptance.
 
+After an authorized verification-environment repair, read the current lane state
+before retrying. Where supported, invoke `verify_lane` with the same declared
+commands and a fresh request ID: an exact retry observes the old check, not a
+new execution. A later stuck return may make an earlier completed return
+ineligible for verification; retain both and report unsupported recovery rather
+than launching a worker solely to restore eligibility or rewriting records.
+
 Integrate only when the steward's authorization covers that act and the exact
 reviewed revision still matches. Preserve unrelated changes. Re-run the relevant
 checks on the integration target after each landed change, in both directions:

@@ -85,6 +85,12 @@ and `BLOCKED` are file-marker transport exits. None creates a fourth lane ending
 A worker's done-with-proof report remains a claim until the manager reruns the
 check and the guarded closure succeeds.
 
+The shared collaboration resource owns verification readiness and setup-failure
+routing for both ordinary manager mode and packaged roles. A manager environment
+failure is not a reason to spend a worker launch solely to restate it. Retained
+returns and checks remain historical evidence; this guidance grants no recovery
+action, state rewrite or exception to an attempt cap.
+
 A request for an actual progress reading is not a fifth decision call. The
 supervisor shows existing records and their evidence without inventing a choice
 or demanding unsolicited attention. If a substantive decision is needed it is

@@ -18,7 +18,26 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
-## Version 0.4.3: finite feedback before implementation
+## Version 0.4.4: verification readiness and bounded recovery
+
+Shared guidance checks the manager's verification environment before admitting
+implementation and routes setup failures without spending worker launches just
+to reconfirm them. It preserves completed returns, recorded checks and attempt
+caps, and names unsupported recovery instead of bypassing guards. Manager
+guidance distinguishes a fresh supported check from replay of an old receipt.
+Environment readiness does not establish product acceptance or resolve separate
+counterevidence. This serves `operation.v1` clauses 7–9; no contract, runtime
+action or recovery mechanism changes.
+
+The shared resource reaches both ordinary CLI/TUI behavior paths and both
+`instruction(role)` consumers; the manager role resource also changes. The
+supervisor role file and manager mode are unchanged. Composed instruction hashes
+change, so retained sessions require their existing explicit adoption process.
+Publication does not update a running or saved session. The
+[verification-recovery scenario](../../evaluations/collaborative/verification-recovery.md)
+is a manual behavioral evaluation, not a claimed model result.
+
+### Version 0.4.3: finite feedback before implementation
 
 Feedback acknowledgment, acceptance reassessment and a replacement-plan discussion
 can finish without launching another wave. Supervisor guidance chooses the installed
@@ -108,8 +127,8 @@ The root CI includes source and installed-wheel resource checks. These are stati
 and packaging checks, not proof a live manager follows Method or product acceptance.
 Reviewed SHA-256 values:
 
-- `instructions/manager.md`: `145159ef139a0096567929a178bbdb8057df5148a7e0187ecbd4f29e3b7c440c`
+- `instructions/manager.md`: `b605f53d80c116458424940effbe2da11701c07c0ff200b0e29b04871910fa02`
 - `instructions/supervisor.md`: `2f38a211f295b877c5ab9a360ddad0f1efb68384195fd825c6d33b3962428557`
-- `instructions/collaboration.md`: `8697290f8defd0dd0ce8bd3c8f9f13b8a45da65e32342fe67a00468dc6b120e5`
+- `instructions/collaboration.md`: `37faeb74b7741e9d19d9a1057cfc12f83a678db32ac2d6c5c8f171ea680898e8`
 
 The package retains the repository's MIT license.
