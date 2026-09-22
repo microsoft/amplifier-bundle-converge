@@ -46,6 +46,9 @@ actions, lifecycle states or storage paths.
 The separate [acceptance-coverage case](acceptance-coverage.md) exercises the
 verification decision with a real, deliberately incomplete worker artifact and
 passing declared commands. It can be run without the full conversation journey.
+The [verification-recovery case](verification-recovery.md) checks readiness before
+admission and preserves completed work when manager check setup fails, including
+an explicitly unsupported recovery state. Its behavioral checkpoints are unrun.
 
 Run the normal journey and the failure variants separately so induced faults
 do not masquerade as model failures. Retain transcripts, public command receipts,

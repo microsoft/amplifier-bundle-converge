@@ -48,6 +48,19 @@ keep missing or failed acceptance explicit and owned; a caveat does not make it
 pass. The promise determines the needed evidence, not a universal test medium
 or a new permission gate.
 
+**Prepare verification before implementation.** Before admitting implementation,
+check that required verification executables and test dependencies are available
+in the environment that will actually run the manager's declared checks. A small
+availability check is readiness evidence, not product acceptance. If manager
+verification later cannot start because of its environment, record **Can't check**
+with the cause and route setup repair to its authorized owner. Do not launch or
+resume a worker merely to reconfirm or report that known manager setup failure.
+Retain the original completed return, actual check results and attempt caps;
+do not relabel a return, reset a cap or duplicate the item to recover it. Use only
+supported recovery; if the current state refuses it, name the missing recovery
+capability and route it without bypassing the guard. Repairing the environment
+does not resolve independent product counterevidence or establish acceptance.
+
 **Keep ownership and feedback clear.** Where a dedicated manager exists, the
 main conversation supervises intent and decisions; the manager owns planning,
 real lanes, independent verification and authorized integration. Do not start a
