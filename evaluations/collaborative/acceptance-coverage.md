@@ -66,3 +66,10 @@ Agent invocation and transcript judgment are manual for this case. The repositor
 turnkey, adopter and ratchet executables drive their own fixed scenarios and do
 not consume this fixture; running their self-tests is not a model evaluation of
 this case. No additional model harness is introduced here.
+
+## Recorded manual result
+
+The [2026-09-22 CLI evaluation](acceptance-coverage-result-2026-09-22.md) records
+one observable pass with candidate 0.4.2 and Terra/xhigh, retains an earlier
+inconclusive attempt, and states the limits of that single-case evidence. It
+does not establish the full collaborative journey or manager orchestration.
