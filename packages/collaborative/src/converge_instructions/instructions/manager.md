@@ -57,27 +57,37 @@ Each worker receives a self-contained brief and its working copy, not the
 manager conversation. Supply the nine parts of Method's lane brief in order:
 what the lane is; what to read first; the quoted gap; the honesty gate; exact
 ownership and off-limits paths; acceptance with evidence and falsifiers; the two
-transport exits and fixed stall number; its marker; its boundaries. Include all
-source material needed to act, dependencies, integration owner, and the route
-for anything outside ownership. A residual belongs in the return with an owner;
+transport exits and fixed stall number; its marker; its boundaries. Before launch,
+check that mandatory reading exists in the admitted source and allowed read scope,
+or is supplied completely in the brief/attachments; exclude outputs explicitly
+assigned for creation from that prerequisite check. Include dependencies,
+integration owner, and the route for anything outside ownership. A residual
+belongs in the return with an owner;
 it does not authorize crossing the boundary or falsely completing an unmet
 in-scope acceptance item.
 
-Resolve required Direction context before launch. For every Direction document
-named in the instruction or reading list, supply `brief.sources` with
-`{capability:"direction",document_id,revision}` at the exact current revision
-read through the public Direction interface. The workflow embeds the resolved
-body, title, draft/settled state, project, revision and hash in the immutable
-brief and exposes that same snapshot through the worker's own-lane read. A
-document ID alone is not source material. Do not silently refresh a stale
-revision, treat draft context as ratified, or revise an already launched brief.
+Resolve required source context through the installed public interfaces before
+launch. Direction documents use `brief.sources` entries
+`{capability:"direction",document_id,revision}` at the exact current revision.
+When runtime discovery supports Operations evidence attachments, select
+`{capability:"operations",evidence_id,revision}` after reading that exact public
+record. Name required evidence as `evidence <32-lowercase-hex-id>` or `Evidence <id>`,
+optionally followed by `:r<revision>`; this bounded syntax requires a matching
+attachment, not general natural-language inference. The workflow captures source
+bytes, state/verification meaning, project, revision and hash in the immutable
+brief and the worker's own-lane source read. On an older runtime without that
+selector, supply the exact needed evidence text and provenance in the brief;
+do not promise an unavailable attachment or require a manager-only record read.
+A bare path, record ID or evidence URI is not delivered source content or a new
+access grant. Do not silently refresh a stale revision, promote draft context
+or reported evidence to approval/proof, or revise an already launched brief.
 Missing, stale or cross-project sources must fail preflight before custody or
 an attempt is consumed. Read the refusal and repair the next authorized brief.
 
 The worker must receive the exact scoped `converge_project` call shapes for
 `operations.read`, `return_lane` and `record_attempt`, including required outcome
 fields and stable request IDs, in its generated brief. Its own read returns its
-item, lane and attached source snapshots; it is not global Direction access.
+item, lane and attached source snapshots; it is not global record access.
 Required context or protocol that is still unavailable is a setup defect:
 return `stuck-with-cause`, name the missing material and route it to the manager.
 Do not search host directories, package installations, caches, logs, native
@@ -266,9 +276,12 @@ Use these installed Operations actions in order; all include `project_id`:
    and `lanes`; use the returned `lane_id`, never an invented one.
 3. `run_lane`: `lane_id`, `agent_name:"self"`, the bounded `instruction`, and
    `brief:{read_first:[text],owned_paths:[relative paths],acceptance:[{evidence,
-   falsifier}],boundaries:text,sources:[{capability:"direction",document_id,
-   revision}],read_only?:boolean}`. `sources` may be omitted only when no Direction document is
-   required. Each acceptance entry names a printed command
+   falsifier}],boundaries:text,sources:[source selectors],read_only?:boolean}`.
+   Source selectors are `{capability:"direction",document_id,revision}` and,
+   only when advertised by the installed runtime,
+   `{capability:"operations",evidence_id,revision}`. Attach required supported
+   records; any other mandatory input must be complete in the brief or permitted
+   working copy before launch. Each acceptance entry names a printed command
    or file and what would disprove it. The runtime combines these with the
    item's source, gap and bound into a persisted nine-part brief before launch;
    its actual brief and marker paths appear in the lane record. Use its recorded

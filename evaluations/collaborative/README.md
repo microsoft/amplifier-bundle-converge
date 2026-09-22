@@ -64,6 +64,9 @@ independent verification of unchanged stuck work. It is **not run**.
 The [engineering re-plan cases](engineering-replan.md) distinguish routine
 dependency repair from product decisions and attempts to reset exhausted scope.
 They are **not run**.
+The [source-delivery case](source-delivery.md) checks mandatory input access,
+exact evidence attachments when supported, and complete brief text on older
+runtimes. It excludes assigned new outputs from input preflight and is **not run**.
 
 Run the normal journey and the failure variants separately so induced faults
 do not masquerade as model failures. Retain transcripts, public command receipts,
