@@ -1,6 +1,6 @@
 [project]
 name = "amplifier-module-hooks-supervisor-entry"
-version = "0.1.0"
+version = "0.1.1"
 description = "Opt-in, read-only Converge project context before supervisor tool choice"
 readme = "README.md"
 requires-python = ">=3.11"

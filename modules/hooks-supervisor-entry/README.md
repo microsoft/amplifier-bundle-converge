@@ -40,8 +40,9 @@ Missing/failed capabilities are not silently retried through the fallback.
 The portable library `observe.py` has no Core or host import. Its only selectors
 are project inventory, a project overview, and revision-bound `project.workspace`
 or complete `review_selection` record pages. Exact manager/result read handles
-remain available to the supervisor. No title, document body, URL, environment,
-error text or other free-form domain instructions are injected.
+remain available to the supervisor. The observation also retains bounded current owner report excerpts as explicitly
+untrusted record data, with exact result-field read handles and report ordering,
+counts and omissions. No environment or error text is injected.
 
 ## Bounds and scope
 
@@ -93,3 +94,20 @@ supervisor uses their public paths. Repeat with unrelated ordinary conversation,
 an unavailable tool, two matching projects and a withdrawn result. Success means
 correct routing and truthful uncertainty without technical customer directions;
 unit or fake-provider success alone does not establish that behavior.
+
+## Current report projection (0.1.1)
+
+The same fresh overview can supply `current`: source `operations.overview`, exact
+manager generation, a bounded current-summary excerpt, and latest owner report
+excerpts with exact run/result reads. Manager identity, revision, native session
+and generation must agree with the overview. Ties, unknown ordering, omitted
+reports and unavailable records stay explicit; report prose never establishes
+completion, live availability or readiness. A later prompt reads again.
+
+The enclosing `observed_at` is the observation completion time, not the record's
+update time or an atomic snapshot. No extra public reads or schedule writes are
+added. The two-second default and existing five-second maximum are unchanged.
+A reviewed receiving setup may use `deadline_seconds: 5`; this remains a bounded
+trial, not a latency guarantee. Timeout still injects uncertainty, never cached
+reports. Correct schedule.report revisions and automatic notification delivery
+remain separate obligations and are not fixed by this projection.

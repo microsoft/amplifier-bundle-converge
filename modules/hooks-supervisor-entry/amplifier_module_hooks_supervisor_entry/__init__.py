@@ -10,7 +10,7 @@ from amplifier_core import HookResult
 from .observe import CAPABILITY, MAX_CONTEXT_BYTES, encoded, observe
 from .mounted import mounted_reader
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 async def mount(coordinator, config=None):
