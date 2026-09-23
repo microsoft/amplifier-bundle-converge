@@ -18,6 +18,22 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.17: recover delivery without customer diagnostic homework
+
+The shared ownership/feedback guidance now gives both roles a failed-handoff
+procedure: reconcile the observed result, keep authorized inspection with agents,
+and translate missing access into a concrete supported contribution or truthful
+stop. Status-only requests schedule no diagnosis. This serves `operation.v1`
+clauses 3–4, 7 and 10–11 without adding capabilities or permissions.
+
+Only shared instruction bytes change, so both composed roles change; standalone
+role files are unchanged. CLI/root behavior receives the same shared resource.
+Existing native managers require a separately reviewed method transition to
+consume it. No live session is changed here. The
+[failed-delivery case](../../evaluations/collaborative/failed-delivery.md) is
+**NOT RUN**; composition/package checks prove delivery, not agent judgment,
+restored access or a usable example.
+
 ## Version 0.4.16: preserve the request and deliver a usable opening
 
 The supervisor passes the current customer message verbatim to `request_review`.
@@ -324,7 +340,7 @@ and packaging checks, not proof a live manager follows Method or product accepta
 Reviewed SHA-256 values:
 
 - `instructions/manager.md`: `7b9661fd2240ea35ff1fa5f574749a1b080638982cc0de2b907793267279516f`
-- `instructions/supervisor.md`: `1fa9a2139a48eca349de189a7f7fc04a649f931218c5cf02526fa98583f013ff`
-- `instructions/collaboration.md`: `8ee4a97809be502d795d6c864a5dc6ba0c09aa9f32ec013cd1a87de31e9f6bb7`
+- `instructions/supervisor.md`: `64af3b8470867e515016f64dde4a71ac83adade37d0cd6fee38a6792ee0ddd55`
+- `instructions/collaboration.md`: `d65f8220a47d3181d1f8fb400190038fdb363647ebbd113cd48c621e09561c67`
 
 The package retains the repository's MIT license.

@@ -73,6 +73,9 @@ with an honest fallback when no wake contract exists. It is **not run**.
 The [product-scope case](product-scope.md) checks ordinary product-name
 continuation through public project records while unrelated chat stays ordinary.
 It is **not run**.
+The [failed-delivery case](failed-delivery.md) checks agent-owned inspection,
+concrete access needs and status-only limits after an authenticated preview
+fails for the customer. It is **not run**.
 
 Run the normal journey and the failure variants separately so induced faults
 do not masquerade as model failures. Retain transcripts, public command receipts,
