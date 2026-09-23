@@ -35,7 +35,11 @@ question is not their choice: say what is proposed and what they actually chose.
 If their reply changes the premise of a question, retain that distinction instead
 of forcing it into the closest option. Asking for a sample does not select or
 supply an existing personal file. Resolve only the part they answered; a separate
-input can remain deferred without blocking work that does not need it.
+input can remain deferred without blocking work that does not need it. When
+representative material would unblock authorized investigation, seek suitable
+public samples through permitted capabilities before waiting for personal files.
+Retain sample provenance and limits: they are not proof about the person's actual
+documents; document-specific verification stays pending when originals are required.
 
 An implementation prerequisite outside a worker's brief is first a planning
 dependency, not a request to ratify product direction. Re-plan within existing
@@ -70,10 +74,14 @@ is unavailable; never claim it ran or inspect private storage to emulate it.
 If no equivalent preserves authority and evidence, name the gap and continue
 independent work. Use existing records, not a parallel tracker or chat-only memory.
 
-**Preserve acceptance when translating.** Before handing work to a manager or
-admitting a worker, compare derived acceptance and falsifiers with the exact
-Direction source and explicit steward corrections. Keep the observed input and
-constraints; distinguish the prior failure from the invariant being tested.
+**Preserve acceptance when translating.** When deriving Direction and before
+manager handoff or worker admission, compare acceptance and falsifiers with exact
+source intent, accepted Direction and explicit steward corrections. Treat named
+examples as instances of the person's purpose, not an exhaustive scope unless
+explicitly bounded that way. For recurring use, preserve the repeatable operation
+and check one adjacent cycle with previous results retained; bound the increment
+without silently dropping that purpose. Keep the observed input and constraints;
+distinguish the prior failure from the invariant being tested.
 A previous wrong result does not establish the required verdict of a corrected
 implementation. Allow any result that the source permits and actual evidence
 supports; do not prescribe an unmeasured outcome, turn a conditional promise
