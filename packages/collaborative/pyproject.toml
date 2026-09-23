@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "amplifier-converge-instructions"
-version = "0.4.12"
+version = "0.4.13"
 description = "Converge collaborative supervisor and manager instruction resources"
 readme = "README.md"
 requires-python = ">=3.12"

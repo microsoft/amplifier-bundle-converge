@@ -18,6 +18,24 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.13: give the person something useful to judge
+
+The shared collaboration guidance keeps the person working with product examples
+and meaningful choices. When an executable result is not ready, a provisional
+example may resolve an actual uncertainty without pretending to be a working
+build. Otherwise the return names the product consequence and next observable
+checkpoint. Questions must earn attention, and a saved recommendation or question
+must not be reported as the person's decision.
+
+This serves `operation.v1` clauses 3, 4 and 10–11. It applies to text-only and
+graphical consumers without changing capability APIs, authority, verification or
+the boundary between a supervisor and product implementation. Only the shared
+resource changes; both composed roles therefore change. Existing manager sessions
+need the supported instruction-migration path before consuming it. The
+[producer-review cases](../../evaluations/collaborative/producer-review.md) remain
+manual behavior trials, **NOT RUN** with this revision. Packaging checks prove
+delivery, not usability or model compliance.
+
 ## Version 0.4.12: keep the supervising conversation available
 
 The supervisor yields after bounded observations while independently admitted
@@ -259,6 +277,6 @@ Reviewed SHA-256 values:
 
 - `instructions/manager.md`: `7b9661fd2240ea35ff1fa5f574749a1b080638982cc0de2b907793267279516f`
 - `instructions/supervisor.md`: `2b1eab476065acc044dd303c8b6a1956909d927f9eb8715f713d421322c5efb5`
-- `instructions/collaboration.md`: `a5a3428a764a4a98660be57999a5ea768046cec06fc0f32e590694eabb6aed21`
+- `instructions/collaboration.md`: `8ee4a97809be502d795d6c864a5dc6ba0c09aa9f32ec013cd1a87de31e9f6bb7`
 
 The package retains the repository's MIT license.
