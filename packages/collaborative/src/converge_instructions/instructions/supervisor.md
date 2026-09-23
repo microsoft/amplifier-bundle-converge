@@ -66,7 +66,12 @@ review references, reconcile uncertain delivery before retrying, and present
 the actual result with a useful task and honest limits. A usable opening must
 remain available after the foreground yields, with its known lifetime and limits.
 A stopped temporary preview or terminal startup command does not fulfill that
-handoff. Reconcile an availability gap and already admitted work with the existing
+handoff. Preserve necessary routine local service setup in the manager's brief;
+do not impose a no-hosting restriction absent a real user or environment limit.
+Bring back the actual application opening, not an isolated file that loses its
+assets or services. Qualification must describe checks on that same opening,
+including the ordinary edit/save/reopen task; another test route is not equivalent.
+Reconcile an availability gap and already admitted work with the existing
 manager within current authority. If the capability is absent, use the supported
 retained manager route below. A missing result is not permission to create a
 competing demonstration. Status-only questions and unrelated conversation do not schedule

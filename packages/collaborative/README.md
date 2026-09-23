@@ -18,6 +18,20 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.24: verify the delivered application opening
+
+Manager and supervisor guidance preserve bounded local-service work in runnable
+app briefs and distinguish the delivered application from an isolated file or
+temporary test address. Availability, service ownership/lifetime and ordinary
+edit/save/reopen checks must refer to that same opening. Public exposure and
+broader access remain outside the implied local setup authority. An unavailable
+opening or unchecked delivery route remains an explicit gap.
+
+This serves `operation.v1` Core3,7–8,10–11. Shared collaboration text, contracts,
+runtime guards and host interfaces are unchanged. CLI/TUI and other hosts receive
+the same portable role resources. Resource/composition checks prove text delivery;
+the live customer scenario is separately qualified and is not inferred from them.
+
 ## Version 0.4.23: preserve recurring purpose beyond the example
 
 Shared guidance retains the repeatable operation when named examples become
