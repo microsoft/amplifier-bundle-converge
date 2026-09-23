@@ -76,6 +76,11 @@ works in CLI/TUI text, without a graphical surface or the optional collaborative
 tools. [The text-only acceptance journey](evaluations/collaborative/README.md)
 describes how to evaluate it; shipped guidance alone is not a passing journey.
 
+An independently opted-in [supervisor entry behavior](modules/hooks-supervisor-entry/README.md)
+can add a bounded public project observation before tool choice when a supported
+read transport is present. It leaves the default composition and native manager
+instructions unchanged; receiving checks do not establish model compliance.
+
 ### Advanced: Converge as the primary bundle
 
 Two commands, for one case: a host that supplies neither the session base nor

@@ -179,6 +179,22 @@ jobs:
         working-directory: modules/hooks-candidate-guard
         run: uv run --frozen --python ${{ matrix.python-version }} pytest tests/ -q --tb=short
 
+  supervisor-entry:
+    name: Tests -- supervisor entry wheel (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv venv --python ${{ matrix.python-version }}
+      - run: uv build modules/hooks-supervisor-entry --out-dir /tmp/supervisor-entry-dist
+      - run: uv pip install 'pytest>=8' 'pytest-asyncio>=0.24' /tmp/supervisor-entry-dist/*.whl
+      - run: .venv/bin/python -m pytest modules/hooks-supervisor-entry/tests -q --tb=short
+
   # ────────────────────────────────────────────────────────────────────────
   # Bundle structure -- the YAML this bundle ships must parse and carry a
   # bundle.name. Nothing else in the repo checks bundle.md's frontmatter or
