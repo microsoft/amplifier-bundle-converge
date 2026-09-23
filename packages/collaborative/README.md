@@ -18,6 +18,21 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.20: deliver the requested runnable opening
+
+The manager's ordinary return guidance now carries the same usable-handoff
+responsibility as review preparation: own authorized setup/startup, preserve
+availability after the turn where supported, and distinguish checks or startup
+instructions from an opening the person can use. Unsupported availability stays
+an explicit owned delivery gap; no hosting or permission is invented.
+
+This serves `operation.v1` clauses 3, 7 and 10–11. Only manager instruction bytes
+change; shared/supervisor resources, contracts, capabilities and runtime guards
+are unchanged. This does not migrate a retained manager. The extended
+[review-preparation case](../../evaluations/collaborative/review-preparation.md)
+is **NOT RUN**; source/wheel checks establish delivery of the text, not live
+availability, browser usability or model compliance.
+
 ## Version 0.4.19: make the planned check executable within lane scope
 
 Before admission, the manager aligns its chosen check and test-discovery layout
@@ -372,7 +387,7 @@ The root CI includes source and installed-wheel resource checks. These are stati
 and packaging checks, not proof a live manager follows Method or product acceptance.
 Reviewed SHA-256 values:
 
-- `instructions/manager.md`: `72bc4e352668a17a30ebb1e6b35a3a00aa75ca7e5e4452c337fccdd049e87c5b`
+- `instructions/manager.md`: `2c64dd0a66867545bb9c24cdc2cf5b5f97a327ac03a1e33a51249d3c1d7d4129`
 - `instructions/supervisor.md`: `e1a5ee6f9690f4749eb4acc969684a3daa220319b59476b125a725a2b7e38e00`
 - `instructions/collaboration.md`: `d65f8220a47d3181d1f8fb400190038fdb363647ebbd113cd48c621e09561c67`
 
