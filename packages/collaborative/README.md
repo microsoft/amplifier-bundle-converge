@@ -18,6 +18,22 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.22: assign commit and checkpoint ownership before launch
+
+Manager preflight now aligns the worker's commit permission with the integration
+path: either scoped worker commits or an explicitly reserved, advertised manager
+`checkpoint_lane`. Unsupported setup is routed before admission. A checkpoint
+preserves outcomes and attempts and requires fresh manager verification; unknown
+receipts do not authorize another effect. Supported service attribution does not
+require inventing a person's identity or changing global Git settings.
+
+This serves `operation.v1` clauses 3, 5, 7–9 and 11. Only manager instruction bytes
+change; shared/supervisor resources, contracts, capabilities and runtime guards
+are unchanged. The action is availability-conditional and does not become
+available by publishing guidance. Native manager adoption remains separate. The
+[commit/checkpoint ownership case](../../evaluations/collaborative/commit-ownership.md)
+is **NOT RUN**; source/wheel checks prove text delivery and composition only.
+
 ## Version 0.4.21: carry confirmed defects into authorized repair
 
 A finite review can establish the cause and correct a misleading availability

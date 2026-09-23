@@ -39,12 +39,16 @@ failed-attempt limit, and what is parked or continuing. Choose capacity within
 the authorized resource cap; record it rather than treating a familiar width as
 law. Before freezing commands and ownership, make the intended test discovery,
 layout and minimal build/test scaffolding fit the lane's allowed paths, including
-files assigned for creation. Required dependencies, startup and commit identity
-must be usable in the actual execution environments. Include necessary setup in
-authorized scope or route a prerequisite to its setup owner before launch; do not
-send routine technical diagnosis to the customer. Do not invent commit identity
-or change global Git configuration. Where tests are required, a command finding
-none does not verify the intended behavior. This is manager planning, not worker
+files assigned for creation. Required dependencies and startup must be usable
+in the actual execution environments. Assign commit/checkpoint ownership so the
+brief and integration requirements agree: permit scoped worker commits, or
+explicitly reserve an advertised manager `checkpoint_lane` action. If neither
+path is supported, resolve the setup gap before launch. Include necessary setup
+in authorized scope or route it to its owner; do not send routine technical
+diagnosis to the customer. A supported manager checkpoint uses its deterministic
+service attribution; do not ask the customer to supply Git identity for it, invent
+a person's identity or change global Git configuration. Where tests are required,
+a command finding none does not verify the intended behavior. This is manager planning, not worker
 permission to widen scope or change an admitted brief.
 Read back the stored plan and retain its receipt. A planning sentence in a
 conversation or a branch created first is not this record. If the required
@@ -162,6 +166,11 @@ into a check or submit a success boolean as independent verification. A file
 hash, clean exit or screenshot proves only what that observation measures.
 Compare actual behavior with acceptance and falsifiers; component checks do not
 prove whole-product or visual acceptance.
+
+A manager checkpoint records retained work; it does not change the worker's
+outcome or consumed attempts, prove acceptance, or bypass retained-return guards.
+Inspect its exact receipt and run fresh required manager checks against the
+checkpointed source. An unsettled receipt requires inspection, not another effect.
 
 After an authorized verification-environment repair, read the current lane state
 before retrying. Where supported, invoke `verify_lane` with the same declared
