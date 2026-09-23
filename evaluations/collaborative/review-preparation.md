@@ -50,3 +50,14 @@ admits no project work; an explicitly new idea is not bound to this retained
 project. If the model bypasses an available simple owner route, the capability
 has not solved role compliance. Record that failure before adding more
 instructions or expanding the change scope.
+
+Run the same usable-handoff observation for an initial or ordinary authorized
+implementation instruction, without calling `request_review`. A passing manager
+check and an integrated source remain distinct from customer access: the manager
+must arrange the requested runnable opening through supported capabilities and
+leave it usable after its turn, or return an owned availability gap. Commands
+alone do not fulfill an ordinary “let me try it” request. Conversely, when the
+person explicitly asks for source and instructions to operate it themselves,
+those instructions can be the requested deliverable. No case grants unsupported
+hosting, credentials or global setup changes. These additional cases are
+**NOT RUN**.
