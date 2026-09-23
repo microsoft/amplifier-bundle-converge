@@ -198,11 +198,16 @@ normal plan, lane custody, bounded attempts and acceptance checks.
 steering. An admitted manager run does not prove a recorded wave/plan or a started
 worker lane; report each from its own evidence. Retain available
 project/manager/run/plan identities, revisions, lane and check states, queued
-input and observation time; name missing evidence.
-Historical state stays historical after a failed read. Reads never create work.
-Resolve an uncertain submission through its receipt/run; exact retries retain
-payload and request identity where supported. Do not start, steer or reconnect
-to poll. Bound transient read retries with backoff, separate from healthy waits
+input and observation time; name missing evidence. A stored run input or
+continuation captured before the run was claimed remains admission history even
+when read now. Reconcile current owner, lane, check and result records before
+claiming work has or has not happened; an empty historical snapshot or failed
+read does not establish absence. A watch expiring ends that observation window,
+not the manager's work or authority; report its limit separately from the latest
+known work state. Preserve actual execution deadlines and terminal outcomes.
+Reads never create work. Resolve an uncertain submission through its receipt/run;
+exact retries retain payload and request identity where supported. Do not start,
+steer or reconnect to poll. Bound transient read retries with backoff, separate from healthy waits
 and lane attempts; stop automatic reads on known disconnection or terminal
 refusal. Preserve drafts and last-known state. Recovery reads without replay.
 
