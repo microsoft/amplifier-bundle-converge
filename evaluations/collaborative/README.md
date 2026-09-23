@@ -77,6 +77,10 @@ The [failed-delivery case](failed-delivery.md) checks agent-owned inspection,
 concrete access needs and status-only limits after an authenticated preview
 fails for the customer. It is **not run**.
 
+The [fresh-idea case](fresh-idea.md) checks that a complete no-match enters
+discovery, authorized building reaches real manager execution, and discussion
+and unrelated-chat controls stay within their scope. It is **not run**.
+
 Run the normal journey and the failure variants separately so induced faults
 do not masquerade as model failures. Retain transcripts, public command receipts,
 document revisions/decisions, plan and lane records, independent checks and the

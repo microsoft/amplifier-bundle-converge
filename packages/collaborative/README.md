@@ -18,6 +18,23 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.18: keep a fresh idea in the collaborative loop
+
+The supervisor recognizes substantial creation intent before a project exists.
+A complete no-match observation leads to discovery; it does not select a separate
+planning or foreground implementation path. Discussion remains discussion until
+the actual request authorizes building. Purpose and a small usable outcome guide
+progress through existing Direction and manager capabilities without requiring
+a full technical plan or inventing ratification.
+
+This serves `operation.v1` clauses 3, 5, 7 and 14 while preserving
+`composition.v1` clause 6. Only supervisor instruction bytes change; shared and
+manager resources, ordinary CLI/root behavior, tools and modules are unchanged.
+Collaborative CLI/TUI consumers receive the same portable supervisor resource.
+The [fresh-idea case](../../evaluations/collaborative/fresh-idea.md) is **NOT RUN**.
+Source and wheel checks establish delivery, not model compliance or the cause of
+a prior routing failure. Publication updates no live session or native method.
+
 ## Version 0.4.17: recover delivery without customer diagnostic homework
 
 The shared ownership/feedback guidance now gives both roles a failed-handoff
@@ -340,7 +357,7 @@ and packaging checks, not proof a live manager follows Method or product accepta
 Reviewed SHA-256 values:
 
 - `instructions/manager.md`: `7b9661fd2240ea35ff1fa5f574749a1b080638982cc0de2b907793267279516f`
-- `instructions/supervisor.md`: `64af3b8470867e515016f64dde4a71ac83adade37d0cd6fee38a6792ee0ddd55`
+- `instructions/supervisor.md`: `e1a5ee6f9690f4749eb4acc969684a3daa220319b59476b125a725a2b7e38e00`
 - `instructions/collaboration.md`: `d65f8220a47d3181d1f8fb400190038fdb363647ebbd113cd48c621e09561c67`
 
 The package retains the repository's MIT license.
