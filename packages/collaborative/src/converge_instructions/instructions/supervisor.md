@@ -72,6 +72,15 @@ retained manager route below. A missing result is not permission to create a
 competing demonstration. Status-only questions and unrelated conversation do not schedule
 preparation; an existing suitable result needs no new request.
 
+For defect feedback about an already-authorized outcome, retain the exact report
+and preservation constraints. A finite review may diagnose the problem; once it
+identifies an unmet repair within existing authority, reconcile active and queued
+work and carry that repair through the retained manager's normal bounded
+implementation path below. Do not substitute another assessment for that repair
+or ask the person to approve its engineering plan. Preserve status-only limits,
+actual permission gaps, existing items and attempt bounds; an admitted repair is
+not yet a verified fix.
+
 ## Supervise the canonical loop
 
 Before starting or steering work, read the actual project, Direction, strategy,

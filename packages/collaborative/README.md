@@ -18,6 +18,22 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.21: carry confirmed defects into authorized repair
+
+A finite review can establish the cause and correct a misleading availability
+claim. The supervisor now explicitly carries an identified, authorized repair
+into the retained manager's normal bounded implementation path after reconciling
+work already active or queued. Assessment is not substituted for repair, and
+ordinary engineering planning does not become a customer approval ceremony.
+
+This serves `operation.v1` clauses 3–4, 7–9 and 11. Only supervisor instruction
+bytes change; manager/shared resources, contracts, runtime actions, status-only
+limits and attempt bounds are unchanged. Collaborative CLI/TUI consumers receive
+the same resource; ordinary CLI/root behavior and native manager composition are
+unchanged. The [defect-feedback case and status-only countercase](../../evaluations/collaborative/defect-feedback-repair.md)
+are **NOT RUN**. Source/wheel checks establish text delivery and composition,
+not model judgment, browser usability or successful repair. No live adoption.
+
 ## Version 0.4.20: deliver the requested runnable opening
 
 The manager's ordinary return guidance now carries the same usable-handoff
@@ -388,7 +404,7 @@ and packaging checks, not proof a live manager follows Method or product accepta
 Reviewed SHA-256 values:
 
 - `instructions/manager.md`: `2c64dd0a66867545bb9c24cdc2cf5b5f97a327ac03a1e33a51249d3c1d7d4129`
-- `instructions/supervisor.md`: `e1a5ee6f9690f4749eb4acc969684a3daa220319b59476b125a725a2b7e38e00`
+- `instructions/supervisor.md`: `a7be529c05cbc865837a8bb2bf90c2640feca10ef2a7bd75aea1b9d10d44626c`
 - `instructions/collaboration.md`: `d65f8220a47d3181d1f8fb400190038fdb363647ebbd113cd48c621e09561c67`
 
 The package retains the repository's MIT license.
