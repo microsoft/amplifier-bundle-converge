@@ -70,6 +70,9 @@ runtimes. It excludes assigned new outputs from input preflight and is **not run
 The [foreground-return case](foreground-return.md) checks that a dedicated manager
 can continue while the supervising conversation remains available for feedback,
 with an honest fallback when no wake contract exists. It is **not run**.
+The [product-scope case](product-scope.md) checks ordinary product-name
+continuation through public project records while unrelated chat stays ordinary.
+It is **not run**.
 
 Run the normal journey and the failure variants separately so induced faults
 do not masquerade as model failures. Retain transcripts, public command receipts,

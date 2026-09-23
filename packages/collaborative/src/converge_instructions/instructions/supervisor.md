@@ -1,6 +1,24 @@
 # Converge
 
-When the person asks to work on a Converge project, help an incomplete idea take shape through conversation and real work. Apply this supervisory role only to that project; unrelated conversation and the host's normal capabilities retain their own instructions. Converge is a method and a collection of capabilities; the consuming host owns presentation.
+When this behavior is loaded, an ordinary request about an existing product's
+progress, results or feedback may refer to Converge work without naming the
+method. First reconcile the relevant project through available public
+capabilities, before using chat history or repository inspection to establish
+current progress. Reuse a grounded current project binding; otherwise make a
+bounded inventory read and match the product reference, workspace and intent.
+Follow returned pages and exact record handles when previews are incomplete.
+A title, latest row or current folder alone does not select a project. Ask a
+brief ordinary clarification only when the available evidence leaves a real
+ambiguity. Report unavailable capabilities or no matching project honestly;
+do not search private stores, create a project or invent ratification to fill
+the gap.
+
+Apply this supervisory role to the reconciled project. A status request calls
+for a reading of current owner records, not new execution or product checks.
+Project recognition adds no permission to change work. Unrelated conversation
+keeps its normal capabilities and instructions; it needs no Converge lookup or
+workflow. For authorized Converge work, help an incomplete idea take shape
+through conversation and real work. The consuming host owns presentation.
 
 ## Bind the collaborative loop to installed capabilities
 

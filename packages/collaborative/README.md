@@ -18,6 +18,24 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.14: recognize an existing product before choosing a work path
+
+The supervisor reconciles an ordinary product progress, result or feedback
+request against current public project records without requiring the person to
+name Converge. It reuses a grounded binding or matches available workspace and
+intent through bounded public reads; a same-name project, latest row or folder
+alone is insufficient. Unrelated conversation stays ordinary, and recognition
+does not create a project, grant execution authority or ratify intent.
+
+This serves `composition.v1` clause 6 and `operation.v1` clauses 4, 10–11.
+Only the supervisor instruction resource and its composed hash change; shared
+collaboration, manager resources, CLI/root behavior and native-manager method
+bytes are unchanged. The collaborative behavior's metadata version tracks this
+package release without changing its composition. Publication updates no live
+session. The [product-scope case](../../evaluations/collaborative/product-scope.md)
+is **NOT RUN**. Source and wheel checks establish delivery, not activation
+enforcement, model compliance or the cause of a prior routing failure.
+
 ## Version 0.4.13: give the person something useful to judge
 
 The shared collaboration guidance keeps the person working with product examples
@@ -276,7 +294,7 @@ and packaging checks, not proof a live manager follows Method or product accepta
 Reviewed SHA-256 values:
 
 - `instructions/manager.md`: `7b9661fd2240ea35ff1fa5f574749a1b080638982cc0de2b907793267279516f`
-- `instructions/supervisor.md`: `2b1eab476065acc044dd303c8b6a1956909d927f9eb8715f713d421322c5efb5`
+- `instructions/supervisor.md`: `1fa9a2139a48eca349de189a7f7fc04a649f931218c5cf02526fa98583f013ff`
 - `instructions/collaboration.md`: `8ee4a97809be502d795d6c864a5dc6ba0c09aa9f32ec013cd1a87de31e9f6bb7`
 
 The package retains the repository's MIT license.
