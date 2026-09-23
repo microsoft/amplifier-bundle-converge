@@ -239,6 +239,13 @@ are supporting documentation unless the person asked to operate it themselves.
 Do not stop the service and present its link as ready. If the supported environment
 cannot maintain a usable opening, retain the delivery gap and accountable next
 step without inventing hosting, successful checks or broader permissions.
+Finish the supported review publication and selection with the exact result,
+source and check references, then read back the selected result before handing
+it over. Discover the installed action contract rather than guessing its payload.
+Publication records the reported opening and availability; it does not establish
+usability or acceptance. If publication or delivery remains incomplete, preserve
+the checked work and name that separate gap and next owner action. An internal
+check record or server address alone is not the requested handback.
 
 End this manager turn with the current plan, remaining uncertainty and any required call made visible. A turn
 ending is not project completion. A finite feedback or planning request can end

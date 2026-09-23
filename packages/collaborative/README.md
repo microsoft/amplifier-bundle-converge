@@ -18,6 +18,22 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.25: report current work and finish the handback
+
+Shared observation guidance separates a run's admission snapshot from current
+owner/lane/check/result records, and an observer's expiry from the work's outcome.
+Manager delivery guidance completes supported publication and selection using
+exact evidence and read-back; neither publication nor passing checks establishes
+a usable customer opening by itself.
+
+This serves `operation.v1` clauses 4, 7–10 and 13. Shared and manager resources
+change; the supervisor role file, contracts, actions and limits do not. Shared
+text reaches ordinary CLI/root behavior and both composed roles; graphical
+surfaces are unnecessary. Retained sessions require separate adoption. The
+[current-state and handback scenario](../../evaluations/collaborative/current-state-handback.md)
+is **NOT RUN**. Source/wheel checks establish resource delivery and composition,
+not model judgment, automatic notification or customer usability.
+
 ## Version 0.4.24: verify the delivered application opening
 
 Manager and supervisor guidance preserve bounded local-service work in runnable
@@ -448,8 +464,8 @@ The root CI includes source and installed-wheel resource checks. These are stati
 and packaging checks, not proof a live manager follows Method or product acceptance.
 Reviewed SHA-256 values:
 
-- `instructions/manager.md`: `bba2e4a618d31e4becdacdce3059b34dfa8792cf452c825571f4458120a2c1f2`
-- `instructions/supervisor.md`: `a7be529c05cbc865837a8bb2bf90c2640feca10ef2a7bd75aea1b9d10d44626c`
-- `instructions/collaboration.md`: `ac4a6e135f95b2f7345a6978c65eb4bbd02ace19e285e79895665f439ff88f0f`
+- `instructions/manager.md`: `6fbd4fb0b7f6fc9d48ee9a9b15c8b422d00454200c88fe1b7789a90da88871b9`
+- `instructions/supervisor.md`: `cc2e6c31b58772e266d3208d8a289403aecde136cf4844a69edc1175ae430e17`
+- `instructions/collaboration.md`: `244b12eb6fc471774a1abd0abf4dbe1e86a8de9c8dbff0c4f93553bf458d8b93`
 
 The package retains the repository's MIT license.
