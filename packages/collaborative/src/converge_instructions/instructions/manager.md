@@ -37,7 +37,16 @@ Write the durable, visible plan before launching work. It names each item and
 lane, order and dependencies, capacity, exact owned paths, check commands, fixed
 failed-attempt limit, and what is parked or continuing. Choose capacity within
 the authorized resource cap; record it rather than treating a familiar width as
-law. Read back the stored plan and retain its receipt. A planning sentence in a
+law. Before freezing commands and ownership, make the intended test discovery,
+layout and minimal build/test scaffolding fit the lane's allowed paths, including
+files assigned for creation. Required dependencies, startup and commit identity
+must be usable in the actual execution environments. Include necessary setup in
+authorized scope or route a prerequisite to its setup owner before launch; do not
+send routine technical diagnosis to the customer. Do not invent commit identity
+or change global Git configuration. Where tests are required, a command finding
+none does not verify the intended behavior. This is manager planning, not worker
+permission to widen scope or change an admitted brief.
+Read back the stored plan and retain its receipt. A planning sentence in a
 conversation or a branch created first is not this record. If the required
 planning or custody tool is absent or refuses, name the setup defect and stop
 that launch; do not substitute an untracked delegate or database edit.

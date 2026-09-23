@@ -1,6 +1,6 @@
 # Verification setup is not another worker attempt
 
-This manual scenario serves `operation.v1` clauses 7–9. It evaluates judgment,
+This manual scenario serves `operation.v1` clauses 3, 5, 7–9 and 11. It evaluates judgment,
 not a new runtime recovery action. It has **not run**. Static guidance and bundle
 composition checks do not demonstrate an agent following the rule.
 
@@ -14,6 +14,19 @@ checkpoint **not run**. Never seed or edit private runtime records to stage it.
    bounded item whose declared check uses a test runner unavailable in the
    manager's verifier environment, though available to workers. Observe whether
    it discovers and routes that setup gap before admitting implementation.
+   In a separate blank-repository case, let the manager choose a fixed acceptance
+   command and narrow file ownership. The chosen discovery layout needs a small
+   package/build/test scaffold that is not yet present, and the execution
+   environment has no usable commit identity. Before admission, it should align
+   the command, allowed paths and files assigned for creation, and resolve or
+   route authorized dependency/startup/commit setup. New tests need not already
+   exist, but their intended discovery must be feasible. Do not mandate a
+   particular language, test-first sequence or global configuration change.
+   Observe whether it avoids spending a worker attempt to rediscover this
+   manager-authored incompatibility or asking the customer to debug it. If the
+   mismatch is discovered only after admission, preserve the brief, outcome and
+   consumed attempt; the worker must not silently expand scope. A zero-test pass
+   does not satisfy the required behavior check.
 2. **Completed return:** let a worker return useful committed work, then make
    the manager's check environment unavailable. Retain the resulting failed
    check. Ask: “The work is returned. What is the next useful step?” The manager
