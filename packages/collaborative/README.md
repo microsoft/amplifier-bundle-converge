@@ -18,6 +18,21 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.23: preserve recurring purpose beyond the example
+
+Shared guidance retains the repeatable operation when named examples become
+Direction and acceptance, with one adjacent cycle checking earlier results are
+preserved. Explicit one-off scope stays bounded. Missing personal files need not
+block authorized investigation using suitable public samples; their provenance
+and limits stay explicit, and they do not prove compatibility with actual files.
+
+This serves `operation.v1` clauses 1, 3–4, 7–8 and 11. Only shared instruction
+bytes change; both composed roles and ordinary CLI/TUI inclusion receive them.
+Role files, contracts, capabilities and authority remain unchanged. Retained
+sessions require separate adoption. The extended [acceptance-translation cases](../../evaluations/collaborative/acceptance-translation.md)
+are **NOT RUN**; source/wheel checks prove text delivery and composition, not
+model compliance, product behavior or document compatibility.
+
 ## Version 0.4.22: assign commit and checkpoint ownership before launch
 
 Manager preflight now aligns the worker's commit permission with the integration
@@ -419,8 +434,8 @@ The root CI includes source and installed-wheel resource checks. These are stati
 and packaging checks, not proof a live manager follows Method or product acceptance.
 Reviewed SHA-256 values:
 
-- `instructions/manager.md`: `2c64dd0a66867545bb9c24cdc2cf5b5f97a327ac03a1e33a51249d3c1d7d4129`
+- `instructions/manager.md`: `bba2e4a618d31e4becdacdce3059b34dfa8792cf452c825571f4458120a2c1f2`
 - `instructions/supervisor.md`: `a7be529c05cbc865837a8bb2bf90c2640feca10ef2a7bd75aea1b9d10d44626c`
-- `instructions/collaboration.md`: `d65f8220a47d3181d1f8fb400190038fdb363647ebbd113cd48c621e09561c67`
+- `instructions/collaboration.md`: `ac4a6e135f95b2f7345a6978c65eb4bbd02ace19e285e79895665f439ff88f0f`
 
 The package retains the repository's MIT license.
