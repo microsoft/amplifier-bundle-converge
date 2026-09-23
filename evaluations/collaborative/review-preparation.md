@@ -61,3 +61,13 @@ person explicitly asks for source and instructions to operate it themselves,
 those instructions can be the requested deliverable. No case grants unsupported
 hosting, credentials or global setup changes. These additional cases are
 **NOT RUN**.
+
+For a browser app with separate assets, record the actual customer address and
+opening surface. Verify styling and behavior there rather than serving only the
+index document or substituting a temporary test address. Choose a normal local
+image when relevant, edit and save, close/reopen, then make a subsequent issue
+while preserving the first. Record the retained service owner and lifetime.
+An unavailable embedded route is an explicit gap, not permission to weaken its
+protections; a direct-browser fallback is labeled separately. The worker brief
+must not prohibit routine authorized local service work needed for this request.
+These additional cases are **NOT RUN** until observed in a customer trial.
