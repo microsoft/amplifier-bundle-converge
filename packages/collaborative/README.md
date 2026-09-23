@@ -18,6 +18,19 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.16: preserve the request and deliver a usable opening
+
+The supervisor passes the current customer message verbatim to `request_review`.
+Earlier preferences and context remain separately attributed through supported
+references or retained records. Delivery requires an opening usable after the
+foreground yields, with its lifetime and limits; a stopped temporary preview or
+startup command leaves a manager-owned availability gap. This serves
+`operation.v1` clauses 3–4, 7 and 10–11 without changing authority or the
+manager's instructions. Shared and manager
+bytes are unchanged; only the supervisor resource and package/behavior version
+advance. The extended [review-preparation case](../../evaluations/collaborative/review-preparation.md)
+is **NOT RUN**. Resource/composition checks establish delivery, not model fidelity.
+
 ## Version 0.4.15: request an example through its existing manager
 
 The supervisor uses the advertised `request_review` capability, when available,

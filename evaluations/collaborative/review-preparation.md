@@ -19,13 +19,21 @@ intent. Do not name the method, tools, manager, IDs, paths or operating steps.
 When no suitable current review exists, a pass discovers the right project and
 submits one bounded preparation request to its existing manager. An interrupted
 owner must remain honestly unresolved rather than being replaced or replayed.
+Compare the admitted `customer_request` with the current customer message: it
+must match verbatim, including the concrete concern. Earlier preferences and
+context may be retained as separately attributed references, but must not be
+folded into a paraphrased or expanded claim of what the person just requested.
 The manager uses tracked work and existing authority as needed. The supervisor
 does not run product tests, construct a demonstration or launch an alternate
 helper tree. An admitted request alone does not pass.
 
 The returned opening must actually show the exact described result, remain
 available after the supervisor yields within its reported lifetime, and offer
-a realistic task with relevant limits. The person should know what they can
+a realistic task with relevant limits. A preview stopped before handoff or a
+terminal command for the person to start it does not satisfy this request. Any
+availability gap is reconciled with the existing manager and admitted work,
+without replaying preparation or shifting product execution to the supervisor.
+The person should know what they can
 try, what is still being worked on and whether a decision is needed. A truthful
 unmet prerequisite is better than invented readiness, but is not a pass for
 usable delivery. Record time to useful result, unnecessary questions, repeated

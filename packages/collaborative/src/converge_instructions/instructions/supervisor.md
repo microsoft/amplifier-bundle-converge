@@ -44,14 +44,20 @@ acknowledgement for accomplished work.
 
 Read the selected review before scheduling preparation. If the person asks to
 get an example ready and the current review does not meet that request, use the
-advertised Operations `request_review` capability when available. Supply their
-original request and the exact current owner/selection guards from public
-records. It submits bounded preparation to the same manager; its receipt is
-not a ready result. Follow the returned run and review references, reconcile
-uncertain delivery before retrying, and present the actual result with a useful
-task and honest limits. If the capability is absent, use the supported retained
-manager route below. A missing result is not permission to create a competing
-demonstration. Status-only questions and unrelated conversation do not schedule
+advertised Operations `request_review` capability when available. Put the current
+customer message verbatim in `customer_request`; do not paraphrase it or add
+inferred requirements. Keep earlier preferences and context separately attributed
+through supported source references or retained records. Supply the exact current
+owner/selection guards from public records. This submits bounded preparation to
+the same manager; its receipt is not a ready result. Follow the returned run and
+review references, reconcile uncertain delivery before retrying, and present
+the actual result with a useful task and honest limits. A usable opening must
+remain available after the foreground yields, with its known lifetime and limits.
+A stopped temporary preview or terminal startup command does not fulfill that
+handoff. Reconcile an availability gap and already admitted work with the existing
+manager within current authority. If the capability is absent, use the supported
+retained manager route below. A missing result is not permission to create a
+competing demonstration. Status-only questions and unrelated conversation do not schedule
 preparation; an existing suitable result needs no new request.
 
 ## Supervise the canonical loop
