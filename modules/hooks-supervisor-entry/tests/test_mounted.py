@@ -3,10 +3,11 @@ from types import SimpleNamespace
 
 import pytest
 
-pytestmark = pytest.mark.asyncio
 from amplifier_core import ToolResult
 
 from amplifier_module_hooks_supervisor_entry.mounted import mounted_reader
+
+pytestmark = pytest.mark.asyncio
 
 
 async def test_explicit_tool_receives_only_public_read_and_exact_structured_payload():

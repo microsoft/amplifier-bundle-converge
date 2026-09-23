@@ -2,12 +2,13 @@ import json
 
 import pytest
 
-pytestmark = pytest.mark.asyncio
 from amplifier_core import AmplifierSession, ModuleCoordinator
 
 from amplifier_module_hooks_supervisor_entry import mount
 from amplifier_module_hooks_supervisor_entry.observe import CAPABILITY
 from test_observation import Public
+
+pytestmark = pytest.mark.asyncio
 
 
 def session(parent=None):
@@ -16,7 +17,9 @@ def session(parent=None):
 
 
 async def test_opt_in_same_session_only_preserves_tools_and_cleanup():
-    s = session(); c = s.coordinator; public = Public()
+    s = session()
+    c = s.coordinator
+    public = Public()
     c.register_capability("session.working_dir", "/work/example")
     c.register_capability(CAPABILITY, public)
     tools = c.get("tools")
@@ -41,7 +44,8 @@ async def test_not_enabled_for_unrelated_or_manager_composition(config):
 @pytest.mark.parametrize("c", [None, "child"])
 async def test_inherited_hook_skips_children_forks_and_unknown_lineage(c):
     coordinator = ModuleCoordinator() if c is None else session("parent").coordinator
-    public = Public(); coordinator.register_capability(CAPABILITY, public)
+    public = Public()
+    coordinator.register_capability(CAPABILITY, public)
     await mount(coordinator, {"enabled": True, "role": "supervisor"})
     assert (await coordinator.hooks.emit("prompt:submit", {})).action == "continue"
     assert public.calls == []
@@ -53,7 +57,8 @@ async def test_capability_is_resolved_at_prompt_not_mount_and_observation_refres
     await mount(c, {"enabled": True, "role": "supervisor"})
     first = await c.hooks.emit("prompt:submit", {})
     assert 'transport_unavailable' in first.context_injection
-    public = Public(); c.register_capability(CAPABILITY, public)
+    public = Public()
+    c.register_capability(CAPABILITY, public)
     second = await c.hooks.emit("prompt:submit", {})
     assert 'none_recorded' in second.context_injection
     public.selected(withdrawn=True)
