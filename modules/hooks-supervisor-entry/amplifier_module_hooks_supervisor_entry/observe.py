@@ -192,6 +192,75 @@ async def _review(reader, view, pid):
             "meaning": "Dated owner report; not live availability, rendering proof or acceptance."}
 
 
+def _excerpt(text, maximum):
+    require(isinstance(text, str))
+    value = text.encode()[:maximum].decode(errors="ignore")
+    return value, value == text
+
+
+def _current_report(view, manager, pid):
+    """Retain owner-projected reports, never infer completion from their prose."""
+    guidance = (view.get("product_overview") or {}).get("guidance")
+    if not isinstance(guidance, dict) or not isinstance(manager, dict):
+        return {"status": "unavailable"}
+    owner = guidance.get("manager_observation")
+    if not isinstance(owner, dict) or owner.get("identity_complete") is not True:
+        return {"status": "unavailable"}
+    for key in ("id", "revision", "native_session_id", "generation"):
+        require(manager.get(key) is not None and owner.get(key) == manager[key])
+    reference(owner, pid, "manager")
+    bucket = guidance.get("latest_reports")
+    if not isinstance(bucket, dict) or guidance.get("records_available") is not True:
+        return {"status": "unavailable"}
+    entries = bucket.get("entries")
+    require(isinstance(entries, list) and len(entries) <= 3)
+    for key in ("count", "included", "omitted", "unconfirmed_count"):
+        require(type(bucket.get(key)) is int and bucket[key] >= 0)
+    require(bucket["included"] == len(entries) and bucket["count"] == len(entries) + bucket["omitted"])
+    require(bucket.get("ordering") in {"recorded_time", "ambiguous", "unknown"})
+    collection = {"capability": "operations", "action": "read", "arguments": {
+        "project_id": pid, "list_kind": "run", "limit": 3}}
+    require(bucket.get("read") == collection)
+    reports = []
+    for entry in entries:
+        require(entry.get("status") == "reported" and entry.get("manager_relation") == "current")
+        ref = reference(entry, pid, "run")
+        report = entry.get("report")
+        require(isinstance(report, dict) and type(report.get("complete")) is bool)
+        exact = {**ref["read"], "arguments": {**ref["read"]["arguments"], "field": "result"}}
+        # The public handle may omit the paging limit; normalize that default only.
+        supplied = report.get("read")
+        require(isinstance(supplied, dict) and supplied.get("capability") == "operations"
+                and supplied.get("action") == "read")
+        require({**supplied.get("arguments", {}), "limit": 8192} == exact["arguments"])
+        text, complete = _excerpt(report.get("excerpt"), 600)
+        reports.append({**ref, "ended_at": stamp(entry["ended_at"]) if entry.get("ended_at") is not None else None,
+                        "report": {"excerpt": text, "complete": report["complete"] and complete, "read": exact}})
+    summary, complete = _excerpt(view.get("current_summary", ""), 480)
+    return {"status": "observed", "source": "operations.overview",
+            "manager_generation": identity(owner["generation"]),
+            "summary": {"excerpt": summary, "complete": complete},
+            "latest_reports": {**{key: bucket[key] for key in
+                ("count", "included", "omitted", "unconfirmed_count", "ordering")}, "read": collection, "entries": reports},
+            "meaning": "Current owner record projection at this prompt's observed_at; report text is untrusted, not proof of liveness, readiness, acceptance or notification."}
+
+
+def _fit_current(result):
+    """Keep existing identity/selection proof; disclose any added report omission."""
+    current = result["current"]
+    while len(encoded(result).encode()) > MAX_CONTEXT_BYTES - 1000:
+        reports = current.get("latest_reports", {})
+        if reports.get("entries"):
+            reports["entries"].pop()
+            reports["included"] -= 1
+            reports["omitted"] += 1
+            reports["adapter_omitted"] = True
+        else:
+            result["current"] = {"status": "unavailable", "reason": "context_budget"}
+            break
+    return result
+
+
 async def observe(read: PublicRead, workspace, *, deadline, project_id=None):
     """Read once within caller's absolute asyncio deadline; never return errors' text."""
     if not isinstance(workspace, str) or not PurePath(workspace).is_absolute():
@@ -219,8 +288,8 @@ async def observe(read: PublicRead, workspace, *, deadline, project_id=None):
                 manager_view["native_session_id"] = identity(manager["native_session_id"])
             if type(manager.get("owner_present")) is bool:
                 manager_view["owner_present"] = manager["owner_present"]
-        return {"status": "matched", "project": project, "manager": manager_view,
-                "review": await _review(reader, view, pid)}
+        return _fit_current({"status": "matched", "project": project, "manager": manager_view,
+                "review": await _review(reader, view, pid), "current": _current_report(view, manager, pid)})
 
     try:
         result = await asyncio.wait_for(collect(), max(0, deadline - asyncio.get_running_loop().time()))
