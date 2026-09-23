@@ -18,6 +18,22 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.19: make the planned check executable within lane scope
+
+Before admission, the manager aligns its chosen check and test-discovery layout
+with allowed paths and necessary build/test scaffolding, and establishes usable
+dependency, startup and commit prerequisites. Routine setup remains agent-owned;
+a missing prerequisite does not permit workers to widen frozen briefs, invent
+commit identity or change global Git settings. A required test command that finds
+no tests is not behavioral proof.
+
+This serves `operation.v1` clauses 3, 5, 7–9 and 11. Only manager instruction bytes
+change; supervisor/shared resources, contracts, tools and runtime guards are
+unchanged. Native consumers need a separately authorized method transition; this
+release adopts nothing. The extended [verification-readiness scenario](../../evaluations/collaborative/verification-recovery.md)
+is **NOT RUN**. Source/wheel checks establish packaging and composition, not
+planning judgment or successful product verification.
+
 ## Version 0.4.18: keep a fresh idea in the collaborative loop
 
 The supervisor recognizes substantial creation intent before a project exists.
@@ -356,7 +372,7 @@ The root CI includes source and installed-wheel resource checks. These are stati
 and packaging checks, not proof a live manager follows Method or product acceptance.
 Reviewed SHA-256 values:
 
-- `instructions/manager.md`: `7b9661fd2240ea35ff1fa5f574749a1b080638982cc0de2b907793267279516f`
+- `instructions/manager.md`: `72bc4e352668a17a30ebb1e6b35a3a00aa75ca7e5e4452c337fccdd049e87c5b`
 - `instructions/supervisor.md`: `e1a5ee6f9690f4749eb4acc969684a3daa220319b59476b125a725a2b7e38e00`
 - `instructions/collaboration.md`: `d65f8220a47d3181d1f8fb400190038fdb363647ebbd113cd48c621e09561c67`
 
