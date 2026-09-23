@@ -90,6 +90,10 @@ routing for both ordinary manager mode and packaged roles. A manager environment
 failure is not a reason to spend a worker launch solely to restate it. Retained
 returns and checks remain historical evidence; this guidance grants no recovery
 action, state rewrite or exception to an attempt cap.
+The same shared ownership guidance applies `operation.v1` clauses 3–4, 7 and
+10–11 to failed delivery: distinguish a missing authorized observation path from
+a person-only check, keep diagnostics agent-owned, and request only a concrete
+supported access contribution when needed. Status-only readings create no work.
 
 A request for an actual progress reading is not a fifth decision call. The
 supervisor shows existing records and their evidence without inventing a choice
