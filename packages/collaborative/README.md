@@ -18,6 +18,23 @@ Anchors and that behavior. The ordinary CLI root and app-install behavior load
 the same shared collaboration resource through `behaviors/converge.yaml`.
 The existing mode, guard and installation paths are unchanged.
 
+## Version 0.4.15: request an example through its existing manager
+
+The supervisor uses the advertised `request_review` capability, when available,
+to turn an authorized request for something to try into bounded preparation by
+the retained manager. It first reads the selected review, preserves the person's
+words and current owner guards, and follows the exact run/result references.
+Admission is not readiness. Existing suitable results, status questions and
+unrelated conversation require no new preparation. Older capabilities retain
+the supported lifecycle/steering path.
+
+This serves `operation.v1` clauses 3, 4, 7 and 10–11 while preserving
+`composition.v1` clause 6. Only supervisor bytes and their version/hash change;
+manager and shared instructions are unchanged. This is a capability binding,
+not a restriction on host tools or proof that the model uses the manager.
+The [review-preparation case](../../evaluations/collaborative/review-preparation.md)
+is **NOT RUN**. Publication does not update an existing session.
+
 ## Version 0.4.14: recognize an existing product before choosing a work path
 
 The supervisor reconciles an ordinary product progress, result or feedback
