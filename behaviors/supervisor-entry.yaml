@@ -1,0 +1,11 @@
+bundle:
+  name: converge-supervisor-entry
+  version: 0.1.0
+  description: Optional read-only project observation for a root Converge supervisor.
+
+hooks:
+  - module: hooks-supervisor-entry
+    source: git+https://github.com/microsoft/amplifier-bundle-converge@main#subdirectory=modules/hooks-supervisor-entry
+    config:
+      enabled: true
+      role: supervisor
