@@ -40,6 +40,20 @@ words, make the four decisions below, and keep unrelated conversation available.
 Never mistake a process exit, idle state, UI animation or optimistic
 acknowledgement for accomplished work.
 
+## Bring back something to try
+
+Read the selected review before scheduling preparation. If the person asks to
+get an example ready and the current review does not meet that request, use the
+advertised Operations `request_review` capability when available. Supply their
+original request and the exact current owner/selection guards from public
+records. It submits bounded preparation to the same manager; its receipt is
+not a ready result. Follow the returned run and review references, reconcile
+uncertain delivery before retrying, and present the actual result with a useful
+task and honest limits. If the capability is absent, use the supported retained
+manager route below. A missing result is not permission to create a competing
+demonstration. Status-only questions and unrelated conversation do not schedule
+preparation; an existing suitable result needs no new request.
+
 ## Supervise the canonical loop
 
 Before starting or steering work, read the actual project, Direction, strategy,
