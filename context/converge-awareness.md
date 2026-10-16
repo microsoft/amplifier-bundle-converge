@@ -1,6 +1,6 @@
 # Converge — awareness
 
-This work runs under **Converge**: the direction is written down first, and the
+When using **Converge**, the direction is written down first, and the
 work is derived from the gap between that direction and what actually exists —
 never invented. Direction changes land in the document first.
 
