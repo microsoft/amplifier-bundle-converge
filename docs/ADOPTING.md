@@ -146,6 +146,11 @@ and say what the project is for. In this order:
 Until step 3 has your answer, no worker session is launched. That is the design,
 not a delay: lanes against an unagreed direction are work you will throw away.
 
+For the investigation and drafting in steps 2 and 3, use
+[Deriving contracts from an existing repository](DERIVING-CONTRACTS.md).
+It explains how to distinguish consumer promises from implementation details,
+retain evidence separately, and keep baseline behavior apart from new requirements.
+
 **A blank repository — starting.** The same five steps with nothing to read
 first. It begins at the vision: what this will be when it is right, written as
 though already true. Everything after that is identical.
