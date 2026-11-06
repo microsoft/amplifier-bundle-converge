@@ -13,6 +13,16 @@ exact words that start a manager session on your own project. It asks you to
 understand nothing about how any of this works. Everything below is here for
 after it is running.
 
+## Context loading
+
+General composition loads only the orientation in `context/converge-awareness.md`.
+The `converge-manager` mode supplies the detailed overview and collaboration
+protocol alongside its existing procedures. The explicitly selected collaborative
+behavior still loads its protocol directly. Agents, work-tracker tools and the
+locked-contract guard stay available in ordinary sessions. This implements the
+composition contract's promise to sit lightly on the host; it does not change
+the ratification or authorization rules.
+
 ## The three roles
 
 - **You — the intent steward.** You set the direction and make the decisions

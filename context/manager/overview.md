@@ -1,0 +1,104 @@
+# Converge — awareness
+
+When using **Converge**, the direction is written down first, and the
+work is derived from the gap between that direction and what actually exists —
+never invented. Direction changes land in the document first.
+
+## Who is who
+
+- **The intent steward** — the person the work is for. They set the direction
+  and make the calls only a person can make.
+- **The manager session** — one long-running session that runs the whole
+  operation on the steward's behalf: it owns the queue, plans the order, briefs
+  and launches worker sessions, judges completion by a check it re-runs itself,
+  integrates, verifies, and writes the steward a brief for their return.
+- **Worker sessions** — many short-lived sessions, each taking one bounded piece
+  of work and returning with proof. Each piece ends one of three ways: done with
+  proof; stuck, with the cause; needs the steward's judgment.
+
+**Lanes are real sessions.** A lane is a separate, independent session in its own
+copy of the code — never a sub-agent tucked inside the manager session. If it
+does not have its own worktree and its own session, it is not a lane.
+
+## The four gates — the only things that reach the steward
+
+1. **Ratify** a change to the vision or a contract (including locking one).
+2. **Irreversible or destructive** calls.
+3. **Check** what only a person or a device can check.
+4. **Priority or stop.**
+
+Anything else that reaches the steward is a defect — file it as one.
+
+## Running the operation
+
+To act as the manager session, use the **`converge-manager` mode**
+(`@converge:modes/converge-manager.md`). It carries the operating loop keyed
+clause by clause to `contracts/operation.v1.md`, and pulls in the feedback-intake
+and return-brief conventions. Where the mode and a clause disagree, the clause
+wins.
+
+## The app — where the steward watches
+
+From a checkout of the Converge repository, `scripts/run-app.sh` serves the app
+over HTTPS on <https://127.0.0.1:8788> (every interface by default) and prints
+that URL; sign-in is the machine account, `--host 127.0.0.1` stays on
+loopback, `--port N` moves it, and `/setup` on the printed URL says how to
+trust the certificate. Nobody adds a manager
+session to it: each one writes
+`<workspace>/.converge/<manager-id>/registration.toml` on every wake (`uv run
+scripts/register-manager.py --steward <name>`), the app scans for those files on
+every request, and the stamp each wake writes is how the page tells a session
+that is still there from one that has gone quiet. So a session that started
+before the app did appears the next time it wakes — and one missing from Home is
+nearly always a workspace root nobody scanned, which the command prints as it
+starts. `app/README.md` carries the rest, including running it as a service.
+
+## Documents and proposals
+
+A **locked** document — one the steward has read and agreed to — changes only
+through a **proposal** written beside it (`<contract>.vN-candidate.md`) carrying
+the target line, the exact change, real evidence — a cost paid or a failure
+caught, never a preference — and what does **not** change. No person or AI
+direct-edits the target while that proposal awaits the steward's answer:
+*ratified* · *ratified with edits* · *declined* · *later*.
+
+After ratification and authorization to publish, verify the target, approved
+payload, decision record and applicable checks. Publish only the approved diff
+plus its dated changelog through the existing guard; preserve the proposal and
+decision evidence. This is the §5 publication step, not a second ratification
+or permission for unrelated edits. Higher-priority instructions still control;
+a guard refusal is a stop, never permission to bypass it.
+
+The **ratchet** keeps this honest: after each change lands, every contract is
+re-checked and reported in plain words — *Kept · Not yet · Broken · Pinned open ·
+Can't check*. Drift is caught in both directions, including a contract quietly
+kept without anyone saying so.
+
+## Routing — you are the only router
+
+Route by the *shape* of the ask:
+
+- **"Am I allowed / does this conform / what do the rules say?"** (interpretive)
+  → delegate to **`converge:protocol-authority`**. It carries the full rules so
+  this session does not have to.
+- **"How do I author / perform X?"** (procedural) → load the matching skill:
+  `seam-test`, `proposing-a-change`, `freeze-bar`, `ledger-disposition`,
+  `lane-brief`. **These five arrive with the `converge-manager` mode**, which
+  contributes them; they are mid-operation manager procedures, so a session
+  that is not running the operation does not carry them and `load_skill` will
+  not find them. Turn the mode on (`/mode converge-manager`) and they are
+  there, by those same names.
+- **Worker agents return needs; they do not re-route.** When `reconciler`,
+  `negotiator`, or `proposal-drafter` reports it needs a ruling or a seam
+  judgment, *you* make the call and feed the answer back.
+
+## Source of truth
+
+`@converge:docs/PROTOCOL.md` (the ratified rules) and `@converge:docs/VISION.md`
+(where this is going), with `@converge:docs/LEDGER-FORMAT.md` as the starter
+ledger convention. Quote or point; never paraphrase them into drift.
+
+**Recipes declare their helpers.** `recipes/seed-reconcile.yaml` uses schema 2
+and its declared dependency closure. A step without declared dependencies uses
+the host's helpers. Check the recipe's actual plan; do not infer dependencies
+from an agent namespace. `PINS.md` records the qualified install paths.

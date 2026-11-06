@@ -6,6 +6,8 @@ runtime judgment, a real lane launch, or product acceptance.
 
 from pathlib import Path
 
+import yaml
+
 
 REPO = Path(__file__).resolve().parents[1]
 MODE = (REPO / "modes" / "converge-manager.md").read_text(encoding="utf-8")
@@ -15,6 +17,22 @@ GOAL = (REPO / "docs" / "workspace-template" / "GOAL-FILE.md.template").read_tex
     encoding="utf-8"
 )
 MANAGER_BRIEF = REPO / "docs" / "workspace-template" / "MANAGER-BRIEF.md.template"
+
+
+def test_general_composition_loads_orientation_and_manager_keeps_procedures():
+    behavior = yaml.safe_load((REPO / "behaviors/converge.yaml").read_text())
+    assert behavior["context"]["include"] == ["converge:context/converge-awareness.md"]
+    awareness = (REPO / "context/converge-awareness.md").read_text()
+    assert len(awareness) <= 1400
+    assert "@converge:" not in awareness
+    mode = yaml.safe_load(MODE.split("---", 2)[1])["mode"]
+    paths = mode["contributes"]["context"]
+    assert "@converge:context/manager/overview.md" in paths
+    assert "@converge:packages/collaborative/src/converge_instructions/instructions/collaboration.md" in paths
+    for path in paths:
+        assert (REPO / path.removeprefix("@converge:")).is_file(), path
+    assert behavior["hooks"][0]["module"] == "hooks-candidate-guard"
+    assert len(behavior["agents"]["include"]) == 4
 
 
 def _normal(text: str) -> str:
