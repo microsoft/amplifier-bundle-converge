@@ -73,7 +73,7 @@ def test_complete_profile_resolves_same_behavior_without_body_replacement(tmp_pa
     asyncio.run(check())
 
 
-def test_cli_root_and_app_behavior_share_one_collaboration_resource(tmp_path):
+def test_cli_and_app_load_collaboration_only_when_requested(tmp_path):
     async def check():
         # Only external dependencies are stubbed; real local roots, behaviors,
         # namespace resolution and prompt materialization are exercised.
@@ -94,9 +94,14 @@ def test_cli_root_and_app_behavior_share_one_collaboration_resource(tmp_path):
         behavior = await registry.load(REPO.as_uri() + '#subdirectory=behaviors/converge.yaml')
         collaborative = await registry.load(REPO.as_uri() + '#subdirectory=behaviors/collaborative.yaml')
         shared = files('converge_instructions').joinpath('instructions/collaboration.md').read_text()
-        for loaded in (root, behavior, root.compose(collaborative), behavior.compose(collaborative)):
+        for loaded, expected_copies in (
+            (root, 0),
+            (behavior, 0),
+            (root.compose(collaborative), 1),
+            (behavior.compose(collaborative), 1),
+        ):
             loaded.resolve_pending_context()
-            assert sum(path.read_text() == shared for path in loaded.context.values()) == 1
+            assert sum(path.read_text() == shared for path in loaded.context.values()) == expected_copies
             assert any(path.name == 'converge-awareness.md' for path in loaded.context.values())
             events = []
 
@@ -106,7 +111,7 @@ def test_cli_root_and_app_behavior_share_one_collaboration_resource(tmp_path):
             session = SimpleNamespace(coordinator=SimpleNamespace(hooks=SimpleNamespace(emit=emit)))
             prepared = PreparedBundle(mount_plan=loaded.to_mount_plan(), resolver=None, bundle=loaded)
             prompt = await prepared.create_system_prompt_factory(session, session_cwd=tmp_path)()
-            assert prompt.count(shared) == 1
+            assert prompt.count(shared) == expected_copies
             assert all(not payload['failed'] for _, payload in events)
 
     asyncio.run(check())
