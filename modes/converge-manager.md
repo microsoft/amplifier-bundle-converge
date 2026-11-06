@@ -46,6 +46,8 @@ mode:
       - "@converge:skills/proposing-a-change"
       - "@converge:skills/seam-test"
     context:
+      - "@converge:context/manager/overview.md"
+      - "@converge:packages/collaborative/src/converge_instructions/instructions/collaboration.md"
       - "@converge:context/manager/feedback-intake.md"
       - "@converge:context/manager/first-wake.md"
       - "@converge:context/manager/registration.md"
