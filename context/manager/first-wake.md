@@ -31,6 +31,11 @@ Everything after the reading is the same on both paths.
 
 ## The investigation - what to come back with
 
+For an existing repository, read
+[Deriving contracts from an existing repository](../../docs/DERIVING-CONTRACTS.md)
+before turning findings into draft promises. It supplements this first-wake
+procedure without changing the contract format or the authority to proceed.
+
 Read. Change nothing: not a fix in passing, not a rename, not a filed item.
 Nothing is derivable yet, so anything you would file is an opinion, and clause 1
 already says what to do with those.

@@ -8,6 +8,11 @@ every AI session obeys.
 
 New here? Jump to [Quickstart by audience](#quickstart-by-audience).
 
+Deriving contracts for code that already exists? Read
+[Deriving contracts from an existing repository](DERIVING-CONTRACTS.md) for
+the investigation and drafting procedure. It supplements the format below;
+it does not replace it.
+
 ## The index
 
 Three contracts govern the method. A family of contracts governs the app.
