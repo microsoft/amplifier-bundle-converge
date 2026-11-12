@@ -1,0 +1,49 @@
+Lane j1e6-ci-converge -- the goal's Procedure 5 verb, EXECUTED rather than inferred.
+
+My first pass asserted that work_resolve was unavailable on model_performance-j1e6
+without ever calling it -- I inferred it from the claim refusal. An unexecuted call is
+an assumption, and "never claim a result you did not observe" applies to a refusal
+exactly as much as to a success. So both calls were run after every deliverable had
+landed. Verbatim, 2026-09-07:
+
+  work_claim(project="model_performance", item_id="model_performance-j1e6")
+    -- at lane start --
+    success: false
+    "claim model_performance-j1e6 as 'agent-spark-1-2996374' failed:
+     Error claiming model_performance-j1e6: issue already claimed by
+     agent-spark-1-1101253"
+
+  work_claim(project="model_performance", item_id="model_performance-j1e6")
+    -- again after completion; the holder had changed, the refusal had not --
+    success: false
+    "claim model_performance-j1e6 as 'agent-spark-1-2996374' failed:
+     Error claiming model_performance-j1e6: issue already claimed by
+     agent-spark-1-2996730"
+
+  work_resolve(id="model_performance-j1e6", reason=<this lane's summary>)
+    success: false
+    "not currently holding 'model_performance-j1e6' in this session --
+     refusing to resolve an item this session did not claim"
+
+TWO FENCES, both working as designed.
+
+  1. CUSTODY. A session cannot resolve an item it never claimed. This item is a
+     deliberately one-item/many-lanes item covering 19 repos; at most one session can
+     hold it, so Procedure 5's verb is unreachable from the state Procedure 1 puts
+     every other lane in.
+
+  2. BEHIND IT, ALREADY-RESOLVED. work_resolve against an already-resolved item is a
+     no-op success ONLY on byte-identical text; differing text fails non-zero and
+     writes nothing. So even holding the item, a lane whose summary differs from the
+     stored one would be refused.
+
+WHAT ACTUALLY HAPPENED TO THE ITEM, read live rather than assumed: a later lane
+(agent-spark-1-2996730) reopened it once for the whole batch and re-resolved it with a
+19-repo summary that names this lane's PR -- "converge #62" -- among the green CI PRs
+awaiting merge. That is the batch-level remedy a sibling lane recommended: ONE reopen
+for the batch, not one per lane. This lane did not reopen, and should not have: the
+item was held by a live session, and reopening would have taken custody of a shared
+record away from it mid-flight.
+
+So the terminal verb for this lane's slice is work_erratum -- append-only, no claim
+required, correct when the WORK stands and only the RECORD is incomplete.
