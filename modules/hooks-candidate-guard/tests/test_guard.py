@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import logging
 import re
+from copy import copy
 from pathlib import Path
+from types import MethodType
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -1067,6 +1069,182 @@ def _wrapped_tools(config: GuardConfig, cwd: str) -> tuple[dict, list]:
     return tools, restored
 
 
+def _rebound_tool_copy(tool):
+    """Model a host's generic MethodType rebind after a shallow copy."""
+    copied = copy(tool)
+    copied.calls = []
+    copied.execute = MethodType(tool.execute.__func__, copied)
+    return copied
+
+
+@pytest.mark.parametrize("stacked", [False, True], ids=["plain", "stacked"])
+async def test_w3d_rebound_execute_uses_its_own_config_and_engine(
+    tmp_path: Path, stacked: bool
+) -> None:
+    from amplifier_module_hooks_candidate_guard import (
+        CandidateGuardBlocked,
+        wrap_mounted_tools,
+    )
+
+    class _ConfiguredTool(_FakeTool):
+        def __init__(self) -> None:
+            super().__init__()
+            self.config = {"scope": "original"}
+            self.engine = object()
+            self.wrapper_calls = []
+
+        async def execute(self, input: dict) -> tuple:  # noqa: A002
+            await super().execute(input)
+            return self.config, self.engine
+
+    tool = _ConfiguredTool()
+    if stacked:
+        inner_func = tool.execute.__func__
+
+        async def existing_wrapper(receiver, *args, **kwargs):
+            receiver.wrapper_calls.append((receiver.config, receiver.engine))
+            return await inner_func(receiver, *args, **kwargs)
+
+        tool.execute = MethodType(existing_wrapper, tool)
+
+    original = tool.execute
+    restored = wrap_mounted_tools({"write_file": tool}, _config(), str(tmp_path))
+    assert isinstance(tool.execute, MethodType)
+    assert tool.execute.__self__ is tool
+    assert restored[0][1] is tool.execute.__converge_candidate_guard_original__
+    assert restored[0][1] == original
+    assert not getattr(
+        _ConfiguredTool().execute, "__converge_candidate_guard_wrapped__", False
+    )  # Never alter the class or another instance.
+
+    copied = _rebound_tool_copy(tool)
+    copied.config = {"scope": "copy"}
+    copied.engine = object()
+    copied.wrapper_calls = []
+    assert copied.execute.__self__ is copied
+
+    _write(tmp_path, "contracts/x.v1.md", H1_FROZEN + "locked\n")
+    for receiver in (tool, copied):
+        with pytest.raises(CandidateGuardBlocked, match="BLOCKED"):
+            await receiver.execute({"file_path": "contracts/x.v1.md", "content": "x"})
+        assert receiver.calls == receiver.wrapper_calls == []
+
+    data = {"file_path": "notes.md", "content": "ordinary"}
+    for receiver in (copied, tool, copied):
+        config, engine = await receiver.execute(input=data)
+        assert config is receiver.config
+        assert engine is receiver.engine
+    assert tool.calls == [data]
+    assert copied.calls == [data, data]
+    if stacked:
+        assert tool.wrapper_calls == [(tool.config, tool.engine)]
+        assert copied.wrapper_calls == [(copied.config, copied.engine)] * 2
+
+
+@pytest.mark.parametrize("keyword", [None, "input", "tool_input", "arguments"])
+@pytest.mark.parametrize(
+    "path", ["contracts/x.v1.md", "docs/VISION.md", "docs/PROTOCOL.md"]
+)
+async def test_w3d_original_and_rebound_refuse_before_inner(
+    tmp_path: Path, keyword: str | None, path: str
+) -> None:
+    from amplifier_module_hooks_candidate_guard import CandidateGuardBlocked
+
+    locked = _write(tmp_path, path, H1_FROZEN + "the locked clause\n")
+    before = locked.read_bytes()
+    tools, _ = _wrapped_tools(_config(), str(tmp_path))
+    tool = tools["write_file"]
+    copied = _rebound_tool_copy(tool)
+    data = {"file_path": path, "content": "hijacked"}
+    for receiver in (tool, copied):
+        with pytest.raises(CandidateGuardBlocked, match="BLOCKED"):
+            if keyword is None:
+                await receiver.execute(data)
+            else:
+                await receiver.execute(**{keyword: data})
+    assert tool.calls == copied.calls == []
+    assert locked.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "contracts/draft.v1.md",
+        "contracts/x.v2-candidate.md",
+        "contracts/CANDIDATE-x.md",
+        "contracts/x.v1.md",
+    ],
+    ids=["draft", "proposal", "legacy-proposal", "ratified-target"],
+)
+async def test_w3d_original_and_rebound_allow_drafts_proposals_and_ratified_edits(
+    tmp_path: Path, path: str
+) -> None:
+    _write(tmp_path, "contracts/draft.v1.md", H1_DRAFT + "authoring\n")
+    _write(tmp_path, "contracts/x.v1.md", H1_FROZEN + "the locked clause\n")
+    _write(
+        tmp_path,
+        "contracts/x.v2-candidate.md",
+        H1_FROZEN + "target: contracts/x.v1.md\n" + RATIFIED_STAMP,
+    )
+    _write(tmp_path, "contracts/CANDIDATE-x.md", H1_FROZEN + "quoting\n")
+    tools, _ = _wrapped_tools(_config(), str(tmp_path))
+    tool = tools["write_file"]
+    copied = _rebound_tool_copy(tool)
+    data = {"file_path": path, "content": "amended"}
+    for receiver in (tool, copied):
+        assert await receiver.execute(data) == {"file_path": path, "bytes": 8}
+    assert tool.calls == copied.calls == [data]
+
+
+@pytest.mark.parametrize("kind", ["closure", "callable-object", "foreign-method"])
+async def test_w3d_opaque_execute_keeps_direct_path_but_refuses_rebinding(
+    tmp_path: Path, kind: str
+) -> None:
+    from amplifier_module_hooks_candidate_guard import (
+        CandidateGuardBlocked,
+        wrap_mounted_tools,
+    )
+
+    tool = _FakeTool()
+    calls = []
+
+    async def closure(input):  # noqa: A002
+        calls.append(input)
+        return {"ok": True}
+
+    class _Callable:
+        def __call__(self, input):  # noqa: A002
+            calls.append(input)
+            return {"ok": True}
+
+    foreign = _FakeTool()
+    if kind == "closure":
+        original = closure
+    elif kind == "callable-object":
+        original = _Callable()
+    else:
+        original = foreign.execute
+        calls = foreign.calls
+    tool.execute = original
+    restored = wrap_mounted_tools({"write_file": tool}, _config(), str(tmp_path))
+    assert restored[0][1] is original
+    assert tool.execute.__converge_candidate_guard_original__ is original
+
+    data = {"file_path": "notes.md", "content": "ordinary"}
+    assert await tool.execute(data)
+    assert calls == [data]  # Async closure/method and synchronous callable work.
+    copied = _rebound_tool_copy(tool)
+    with pytest.raises(CandidateGuardBlocked, match="cannot rebind execute"):
+        await copied.execute(data)
+    assert calls == [data]  # Never silently dispatch through the old callable.
+
+    _write(tmp_path, "contracts/x.v1.md", H1_FROZEN + "locked\n")
+    for receiver in (tool, copied):
+        with pytest.raises(CandidateGuardBlocked, match="BLOCKED"):
+            await receiver.execute({"file_path": "contracts/x.v1.md", "content": "x"})
+    assert calls == [data]
+
+
 async def test_w3d_direct_execute_on_a_locked_contract_raises(tmp_path: Path) -> None:
     """The write must not land, and the refusal must be loud.
 
@@ -1150,6 +1328,12 @@ def test_w3d_wrapping_is_opt_outable_and_idempotent(tmp_path: Path) -> None:
     wrapped_once = tools["write_file"].execute
     assert wrap_mounted_tools(tools, _config(), str(tmp_path)) == []
     assert tools["write_file"].execute is wrapped_once
+    assert wrapped_once.__converge_candidate_guard_original__ is first[0][1]
+    copied = _rebound_tool_copy(tools["write_file"])
+    rebound_once = copied.execute
+    assert wrap_mounted_tools({"write_file": copied}, _config(), str(tmp_path)) == []
+    assert copied.execute is rebound_once
+    assert copied.execute.__converge_candidate_guard_original__ is first[0][1]
 
 
 def test_w3d_a_tool_that_cannot_be_wrapped_does_not_break_the_guard(
@@ -1189,6 +1373,8 @@ async def test_w3d_mount_wraps_the_mounted_tools_and_cleanup_restores_them(
 
     _write(tmp_path, "contracts/x.v1.md", H1_FROZEN + "the locked clause\n")
     tool = _FakeTool()
+    original = tool.execute
+    tool.execute = original  # Capture the exact object mount must restore.
 
     coordinator = MagicMock()
     coordinator.hooks.register = MagicMock(return_value=MagicMock())
@@ -1201,15 +1387,22 @@ async def test_w3d_mount_wraps_the_mounted_tools_and_cleanup_restores_them(
     cleanup = await mount(coordinator, {})
 
     assert getattr(tool.execute, "__converge_candidate_guard_wrapped__", False)
+    assert tool.execute.__converge_candidate_guard_original__ is original
+    copied = _rebound_tool_copy(tool)
     with pytest.raises(CandidateGuardBlocked):
         await tool.execute({"file_path": "contracts/x.v1.md", "content": "hijacked"})
     assert tool.calls == []  # the tool was never reached
 
     cleanup()
+    assert tool.execute is original
     assert not getattr(tool.execute, "__converge_candidate_guard_wrapped__", False)
     # Restored means restored: the same write now reaches the tool.
     assert await tool.execute({"file_path": "contracts/x.v1.md", "content": "x"})
     assert len(tool.calls) == 1
+    # Cleanup owns only the mounted instance, not a host's later copied tool.
+    with pytest.raises(CandidateGuardBlocked):
+        await copied.execute({"file_path": "contracts/x.v1.md", "content": "x"})
+    assert copied.calls == []
 
 
 # ---------------------------------------------------------------------------
