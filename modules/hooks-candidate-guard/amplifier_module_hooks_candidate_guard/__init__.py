@@ -32,6 +32,7 @@ from __future__ import annotations
 import inspect
 import logging
 import os
+from types import MethodType
 from typing import Any
 
 from amplifier_core import HookResult
@@ -167,6 +168,9 @@ def wrap_mounted_tools(
     Wrapping is per **instance**, never on the class: tool instances are
     mounted per session, so an instance-level attribute cannot leak the guard
     into an unrelated session that merely imports the same tool module.
+    Hosts copying a tool must explicitly rebind this method to the copy.
+    Only an inner Python method bound to the mounted instance can follow that
+    receiver; opaque callables remain usable on the original instance only.
     """
     restored: list[tuple[Any, Any]] = []
     if not config.wrap_tool_execute or not tools:
@@ -182,8 +186,16 @@ def wrap_mounted_tools(
         if getattr(original, _WRAPPED_ATTR, False):
             continue  # already wrapped by an earlier mount in this session
 
-        def _make(name: str, inner: Any) -> Any:
-            async def guarded_execute(*args: Any, **kw: Any):
+        def _make(name: str, inner: Any, owner: Any) -> Any:
+            # Preserve the actual function, including any receiver-aware wrapper
+            # already installed on this instance; the class's execute may differ.
+            inner_func = (
+                inner.__func__
+                if isinstance(inner, MethodType) and inner.__self__ is owner
+                else None
+            )
+
+            async def guarded_execute(receiver: Any, *args: Any, **kw: Any):
                 # The composed tools take one positional dict
                 # (`async def execute(self, input: dict)`), but accept the
                 # keyword spellings too rather than assume a call shape.
@@ -203,17 +215,26 @@ def wrap_mounted_tools(
                         or "converge/candidate-guard: blocked by the "
                         "locked-contract guard."
                     )
-                out = inner(*args, **kw)
+                if inner_func is not None:
+                    out = inner_func(receiver, *args, **kw)
+                else:
+                    if receiver is not owner:
+                        raise CandidateGuardBlocked(
+                            "converge/candidate-guard: cannot rebind execute() "
+                            f"for tool {name!r}; the original callable is not a "
+                            "Python method bound to the mounted instance."
+                        )
+                    out = inner(*args, **kw)
                 if inspect.isawaitable(out):
                     return await out
                 return out
 
             setattr(guarded_execute, _WRAPPED_ATTR, True)
             setattr(guarded_execute, _ORIGINAL_ATTR, inner)
-            return guarded_execute
+            return MethodType(guarded_execute, owner)
 
         try:
-            instance.execute = _make(tool_name, original)  # type: ignore[attr-defined]
+            instance.execute = _make(tool_name, original, instance)  # type: ignore[attr-defined]
         except Exception:  # noqa: BLE001 -- a read-only/slotted tool cannot be wrapped
             logger.warning(
                 "candidate-guard: could not wrap execute() on tool %r -- the "
